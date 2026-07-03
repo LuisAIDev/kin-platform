@@ -12,6 +12,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import reactor.core.publisher.Flux;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -77,6 +78,34 @@ public class AiEngineService {
         }
 
         return mockResponse(history.size(), projectTitle);
+    }
+
+    public Flux<String> generateAiResponseStream(
+            List<ChatMessage> history, String userMessage,
+            String projectTitle, String projectDescription, String projectCategory
+    ) {
+        var messages = new ArrayList<Message>();
+        messages.add(buildSystemMessage(projectTitle, projectDescription, projectCategory));
+
+        for (var msg : history) {
+            messages.add(switch (msg.getRole()) {
+                case USER -> new UserMessage(msg.getContent());
+                case ASSISTANT -> new AssistantMessage(msg.getContent());
+                case SYSTEM -> new SystemMessage(msg.getContent());
+            });
+        }
+
+        log.debug("Streaming from Ollama ({} messages in history, model: {})", history.size(), modelName);
+
+        return chatClient.prompt()
+                .messages(messages.toArray(new Message[0]))
+                .user(userMessage)
+                .stream()
+                .content()
+                .onErrorResume(e -> {
+                    log.error("Ollama stream failed (falling back to mock): {}", e.getMessage());
+                    return Flux.just(mockResponse(history.size(), projectTitle));
+                });
     }
 
     private SystemMessage buildSystemMessage(String title, String description, String category) {

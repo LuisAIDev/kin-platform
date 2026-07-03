@@ -6,6 +6,8 @@ server:
   port: 8080
   servlet:
     context-path: /api/v1
+  tomcat:
+    max-swallow-size: 2MB
 
 spring:
   application:
@@ -82,7 +84,7 @@ spring:
 # JWT
 # -----------------------------------------------------------
 jwt:
-  secret: ${JWT_SECRET:dev-only-fallback-secret-not-for-production-use}
+  secret: ${JWT_SECRET:RuSedLdVxrG4HOIwc2YNFOKcwtOA3umG8KSCBMMy7Xo=}
   expiration-ms: 86400000
 
 # -----------------------------------------------------------

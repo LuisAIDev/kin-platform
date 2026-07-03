@@ -3,11 +3,13 @@
 import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { projectsService, type Project } from "@/services/projects";
-import { chatService, type ChatMessage } from "@/services/chat";
+import { chatService, type ChatMessage, type ChatResponse } from "@/services/chat";
 import { authService } from "@/services/auth";
 import { forceLogout } from "@/services/session";
 import ViabilityScore from "@/components/ViabilityScore";
 import PdfReportButton from "@/components/PdfReportButton";
+
+const STREAMING_ID_PREFIX = "streaming-";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -22,8 +24,11 @@ export default function ProjectDetailPage({ params }: Props) {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [streamingId, setStreamingId] = useState<string | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const sendingRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const token = authService.getToken();
@@ -50,10 +55,16 @@ export default function ProjectDetailPage({ params }: Props) {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = async () => {
-    const text = input.trim();
-    if (!text || sending) return;
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
+  const handleSend = () => {
+    const text = input.trim();
+    if (!text || sendingRef.current) return;
+    sendingRef.current = true;
     setSending(true);
     setInput("");
 
@@ -68,34 +79,63 @@ export default function ProjectDetailPage({ params }: Props) {
       createdAt: new Date().toISOString(),
     };
 
-    setMessages((prev) => [...prev, optimisticUser]);
+    const aiId = STREAMING_ID_PREFIX + crypto.randomUUID();
+    const optimisticAi: ChatMessage = {
+      id: aiId,
+      projectId: id,
+      userId: "",
+      role: "ASSISTANT",
+      content: "",
+      metadata: null,
+      tokensUsed: 0,
+      createdAt: new Date().toISOString(),
+    };
 
-    try {
-      const res = await chatService.sendMessage(id, text);
+    setMessages((prev) => [...prev, optimisticUser, optimisticAi]);
+    setStreamingId(aiId);
 
-      const aiMessage: ChatMessage = {
-        id: res.assistantMessageId,
-        projectId: id,
-        userId: "",
-        role: "ASSISTANT",
-        content: res.content,
-        metadata: null,
-        tokensUsed: res.tokensUsed,
-        createdAt: new Date().toISOString(),
-      };
-
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === optimisticUser.id
-            ? { ...m, content: "(error al enviar)" }
-            : m
-        )
-      );
-    } finally {
+    const done = () => {
+      sendingRef.current = false;
+      setStreamingId(null);
       setSending(false);
-    }
+    };
+
+    abortRef.current = chatService.sendMessageStream(id, text, {
+      onToken: (token: string) => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === aiId ? { ...m, content: m.content + token } : m
+          )
+        );
+      },
+      onDone: (res: ChatResponse) => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === aiId
+              ? {
+                  ...m,
+                  id: res.assistantMessageId,
+                  content: res.content || m.content,
+                  tokensUsed: res.tokensUsed,
+                }
+              : m
+          )
+        );
+        done();
+      },
+      onError: () => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === aiId
+              ? { ...m, content: "(error al generar respuesta)" }
+              : m.id === optimisticUser.id
+                ? m
+                : m
+          )
+        );
+        done();
+      },
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -180,6 +220,7 @@ export default function ProjectDetailPage({ params }: Props) {
 
           {messages.map((msg) => {
             const isUser = msg.role === "USER";
+            const isStreaming = msg.id === streamingId;
             return (
               <div
                 key={msg.id}
@@ -193,6 +234,9 @@ export default function ProjectDetailPage({ params }: Props) {
                   }`}
                 >
                   <RenderContent content={msg.content} projectTitle={project.title} />
+                  {isStreaming && (
+                    <span className="inline-block w-2 h-4 bg-neutral-500 animate-pulse ml-0.5" />
+                  )}
                 </div>
               </div>
             );

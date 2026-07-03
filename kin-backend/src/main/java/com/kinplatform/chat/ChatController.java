@@ -8,9 +8,11 @@ import com.kinplatform.user.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,6 +35,16 @@ public class ChatController {
         var userId = getAuthenticatedUserId(auth);
         var response = chatOrchestratorService.processMessage(userId, projectId, request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter chatStream(
+            Authentication auth,
+            @PathVariable UUID projectId,
+            @Valid @RequestBody ChatRequest request
+    ) {
+        var userId = getAuthenticatedUserId(auth);
+        return chatOrchestratorService.processMessageStream(userId, projectId, request);
     }
 
     @PostMapping("/messages")
