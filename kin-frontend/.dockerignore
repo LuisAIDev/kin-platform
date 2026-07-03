@@ -1,0 +1,7 @@
+node_modules/
+.next/
+**/.classpath
+**/.project
+**/.settings/
+**/.idea/
+**/*.iml

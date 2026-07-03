@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kin-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: kin_platform
+      POSTGRES_USER: kin_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kin_admin -d kin_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kin-network
+
+volumes:
+  pgdata:
+    name: kin_pgdata
+    driver: local
+
+networks:
+  kin-network:
+    name: kin_network
+    driver: bridge

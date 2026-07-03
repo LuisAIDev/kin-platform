@@ -1,0 +1,32 @@
+# ============================================================
+# KIN Backend — .gitignore
+# ============================================================
+
+# Maven
+target/
+*.jar
+*.war
+*.class
+.mvn/timing.xml
+
+# H2 local database (development)
+data/
+*.db
+*.mv.db
+*.trace.db
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log

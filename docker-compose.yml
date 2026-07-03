@@ -1,0 +1,87 @@
+version: "3.9"
+
+# ============================================================
+# KIN Platform — Global Orchestration
+# ============================================================
+
+services:
+
+  # ----------------------------------------------------------
+  # Database
+  # ----------------------------------------------------------
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: kin-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: kin_platform
+      POSTGRES_USER: kin_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./kin-database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kin_admin -d kin_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kin-network
+
+  # ----------------------------------------------------------
+  # Backend API (Spring Boot)
+  # ----------------------------------------------------------
+  kin-backend:
+    build:
+      context: ./kin-backend
+    container_name: kin-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/kin_platform
+      SPRING_DATASOURCE_USERNAME: kin_admin
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - kin-network
+
+  # ----------------------------------------------------------
+  # Frontend (Next.js)
+  # ----------------------------------------------------------
+  kin-frontend:
+    build:
+      context: ./kin-frontend
+    container_name: kin-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
+    depends_on:
+      - kin-backend
+    networks:
+      - kin-network
+
+# ----------------------------------------------------------
+# Volumes
+# ----------------------------------------------------------
+volumes:
+  pgdata:
+    name: kin_pgdata
+    driver: local
+
+# ----------------------------------------------------------
+# Networks
+# ----------------------------------------------------------
+networks:
+  kin-network:
+    name: kin_network
+    driver: bridge

@@ -1,0 +1,98 @@
+# ============================================================
+# KIN Platform - Spring Boot Configuration
+# ============================================================
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+spring:
+  application:
+    name: kin-backend
+
+  # -----------------------------------------------------------
+  # Datasource — H2 file-based (persistente localmente)
+  # -----------------------------------------------------------
+  datasource:
+    url: jdbc:h2:file:./data/kindb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 20000
+
+  # -----------------------------------------------------------
+  # H2 Console (enable for debugging)
+  # -----------------------------------------------------------
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # -----------------------------------------------------------
+  # JPA / Hibernate
+  # -----------------------------------------------------------
+  jpa:
+    database: H2
+    show-sql: true
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        jdbc:
+          lob:
+            non_contextual_creation: true
+        format_sql: true
+        default_batch_fetch_size: 50
+        enable_lazy_load_no_trans: false
+        connection:
+          provider_disables_autocommit: false
+
+  # -----------------------------------------------------------
+  # Jackson
+  # -----------------------------------------------------------
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+    default-property-inclusion: non_null
+
+  # -----------------------------------------------------------
+  # Spring AI — Ollama (local)
+  # -----------------------------------------------------------
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      connect-timeout: 10s
+      read-timeout: 120s
+      chat:
+        options:
+          model: llama3.2
+          temperature: 0.7
+
+# -----------------------------------------------------------
+# JWT
+# -----------------------------------------------------------
+jwt:
+  secret: ${JWT_SECRET:dev-only-fallback-secret-not-for-production-use}
+  expiration-ms: 86400000
+
+# -----------------------------------------------------------
+# Logging
+# -----------------------------------------------------------
+logging:
+  level:
+    root: INFO
+    com.kinplatform: DEBUG
+    org.springframework.ai: DEBUG
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql: WARN
+    com.zaxxer.hikari: INFO
