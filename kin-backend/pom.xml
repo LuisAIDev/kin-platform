@@ -69,14 +69,11 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- PostgreSQL (kept for reference, but H2 is active) -->
-        <!--
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
-        -->
 
         <!-- Lombok -->
         <dependency>
@@ -104,10 +101,23 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Actuator — health check, metrics -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <!-- Spring AI — Ollama (local LLM) -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-ollama</artifactId>
+        </dependency>
+
+        <!-- dotenv — carga .env automáticamente en desarrollo -->
+        <dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>springboot3-dotenv</artifactId>
+            <version>5.1.0</version>
         </dependency>
     </dependencies>
 

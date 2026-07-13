@@ -81,11 +81,29 @@ spring:
           temperature: 0.7
 
 # -----------------------------------------------------------
+# Actuator — health check endpoints
+# -----------------------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: never
+
+# -----------------------------------------------------------
 # JWT
 # -----------------------------------------------------------
 jwt:
-  secret: ${JWT_SECRET:RuSedLdVxrG4HOIwc2YNFOKcwtOA3umG8KSCBMMy7Xo=}
+  secret: ${JWT_SECRET}
   expiration-ms: 86400000
+
+# -----------------------------------------------------------
+# dotenv — busca .env en la raíz del repo (no en kin-backend/)
+# -----------------------------------------------------------
+springdotenv:
+  directory: ${SPRINGDOTENV_DIRECTORY:../}
 
 # -----------------------------------------------------------
 # Logging

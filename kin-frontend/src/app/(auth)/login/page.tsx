@@ -11,14 +11,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [checking, setChecking] = useState(true);
+  const [checking, setChecking] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return !!authService.getToken();
+  });
 
   useEffect(() => {
-    const token = authService.getToken();
-    if (!token) {
-      setChecking(false);
-      return;
-    }
+    if (!checking) return;
 
     api.get("/auth/me")
       .then(() => router.push("/dashboard/projects"))
@@ -26,7 +25,7 @@ export default function LoginPage() {
         authService.logout();
         setChecking(false);
       });
-  }, [router]);
+  }, [checking, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +68,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
         />
 
         <input
@@ -78,19 +77,19 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
         />
 
         <button
           type="submit"
-          className="rounded-lg bg-neutral-900 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition"
+          className="rounded-lg bg-primary-600 py-2 text-sm font-medium text-white hover:bg-primary-700 transition min-h-11"
         >
           Entrar
         </button>
 
         <p className="text-center text-sm text-neutral-500">
           No tienes cuenta?{" "}
-          <Link href="/register" className="text-neutral-900 underline">
+          <Link href="/register" className="text-primary-600 underline hover:text-primary-700">
             Registrate
           </Link>
         </p>

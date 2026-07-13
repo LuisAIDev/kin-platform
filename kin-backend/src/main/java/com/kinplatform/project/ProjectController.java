@@ -1,17 +1,20 @@
 package com.kinplatform.project;
 
+import com.kinplatform.common.dto.PageResponse;
 import com.kinplatform.project.dto.CreateProjectRequest;
 import com.kinplatform.project.dto.ProjectResponse;
 import com.kinplatform.project.dto.UpdateProjectRequest;
 import com.kinplatform.user.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -33,9 +36,12 @@ public class ProjectController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProjectResponse>> getAll(Authentication auth) {
+    public ResponseEntity<PageResponse<ProjectResponse>> getAll(
+            Authentication auth,
+            @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
         var userId = getAuthenticatedUserId(auth);
-        var projects = projectService.getAllByUser(userId);
+        var projects = projectService.getAllByUser(userId, pageable);
         return ResponseEntity.ok(projects);
     }
 

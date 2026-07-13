@@ -155,6 +155,53 @@ CREATE TRIGGER trg_projects_updated_at
     FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
 
 -- ============================================================
+-- TABLE: pricing_plans
+-- ============================================================
+
+CREATE TABLE pricing_plans (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name            VARCHAR(100) NOT NULL,
+    price           NUMERIC(10, 2) NOT NULL,
+    currency        VARCHAR(3) NOT NULL DEFAULT 'USD',
+    billing_period  VARCHAR(20) NOT NULL DEFAULT 'monthly',
+    features        JSONB NOT NULL,
+    is_popular      BOOLEAN NOT NULL DEFAULT FALSE,
+    display_order   INTEGER NOT NULL DEFAULT 0,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_pricing_plans_display_order ON pricing_plans (display_order);
+
+-- ============================================================
+-- SEED: pricing plans
+-- ============================================================
+
+INSERT INTO pricing_plans (id, name, price, currency, billing_period, features, is_popular, display_order)
+VALUES (
+    uuid_generate_v4(),
+    'Básico Gratis',
+    0.00,
+    'USD',
+    'monthly',
+    '["Hasta 3 proyectos", "Asistente de IA básico", "Scoring de viabilidad", "Exportación a PDF"]',
+    FALSE,
+    1
+);
+
+INSERT INTO pricing_plans (id, name, price, currency, billing_period, features, is_popular, display_order)
+VALUES (
+    uuid_generate_v4(),
+    'Premium Pro',
+    19.00,
+    'USD',
+    'monthly',
+    '["Proyectos ilimitados", "IA avanzada con contexto extendido", "Scoring detallado con métricas", "Exportación PDF premium", "Soporte prioritario 24/7"]',
+    TRUE,
+    2
+);
+
+-- ============================================================
 -- SEED: admin user (password: Admin123!)
 -- BCrypt hash generated for: Admin123!
 -- ============================================================

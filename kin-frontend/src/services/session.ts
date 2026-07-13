@@ -23,10 +23,6 @@ function setCookie(name: string, value: string) {
   document.cookie = `${name}=${value}; ${COOKIE_OPTIONS}`;
 }
 
-function deleteCookie(name: string) {
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-}
-
 export function storeSession(res: { token: string; email: string; fullName: string; role: string }) {
   localStorage.setItem("kin_token_v2", res.token);
   localStorage.setItem("kin_user_v2", JSON.stringify(res));

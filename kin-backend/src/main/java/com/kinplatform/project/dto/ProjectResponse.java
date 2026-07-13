@@ -27,4 +27,5 @@ public class ProjectResponse {
     private OffsetDateTime completedAt;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
+    private Integer progressPercentage;
 }

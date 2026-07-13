@@ -1,3 +1,11 @@
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  size: number;
+}
+
 export interface User {
   id: string;
   email: string;

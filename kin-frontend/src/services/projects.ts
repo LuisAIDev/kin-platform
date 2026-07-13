@@ -1,4 +1,5 @@
 import { api } from "./api";
+import type { PageResponse } from "@/types";
 
 export interface Project {
   id: string;
@@ -13,6 +14,7 @@ export interface Project {
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  progressPercentage: number | null;
 }
 
 export interface CreateProjectRequest {
@@ -22,7 +24,8 @@ export interface CreateProjectRequest {
 }
 
 export const projectsService = {
-  getAll: () => api.get<Project[]>("/projects"),
+  getAll: (page = 0, size = 12) =>
+    api.get<PageResponse<Project>>(`/projects?page=${page}&size=${size}`),
 
   getById: (id: string) => api.get<Project>(`/projects/${id}`),
 

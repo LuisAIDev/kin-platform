@@ -12,4 +12,6 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
     List<ChatMessage> findByProjectIdOrderByCreatedAtAsc(UUID projectId);
 
     long countByProjectId(UUID projectId);
+
+    long countByProjectIdAndRole(UUID projectId, MessageRole role);
 }

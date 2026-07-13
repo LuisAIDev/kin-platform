@@ -47,7 +47,7 @@ export default function RegisterPage() {
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           required
-          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
         />
 
         <input
@@ -56,7 +56,7 @@ export default function RegisterPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
         />
 
         <input
@@ -66,19 +66,19 @@ export default function RegisterPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={8}
-          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
         />
 
         <button
           type="submit"
-          className="rounded-lg bg-neutral-900 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition"
+          className="rounded-lg bg-primary-600 py-2 text-sm font-medium text-white hover:bg-primary-700 transition min-h-11"
         >
           Crear cuenta
         </button>
 
         <p className="text-center text-sm text-neutral-500">
           ¿Ya tienes cuenta?{" "}
-          <Link href="/login" className="text-neutral-900 underline">
+          <Link href="/login" className="text-primary-600 underline hover:text-primary-700">
             Inicia sesión
           </Link>
         </p>

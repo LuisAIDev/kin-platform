@@ -1,14 +1,18 @@
 package com.kinplatform.project;
 
+import com.kinplatform.chat.ChatMessageRepository;
+import com.kinplatform.chat.MessageRole;
+import com.kinplatform.common.dto.PageResponse;
 import com.kinplatform.project.dto.CreateProjectRequest;
 import com.kinplatform.project.dto.ProjectResponse;
 import com.kinplatform.project.dto.UpdateProjectRequest;
 import com.kinplatform.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -17,6 +21,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
     @Override
     @Transactional
@@ -45,11 +50,9 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProjectResponse> getAllByUser(UUID userId) {
-        return projectRepository.findByUserIdOrderByCreatedAtDesc(userId)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+    public PageResponse<ProjectResponse> getAllByUser(UUID userId, Pageable pageable) {
+        Page<Project> page = projectRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+        return PageResponse.from(page.map(this::toResponse));
     }
 
     @Override
@@ -106,6 +109,42 @@ public class ProjectServiceImpl implements ProjectService {
                 .completedAt(project.getCompletedAt())
                 .createdAt(project.getCreatedAt())
                 .updatedAt(project.getUpdatedAt())
+                .progressPercentage(calculateProgress(project))
                 .build();
+    }
+
+    private int calculateProgress(Project project) {
+        int progress = 0;
+
+        // 1. Basic info complete (20%)
+        if (project.getTitle() != null && !project.getTitle().isBlank()
+                && project.getDescription() != null && !project.getDescription().isBlank()
+                && project.getCategory() != null) {
+            progress += 20;
+        }
+
+        // 2. Viability score exists (20%)
+        if (project.getViabilityScore() != null) {
+            progress += 20;
+        }
+
+        long userMsgCount = chatMessageRepository.countByProjectIdAndRole(project.getId(), MessageRole.USER);
+
+        // 3. At least 3 user messages (30%)
+        if (userMsgCount >= 3) {
+            progress += 30;
+        }
+
+        // 4. At least 6 user messages as proxy for value proposition (20%)
+        if (userMsgCount >= 6) {
+            progress += 20;
+        }
+
+        // 5. Status changed from DRAFT (10%)
+        if (project.getStatus() != ProjectStatus.DRAFT) {
+            progress += 10;
+        }
+
+        return progress;
     }
 }

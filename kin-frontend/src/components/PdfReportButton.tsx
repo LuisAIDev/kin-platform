@@ -1,245 +1,233 @@
 "use client";
 
+import type { Project } from "@/services/projects";
+import type { ChatMessage } from "@/services/chat";
+
 type Props = {
-  projectTitle: string;
-  content: string;
+  project: Project;
+  messages: ChatMessage[];
 };
 
-const SECTIONS = ["Problema", "Solución", "Clientes", "Costos"];
+const SCORE_REGEX = /###\s*Scoring\s+de\s+Viabilidad\s+Estimado:\s*\*\*(\d+)\/100\*\*/;
 
-function parseReport(content: string) {
-  const sections: Record<string, string> = {};
-  for (const s of SECTIONS) {
-    const re = new RegExp(
-      `\\*\\*${s}\\:\\*\\*\\s*([^]*?)(?=\\n\\*\\*|\\n---|$)`
-    );
-    const m = content.match(re);
-    if (m) sections[s] = m[1].trim();
+function formatDate(iso: string | undefined | null): string {
+  if (!iso) return "(fecha desconocida)";
+  try {
+    return new Date(iso).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "(fecha inválida)";
   }
-
-  const scoreMatch = content.match(/\*\*(\d+)\/100\*\*/);
-  const score = scoreMatch ? parseInt(scoreMatch[1], 10) : null;
-
-  const recoLines: string[] = [];
-  const recoRe = content.match(
-    /recomendaría[^]*?(?:\n|$)((?:.*?\d\..*?(?:\n|$))+)/
-  );
-  if (recoRe) {
-    for (const line of recoRe[1].split("\n")) {
-      const t = line.trim();
-      if (/^\d+\.\s/.test(t)) recoLines.push(t.replace(/^\d+\.\s*/, ""));
-    }
-  }
-
-  return { sections, score, recoLines };
 }
 
-export default function PdfReportButton({ projectTitle, content }: Props) {
-  const scoreMatch = content.match(/\*\*(\d+)\/100\*\*/);
-  const score = scoreMatch ? parseInt(scoreMatch[1], 10) : null;
-  const btnColor =
-    score !== null && score >= 70
-      ? "bg-green-600 hover:bg-green-700"
-      : score !== null && score >= 40
-        ? "bg-amber-500 hover:bg-amber-600"
-        : "bg-red-500 hover:bg-red-600";
-
+export default function PdfReportButton({ project, messages }: Props) {
   const handleClick = async () => {
     const { default: jsPDF } = await import("jspdf");
     const doc = new jsPDF("p", "mm", "a4");
-    const { sections, score: s, recoLines } = parseReport(content);
 
     const pw = doc.internal.pageSize.getWidth();
-    const ml = 22;
-    const mr = 22;
+    const ml = 20;
+    const mr = 20;
     const cw = pw - ml - mr;
-    let y = 24;
-    const accent =
-      s !== null && s >= 70
-        ? "#16a34a"
-        : s !== null && s >= 40
-          ? "#d97706"
-          : "#dc2626";
-    const dateStr = new Date().toLocaleDateString("es-ES", {
+    let y = 20;
+    const reportDate = new Date().toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
 
-    // Header bar
+    // === HEADER ===
     doc.setFillColor(245, 245, 245);
-    doc.rect(0, 0, pw, 42, "F");
+    doc.rect(0, 0, pw, 40, "F");
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
+    doc.setFontSize(24);
     doc.setTextColor(26, 26, 26);
     doc.text("KIN", ml, 18);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(107, 114, 128);
-    doc.text(`Reporte de Viabilidad  •  ${dateStr}`, ml, 26);
+    doc.text(`Reporte de Proyecto  •  ${reportDate}`, ml, 26);
     doc.setDrawColor(220, 220, 220);
-    doc.line(ml, 30, pw - mr, 30);
+    doc.line(ml, 32, pw - mr, 32);
 
-    // Project title
-    y = 53;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(13);
-    doc.setTextColor(107, 114, 128);
-    doc.text("PROYECTO", ml, y);
-    y += 7;
+    // === PROJECT INFO ===
+    y = 52;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(17);
+    doc.setFontSize(16);
     doc.setTextColor(26, 26, 26);
-    const titleLines = doc.splitTextToSize(projectTitle, cw);
+    const titleLines = doc.splitTextToSize(project.title, cw);
     doc.text(titleLines, ml, y);
-    y += titleLines.length * 7 + 6;
+    y += titleLines.length * 7 + 4;
+
+    if (project.description) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(107, 114, 128);
+      const descLines = doc.splitTextToSize(project.description, cw);
+      doc.text(descLines, ml, y);
+      y += descLines.length * 5 + 4;
+    }
+
+    // Metadata row
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(55, 65, 81);
+    const meta = `Categoría: ${project.category}  |  Estado: ${project.status}  |  Creado: ${formatDate(project.createdAt)}`;
+    doc.text(meta, ml, y);
+    y += 8;
 
     doc.setDrawColor(230, 230, 230);
     doc.line(ml, y, pw - mr, y);
     y += 10;
 
-    // Executive Summary
+    // === SCORES SECTION ===
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
+    doc.setFontSize(13);
     doc.setTextColor(26, 26, 26);
-    doc.text("Resumen Ejecutivo", ml, y);
+    doc.text("Métricas del Proyecto", ml, y);
     y += 2;
-    doc.setDrawColor(accent);
+    doc.setDrawColor(16, 163, 42);
     doc.setLineWidth(1.2);
-    doc.line(ml, y, ml + 40, y);
-    y += 8;
+    doc.line(ml, y, ml + 36, y);
+    y += 10;
 
-    const hasContent = SECTIONS.some((sec) => sections[sec]);
-    if (hasContent) {
-      for (const sec of SECTIONS) {
-        const val = sections[sec];
-        if (!val) continue;
-        const lines = doc.splitTextToSize(val, cw - 48);
-        const boxH = Math.max(14, 11 + lines.length * 5);
-        if (y + boxH > 275) {
-          doc.addPage();
-          y = 24;
-        }
-        doc.setFillColor(249, 250, 251);
-        doc.roundedRect(ml, y, cw, boxH, 2, 2, "F");
+    // Progress bar
+    const progress = project.progressPercentage ?? 0;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(55, 65, 81);
+    doc.text("Progreso del proyecto", ml, y);
+    y += 2;
+    doc.setFillColor(230, 230, 230);
+    doc.roundedRect(ml, y, cw, 12, 3, 3, "F");
+    const progColor = progress >= 80 ? "#16a34a" : progress >= 50 ? "#d97706" : "#dc2626";
+    doc.setFillColor(progColor);
+    doc.roundedRect(ml, y, Math.max((progress / 100) * cw, 4), 12, 3, 3, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`${progress}%`, ml + 6, y + 9);
+    y += 20;
+
+    // Viability score
+    let parsedScore: number | null = null;
+    for (const msg of messages) {
+      const m = msg.content?.match(SCORE_REGEX);
+      if (m) {
+        parsedScore = parseInt(m[1], 10);
+        break;
+      }
+    }
+    const displayScore = project.viabilityScore != null ? project.viabilityScore : parsedScore;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(55, 65, 81);
+    doc.text("Score de Viabilidad", ml, y);
+    y += 2;
+    doc.setFillColor(230, 230, 230);
+    doc.roundedRect(ml, y, cw, 12, 3, 3, "F");
+    if (displayScore != null) {
+      const scoreVal = typeof displayScore === "number" ? displayScore : Number(displayScore);
+      if (!isNaN(scoreVal)) {
+        const scColor = scoreVal >= 70 ? "#16a34a" : scoreVal >= 40 ? "#d97706" : "#dc2626";
+        doc.setFillColor(scColor);
+        doc.roundedRect(ml, y, Math.max((scoreVal / 100) * cw, 4), 12, 3, 3, "F");
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(8);
-        doc.setTextColor(107, 114, 128);
-        doc.text(sec.toUpperCase(), ml + 4, y + 5);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9.5);
-        doc.setTextColor(55, 65, 81);
-        doc.text(lines, ml + 4, y + 12);
-        y += boxH + 5;
+        doc.setFontSize(11);
+        doc.setTextColor(255, 255, 255);
+        doc.text(`${scoreVal}/100`, ml + 6, y + 9);
+      } else {
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(9);
+        doc.setTextColor(156, 163, 175);
+        doc.text("(aún no generado)", ml + 4, y + 9);
       }
     } else {
       doc.setFont("helvetica", "italic");
-      doc.setFontSize(9.5);
-      doc.setTextColor(107, 114, 128);
-      doc.text("(Los hallazgos del resumen ejecutivo se muestran en el contenido del chat)", ml, y + 2);
-      y += 14;
+      doc.setFontSize(9);
+      doc.setTextColor(156, 163, 175);
+      doc.text("(aún no generado)", ml + 4, y + 9);
     }
+    y += 24;
 
-    // Score section
-    if (y + 48 > 270) {
+    // === CHAT HISTORY ===
+    if (y > 240) {
       doc.addPage();
-      y = 24;
+      y = 20;
     }
-    y += 4;
     doc.setDrawColor(230, 230, 230);
     doc.line(ml, y, pw - mr, y);
     y += 8;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
+    doc.setFontSize(13);
     doc.setTextColor(26, 26, 26);
-    doc.text("Scoring de Viabilidad", ml, y);
+    doc.text("Historial de Conversación", ml, y);
     y += 2;
-    doc.setDrawColor(accent);
+    doc.setDrawColor(16, 163, 42);
     doc.setLineWidth(1.2);
-    doc.line(ml, y, ml + 40, y);
+    doc.line(ml, y, ml + 36, y);
     y += 10;
 
-    doc.setFillColor(230, 230, 230);
-    doc.roundedRect(ml, y, cw, 14, 3, 3, "F");
-    if (s !== null) {
-      doc.setFillColor(accent);
-      doc.roundedRect(ml, y, Math.max((s / 100) * cw, 4), 14, 3, 3, "F");
-    }
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.setTextColor(255, 255, 255);
-    doc.text(s !== null ? `${s}/100` : "—", ml + 6, y + 10);
+    if (messages.length === 0) {
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(9);
+      doc.setTextColor(156, 163, 175);
+      doc.text("(aún no hay mensajes en esta conversación)", ml, y);
+      y += 10;
+    } else {
+      for (const msg of messages) {
+        const isUser = msg.role === "USER";
+        const label = isUser ? "USUARIO" : "KIN";
+        const time = formatDate(msg.createdAt);
+        const prefix = `[${time}] ${label}:`;
+        const contentLines = doc.splitTextToSize(msg.content || "", cw - 4);
 
-    let label = "";
-    let labelColor = "";
-    if (s !== null) {
-      if (s >= 70) {
-        label = "ALTO";
-        labelColor = "#16a34a";
-      } else if (s >= 40) {
-        label = "MEDIO";
-        labelColor = "#d97706";
-      } else {
-        label = "BAJO";
-        labelColor = "#dc2626";
-      }
-    }
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(labelColor);
-    doc.text(label, pw - mr, y + 11, { align: "right" });
-    y += 26;
+        const boxH = Math.max(10, 8 + 5 + contentLines.length * 5);
+        if (y + boxH > 275) {
+          doc.addPage();
+          y = 20;
+        }
 
-    // Recommendations
-    if (recoLines.length > 0) {
-      if (y + 12 + recoLines.length * 7 > 275) {
-        doc.addPage();
-        y = 24;
-      }
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.setTextColor(26, 26, 26);
-      doc.text("Recomendaciones", ml, y);
-      y += 2;
-      doc.setDrawColor(accent);
-      doc.setLineWidth(1.2);
-      doc.line(ml, y, ml + 40, y);
-      y += 9;
-      for (let i = 0; i < recoLines.length; i++) {
-        const lines = doc.splitTextToSize(
-          `${i + 1}.  ${recoLines[i]}`,
-          cw - 6
-        );
+        doc.setFillColor(isUser ? 239 : 249, isUser ? 244 : 250, isUser ? 255 : 251);
+        doc.roundedRect(ml, y, cw, boxH, 2, 2, "F");
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7);
+        doc.setTextColor(isUser ? 37 : 22, isUser ? 99 : 101, isUser ? 235 : 52);
+        doc.text(prefix, ml + 3, y + 5);
+
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(9.5);
+        doc.setFontSize(8.5);
         doc.setTextColor(55, 65, 81);
-        doc.text(lines, ml + 3, y);
-        y += lines.length * 5 + 4;
+        doc.text(contentLines, ml + 3, y + 12);
+
+        y += boxH + 4;
       }
     }
 
-    // Footer
+    // === FOOTER ===
     const fy = 285;
     doc.setDrawColor(220, 220, 220);
     doc.line(ml, fy, pw - mr, fy);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
+    doc.setFontSize(7);
     doc.setTextColor(156, 163, 175);
-    doc.text(
-      "Generado por KIN Platform — Knowledge, Innovation & Navigation",
-      ml,
-      fy + 5
-    );
-    doc.text(dateStr, pw - mr, fy + 5, { align: "right" });
+    doc.text("Generado por KIN Platform — Knowledge, Innovation & Navigation", ml, fy + 5);
+    doc.text(reportDate, pw - mr, fy + 5, { align: "right" });
 
-    doc.save(`KIN_Reporte_${projectTitle.replace(/\s+/g, "_")}.pdf`);
+    doc.save(`KIN_Reporte_${project.title.replace(/\s+/g, "_")}.pdf`);
   };
 
   return (
     <div className="flex justify-center mt-3 mb-2">
       <button
         onClick={handleClick}
-        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition cursor-pointer ${btnColor}`}
+        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition cursor-pointer bg-primary-600 hover:bg-primary-700"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

@@ -71,7 +71,7 @@ export default function NewProjectPage() {
             placeholder="Ej: App de gestión financiera"
             required
             maxLength={255}
-            className="rounded-lg border border-neutral-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+            className="rounded-lg border border-neutral-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
 
@@ -86,7 +86,7 @@ export default function NewProjectPage() {
             placeholder="Describe brevemente tu proyecto..."
             rows={4}
             maxLength={5000}
-            className="rounded-lg border border-neutral-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
+            className="rounded-lg border border-neutral-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
           />
         </div>
 
@@ -99,7 +99,7 @@ export default function NewProjectPage() {
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             required
-            className="rounded-lg border border-neutral-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-white"
+            className="rounded-lg border border-neutral-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
           >
             <option value="" disabled>
               Selecciona una categoría
@@ -123,7 +123,7 @@ export default function NewProjectPage() {
           <button
             type="submit"
             disabled={saving || !title.trim() || !category}
-            className="rounded-lg bg-neutral-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-neutral-800 transition disabled:opacity-50"
+            className="rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-primary-700 transition disabled:bg-primary-300 disabled:opacity-100"
           >
             {saving ? "Creando..." : "Crear proyecto"}
           </button>

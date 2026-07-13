@@ -8,6 +8,8 @@ import { authService } from "@/services/auth";
 import { forceLogout } from "@/services/session";
 import ViabilityScore from "@/components/ViabilityScore";
 import PdfReportButton from "@/components/PdfReportButton";
+import ProgressCircle from "@/components/ProgressCircle";
+import { categoryBadge, statusBadge } from "@/utils/badgeColors";
 
 const STREAMING_ID_PREFIX = "streaming-";
 
@@ -25,6 +27,7 @@ export default function ProjectDetailPage({ params }: Props) {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [streamingId, setStreamingId] = useState<string | null>(null);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const sendingRef = useRef(false);
@@ -164,55 +167,83 @@ export default function ProjectDetailPage({ params }: Props) {
   return (
     <main className="flex-1 flex flex-col lg:flex-row">
       <aside className="lg:w-80 xl:w-96 border-b lg:border-b-0 lg:border-r border-neutral-200 p-6 overflow-y-auto shrink-0">
-        <button
-          onClick={() => router.push("/dashboard/projects")}
-          className="text-sm text-neutral-500 hover:text-neutral-900 mb-4 block"
-        >
-          &larr; Volver
-        </button>
-
-        <h1 className="text-xl font-bold mb-2">{project.title}</h1>
-
-        {project.description && (
-          <p className="text-sm text-neutral-600 mb-4">
-            {project.description}
-          </p>
-        )}
-
-        <div className="flex flex-wrap gap-2 mb-6">
-          <span className="text-xs bg-neutral-100 px-2.5 py-1 rounded-full font-medium">
-            {project.category}
-          </span>
-          <span className="text-xs bg-neutral-100 px-2.5 py-1 rounded-full font-medium">
-            {project.status}
-          </span>
-          {project.viabilityScore !== null && (
-            <span className="text-xs bg-green-100 text-green-800 px-2.5 py-1 rounded-full font-medium">
-              Score: {project.viabilityScore}
-            </span>
-          )}
+        <div className="flex items-start justify-between">
+          <div>
+            <button
+              onClick={() => router.push("/dashboard/projects")}
+              className="text-sm text-neutral-500 hover:text-primary-600 mb-1 block transition"
+            >
+              &larr; Volver
+            </button>
+            <h1 className="text-xl font-bold tracking-tight">{project.title}</h1>
+          </div>
+          <button
+            onClick={() => setInfoOpen(!infoOpen)}
+            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-neutral-100 transition shrink-0 mt-1"
+            aria-label={infoOpen ? "Ocultar detalles del proyecto" : "Mostrar detalles del proyecto"}
+          >
+            <svg className={`w-5 h-5 text-neutral-500 transition-transform ${infoOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
         </div>
 
-        {project.aiSummary && (
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-              Resumen IA
-            </h3>
-            <p className="text-sm text-neutral-600 whitespace-pre-line">
-              {project.aiSummary}
+        <div className={`${infoOpen ? "" : "hidden"} lg:block mt-4`}>
+          {project.description && (
+            <p className="text-sm text-neutral-600 mb-4 leading-relaxed">
+              {project.description}
             </p>
+          )}
+
+          <div className="flex flex-wrap gap-2 mb-6">
+            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${categoryBadge(project.category)}`}>
+              {project.category}
+            </span>
+            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusBadge(project.status)}`}>
+              {project.status}
+            </span>
+            {project.viabilityScore != null && (
+              <span className="text-xs bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-medium">
+                Score: {project.viabilityScore}
+              </span>
+            )}
           </div>
-        )}
+
+          {project.progressPercentage !== null && (
+            <div className="mb-6">
+              <ProgressCircle percentage={project.progressPercentage} />
+            </div>
+          )}
+
+          <PdfReportButton project={project} messages={messages} />
+
+          {project.aiSummary && (
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
+                Resumen IA
+              </h3>
+              <p className="text-sm text-neutral-600 whitespace-pre-line">
+                {project.aiSummary}
+              </p>
+            </div>
+          )}
+        </div>
       </aside>
 
       <section className="flex-1 flex flex-col min-w-0">
         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
           {messages.length === 0 && (
             <div className="text-center py-16">
-              <p className="text-neutral-400 text-sm">
+              <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center mx-auto mb-4">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary-600">
+                  <polyline points="4 7 12 12 4 17" />
+                  <polyline points="12 7 20 12 12 17" />
+                </svg>
+              </div>
+              <p className="text-neutral-500 text-sm font-medium">
                 KIN te guiará en la estructuración de tu proyecto.
               </p>
-              <p className="text-neutral-400 text-sm">
+              <p className="text-neutral-400 text-sm mt-1">
                 Escribe un mensaje para comenzar.
               </p>
             </div>
@@ -224,18 +255,31 @@ export default function ProjectDetailPage({ params }: Props) {
             return (
               <div
                 key={msg.id}
-                className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                className={`flex items-start gap-2 ${isUser ? "justify-end" : "justify-start"}`}
               >
+                {!isUser && (
+                  <div className="w-7 h-7 rounded-full bg-primary-100 flex items-center justify-center shrink-0 mt-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary-600">
+                      <polyline points="4 7 12 12 4 17" />
+                      <polyline points="12 7 20 12 12 17" />
+                    </svg>
+                  </div>
+                )}
                 <div
                   className={`max-w-[80%] lg:max-w-[70%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                     isUser
                       ? "bg-neutral-900 text-white rounded-br-md"
-                      : "bg-neutral-100 text-neutral-900 rounded-bl-md"
+                      : "bg-primary-50 text-neutral-900 rounded-bl-md"
                   }`}
                 >
-                  <RenderContent content={msg.content} projectTitle={project.title} />
+                  {!isUser && (
+                    <p className="text-[10px] font-semibold text-primary-600 uppercase tracking-wide mb-0.5">
+                      KIN
+                    </p>
+                  )}
+                  <RenderContent content={msg.content} />
                   {isStreaming && (
-                    <span className="inline-block w-2 h-4 bg-neutral-500 animate-pulse ml-0.5" />
+                    <span className="inline-block w-2 h-4 bg-primary-500 animate-pulse ml-0.5" />
                   )}
                 </div>
               </div>
@@ -244,7 +288,7 @@ export default function ProjectDetailPage({ params }: Props) {
           <div ref={chatEndRef} />
         </div>
 
-        <div className="border-t border-neutral-200 px-4 py-3 shrink-0">
+        <div className="border-t border-neutral-200 px-4 py-3 shrink-0 sticky bottom-0 bg-white z-10">
           <div className="flex gap-2 max-w-4xl mx-auto">
             <input
               type="text"
@@ -253,12 +297,12 @@ export default function ProjectDetailPage({ params }: Props) {
               onKeyDown={handleKeyDown}
               placeholder="Escribe tu mensaje..."
               disabled={sending}
-              className="flex-1 rounded-xl border border-neutral-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 disabled:opacity-50"
+              className="flex-1 rounded-xl border border-neutral-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 min-h-11"
             />
             <button
               onClick={handleSend}
               disabled={sending || !input.trim()}
-              className="rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-neutral-800 transition disabled:opacity-50"
+              className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-50 min-h-11"
             >
               {sending ? "..." : "Enviar"}
             </button>
@@ -271,7 +315,7 @@ export default function ProjectDetailPage({ params }: Props) {
 
 const SCORE_REGEX = /###\s*Scoring\s+de\s+Viabilidad\s+Estimado:\s*\*\*(\d+)\/100\*\*/;
 
-function RenderContent({ content, projectTitle }: { content: string; projectTitle: string }) {
+function RenderContent({ content }: { content: string }) {
   const scoreMatch = content.match(SCORE_REGEX);
 
   if (scoreMatch) {
@@ -284,18 +328,7 @@ function RenderContent({ content, projectTitle }: { content: string; projectTitl
       <>
         {before && <span className="whitespace-pre-line">{before}</span>}
         <ViabilityScore score={score} />
-        <PdfReportButton projectTitle={projectTitle} content={content} />
         {after && <span className="whitespace-pre-line">{after}</span>}
-      </>
-    );
-  }
-
-  const hasKeywords = /resumen\s+ejecutivo|Scoring|Viabilidad|recomendaría/i.test(content);
-  if (hasKeywords) {
-    return (
-      <>
-        <span className="whitespace-pre-line">{content}</span>
-        <PdfReportButton projectTitle={projectTitle} content={content} />
       </>
     );
   }
