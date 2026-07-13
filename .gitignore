@@ -23,3 +23,6 @@ Desktop.ini
 
 # Docker
 docker-compose.override.yml
+
+# Session transcripts / logs
+Iniciando_proyecto.md
