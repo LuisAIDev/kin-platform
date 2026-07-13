@@ -34,7 +34,7 @@
 
 El proyecto fue construido desde cero como ejercicio de portafolio para consolidar un stack backend enterprise (**Java + Spring Boot**) combinado con un frontend moderno (**Next.js + TypeScript**), aplicando arquitectura en capas, autenticación stateless con JWT, y buenas prácticas de seguridad y despliegue con Docker.
 
-> 🚧 **Estado actual:** en desarrollo activo. Funciona de forma local; el despliegue en producción está planificado como siguiente fase (ver [Roadmap](#-roadmap)).
+> 🧪 **Estado actual:** cobertura completa de tests unitarios (36 tests, 0 fallos). Seguridad reforzada con rate limiting y headers HTTP. Diseño responsive mobile-first verificado en rango amplio de dispositivos. El despliegue en producción sigue pendiente como siguiente fase (ver [Roadmap](#-roadmap)).
 
 ---
 
@@ -48,6 +48,12 @@ El proyecto fue construido desde cero como ejercicio de portafolio para consolid
 - 🐳 **Contenerizado con Docker** — backend, frontend y base de datos orquestados con Docker Compose
 - 🔄 **Doble entorno de base de datos** — H2 embebida para desarrollo ágil, PostgreSQL para producción
 - 🛡️ **Gestión de secretos** vía variables de entorno, sin credenciales expuestas en el código
+- 🚦 **Rate limiting** en endpoints de autenticación para protección contra fuerza bruta
+- 🛡️ **Headers de seguridad HTTP** (CSP, X-Frame-Options, HSTS, X-Content-Type-Options)
+- ❤️ **Health check endpoint** vía Spring Boot Actuator
+- 🔧 **Panel de administración** para gestionar planes de precios (rol `ADMIN`)
+- 📄 **Paginación de proyectos** con respuesta paginada estándar
+- 📱 **Diseño responsive mobile-first**, verificado en rango amplio de dispositivos reales
 
 ---
 
@@ -107,6 +113,8 @@ session.ts   → sin dependencias · maneja token, sesión y logout forzado
 | Base de datos (dev) | H2 (file-based, embebida) |
 | Base de datos (prod) | PostgreSQL 16 |
 | IA | Integración con motor local (Ollama / Llama 3.2) |
+| Testing | JUnit 5, Mockito, Reactor Test |
+| Monitoreo | Spring Boot Actuator |
 | Build | Maven (Maven Wrapper) |
 
 ### Frontend
@@ -221,6 +229,30 @@ Esto orquesta PostgreSQL, backend y frontend en contenedores usando las variable
 
 ---
 
+## 🧪 Testing
+
+### Cómo ejecutar los tests
+
+```bash
+cd kin-backend
+./mvnw test
+```
+
+### Resumen
+
+**36 tests unitarios, 0 fallos**, cubriendo las siguientes áreas del backend:
+
+| Módulo | Tests | Cobertura principal |
+|---|---|---|
+| `auth` | 5 | Registro, login, cambio de contraseña |
+| `common.security` | 10 | Filtro JWT (5) + Rate Limiting (5) |
+| `project` | 7 | CRUD completo, paginación, validación de propietario |
+| `pricing` | 4 | CRUD de planes de precios, control de acceso por rol |
+| `ai` | 5 | Motor de IA (Ollama), fallback mock, streaming reactivo |
+| `chat` | 5 | Orquestación del chat con streaming SSE (`SseEmitter`) |
+
+---
+
 ## 📸 Capturas de pantalla
 
 > _Próximamente — capturas del login, dashboard de proyectos y chat con IA._
@@ -235,9 +267,9 @@ Esto orquesta PostgreSQL, backend y frontend en contenedores usando las variable
 - [x] Contenerización con Docker Compose
 - [ ] Despliegue en producción (backend en Render/Railway, frontend en Vercel)
 - [ ] Migraciones versionadas con Flyway
-- [ ] Cobertura de tests unitarios e integración (JUnit + Testcontainers)
-- [ ] Generación de reportes PDF de viabilidad
-- [ ] Panel de administración para rol `ADMIN`
+- [x] Cobertura de tests unitarios e integración (JUnit + Mockito + Reactor Test)
+- [x] Generación de reportes PDF de viabilidad
+- [x] Panel de administración para rol `ADMIN`
 
 ---
 
