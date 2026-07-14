@@ -276,8 +276,9 @@ cd kin-backend
 ## 👤 Autor
 
 **Luis Orlando Guerra González**
-Desarrollador full-stack en formación — SENA
-📍 Cartagena, Colombia (trabajo remoto)
+Desarrollador Full-Stack en búsqueda de oportunidades laborales
+Formación completada en SENA (Análisis y Desarrollo de Software)
+📍 Cartagena, Colombia (disponible para trabajo remoto)
 
 [![GitHub](https://img.shields.io/badge/GitHub-LuisAIDev-181717?style=flat&logo=github&logoColor=white)](https://github.com/LuisAIDev)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Luis%20Orlando%20Guerra-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/luis-orlando-guerra-gonzalez-49aa30244)
