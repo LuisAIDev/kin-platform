@@ -70,11 +70,17 @@ public class AiEngineService {
                 return response;
             }
 
-            log.warn("AI returned empty response");
+            log.warn("AI returned empty response (history={})", history.size());
         } catch (TimeoutException e) {
-            log.error("AI timed out after {}s (falling back to mock)", AI_TIMEOUT_SECONDS);
+            log.error("AI timed out after {}s (history={}, userMsgLen={})",
+                    AI_TIMEOUT_SECONDS, history.size(), userMessage.length());
         } catch (Exception e) {
-            log.error("AI call failed (falling back to mock): {}", e.getMessage());
+            log.error("AI call failed (history={}, userMsgLen={}): type={}, msg={}",
+                    history.size(), userMessage.length(),
+                    e.getClass().getName(), e.getMessage());
+            if (log.isDebugEnabled()) {
+                log.debug("AI failure stacktrace", e);
+            }
         }
 
         return mockResponse(history.size(), projectTitle);
@@ -103,7 +109,12 @@ public class AiEngineService {
                 .stream()
                 .content()
                 .onErrorResume(e -> {
-                    log.error("AI stream failed (falling back to mock): {}", e.getMessage());
+                    log.error("AI stream failed (history={}, userMsgLen={}): type={}, msg={}",
+                            history.size(), userMessage.length(),
+                            e.getClass().getName(), e.getMessage());
+                    if (log.isDebugEnabled()) {
+                        log.debug("AI stream failure stacktrace", e);
+                    }
                     return Flux.just(mockResponse(history.size(), projectTitle));
                 });
     }
