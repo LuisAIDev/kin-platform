@@ -9,7 +9,7 @@ export default async function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/dashboard")) {
     if (!token) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return NextResponse.next();
     }
 
     try {
@@ -21,6 +21,11 @@ export default async function proxy(request: NextRequest) {
         const response = NextResponse.redirect(new URL("/login", request.url));
         response.cookies.delete("kin_session_v2");
         response.cookies.delete("kin_token_v2");
+        response.cookies.set("kin_force_logout", "true", {
+          path: "/",
+          maxAge: 60,
+          sameSite: "lax",
+        });
         return response;
       }
     } catch {

@@ -13,6 +13,18 @@ function clearAllCookies() {
   }
 }
 
+export function checkForceLogout(): boolean {
+  if (typeof document === "undefined") return false;
+  for (const cookie of document.cookie.split("; ")) {
+    const [name] = cookie.split("=");
+    if (name === "kin_force_logout") {
+      document.cookie = "kin_force_logout=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      return true;
+    }
+  }
+  return false;
+}
+
 export function clearSession() {
   localStorage.clear();
   sessionStorage.clear();

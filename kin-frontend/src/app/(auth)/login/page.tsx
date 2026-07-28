@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authService } from "@/services/auth";
 import { api } from "@/services/api";
+import { checkForceLogout } from "@/services/session";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,6 +14,10 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(() => {
     if (typeof window === "undefined") return true;
+    if (checkForceLogout()) {
+      localStorage.clear();
+      sessionStorage.clear();
+    }
     return !!authService.getToken();
   });
 
