@@ -23,20 +23,20 @@ import java.util.concurrent.TimeoutException;
 public class AiEngineService {
 
     private static final Logger log = LoggerFactory.getLogger(AiEngineService.class);
-    private static final int OLLAMA_TIMEOUT_SECONDS = 120;
+    private static final int AI_TIMEOUT_SECONDS = 120;
 
     private final ChatClient chatClient;
     private final String modelName;
 
     public AiEngineService(ChatClient.Builder chatClientBuilder,
-                           @Value("${spring.ai.ollama.chat.options.model}") String modelName) {
+                           @Value("${spring.ai.openai.chat.model}") String modelName) {
         this.chatClient = chatClientBuilder.build();
         this.modelName = modelName;
     }
 
     @PostConstruct
     void logStartup() {
-        log.info("Ollama connected successfully — running {}", modelName);
+        log.info("OpenAI configured — using model {}", modelName);
     }
 
     public String generateAiResponse(List<ChatMessage> history, String userMessage,
@@ -52,7 +52,7 @@ public class AiEngineService {
             });
         }
 
-        log.debug("Calling Ollama ({} messages in history, model: {})", history.size(), modelName);
+        log.debug("Calling AI ({} messages in history, model: {})", history.size(), modelName);
 
         try {
             var future = CompletableFuture.supplyAsync(() ->
@@ -63,18 +63,18 @@ public class AiEngineService {
                     .content()
             );
 
-            var response = future.get(OLLAMA_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            var response = future.get(AI_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
             if (response != null && !response.isBlank()) {
-                log.debug("Ollama responded successfully ({} chars)", response.length());
+                log.debug("AI responded successfully ({} chars)", response.length());
                 return response;
             }
 
-            log.warn("Ollama returned empty response");
+            log.warn("AI returned empty response");
         } catch (TimeoutException e) {
-            log.error("Ollama timed out after {}s (falling back to mock)", OLLAMA_TIMEOUT_SECONDS);
+            log.error("AI timed out after {}s (falling back to mock)", AI_TIMEOUT_SECONDS);
         } catch (Exception e) {
-            log.error("Ollama call failed (falling back to mock): {}", e.getMessage());
+            log.error("AI call failed (falling back to mock): {}", e.getMessage());
         }
 
         return mockResponse(history.size(), projectTitle);
@@ -95,7 +95,7 @@ public class AiEngineService {
             });
         }
 
-        log.debug("Streaming from Ollama ({} messages in history, model: {})", history.size(), modelName);
+        log.debug("Streaming from AI ({} messages in history, model: {})", history.size(), modelName);
 
         return chatClient.prompt()
                 .messages(messages.toArray(new Message[0]))
@@ -103,7 +103,7 @@ public class AiEngineService {
                 .stream()
                 .content()
                 .onErrorResume(e -> {
-                    log.error("Ollama stream failed (falling back to mock): {}", e.getMessage());
+                    log.error("AI stream failed (falling back to mock): {}", e.getMessage());
                     return Flux.just(mockResponse(history.size(), projectTitle));
                 });
     }

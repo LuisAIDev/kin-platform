@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -21,8 +20,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final Duration WINDOW = Duration.ofMinutes(1);
 
     private final Map<String, RateLimitState> buckets = new ConcurrentHashMap<>();
-
-    Clock clock = Clock.systemDefaultZone();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -37,10 +34,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         }
 
         String ip = getClientIP(request);
-        RateLimitState state = buckets.computeIfAbsent(ip, k -> new RateLimitState(clock.instant()));
+        RateLimitState state = buckets.computeIfAbsent(ip, k -> new RateLimitState());
 
         synchronized (state) {
-            Instant now = Instant.now(clock);
+            Instant now = Instant.now();
             if (state.windowStart.plus(WINDOW).isBefore(now)) {
                 state.windowStart = now;
                 state.count = 0;
@@ -66,12 +63,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private static class RateLimitState {
-        Instant windowStart;
-        int count;
-
-        RateLimitState(Instant start) {
-            this.windowStart = start;
-            this.count = 0;
-        }
+        Instant windowStart = Instant.now();
+        int count = 0;
     }
 }

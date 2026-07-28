@@ -34,7 +34,8 @@ docker compose up --build                      # from repo root
 - **Dual CORS config**: both `CorsConfig.java` and `SecurityConfig.java` configure CORS. `SecurityConfig` takes precedence (Spring Security filter chain). Add new origins to both.
 - **AI engine** (`AiEngineService.java`) calls Ollama (`llama3.2`) but falls back to Spanish mock responses on failure — safe to develop without Ollama running.
 - **Auth middleware** is in `src/proxy.ts` (frontend middleware, not backend). Protects `/dashboard` and redirects `/login` when authenticated.
-- **No tests exist** yet (roadmap item).
+- **Tests** exist in `kin-backend/src/test/java/`. Run with `cd kin-backend && ./mvnw test`. Currently 10 tests (5 in `AiEngineServiceTest`, 5 in `ChatOrchestratorServiceImplTest`). Tests use Mockito + JUnit 5 + reactor-test; the AI engine tests exercise the mock fallback path (no Ollama needed). No frontend tests or integration tests yet.
+- **E2E tests** (`kin-frontend/tests/`): 3 login-flow tests with Playwright. Run with `cd kin-frontend && npx playwright test`. The webServer auto-starts only the Next.js frontend. **Before running, start the backend manually**: `cd kin-backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=test` (H2 in-memory, no Docker needed).
 - **`.env` is gitignored** — never commit secrets. Copy `.env.example` to `.env`.
 - **Frontend API URL**: controlled by `NEXT_PUBLIC_API_URL` env var (defaults to `http://localhost:8080/api/v1`).
 - **Backend API prefix**: all endpoints under `/api/v1` (set via `server.servlet.context-path`).

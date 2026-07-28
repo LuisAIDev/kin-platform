@@ -107,10 +107,10 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- Spring AI — Ollama (local LLM) -->
+        <!-- Spring AI — OpenAI (production LLM) -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-model-ollama</artifactId>
+            <artifactId>spring-ai-starter-model-openai</artifactId>
         </dependency>
 
         <!-- dotenv — carga .env automáticamente en desarrollo -->

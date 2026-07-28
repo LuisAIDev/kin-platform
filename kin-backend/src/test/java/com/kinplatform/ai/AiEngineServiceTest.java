@@ -38,12 +38,12 @@ class AiEngineServiceTest {
 
     private AiEngineService aiEngineService;
 
-    private static final String MODEL_NAME = "llama3.2";
+    private static final String MODEL_NAME = "gpt-4o-mini";
     private static final String USER_MSG = "¿Qué opinas de mi proyecto?";
     private static final String TITLE = "Mi App";
     private static final String DESC = "App para gestionar tareas";
     private static final String CAT = "EMPRENDIMIENTO";
-    private static final String OLLAMA_RESP = "¡Excelente idea! Recomiendo enfocarte en la validación temprana con clientes potenciales.";
+    private static final String AI_RESP = "¡Excelente idea! Recomiendo enfocarte en la validación temprana con clientes potenciales.";
 
     @BeforeEach
     void setUp() {
@@ -55,9 +55,9 @@ class AiEngineServiceTest {
     }
 
     @Test
-    void generateAiResponse_deberiaRetornarRespuestaDeOllama_cuandoOllamaResponde() {
+    void generateAiResponse_deberiaRetornarRespuestaDeAI_cuandoAIResponde() {
         when(requestSpec.call()).thenReturn(callResponseSpec);
-        when(callResponseSpec.content()).thenReturn(OLLAMA_RESP);
+        when(callResponseSpec.content()).thenReturn(AI_RESP);
 
         var history = List.of(
                 ChatMessage.builder().role(MessageRole.USER).content("Hola").build()
@@ -65,13 +65,13 @@ class AiEngineServiceTest {
 
         String result = aiEngineService.generateAiResponse(history, USER_MSG, TITLE, DESC, CAT);
 
-        assertEquals(OLLAMA_RESP, result);
+        assertEquals(AI_RESP, result);
         verify(requestSpec).call();
         verify(callResponseSpec).content();
     }
 
     @Test
-    void generateAiResponse_deberiaRetornarMock_cuandoOllamaFalla() {
+    void generateAiResponse_deberiaRetornarMock_cuandoAIFalla() {
         when(requestSpec.call()).thenReturn(callResponseSpec);
         when(callResponseSpec.content()).thenThrow(new RuntimeException("Connection refused"));
 
@@ -88,7 +88,7 @@ class AiEngineServiceTest {
     }
 
     @Test
-    void generateAiResponse_deberiaRetornarMock_cuandoOllamaTimeout() {
+    void generateAiResponse_deberiaRetornarMock_cuandoAITimeout() {
         when(requestSpec.call()).thenReturn(callResponseSpec);
         when(callResponseSpec.content()).thenReturn(null);
 
@@ -104,7 +104,7 @@ class AiEngineServiceTest {
     }
 
     @Test
-    void generateAiResponseStream_deberiaEmitirTokensDeOllama_cuandoOllamaResponde() {
+    void generateAiResponseStream_deberiaEmitirTokensDeAI_cuandoAIResponde() {
         when(requestSpec.stream()).thenReturn(streamResponseSpec);
         when(streamResponseSpec.content()).thenReturn(Flux.just("Token 1", "Token 2"));
 
@@ -125,7 +125,7 @@ class AiEngineServiceTest {
     }
 
     @Test
-    void generateAiResponseStream_deberiaEmitirMock_cuandoOllamaFalla() {
+    void generateAiResponseStream_deberiaEmitirMock_cuandoAIFalla() {
         when(requestSpec.stream()).thenReturn(streamResponseSpec);
         when(streamResponseSpec.content()).thenReturn(Flux.error(new RuntimeException("Stream error")));
 
