@@ -116,11 +116,12 @@ public class AiEngineService {
 
         log.debug("Streaming from AI ({} messages in history, model: {})", history.size(), modelName);
 
-        return chatClient.prompt()
+        return Flux.defer(() -> chatClient.prompt()
                 .messages(messages.toArray(new Message[0]))
                 .user(userMessage)
                 .stream()
                 .content()
+        )
                 .retryWhen(Retry.backoff(MAX_RETRY_ATTEMPTS, Duration.ofSeconds(1))
                         .maxBackoff(Duration.ofSeconds(2))
                         .filter(e -> isRateLimitError(e))
