@@ -11,8 +11,12 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import reactor.core.publisher.Flux;
+import reactor.util.retry.Retry;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +28,8 @@ public class AiEngineService {
 
     private static final Logger log = LoggerFactory.getLogger(AiEngineService.class);
     private static final int AI_TIMEOUT_SECONDS = 120;
+    private static final int MAX_RETRY_ATTEMPTS = 3;
+    private static final String RATE_LIMIT_MESSAGE = "⏳ Hay mucho tráfico en este momento. Por favor, intentá de nuevo en unos segundos.";
 
     private final ChatClient chatClient;
     private final String modelName;
@@ -41,45 +47,61 @@ public class AiEngineService {
 
     public String generateAiResponse(List<ChatMessage> history, String userMessage,
                                      String projectTitle, String projectDescription, String projectCategory) {
-        var messages = new ArrayList<Message>();
-        messages.add(buildSystemMessage(projectTitle, projectDescription, projectCategory));
-
-        for (var msg : history) {
-            messages.add(switch (msg.getRole()) {
-                case USER -> new UserMessage(msg.getContent());
-                case ASSISTANT -> new AssistantMessage(msg.getContent());
-                case SYSTEM -> new SystemMessage(msg.getContent());
-            });
-        }
+        var messages = buildMessages(history, projectTitle, projectDescription, projectCategory);
 
         log.debug("Calling AI ({} messages in history, model: {})", history.size(), modelName);
 
-        try {
-            var future = CompletableFuture.supplyAsync(() ->
-                chatClient.prompt()
-                    .messages(messages.toArray(new Message[0]))
-                    .user(userMessage)
-                    .call()
-                    .content()
-            );
+        for (int attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
+            try {
+                var future = CompletableFuture.supplyAsync(() ->
+                    chatClient.prompt()
+                        .messages(messages.toArray(new Message[0]))
+                        .user(userMessage)
+                        .call()
+                        .content()
+                );
 
-            var response = future.get(AI_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                var response = future.get(AI_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-            if (response != null && !response.isBlank()) {
-                log.debug("AI responded successfully ({} chars)", response.length());
-                return response;
-            }
+                if (response != null && !response.isBlank()) {
+                    log.debug("AI responded successfully ({} chars, attempt {}/{})",
+                            response.length(), attempt, MAX_RETRY_ATTEMPTS);
+                    return response;
+                }
 
-            log.warn("AI returned empty response (history={})", history.size());
-        } catch (TimeoutException e) {
-            log.error("AI timed out after {}s (history={}, userMsgLen={})",
-                    AI_TIMEOUT_SECONDS, history.size(), userMessage.length());
-        } catch (Exception e) {
-            log.error("AI call failed (history={}, userMsgLen={}): type={}, msg={}",
-                    history.size(), userMessage.length(),
-                    e.getClass().getName(), e.getMessage());
-            if (log.isDebugEnabled()) {
-                log.debug("AI failure stacktrace", e);
+                log.warn("AI returned empty response (history={}, attempt={})", history.size(), attempt);
+                break;
+            } catch (TimeoutException e) {
+                log.error("AI timed out after {}s (history={}, userMsgLen={})",
+                        AI_TIMEOUT_SECONDS, history.size(), userMessage.length());
+                break;
+            } catch (Exception e) {
+                if (isRateLimitError(e) && attempt < MAX_RETRY_ATTEMPTS) {
+                    long delay = (long) Math.pow(2, attempt) * 1000L;
+                    log.warn("Rate limit (429) on attempt {}/{} — retrying in {}ms (history={})",
+                            attempt, MAX_RETRY_ATTEMPTS, delay, history.size());
+                    try {
+                        Thread.sleep(delay);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                    continue;
+                }
+
+                if (isRateLimitError(e)) {
+                    log.error("Rate limit (429) — all {} retries exhausted (history={})",
+                            MAX_RETRY_ATTEMPTS - 1, history.size());
+                    return RATE_LIMIT_MESSAGE;
+                }
+
+                log.error("AI call failed (history={}, userMsgLen={}): type={}, msg={}",
+                        history.size(), userMessage.length(),
+                        e.getClass().getName(), e.getMessage());
+                if (log.isDebugEnabled()) {
+                    log.debug("AI failure stacktrace", e);
+                }
+                break;
             }
         }
 
@@ -88,6 +110,42 @@ public class AiEngineService {
 
     public Flux<String> generateAiResponseStream(
             List<ChatMessage> history, String userMessage,
+            String projectTitle, String projectDescription, String projectCategory
+    ) {
+        var messages = buildMessages(history, projectTitle, projectDescription, projectCategory);
+
+        log.debug("Streaming from AI ({} messages in history, model: {})", history.size(), modelName);
+
+        return chatClient.prompt()
+                .messages(messages.toArray(new Message[0]))
+                .user(userMessage)
+                .stream()
+                .content()
+                .retryWhen(Retry.backoff(MAX_RETRY_ATTEMPTS, Duration.ofSeconds(1))
+                        .maxBackoff(Duration.ofSeconds(2))
+                        .filter(e -> isRateLimitError(e))
+                        .doBeforeRetry(rs -> log.warn(
+                                "Rate limit (429) on stream — retry {}/{} (history={})",
+                                rs.totalRetries() + 1, MAX_RETRY_ATTEMPTS - 1, history.size()))
+                )
+                .onErrorResume(e -> {
+                    if (isRateLimitError(e)) {
+                        log.error("Rate limit (429) — all stream retries exhausted (history={})",
+                                history.size());
+                        return Flux.just(RATE_LIMIT_MESSAGE);
+                    }
+                    log.error("AI stream failed (history={}, userMsgLen={}): type={}, msg={}",
+                            history.size(), userMessage.length(),
+                            e.getClass().getName(), e.getMessage());
+                    if (log.isDebugEnabled()) {
+                        log.debug("AI stream failure stacktrace", e);
+                    }
+                    return Flux.just(mockResponse(history.size(), projectTitle));
+                });
+    }
+
+    private List<Message> buildMessages(
+            List<ChatMessage> history,
             String projectTitle, String projectDescription, String projectCategory
     ) {
         var messages = new ArrayList<Message>();
@@ -101,22 +159,24 @@ public class AiEngineService {
             });
         }
 
-        log.debug("Streaming from AI ({} messages in history, model: {})", history.size(), modelName);
+        return messages;
+    }
 
-        return chatClient.prompt()
-                .messages(messages.toArray(new Message[0]))
-                .user(userMessage)
-                .stream()
-                .content()
-                .onErrorResume(e -> {
-                    log.error("AI stream failed (history={}, userMsgLen={}): type={}, msg={}",
-                            history.size(), userMessage.length(),
-                            e.getClass().getName(), e.getMessage());
-                    if (log.isDebugEnabled()) {
-                        log.debug("AI stream failure stacktrace", e);
-                    }
-                    return Flux.just(mockResponse(history.size(), projectTitle));
-                });
+    private boolean isRateLimitError(Throwable e) {
+        Throwable t = e;
+        if (t instanceof java.util.concurrent.ExecutionException) {
+            t = t.getCause() != null ? t.getCause() : t;
+        }
+
+        if (t instanceof HttpClientErrorException) {
+            return ((HttpClientErrorException) t).getStatusCode().value() == 429;
+        }
+        if (t instanceof WebClientResponseException) {
+            return ((WebClientResponseException) t).getStatusCode().value() == 429;
+        }
+
+        String msg = t.getMessage();
+        return msg != null && (msg.contains("429") || msg.contains("Too Many Requests"));
     }
 
     private SystemMessage buildSystemMessage(String title, String description, String category) {
