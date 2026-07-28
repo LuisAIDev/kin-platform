@@ -125,21 +125,32 @@ public class AiEngineService {
                 .retryWhen(Retry.backoff(MAX_RETRY_ATTEMPTS, Duration.ofSeconds(1))
                         .maxBackoff(Duration.ofSeconds(2))
                         .filter(e -> isRateLimitError(e))
-                        .doBeforeRetry(rs -> log.warn(
-                                "Rate limit (429) on stream — retry {}/{} (history={})",
-                                rs.totalRetries() + 1, MAX_RETRY_ATTEMPTS - 1, history.size()))
+                        .doBeforeRetry(rs -> {
+                            Throwable cause = rs.failure();
+                            log.warn("Stream attempt {}/{} failed — type={}, msg={} (history={})",
+                                    rs.totalRetries() + 1, MAX_RETRY_ATTEMPTS,
+                                    cause.getClass().getName(), cause.getMessage(),
+                                    history.size());
+                            if (log.isDebugEnabled()) {
+                                log.debug("Stream attempt {} failure detail", rs.totalRetries() + 1, cause);
+                            }
+                        })
                 )
                 .onErrorResume(e -> {
-                    if (isRateLimitError(e)) {
-                        log.error("Rate limit (429) — all stream retries exhausted (history={})",
-                                history.size());
+                    Throwable actual = e;
+                    if (e.getClass().getName().contains("RetryExhaustedException")) {
+                        actual = e.getCause() != null ? e.getCause() : e;
+                    }
+                    if (isRateLimitError(actual)) {
+                        log.error("Rate limit (429) after retries — last error type={}, msg={} (history={})",
+                                actual.getClass().getName(), actual.getMessage(), history.size());
                         return Flux.just(RATE_LIMIT_MESSAGE);
                     }
                     log.error("AI stream failed (history={}, userMsgLen={}): type={}, msg={}",
                             history.size(), userMessage.length(),
-                            e.getClass().getName(), e.getMessage());
+                            actual.getClass().getName(), actual.getMessage());
                     if (log.isDebugEnabled()) {
-                        log.debug("AI stream failure stacktrace", e);
+                        log.debug("AI stream failure stacktrace", actual);
                     }
                     return Flux.just(mockResponse(history.size(), projectTitle));
                 });
