@@ -9,5 +9,5 @@ import java.util.UUID;
 @Repository
 public interface PricingPlanRepository extends JpaRepository<PricingPlan, UUID> {
 
-    List<PricingPlan> findAllByOrderByDisplayOrderAsc();
+    List<PricingPlan> findByIsActiveTrueOrderByPriceAsc();
 }

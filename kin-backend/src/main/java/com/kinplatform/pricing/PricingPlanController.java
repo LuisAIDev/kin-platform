@@ -1,11 +1,13 @@
 package com.kinplatform.pricing;
 
+import com.kinplatform.pricing.dto.CreatePricingPlanRequest;
 import com.kinplatform.pricing.dto.PricingPlanResponse;
 import com.kinplatform.pricing.dto.UpdatePricingPlanRequest;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -18,16 +20,27 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PricingPlanController {
 
-    private final PricingPlanRepository pricingPlanRepository;
+    private final PricingPlanService pricingPlanService;
     private final UserRepository userRepository;
 
     @GetMapping("/pricing-plans")
     public ResponseEntity<List<PricingPlanResponse>> getAll() {
-        var plans = pricingPlanRepository.findAllByOrderByDisplayOrderAsc();
-        var response = plans.stream()
-                .map(PricingPlanResponse::fromEntity)
-                .toList();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(pricingPlanService.getAllActive());
+    }
+
+    @GetMapping("/pricing-plans/{id}")
+    public ResponseEntity<PricingPlanResponse> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(pricingPlanService.getById(id));
+    }
+
+    @PostMapping("/admin/pricing-plans")
+    public ResponseEntity<PricingPlanResponse> create(
+            Authentication auth,
+            @Valid @RequestBody CreatePricingPlanRequest request
+    ) {
+        requireAdmin(auth);
+        var response = pricingPlanService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/admin/pricing-plans/{id}")
@@ -36,31 +49,26 @@ public class PricingPlanController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdatePricingPlanRequest request
     ) {
+        requireAdmin(auth);
+        return ResponseEntity.ok(pricingPlanService.update(id, request));
+    }
+
+    @DeleteMapping("/admin/pricing-plans/{id}")
+    public ResponseEntity<Void> deactivate(
+            Authentication auth,
+            @PathVariable UUID id
+    ) {
+        requireAdmin(auth);
+        pricingPlanService.deactivate(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    private void requireAdmin(Authentication auth) {
         var user = userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found"));
 
         if (user.getRole() != UserRole.ADMIN) {
-            throw new AccessDeniedException("Only administrators can update pricing plans");
+            throw new AccessDeniedException("Only administrators can manage pricing plans");
         }
-
-        var plan = pricingPlanRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Pricing plan not found: " + id));
-
-        plan.setName(request.getName());
-        plan.setPrice(request.getPrice());
-        plan.setCurrency(request.getCurrency());
-        plan.setBillingPeriod(request.getBillingPeriod());
-        plan.setIsPopular(request.getIsPopular());
-        plan.setDisplayOrder(request.getDisplayOrder());
-
-        try {
-            var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            plan.setFeatures(mapper.writeValueAsString(request.getFeatures()));
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to serialize features", e);
-        }
-
-        pricingPlanRepository.save(plan);
-        return ResponseEntity.ok(PricingPlanResponse.fromEntity(plan));
     }
 }

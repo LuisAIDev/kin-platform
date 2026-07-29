@@ -28,37 +28,47 @@ public class DataInitializer implements CommandLineRunner {
 
         var basicFeatures = List.of(
                 "Hasta 3 proyectos",
-                "Asistente de IA básico",
-                "Scoring de viabilidad",
+                "Asistente de IA básico (DeepSeek V4 Flash)",
+                "Scoring de viabilidad básico",
+                "100 mensajes de IA por mes",
                 "Exportación a PDF"
         );
 
         var premiumFeatures = List.of(
                 "Proyectos ilimitados",
-                "IA avanzada con contexto extendido",
-                "Scoring detallado con métricas",
-                "Exportación PDF premium",
+                "IA avanzada (DeepSeek V4 Pro)",
+                "Scoring detallado con métricas avanzadas",
+                "500 mensajes de IA por mes",
+                "Exportación a PDF premium",
                 "Soporte prioritario 24/7"
         );
 
         var basic = PricingPlan.builder()
                 .name("Básico Gratis")
+                .description("Plan gratuito para empezar a evaluar tus ideas de negocio")
                 .price(BigDecimal.ZERO)
-                .currency("USD")
-                .billingPeriod("monthly")
                 .features(objectMapper.writeValueAsString(basicFeatures))
-                .isPopular(false)
-                .displayOrder(1)
+                .maxProjects(3)
+                .messagesPerMonth(100)
+                .advancedAI(false)
+                .pdfExport(true)
+                .supportLevel(SupportLevel.BASIC)
+                .viabilityScoringDetail(ViabilityScoringDetail.BASIC)
+                .isActive(true)
                 .build();
 
         var premium = PricingPlan.builder()
                 .name("Premium Pro")
-                .price(new BigDecimal("19.00"))
-                .currency("USD")
-                .billingPeriod("monthly")
+                .description("Plan completo para emprendedores que buscan análisis profundo")
+                .price(new BigDecimal("19.99"))
                 .features(objectMapper.writeValueAsString(premiumFeatures))
-                .isPopular(true)
-                .displayOrder(2)
+                .maxProjects(null)
+                .messagesPerMonth(500)
+                .advancedAI(true)
+                .pdfExport(true)
+                .supportLevel(SupportLevel.SUPPORT_24_7)
+                .viabilityScoringDetail(ViabilityScoringDetail.DETAILED)
+                .isActive(true)
                 .build();
 
         repository.saveAll(List.of(basic, premium));

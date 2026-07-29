@@ -3,12 +3,15 @@ package com.kinplatform.pricing.dto;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.pricing.PricingPlan;
+import com.kinplatform.pricing.SupportLevel;
+import com.kinplatform.pricing.ViabilityScoringDetail;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -21,12 +24,18 @@ public class PricingPlanResponse {
 
     private UUID id;
     private String name;
+    private String description;
     private BigDecimal price;
-    private String currency;
-    private String billingPeriod;
     private List<String> features;
-    private Boolean isPopular;
-    private Integer displayOrder;
+    private Integer maxProjects;
+    private Integer messagesPerMonth;
+    private Boolean advancedAI;
+    private Boolean pdfExport;
+    private SupportLevel supportLevel;
+    private ViabilityScoringDetail viabilityScoringDetail;
+    private Boolean isActive;
+    private OffsetDateTime createdAt;
+    private OffsetDateTime updatedAt;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -41,12 +50,18 @@ public class PricingPlanResponse {
         return PricingPlanResponse.builder()
                 .id(plan.getId())
                 .name(plan.getName())
+                .description(plan.getDescription())
                 .price(plan.getPrice())
-                .currency(plan.getCurrency())
-                .billingPeriod(plan.getBillingPeriod())
                 .features(featureList)
-                .isPopular(plan.getIsPopular())
-                .displayOrder(plan.getDisplayOrder())
+                .maxProjects(plan.getMaxProjects())
+                .messagesPerMonth(plan.getMessagesPerMonth())
+                .advancedAI(plan.getAdvancedAI())
+                .pdfExport(plan.getPdfExport())
+                .supportLevel(plan.getSupportLevel())
+                .viabilityScoringDetail(plan.getViabilityScoringDetail())
+                .isActive(plan.getIsActive())
+                .createdAt(plan.getCreatedAt())
+                .updatedAt(plan.getUpdatedAt())
                 .build();
     }
 }

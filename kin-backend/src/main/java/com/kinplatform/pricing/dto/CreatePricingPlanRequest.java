@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-public class UpdatePricingPlanRequest {
+public class CreatePricingPlanRequest {
 
     @NotBlank(message = "Name is required")
     private String name;
@@ -37,6 +37,5 @@ public class UpdatePricingPlanRequest {
 
     private ViabilityScoringDetail viabilityScoringDetail;
 
-    @NotNull(message = "Active status is required")
     private Boolean isActive;
 }

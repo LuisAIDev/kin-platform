@@ -1,10 +1,13 @@
 package com.kinplatform.user;
 
+import com.kinplatform.pricing.PricingPlan;
+import com.kinplatform.pricing.UserSubscription;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -44,6 +47,15 @@ public class User {
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
+
+    @ToString.Exclude
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private UserSubscription subscription;
+
+    @ToString.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "current_plan_id")
+    private PricingPlan currentPlan;
 
     @Column(name = "last_login_at")
     private OffsetDateTime lastLoginAt;

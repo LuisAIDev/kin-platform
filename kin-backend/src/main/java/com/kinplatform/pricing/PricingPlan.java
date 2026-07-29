@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -26,27 +25,42 @@ public class PricingPlan {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
-
-    @Column(nullable = false, length = 3)
-    @Builder.Default
-    private String currency = "USD";
-
-    @Column(name = "billing_period", nullable = false, length = 20)
-    @Builder.Default
-    private String billingPeriod = "monthly";
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String features;
 
-    @Column(name = "is_popular", nullable = false)
-    @Builder.Default
-    private Boolean isPopular = false;
+    @Column(name = "max_projects")
+    private Integer maxProjects;
 
-    @Column(name = "display_order", nullable = false)
+    @Column(name = "messages_per_month")
+    private Integer messagesPerMonth;
+
+    @Column(name = "advanced_ai", nullable = false)
     @Builder.Default
-    private Integer displayOrder = 0;
+    private Boolean advancedAI = false;
+
+    @Column(name = "pdf_export", nullable = false)
+    @Builder.Default
+    private Boolean pdfExport = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "support_level", nullable = false, length = 20)
+    @Builder.Default
+    private SupportLevel supportLevel = SupportLevel.BASIC;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "viability_scoring_detail", nullable = false, length = 20)
+    @Builder.Default
+    private ViabilityScoringDetail viabilityScoringDetail = ViabilityScoringDetail.BASIC;
+
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
