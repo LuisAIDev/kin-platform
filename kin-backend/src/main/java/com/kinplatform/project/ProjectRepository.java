@@ -18,4 +18,6 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     List<Project> findByUserIdAndCategoryOrderByCreatedAtDesc(UUID userId, ProjectCategory category);
 
     long countByUserId(UUID userId);
+
+    long countByUserIdAndStatusNot(UUID userId, ProjectStatus status);
 }

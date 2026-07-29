@@ -30,6 +30,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final RateLimitingFilter rateLimitingFilter;
+    private final com.kinplatform.common.security.SubscriptionAccessFilter subscriptionAccessFilter;
 
     @Value("${app.cors.allowed-origins:http://localhost:3000}")
     private String allowedOrigins;
@@ -44,8 +45,12 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/pricing-plans/**").permitAll()
+                .requestMatchers("/stripe/webhook").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                .requestMatchers(HttpMethod.GET, "/admin/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/admin/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/admin/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .headers(headers -> headers
@@ -67,7 +72,8 @@ public class SecurityConfig {
                 ))
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterBefore(rateLimitingFilter, JwtAuthenticationFilter.class);
+            .addFilterBefore(rateLimitingFilter, JwtAuthenticationFilter.class)
+            .addFilterAfter(subscriptionAccessFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

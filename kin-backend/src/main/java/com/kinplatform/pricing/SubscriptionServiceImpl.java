@@ -34,6 +34,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             throw new IllegalArgumentException("Pricing plan is not active: " + planId);
         }
 
+        if (plan.getPrice().compareTo(java.math.BigDecimal.ZERO) > 0) {
+            throw new IllegalArgumentException(
+                    "Paid plans require payment. Use /stripe/create-checkout-session instead.");
+        }
+
         subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .ifPresent(s -> {
                     throw new IllegalArgumentException("User already has an active subscription");
@@ -55,7 +60,50 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         user.setSubscription(saved);
         userRepository.save(user);
 
-        log.info("User {} subscribed to plan {} successfully", userId, planId);
+        log.info("User {} subscribed to free plan {} successfully", userId, planId);
+        return SubscriptionResponse.fromEntity(saved);
+    }
+
+    @Override
+    @Transactional
+    public SubscriptionResponse startTrial(UUID userId, UUID planId) {
+        log.info("User {} starting trial for plan {}", userId, planId);
+
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        var plan = planRepository.findById(planId)
+                .orElseThrow(() -> new PlanNotFoundException("Pricing plan not found: " + planId));
+
+        if (!plan.getIsActive()) {
+            throw new IllegalArgumentException("Pricing plan is not active: " + planId);
+        }
+
+        subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+                .ifPresent(s -> {
+                    throw new IllegalArgumentException("User already has an active subscription");
+                });
+
+        var now = OffsetDateTime.now();
+        var trialEnd = now.plusDays(14);
+
+        var subscription = UserSubscription.builder()
+                .user(user)
+                .plan(plan)
+                .startDate(now)
+                .endDate(trialEnd)
+                .status(SubscriptionStatus.TRIAL)
+                .messagesUsed(0)
+                .lastResetDate(now)
+                .build();
+
+        var saved = subscriptionRepository.save(subscription);
+
+        user.setCurrentPlan(plan);
+        user.setSubscription(saved);
+        userRepository.save(user);
+
+        log.info("User {} started trial for plan {} until {}", userId, planId, trialEnd);
         return SubscriptionResponse.fromEntity(saved);
     }
 

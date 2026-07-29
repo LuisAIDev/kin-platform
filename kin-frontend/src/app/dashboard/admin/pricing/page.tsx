@@ -27,7 +27,7 @@ export default function AdminPricingPage() {
       .finally(() => setLoading(false));
   }, [router]);
 
-  const handleChange = (id: string, field: string, value: string | number | boolean | string[]) => {
+  const handleChange = (id: string, field: string, value: string | number | boolean | string[] | null) => {
     setEdits((prev) => ({
       ...prev,
       [id]: { ...prev[id], [field]: value },
@@ -43,12 +43,16 @@ export default function AdminPricingPage() {
     try {
       const updated = await pricingService.update(plan.id, {
         name: (edit.name ?? plan.name) as string,
+        description: (edit.description ?? plan.description ?? "") as string,
         price: (edit.price ?? plan.price) as number,
-        currency: (edit.currency ?? plan.currency) as string,
-        billingPeriod: (edit.billingPeriod ?? plan.billingPeriod) as string,
         features: (edit.features ?? plan.features) as string[],
-        isPopular: (edit.isPopular ?? plan.isPopular) as boolean,
-        displayOrder: (edit.displayOrder ?? plan.displayOrder) as number,
+        maxProjects: edit.maxProjects !== undefined ? edit.maxProjects : plan.maxProjects,
+        messagesPerMonth: edit.messagesPerMonth !== undefined ? edit.messagesPerMonth : plan.messagesPerMonth,
+        advancedAI: (edit.advancedAI ?? plan.advancedAI) as boolean,
+        pdfExport: (edit.pdfExport ?? plan.pdfExport) as boolean,
+        supportLevel: (edit.supportLevel ?? plan.supportLevel) as PricingPlan["supportLevel"],
+        viabilityScoringDetail: (edit.viabilityScoringDetail ?? plan.viabilityScoringDetail) as PricingPlan["viabilityScoringDetail"],
+        isActive: (edit.isActive ?? plan.isActive) as boolean,
       });
       setPlans((prev) => prev.map((p) => (p.id === plan.id ? updated : p)));
       setEdits((prev) => {
@@ -120,7 +124,7 @@ export default function AdminPricingPage() {
 
                 <div>
                   <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
-                    Precio
+                    Precio (USD/mes)
                   </label>
                   <input
                     type="number"
@@ -132,55 +136,102 @@ export default function AdminPricingPage() {
                   />
                 </div>
 
-                <div>
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
-                    Moneda
+                    Descripción
                   </label>
                   <input
                     type="text"
-                    maxLength={3}
-                    value={getEditValue(plan, "currency") as string}
-                    onChange={(e) => handleChange(plan.id, "currency", e.target.value.toUpperCase())}
+                    value={getEditValue(plan, "description") as string}
+                    onChange={(e) => handleChange(plan.id, "description", e.target.value)}
                     className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
-                    Período de facturación
-                  </label>
-                  <input
-                    type="text"
-                    value={getEditValue(plan, "billingPeriod") as string}
-                    onChange={(e) => handleChange(plan.id, "billingPeriod", e.target.value)}
-                    className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
-                    Orden
+                    Máx. proyectos
                   </label>
                   <input
                     type="number"
-                    min="0"
-                    value={getEditValue(plan, "displayOrder") as number}
-                    onChange={(e) =>
-                      handleChange(plan.id, "displayOrder", parseInt(e.target.value) || 0)
-                    }
+                    min={0}
+                    value={(getEditValue(plan, "maxProjects") as number) ?? ""}
+                    onChange={(e) => handleChange(plan.id, "maxProjects", e.target.value ? parseInt(e.target.value) : null)}
                     className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+                    placeholder="Ilimitado"
                   />
                 </div>
 
-                <div className="flex items-center gap-3 pt-6">
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+                    Mensajes/mes
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={(getEditValue(plan, "messagesPerMonth") as number) ?? ""}
+                    onChange={(e) => handleChange(plan.id, "messagesPerMonth", e.target.value ? parseInt(e.target.value) : null)}
+                    className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+                    placeholder="Ilimitado"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+                    Nivel de soporte
+                  </label>
+                  <select
+                    value={getEditValue(plan, "supportLevel") as string}
+                    onChange={(e) => handleChange(plan.id, "supportLevel", e.target.value)}
+                    className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11 bg-white"
+                  >
+                    <option value="BASIC">Básico</option>
+                    <option value="PREMIUM">Premium</option>
+                    <option value="SUPPORT_24_7">24/7</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+                    Detalle de scoring
+                  </label>
+                  <select
+                    value={getEditValue(plan, "viabilityScoringDetail") as string}
+                    onChange={(e) => handleChange(plan.id, "viabilityScoringDetail", e.target.value)}
+                    className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11 bg-white"
+                  >
+                    <option value="BASIC">Básico</option>
+                    <option value="DETAILED">Detallado</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-6 pt-6">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={getEditValue(plan, "isPopular") as boolean}
-                      onChange={(e) => handleChange(plan.id, "isPopular", e.target.checked)}
+                      checked={getEditValue(plan, "advancedAI") as boolean}
+                      onChange={(e) => handleChange(plan.id, "advancedAI", e.target.checked)}
                       className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
                     />
-                    <span className="text-sm text-neutral-700">Plan popular</span>
+                    <span className="text-sm text-neutral-700">IA Avanzada (PRO)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={getEditValue(plan, "pdfExport") as boolean}
+                      onChange={(e) => handleChange(plan.id, "pdfExport", e.target.checked)}
+                      className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-neutral-700">Exportación PDF</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={getEditValue(plan, "isActive") as boolean}
+                      onChange={(e) => handleChange(plan.id, "isActive", e.target.checked)}
+                      className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-neutral-700">Activo</span>
                   </label>
                 </div>
               </div>

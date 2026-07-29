@@ -8,6 +8,8 @@ import { useState } from "react";
 const NAV_ITEMS = [
   { label: "Mis Proyectos", href: "/dashboard/projects" },
   { label: "Nuevo Proyecto", href: "/dashboard/projects/new" },
+  { label: "Planes", href: "/dashboard/pricing" },
+  { label: "Suscripción", href: "/dashboard/subscription" },
 ];
 
 const ADMIN_ITEM = { label: "Administración", href: "/dashboard/admin/pricing" };
@@ -32,6 +34,12 @@ export default function Sidebar() {
     }
     if (href === "/dashboard/admin/pricing") {
       return pathname.startsWith("/dashboard/admin");
+    }
+    if (href === "/dashboard/pricing") {
+      return pathname === "/dashboard/pricing";
+    }
+    if (href === "/dashboard/subscription") {
+      return pathname === "/dashboard/subscription";
     }
     return pathname.startsWith("/dashboard/projects") && pathname !== "/dashboard/projects/new";
   };

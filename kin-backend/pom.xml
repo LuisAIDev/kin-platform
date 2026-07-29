@@ -113,6 +113,13 @@
             <artifactId>spring-ai-starter-model-openai</artifactId>
         </dependency>
 
+        <!-- Stripe — Payment processing -->
+        <dependency>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>24.0.0</version>
+        </dependency>
+
         <!-- dotenv — carga .env automáticamente en desarrollo -->
         <dependency>
             <groupId>me.paulschwarz</groupId>

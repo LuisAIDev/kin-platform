@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -27,6 +28,20 @@ public class PricingPlanServiceImpl implements PricingPlanService {
         return repository.findByIsActiveTrueOrderByPriceAsc().stream()
                 .map(PricingPlanResponse::fromEntity)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PricingPlan> getActivePlans() {
+        log.debug("Fetching all active pricing plan entities");
+        return repository.findByIsActiveTrueOrderByPriceAsc();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<PricingPlan> getPlanByName(String name) {
+        log.debug("Fetching pricing plan by name: {}", name);
+        return repository.findByName(name);
     }
 
     @Override

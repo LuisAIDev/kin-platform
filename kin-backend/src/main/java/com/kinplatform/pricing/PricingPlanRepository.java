@@ -10,4 +10,8 @@ import java.util.UUID;
 public interface PricingPlanRepository extends JpaRepository<PricingPlan, UUID> {
 
     List<PricingPlan> findByIsActiveTrueOrderByPriceAsc();
+
+    java.util.Optional<PricingPlan> findByName(String name);
+
+    java.util.Optional<PricingPlan> findFirstByIsActiveTrueOrderByPriceAsc();
 }

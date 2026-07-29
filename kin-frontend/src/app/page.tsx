@@ -1,8 +1,67 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
-import PricingSection from "@/components/pricing/PricingSection";
+import { subscriptionApi } from "@/services/subscriptionApi";
+import type { PricingPlan } from "@/services/pricing";
+
+const FALLBACK_PLANS: PricingPlan[] = [
+  {
+    id: "basic",
+    name: "Básico Gratis",
+    description: "Plan gratuito para empezar a evaluar tus ideas de negocio",
+    price: 0,
+    features: [
+      "Hasta 3 proyectos",
+      "Asistente de IA básico (DeepSeek V4 Flash)",
+      "Scoring de viabilidad básico",
+      "100 mensajes de IA por mes",
+      "Exportación a PDF",
+    ],
+    maxProjects: 3,
+    messagesPerMonth: 100,
+    advancedAI: false,
+    pdfExport: true,
+    supportLevel: "BASIC",
+    viabilityScoringDetail: "BASIC",
+    isActive: true,
+  },
+  {
+    id: "premium",
+    name: "Premium Pro",
+    description: "Plan completo para emprendedores que buscan análisis profundo",
+    price: 19.99,
+    features: [
+      "Proyectos ilimitados",
+      "IA avanzada (DeepSeek V4 Pro)",
+      "Scoring detallado con métricas avanzadas",
+      "500 mensajes de IA por mes",
+      "Exportación a PDF premium",
+      "Soporte prioritario 24/7",
+    ],
+    maxProjects: null,
+    messagesPerMonth: 500,
+    advancedAI: true,
+    pdfExport: true,
+    supportLevel: "SUPPORT_24_7",
+    viabilityScoringDetail: "DETAILED",
+    isActive: true,
+  },
+];
 
 export default function Home() {
+  const [plans, setPlans] = useState<PricingPlan[]>(FALLBACK_PLANS);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    subscriptionApi
+      .getPlans()
+      .then(setPlans)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <>
       <Navbar />
@@ -23,32 +82,27 @@ export default function Home() {
           />
         </div>
 
-        {/* Animated decorative blobs */}
         <div className="absolute top-20 -left-40 w-96 h-96 bg-primary-200/20 rounded-full blur-3xl animate-[blob_8s_ease-in-out_infinite]" />
         <div className="absolute top-1/3 -right-32 w-[30rem] h-[30rem] bg-accent-200/15 rounded-full blur-3xl animate-[blob_10s_ease-in-out_infinite_2s]" />
         <div className="absolute -bottom-20 left-1/4 w-80 h-80 bg-primary-100/30 rounded-full blur-3xl animate-[blob_7s_ease-in-out_infinite_4s]" />
 
         <div className="relative mx-auto max-w-7xl px-4 py-28 sm:px-6 sm:py-40 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
-            {/* Eyebrow */}
             <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50/80 px-4 py-1.5 text-sm font-medium text-primary-700 mb-6 shadow-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-primary-500 animate-pulse" />
               Knowledge, Innovation &amp; Navigation
             </div>
 
-            {/* Title */}
             <h1 className="text-6xl font-extrabold tracking-tight sm:text-8xl">
               <span className="bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 bg-clip-text text-transparent">
                 KIN
               </span>
             </h1>
 
-            {/* Subtitle */}
             <p className="mt-6 text-lg leading-8 text-neutral-500 sm:text-xl max-w-2xl mx-auto">
               Estructura tu proyecto en menos de 60 minutos con asistencia de IA.
             </p>
 
-            {/* CTAs */}
             <div className="mt-10 flex items-center justify-center gap-4">
               <Link
                 href="/register"
@@ -129,46 +183,37 @@ export default function Home() {
           </div>
 
           <div className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {/* Card 1 */}
             <div className="group relative rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50 group-hover:bg-primary-100 transition-colors duration-200 ring-1 ring-primary-100">
                 <svg className="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
                 </svg>
               </div>
-              <h3 className="mt-6 text-lg font-semibold text-neutral-900">
-                Asistente de IA
-              </h3>
+              <h3 className="mt-6 text-lg font-semibold text-neutral-900">Asistente de IA</h3>
               <p className="mt-2 text-sm leading-6 text-neutral-500">
                 Genera la estructura completa de tu proyecto con inteligencia artificial. Describe tu idea y obtén un plan detallado al instante.
               </p>
             </div>
 
-            {/* Card 2 */}
             <div className="group relative rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50 group-hover:bg-primary-100 transition-colors duration-200 ring-1 ring-primary-100">
                 <svg className="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
                 </svg>
               </div>
-              <h3 className="mt-6 text-lg font-semibold text-neutral-900">
-                Scoring de Viabilidad
-              </h3>
+              <h3 className="mt-6 text-lg font-semibold text-neutral-900">Scoring de Viabilidad</h3>
               <p className="mt-2 text-sm leading-6 text-neutral-500">
                 Evalúa la factibilidad técnica y comercial de tu proyecto con métricas objetivas y recomendaciones accionables.
               </p>
             </div>
 
-            {/* Card 3 */}
             <div className="group relative rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50 group-hover:bg-primary-100 transition-colors duration-200 ring-1 ring-primary-100">
                 <svg className="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                 </svg>
               </div>
-              <h3 className="mt-6 text-lg font-semibold text-neutral-900">
-                Exportación a PDF
-              </h3>
+              <h3 className="mt-6 text-lg font-semibold text-neutral-900">Exportación a PDF</h3>
               <p className="mt-2 text-sm leading-6 text-neutral-500">
                 Descarga reportes profesionales en PDF con el análisis completo de tu proyecto, listos para presentar a inversores.
               </p>
@@ -177,7 +222,89 @@ export default function Home() {
         </div>
       </section>
 
-      <PricingSection />
+      {/* ── Planes de Precios (desde backend) ────────────────── */}
+      <section id="precios" className="border-y border-neutral-100 bg-neutral-50/50 py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-sm font-semibold text-primary-600 tracking-widest uppercase mb-3">
+              Planes
+            </p>
+            <h2 className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
+              Planes de Precios
+            </h2>
+            <p className="mt-4 text-lg text-neutral-500">
+              Elige el plan que mejor se adapte a tu flujo de trabajo.
+            </p>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary-600 border-r-transparent" />
+              <p className="mt-4 text-sm text-neutral-500">Cargando planes...</p>
+            </div>
+          ) : (
+            <div className="mx-auto mt-16 grid max-w-4xl grid-cols-1 gap-8 lg:grid-cols-2">
+              {plans.map((plan) => {
+                const isPremium = plan.advancedAI;
+                return (
+                  <div
+                    key={plan.id}
+                    className={
+                      isPremium
+                        ? "relative rounded-2xl border-2 border-primary-500 bg-gradient-to-b from-white to-primary-50/40 p-8 shadow-lg shadow-primary-500/10"
+                        : "relative rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm"
+                    }
+                  >
+                    {isPremium && (
+                      <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-4 py-1 text-xs font-semibold text-white shadow-sm">
+                        Más popular
+                      </span>
+                    )}
+
+                    <h3 className="text-lg font-semibold text-neutral-900">{plan.name}</h3>
+                    {plan.description && (
+                      <p className="mt-2 text-sm text-neutral-500">{plan.description}</p>
+                    )}
+
+                    <p className="mt-4">
+                      <span className="text-5xl font-bold tracking-tight text-neutral-900">
+                        ${plan.price}
+                      </span>
+                      <span className="ml-1 text-sm text-neutral-400">/mes</span>
+                    </p>
+
+                    <ul className="mt-8 space-y-4" role="list">
+                      {plan.features.map((feature) => (
+                        <li key={feature} className="flex items-center gap-3 text-sm text-neutral-600">
+                          <svg className="h-5 w-5 shrink-0 text-primary-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path
+                              fillRule="evenodd"
+                              d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Link
+                      href={plan.price === 0 ? "/register" : `/register?plan=${plan.id}`}
+                      className={
+                        isPremium
+                          ? "mt-8 flex w-full items-center justify-center rounded-xl bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-primary-600/20 hover:bg-primary-500 hover:shadow-lg hover:shadow-primary-600/30 transition-all duration-200"
+                          : "mt-8 flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-6 py-3 text-sm font-semibold text-neutral-700 shadow-sm hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200"
+                      }
+                    >
+                      {plan.price === 0 ? "Comenzar gratis" : "Suscribirse"}
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* ── Footer ──────────────────────────────────────────── */}
       <footer id="contacto" className="border-t border-neutral-100 bg-neutral-50/50">
@@ -198,12 +325,12 @@ export default function Home() {
               <h4 className="text-sm font-semibold text-neutral-900 mb-4">Producto</h4>
               <ul className="space-y-3">
                 <li>
-                  <a href="#caracteristicas" className="text-sm text-neutral-500 hover:text-primary-600 transition-colors duration-200">
+                  <a href="#caracteristicas" className="text-sm text-neutral-500 hover:text-primary-600 transition-colors">
                     Características
                   </a>
                 </li>
                 <li>
-                  <a href="#precios" className="text-sm text-neutral-500 hover:text-primary-600 transition-colors duration-200">
+                  <a href="#precios" className="text-sm text-neutral-500 hover:text-primary-600 transition-colors">
                     Precios
                   </a>
                 </li>
@@ -213,10 +340,7 @@ export default function Home() {
               <h4 className="text-sm font-semibold text-neutral-900 mb-4">Contacto</h4>
               <ul className="space-y-3">
                 <li>
-                  <a
-                    href="mailto:hola@kin.ai"
-                    className="text-sm text-neutral-500 hover:text-primary-600 transition-colors duration-200"
-                  >
+                  <a href="mailto:hola@kin.ai" className="text-sm text-neutral-500 hover:text-primary-600 transition-colors">
                     hola@kin.ai
                   </a>
                 </li>

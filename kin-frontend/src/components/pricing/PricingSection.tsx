@@ -45,7 +45,7 @@ export default function PricingSection() {
         {loaded && plans.length > 0 && (
           <div className="mx-auto mt-16 grid max-w-4xl grid-cols-1 gap-8 lg:grid-cols-2">
             {plans.map((plan) => {
-              const isPremium = plan.isPopular;
+              const isPremium = plan.advancedAI;
               return (
                 <div
                   key={plan.id}
@@ -62,12 +62,15 @@ export default function PricingSection() {
                   )}
 
                   <h3 className="text-lg font-semibold text-neutral-900">{plan.name}</h3>
+                  {plan.description && (
+                    <p className="mt-2 text-sm text-neutral-500">{plan.description}</p>
+                  )}
 
                   <p className="mt-4">
                     <span className="text-5xl font-bold tracking-tight text-neutral-900">
-                      {plan.currency === "USD" ? "$" : plan.currency}{plan.price}
+                      ${plan.price}
                     </span>
-                    <span className="ml-1 text-sm text-neutral-400">/{plan.billingPeriod === "monthly" ? "mes" : plan.billingPeriod}</span>
+                    <span className="ml-1 text-sm text-neutral-400">/mes</span>
                   </p>
 
                   <ul className="mt-8 space-y-4" role="list">

@@ -8,6 +8,8 @@ public interface SubscriptionService {
 
     SubscriptionResponse subscribe(UUID userId, UUID planId);
 
+    SubscriptionResponse startTrial(UUID userId, UUID planId);
+
     SubscriptionResponse cancelSubscription(UUID userId);
 
     SubscriptionResponse getCurrentSubscription(UUID userId);
