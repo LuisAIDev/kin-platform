@@ -12,6 +12,7 @@ import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import com.stripe.param.checkout.SessionCreateParams;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,13 @@ public class StripeService {
         this.planRepository = planRepository;
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
+    }
+
+    @PostConstruct
+    void warnIfMissingConfig() {
+        if (webhookSecret == null || webhookSecret.isBlank()) {
+            log.warn("STRIPE_WEBHOOK_SECRET no está configurada — los webhooks de Stripe fallarán hasta que se defina");
+        }
     }
 
     public CheckoutResponse createCheckoutSession(UUID userId, UUID planId,
@@ -150,6 +158,10 @@ public class StripeService {
     }
 
     public Event constructWebhookEvent(String payload, String sigHeader) {
+        if (webhookSecret == null || webhookSecret.isBlank()) {
+            throw new IllegalStateException(
+                    "STRIPE_WEBHOOK_SECRET no está configurada. Define la variable de entorno en Render y redeployea.");
+        }
         try {
             return Webhook.constructEvent(payload, sigHeader, webhookSecret);
         } catch (Exception e) {

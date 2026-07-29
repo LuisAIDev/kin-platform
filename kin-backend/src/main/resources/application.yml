@@ -44,7 +44,7 @@ spring:
     show-sql: true
     open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
@@ -56,6 +56,14 @@ spring:
         enable_lazy_load_no_trans: false
         connection:
           provider_disables_autocommit: false
+
+  # -----------------------------------------------------------
+  # Flyway — migraciones gestionadas
+  # -----------------------------------------------------------
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
 
   # -----------------------------------------------------------
   # Jackson
@@ -94,8 +102,8 @@ management:
 # Stripe
 # -----------------------------------------------------------
 stripe:
-  secret-key: ${STRIPE_SECRET_KEY}
-  webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+  secret-key: ${STRIPE_SECRET_KEY:}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
 
 # -----------------------------------------------------------
 # JWT
