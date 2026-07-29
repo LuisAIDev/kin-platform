@@ -12,17 +12,20 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [checking, setChecking] = useState(() => {
-    if (typeof window === "undefined") return true;
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
     if (checkForceLogout()) {
       localStorage.clear();
       sessionStorage.clear();
+      setChecking(false);
+      return;
     }
-    return !!authService.getToken();
-  });
 
-  useEffect(() => {
-    if (!checking) return;
+    if (!authService.getToken()) {
+      setChecking(false);
+      return;
+    }
 
     api.get("/auth/me")
       .then(() => router.push("/dashboard/projects"))
@@ -30,7 +33,7 @@ export default function LoginPage() {
         authService.logout();
         setChecking(false);
       });
-  }, [checking, router]);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
