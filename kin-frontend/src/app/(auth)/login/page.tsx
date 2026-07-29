@@ -13,39 +13,40 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (checkForceLogout()) {
       localStorage.clear();
       sessionStorage.clear();
-      setChecking(false);
-      return;
     }
 
-    if (!authService.getToken()) {
-      setChecking(false);
-      return;
+    const token = authService.getToken();
+    if (token) {
+      api.get("/auth/me")
+        .then(() => router.push("/dashboard/projects"))
+        .catch(authService.logout)
+        .finally(() => setChecking(false));
+    } else {
+      setTimeout(() => setChecking(false));
     }
-
-    api.get("/auth/me")
-      .then(() => router.push("/dashboard/projects"))
-      .catch(() => {
-        authService.logout();
-        setChecking(false);
-      });
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    const result = await authService.login({ email, password });
-    if (result.error) {
-      setError(result.error);
-      return;
+    try {
+      const result = await authService.login({ email, password });
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      router.push("/dashboard/projects");
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/dashboard/projects");
   };
 
   if (checking) {
@@ -90,9 +91,16 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          className="rounded-lg bg-primary-600 py-2 text-sm font-medium text-white hover:bg-primary-700 transition min-h-11"
+          disabled={loading}
+          className="rounded-lg bg-primary-600 py-2 text-sm font-medium text-white hover:bg-primary-700 transition min-h-11 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          Entrar
+          {loading && (
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          )}
+          {loading ? "Cargando..." : "Entrar"}
         </button>
 
         <p className="text-center text-sm text-neutral-500">
