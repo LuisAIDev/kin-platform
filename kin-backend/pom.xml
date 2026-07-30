@@ -120,15 +120,10 @@
             <version>24.0.0</version>
         </dependency>
 
-        <!-- Flyway — migraciones gestionadas (producción con PostgreSQL) -->
+        <!-- Flyway — migraciones gestionadas (PostgreSQL incluido en flyway-core v9) -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
-            <scope>runtime</scope>
         </dependency>
 
         <!-- dotenv — carga .env automáticamente en desarrollo -->
