@@ -14,7 +14,7 @@ const FALLBACK_PLANS: PricingPlan[] = [
     price: 0,
     features: [
       "Hasta 3 proyectos",
-      "Asistente de IA básico (DeepSeek V4 Flash)",
+      "Asistente de IA básico",
       "Scoring de viabilidad básico",
       "100 mensajes de IA por mes",
       "Exportación a PDF",
@@ -34,7 +34,7 @@ const FALLBACK_PLANS: PricingPlan[] = [
     price: 19.99,
     features: [
       "Proyectos ilimitados",
-      "IA avanzada (DeepSeek V4 Pro)",
+      "IA avanzada",
       "Scoring detallado con métricas avanzadas",
       "500 mensajes de IA por mes",
       "Exportación a PDF premium",

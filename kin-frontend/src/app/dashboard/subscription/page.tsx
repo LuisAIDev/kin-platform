@@ -115,7 +115,7 @@ export default function SubscriptionPage() {
               </div>
               <div>
                 <p className="text-neutral-500">IA</p>
-                <p className="font-medium">DeepSeek V4 {status.aiLevel}</p>
+                <p className="font-medium">Asistente IA — {status.aiLevel === "PRO" ? "Pro" : "Flash"}</p>
               </div>
               <div>
                 <p className="text-neutral-500">Mensajes restantes</p>
