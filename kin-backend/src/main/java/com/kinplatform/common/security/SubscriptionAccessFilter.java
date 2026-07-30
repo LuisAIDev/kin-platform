@@ -27,11 +27,12 @@ public class SubscriptionAccessFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
+        String path = request.getServletPath();
         return path.startsWith("/auth")
             || path.startsWith("/pricing-plans")
             || path.startsWith("/actuator")
             || path.startsWith("/subscriptions")
+            || path.startsWith("/stripe")
             || "GET".equalsIgnoreCase(request.getMethod())
             || "OPTIONS".equalsIgnoreCase(request.getMethod());
     }
