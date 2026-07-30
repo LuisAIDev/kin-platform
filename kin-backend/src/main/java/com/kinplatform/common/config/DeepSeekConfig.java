@@ -22,6 +22,12 @@ public class DeepSeekConfig {
     @PostConstruct
     void logConfig() {
         String masked = (apiKey != null && apiKey.length() > 5) ? apiKey.substring(0, 7) + "..." : "***";
+        int keyLength = apiKey != null ? apiKey.length() : 0;
+        log.info("DEEPSEEK_API_KEY presente: {}", apiKey != null && !apiKey.isBlank());
+        log.info("DEEPSEEK_API_KEY longitud: {}", keyLength);
+        if (apiKey != null && apiKey.length() >= 6) {
+            log.info("DEEPSEEK_API_KEY primeros 6 chars: {}xxxxxx", apiKey.substring(0, 6));
+        }
         log.info("DeepSeek configured with key: {}", masked);
     }
 
@@ -29,6 +35,15 @@ public class DeepSeekConfig {
     public ChatClient deepseekChatClient(
             @Value("${deepseek.base-url}") String baseUrl,
             @Value("${deepseek.model}") String model) {
+        log.info("===== DEEPSEEK CONFIG =====");
+        log.info("Base URL: {}", baseUrl);
+        log.info("Model: {}", model);
+        log.info("API Key present: {}", apiKey != null && !apiKey.isBlank());
+        log.info("API Key length: {}", apiKey != null ? apiKey.length() : 0);
+
+        String fullUrl = baseUrl.endsWith("/") ? baseUrl + "v1/chat/completions" : baseUrl + "/v1/chat/completions";
+        log.info("Full chat completions URL: POST {}", fullUrl);
+
         var api = OpenAiApi.builder()
                 .baseUrl(baseUrl)
                 .apiKey(apiKey)
@@ -40,6 +55,8 @@ public class DeepSeekConfig {
                         .temperature(0.7)
                         .build())
                 .build();
+        log.info("DeepSeek ChatClient created successfully");
+        log.info("===== END DEEPSEEK CONFIG =====");
         return ChatClient.builder(chatModel).build();
     }
 }

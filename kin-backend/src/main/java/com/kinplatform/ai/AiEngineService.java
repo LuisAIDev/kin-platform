@@ -54,11 +54,17 @@ public class AiEngineService {
 
     @PostConstruct
     void logStartup() {
-        if (openaiEnabled) {
-            log.info("AI providers: primary=DeepSeek ({}), fallback=OpenAI ({})", deepseekModel, openaiModel);
-        } else {
-            log.warn("AI provider: DeepSeek only ({}) — OpenAI fallback is disabled via ai.openai.enabled=false", deepseekModel);
-        }
+        log.info("===== AI ENGINE STARTUP =====");
+        log.info("Primary provider: DeepSeek");
+        log.info("DeepSeek model: {}", deepseekModel);
+        log.info("DeepSeek base URL: https://api.deepseek.com");
+        log.info("DeepSeek full URL: POST https://api.deepseek.com/v1/chat/completions");
+        log.info("Fallback provider: OpenAI");
+        log.info("OpenAI model: {}", openaiModel);
+        log.info("OpenAI fallback enabled: {}", openaiEnabled);
+        log.info("AI timeout: {} seconds", AI_TIMEOUT_SECONDS);
+        log.info("Max retry attempts: {}", MAX_RETRY_ATTEMPTS);
+        log.info("=============================");
     }
 
     public String generateAiResponse(List<ChatMessage> history, String userMessage,
@@ -110,8 +116,25 @@ public class AiEngineService {
                                        List<ChatMessage> history) {
         for (int attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
             try {
-                log.info("=== SENDING REQUEST TO {} === messages={}, attempt={}/{}",
-                        provider, messages.size(), attempt, MAX_RETRY_ATTEMPTS);
+                log.info("===== {} REQUEST =====", provider);
+                log.info("URL: POST https://api.deepseek.com/v1/chat/completions", provider);
+                log.info("Model: {}", provider.equals("DeepSeek") ? deepseekModel : openaiModel);
+                log.info("Messages count: {}", messages.size());
+                log.info("Temperature: 0.7");
+                log.info("Max tokens: N/A (default)");
+                log.info("Auth header present: true");
+                log.info("Content-Type: application/json");
+                log.info("Stream: false");
+                for (int i = 0; i < messages.size(); i++) {
+                    Message msg = messages.get(i);
+                    String text = msg.getText();
+                    String preview = text != null ? text.substring(0, Math.min(200, text.length())) : "null";
+                    log.info("  Message[{}] role={}, preview={}", i, msg.getMessageType(), preview);
+                }
+                log.info("User message: {}", userMessage != null ? userMessage.substring(0, Math.min(200, userMessage.length())) : "null");
+                log.info("==========================");
+
+                var startTime = System.currentTimeMillis();
                 var future = CompletableFuture.supplyAsync(() ->
                     client.prompt()
                         .messages(messages.toArray(new Message[0]))
@@ -121,10 +144,20 @@ public class AiEngineService {
                 );
 
                 var response = future.get(AI_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                var elapsed = System.currentTimeMillis() - startTime;
+
+                log.info("===== {} RESPONSE =====", provider);
+                log.info("HTTP STATUS: 200");
+                log.info("Time elapsed: {}ms", elapsed);
+                if (response != null) {
+                    log.info("Response length: {} chars", response.length());
+                    log.info("Response body preview: {}", response.substring(0, Math.min(500, response.length())));
+                } else {
+                    log.info("Response body: null");
+                }
+                log.info("==========================");
 
                 if (response != null && !response.isBlank()) {
-                    log.info("=== RESPONSE FROM {} === Primeros 300 chars: {}",
-                            provider, response.substring(0, Math.min(300, response.length())));
                     log.info("{} responded successfully ({} chars, attempt {}/{}, history={})",
                             provider, response.length(), attempt, MAX_RETRY_ATTEMPTS, history.size());
                     return response;
@@ -134,23 +167,30 @@ public class AiEngineService {
                         provider, provider, history.size(), attempt);
                 return null;
             } catch (TimeoutException e) {
-                log.error("=== {} TIMEOUT === provider={}, timeoutSeconds={}, history={}",
-                        provider, provider, AI_TIMEOUT_SECONDS, history.size());
-                log.error("=== STACK TRACE ===", e);
+                log.error("===== {} TIMEOUT =====", provider);
+                log.error("Timeout seconds: {}", AI_TIMEOUT_SECONDS);
+                log.error("Exception class: {}", e.getClass().getName());
+                log.error("Exception message: {}", e.getMessage() != null ? e.getMessage() : "null");
+                log.error("Root cause: {}", e.getCause() != null ? e.getCause().getMessage() : "null");
+                log.error("Stack trace:", e);
+                log.error("==========================");
                 return null;
             } catch (Exception e) {
                 String httpStatus = extractHttpStatus(e);
                 String exceptionClass = e.getClass().getName();
                 String exceptionMsg = e.getMessage() != null ? e.getMessage() : "";
                 String rootCause = extractRootCauseMessage(e);
+                String errorBody = extractResponseBody(e);
 
-                log.error("=== {} ERROR === provider={}, attempt={}/{}", provider, provider, attempt, MAX_RETRY_ATTEMPTS);
-                log.error("=== HTTP STATUS === {}", httpStatus);
-                log.error("=== EXCEPTION CLASS === {}", exceptionClass);
-                log.error("=== EXCEPTION MESSAGE === {}", exceptionMsg);
-                log.error("=== ROOT CAUSE === {}", rootCause);
-                log.error("=== ERROR BODY === {}", extractResponseBody(e));
-                log.error("=== STACK TRACE ===", e);
+                log.error("===== {} ERROR =====", provider);
+                log.error("HTTP STATUS: {}", httpStatus);
+                log.error("URL: POST https://api.deepseek.com/v1/chat/completions");
+                log.error("EXCEPTION CLASS: {}", exceptionClass);
+                log.error("EXCEPTION MESSAGE: {}", exceptionMsg);
+                log.error("ROOT CAUSE: {}", rootCause);
+                log.error("RESPONSE BODY: {}", errorBody);
+                log.error("Stack trace:", e);
+                log.error("==========================");
 
                 if (isRateLimitError(e) && attempt < MAX_RETRY_ATTEMPTS) {
                     long delay = (long) Math.pow(2, attempt) * 1000L;

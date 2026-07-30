@@ -44,15 +44,28 @@ export const chatService = {
 
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/projects/${projectId}/chat/stream`, {
+        const url = `${API_URL}/projects/${projectId}/chat/stream`;
+        console.log("=== CHAT SENDING REQUEST ===");
+        console.log("URL:", url);
+        console.log("Method: POST");
+        console.log("Headers:", JSON.stringify(headers));
+        console.log("Body:", JSON.stringify({ content: content.substring(0, 200) }));
+        console.log("Token present:", !!token);
+
+        const res = await fetch(url, {
           method: "POST",
           headers,
           body: JSON.stringify({ content }),
           signal: controller.signal,
         });
 
+        console.log("=== CHAT RESPONSE ===");
+        console.log("HTTP Status:", res.status, res.statusText);
+        console.log("Headers:", res.headers.get("content-type"));
+
         if (!res.ok) {
           const body = await res.json().catch(() => null);
+          console.error("=== CHAT ERROR RESPONSE BODY ===", body);
           throw new Error(body?.error ?? `Request failed (${res.status})`);
         }
 
@@ -98,6 +111,7 @@ export const chatService = {
                   });
                   break;
                 } else if (eventType === "error") {
+                  console.error("=== CHAT STREAM ERROR EVENT ===", parsed);
                   callbacks.onError(new Error(parsed.error ?? "Unknown server error"));
                 }
               } catch {

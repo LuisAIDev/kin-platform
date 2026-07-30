@@ -33,6 +33,7 @@ public class SubscriptionAccessFilter extends OncePerRequestFilter {
             || path.startsWith("/actuator")
             || path.startsWith("/subscriptions")
             || path.startsWith("/stripe")
+            || path.startsWith("/test")
             || "GET".equalsIgnoreCase(request.getMethod())
             || "OPTIONS".equalsIgnoreCase(request.getMethod());
     }

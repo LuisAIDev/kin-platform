@@ -48,6 +48,7 @@ public class SecurityConfig {
                 .requestMatchers("/stripe/webhook").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                 .requestMatchers("/error").permitAll()
+                .requestMatchers("/test/**").permitAll()
                 .requestMatchers("/subscriptions/**").authenticated()
                 .requestMatchers("/stripe/create-checkout-session").authenticated()
                 .requestMatchers(HttpMethod.GET, "/admin/**").hasRole("ADMIN")

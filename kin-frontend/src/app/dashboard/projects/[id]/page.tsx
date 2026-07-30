@@ -48,7 +48,8 @@ export default function ProjectDetailPage({ params }: Props) {
         setProject(projectData);
         setMessages(history);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("=== FAILED TO LOAD PROJECT/HISTORY ===", err);
         forceLogout();
       })
       .finally(() => setLoading(false));
@@ -126,7 +127,10 @@ export default function ProjectDetailPage({ params }: Props) {
         );
         done();
       },
-      onError: () => {
+      onError: (err) => {
+        console.error("=== CHAT ERROR ===", err);
+        console.error("Request URL:", `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"}/projects/${id}/chat/stream`);
+        console.error("Token present:", !!authService.getToken());
         setMessages((prev) =>
           prev.map((m) =>
             m.id === aiId

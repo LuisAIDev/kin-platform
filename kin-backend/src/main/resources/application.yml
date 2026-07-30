@@ -92,7 +92,9 @@ spring:
 deepseek:
   api-key: ${DEEPSEEK_API_KEY:}
   base-url: https://api.deepseek.com
-  model: deepseek-v3-flash
+  # 2026-07-30: Migrated from deepseek-v3-flash (invalid) to deepseek-v4-flash.
+  # deepseek-chat and deepseek-reasoner were deprecated on 2026-07-24.
+  model: deepseek-v4-flash
 
 # -----------------------------------------------------------
 # AI provider control — enables/disables OpenAI fallback
