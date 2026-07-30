@@ -39,12 +39,15 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         var project = findProject(userId, projectId);
         var userMessage = saveUserMessage(userId, projectId, request.getContent());
         var history = loadHistoryForContext(userId, projectId, userMessage);
+        log.info("=== CALLING DEEPSEEK === project={}, userId={}, historySize={}", projectId, userId, history.size());
         var aiResponse = aiEngineService.generateAiResponse(
                 history, request.getContent(),
                 project.getTitle(), project.getDescription(), project.getCategory().name()
         );
         var assistantMessage = saveAssistantMessage(userId, projectId, aiResponse);
 
+        log.info("=== RESPONSE SENT TO FRONTEND === messageId={}, chars={}",
+                assistantMessage.getId(), aiResponse != null ? aiResponse.length() : 0);
         return ChatResponse.builder()
                 .userMessageId(userMessage.getId())
                 .assistantMessageId(assistantMessage.getId())
@@ -58,6 +61,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         var project = findProject(userId, projectId);
         var userMessage = saveUserMessage(userId, projectId, request.getContent());
         var history = loadHistoryForContext(userId, projectId, userMessage);
+        log.info("=== CALLING DEEPSEEK === project={}, userId={}, historySize={}", projectId, userId, history.size());
 
         var emitter = new SseEmitter(SSE_TIMEOUT);
         var fullContent = new StringBuilder();
@@ -92,6 +96,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                 },
                 () -> {
                     var finalContent = fullContent.toString();
+                    log.info("=== RESPONSE SENT TO FRONTEND === chars={}", finalContent.length());
                     try {
                         var assistantMessage = saveAssistantMessage(userId, projectId, finalContent);
                         var donePayload = Map.of(

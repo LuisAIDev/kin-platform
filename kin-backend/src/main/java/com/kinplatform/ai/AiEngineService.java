@@ -85,6 +85,8 @@ public class AiEngineService {
                                        List<ChatMessage> history) {
         for (int attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
             try {
+                log.info("=== SENDING REQUEST TO {} === messages={}, attempt={}/{}",
+                        provider, messages.size(), attempt, MAX_RETRY_ATTEMPTS);
                 var future = CompletableFuture.supplyAsync(() ->
                     client.prompt()
                         .messages(messages.toArray(new Message[0]))
@@ -96,6 +98,8 @@ public class AiEngineService {
                 var response = future.get(AI_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
                 if (response != null && !response.isBlank()) {
+                    log.info("=== RESPONSE FROM {} === Primeros 300 chars: {}",
+                            provider, response.substring(0, Math.min(300, response.length())));
                     log.info("{} responded successfully ({} chars, attempt {}/{}, history={})",
                             provider, response.length(), attempt, MAX_RETRY_ATTEMPTS, history.size());
                     return response;
@@ -174,13 +178,14 @@ public class AiEngineService {
                                            List<Message> messages, String userMessage,
                                            List<ChatMessage> history, String projectTitle) {
         return Flux.defer(() -> {
-            log.debug("Streaming from {} ({} messages in history)", provider, history.size());
+            log.info("=== SENDING REQUEST TO {} === messages={}, streaming", provider, messages.size());
             return client.prompt()
                     .messages(messages.toArray(new Message[0]))
                     .user(userMessage)
                     .stream()
                     .content()
-                    .doOnComplete(() -> log.info("{} stream completed successfully (history={})", provider, history.size()));
+                    .doOnNext(token -> log.debug("=== RESPONSE FROM {} === token: {}", provider, token))
+                    .doOnComplete(() -> log.info("=== {} STREAM COMPLETE ===", provider));
         })
         .retryWhen(Retry.backoff(MAX_RETRY_ATTEMPTS, Duration.ofSeconds(1))
                 .maxBackoff(Duration.ofSeconds(2))

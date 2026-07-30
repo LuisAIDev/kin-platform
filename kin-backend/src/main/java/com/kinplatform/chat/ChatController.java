@@ -14,6 +14,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +23,8 @@ import java.util.UUID;
 @RequestMapping("/projects/{projectId}")
 @RequiredArgsConstructor
 public class ChatController {
+
+    private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
     private final ChatService chatService;
     private final ChatOrchestratorService chatOrchestratorService;
@@ -32,6 +36,7 @@ public class ChatController {
             @PathVariable UUID projectId,
             @Valid @RequestBody ChatRequest request
     ) {
+        log.info("=== CHAT REQUEST RECEIVED === Mensaje del usuario: {}", request.getContent());
         var userId = getAuthenticatedUserId(auth);
         var response = chatOrchestratorService.processMessage(userId, projectId, request);
         return ResponseEntity.ok(response);
@@ -43,6 +48,7 @@ public class ChatController {
             @PathVariable UUID projectId,
             @Valid @RequestBody ChatRequest request
     ) {
+        log.info("=== CHAT REQUEST RECEIVED === Mensaje del usuario: {}", request.getContent());
         var userId = getAuthenticatedUserId(auth);
         return chatOrchestratorService.processMessageStream(userId, projectId, request);
     }
