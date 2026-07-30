@@ -42,6 +42,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 auth != null ? auth.getName() : "none");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.warn("=== JWT FILTER === No Bearer token found for URI={}. auth after skip: {}",
+                    request.getRequestURI(),
+                    SecurityContextHolder.getContext().getAuthentication() != null
+                            ? SecurityContextHolder.getContext().getAuthentication().getName()
+                            : "null");
             filterChain.doFilter(request, response);
             return;
         }
@@ -49,6 +54,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var token = authHeader.substring(7);
 
         if (!jwtService.isTokenValid(token)) {
+            log.warn("=== JWT FILTER === Token INVALID for URI={}. Token (first 20): {}...",
+                    request.getRequestURI(),
+                    token.substring(0, Math.min(20, token.length())));
             filterChain.doFilter(request, response);
             return;
         }
@@ -62,6 +70,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        log.info("=== JWT FILTER === AUTHENTICATION SET for URI={}, user={}, role={}, authorities={}",
+                request.getRequestURI(), email, role, authorities);
         filterChain.doFilter(request, response);
     }
 }

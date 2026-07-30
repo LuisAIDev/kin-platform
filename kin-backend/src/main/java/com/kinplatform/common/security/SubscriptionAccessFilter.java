@@ -44,13 +44,21 @@ public class SubscriptionAccessFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        log.info("=== SUBSCRIPTION FILTER === URI={}, method={}, auth={}, principal={}, authorities={}",
+                request.getRequestURI(), request.getMethod(),
+                auth != null ? auth.isAuthenticated() : "null",
+                auth != null ? auth.getName() : "null",
+                auth != null ? auth.getAuthorities() : "[]");
+
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            log.info("=== SUBSCRIPTION FILTER === No valid auth, passing through for URI={}", request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
 
         User user = userRepository.findByEmail(auth.getName()).orElse(null);
         if (user == null) {
+            log.warn("=== SUBSCRIPTION FILTER === User not found for email={}, passing through", auth.getName());
             filterChain.doFilter(request, response);
             return;
         }
@@ -77,6 +85,7 @@ public class SubscriptionAccessFilter extends OncePerRequestFilter {
             return;
         }
 
+        log.info("=== SUBSCRIPTION FILTER === Access granted for URI={}, userId={}", path, userId);
         filterChain.doFilter(request, response);
     }
 
@@ -85,6 +94,8 @@ public class SubscriptionAccessFilter extends OncePerRequestFilter {
     }
 
     private boolean isMessageSend(String method, String path) {
-        return "POST".equalsIgnoreCase(method) && path.matches(".*/projects/[^/]+/chat/?$");
+        return "POST".equalsIgnoreCase(method)
+                && (path.matches(".*/projects/[^/]+/chat/?$")
+                 || path.matches(".*/projects/[^/]+/chat/stream/?$"));
     }
 }

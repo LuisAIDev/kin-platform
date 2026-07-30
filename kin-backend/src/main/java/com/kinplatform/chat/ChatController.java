@@ -36,7 +36,12 @@ public class ChatController {
             @PathVariable UUID projectId,
             @Valid @RequestBody ChatRequest request
     ) {
-        log.info("=== CHAT REQUEST RECEIVED === Mensaje del usuario: {}", request.getContent());
+        log.info("=== CHAT REQUEST RECEIVED === URI=/api/v1/projects/{}/chat, user={}, authenticated={}, authorities={}",
+                projectId,
+                auth != null ? auth.getName() : "null",
+                auth != null ? auth.isAuthenticated() : false,
+                auth != null ? auth.getAuthorities() : "[]");
+        log.info("Mensaje del usuario: {}", request.getContent());
         var userId = getAuthenticatedUserId(auth);
         var response = chatOrchestratorService.processMessage(userId, projectId, request);
         return ResponseEntity.ok(response);
