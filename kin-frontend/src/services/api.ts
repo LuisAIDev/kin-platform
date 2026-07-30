@@ -25,13 +25,13 @@ async function request<T>(
   });
 
   if (!res.ok) {
-    if (res.status === 401 || res.status === 403) {
+    const body = await res.json().catch(() => null);
+    const message = body?.error ?? `Request failed (${res.status})`;
+
+    if (res.status === 401) {
       forceLogout();
       throw new Error("Unauthorized");
     }
-
-    const body = await res.json().catch(() => null);
-    const message = body?.error ?? `Request failed (${res.status})`;
 
     if (res.status === 400 && message.toLowerCase().includes("authenticated user")) {
       forceLogout();
