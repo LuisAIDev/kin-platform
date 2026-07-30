@@ -1,6 +1,7 @@
 package com.kinplatform.common;
 
 import com.kinplatform.pricing.PlanNotFoundException;
+import com.kinplatform.project.ProjectLimitExceededException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -35,6 +36,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handlePlanNotFound(PlanNotFoundException ex) {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ProjectLimitExceededException.class)
+    public ResponseEntity<Map<String, String>> handleProjectLimit(ProjectLimitExceededException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
                 .body(Map.of("error", ex.getMessage()));
     }
 

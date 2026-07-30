@@ -6,6 +6,7 @@ import com.kinplatform.common.dto.PageResponse;
 import com.kinplatform.project.dto.CreateProjectRequest;
 import com.kinplatform.project.dto.ProjectResponse;
 import com.kinplatform.project.dto.UpdateProjectRequest;
+import com.kinplatform.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,12 +23,18 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final SubscriptionValidatorService subscriptionValidator;
 
     @Override
     @Transactional
     public ProjectResponse create(UUID userId, CreateProjectRequest request) {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (!subscriptionValidator.canCreateProject(userId)) {
+            throw new ProjectLimitExceededException(
+                "Alcanzaste el límite de proyectos de tu plan. Mejora a Premium para crear más.");
+        }
 
         var project = Project.builder()
                 .user(user)
@@ -38,6 +45,9 @@ public class ProjectServiceImpl implements ProjectService {
                 .build();
 
         project = projectRepository.save(project);
+
+        subscriptionValidator.evictProjectLimitCache(userId);
+
         return toResponse(project);
     }
 

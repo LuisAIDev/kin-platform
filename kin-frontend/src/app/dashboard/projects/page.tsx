@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { projectsService, type Project } from "@/services/projects";
+import { subscriptionApi, type SubscriptionStatus } from "@/services/subscriptionApi";
 import { authService } from "@/services/auth";
 import { forceLogout } from "@/services/session";
 import ProgressCircle from "@/components/ProgressCircle";
@@ -19,6 +20,7 @@ export default function ProjectsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
 
   useEffect(() => {
     const token = authService.getToken();
@@ -29,12 +31,15 @@ export default function ProjectsPage() {
 
     let cancelled = false;
 
-    projectsService
-      .getAll(page)
-      .then((res) => {
+    Promise.all([
+      projectsService.getAll(page),
+      subscriptionApi.getStatus(),
+    ])
+      .then(([projectsRes, sub]) => {
         if (cancelled) return;
-        setProjects(res.content);
-        setTotalPages(res.totalPages);
+        setProjects(projectsRes.content);
+        setTotalPages(projectsRes.totalPages);
+        setSubscription(sub);
       })
       .catch(() => {
         if (!cancelled) forceLogout();
@@ -60,12 +65,22 @@ export default function ProjectsPage() {
     <main className="flex-1 px-6 py-8 max-w-5xl mx-auto w-full">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold tracking-tight">Mis Proyectos</h1>
-        <button
-          onClick={() => router.push("/dashboard/projects/new")}
-          className="rounded-lg bg-primary-600 px-5 py-2 text-sm font-medium text-white hover:bg-primary-700 transition focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none min-h-11"
-        >
-          Nuevo proyecto
-        </button>
+        <div className="relative group">
+          <button
+            onClick={() => router.push("/dashboard/projects/new")}
+            disabled={subscription !== null && !subscription.canCreateProject}
+            className="rounded-lg bg-primary-600 px-5 py-2 text-sm font-medium text-white hover:bg-primary-700 transition focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none min-h-11 disabled:bg-primary-300 disabled:cursor-not-allowed"
+          >
+            Nuevo proyecto
+          </button>
+          {subscription !== null && !subscription.canCreateProject && (
+            <div className="absolute right-0 top-full mt-2 w-64 rounded-lg bg-neutral-800 px-4 py-2.5 text-xs text-white shadow-lg opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
+              Alcanzaste el límite de proyectos de tu plan.
+              <br />
+              <Link href="/dashboard/subscription" className="underline hover:text-primary-300">Mejora a Premium</Link> para crear más.
+            </div>
+          )}
+        </div>
       </div>
 
       <ConfirmDialog
@@ -102,12 +117,22 @@ export default function ProjectsPage() {
           <p className="text-neutral-500 mb-4">
             Aún no tienes proyectos
           </p>
-          <button
-            onClick={() => router.push("/dashboard/projects/new")}
-          className="rounded-lg bg-primary-600 px-6 py-3 text-sm font-medium text-white hover:bg-primary-700 transition focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none min-h-11"
-        >
-          Crear primer proyecto
-          </button>
+          <div className="relative inline-block group">
+            <button
+              onClick={() => router.push("/dashboard/projects/new")}
+              disabled={subscription !== null && !subscription.canCreateProject}
+              className="rounded-lg bg-primary-600 px-6 py-3 text-sm font-medium text-white hover:bg-primary-700 transition focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none min-h-11 disabled:bg-primary-300 disabled:cursor-not-allowed"
+            >
+              Crear primer proyecto
+            </button>
+            {subscription !== null && !subscription.canCreateProject && (
+              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 rounded-lg bg-neutral-800 px-4 py-2.5 text-xs text-white shadow-lg opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
+                Alcanzaste el límite de proyectos de tu plan.
+                <br />
+                <Link href="/dashboard/subscription" className="underline hover:text-primary-300">Mejora a Premium</Link> para crear más.
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

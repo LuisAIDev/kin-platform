@@ -48,7 +48,7 @@ public class SubscriptionValidatorService {
             return true;
         }
 
-        long currentProjects = projectRepository.countByUserIdAndStatusNot(userId, ProjectStatus.DELETED);
+        long currentProjects = projectRepository.countByUserIdAndStatusNot(userId, ProjectStatus.ARCHIVED);
         boolean canCreate = currentProjects < plan.getMaxProjects();
 
         log.debug("Usuario {}: proyectos {}/{} - {}",
@@ -143,6 +143,10 @@ public class SubscriptionValidatorService {
     private PricingPlan getDefaultPlan() {
         return planRepository.findFirstByIsActiveTrueOrderByPriceAsc()
             .orElseThrow(() -> new RuntimeException("No active pricing plan found"));
+    }
+
+    public void evictProjectLimitCache(UUID userId) {
+        evictCache("projectLimit", userId);
     }
 
     private void evictCache(String cacheName, UUID userId) {
