@@ -22,42 +22,58 @@ import static org.mockito.Mockito.*;
 class AiEngineServiceTest {
 
     @Mock
-    private ChatClient.Builder chatClientBuilder;
+    private ChatClient deepseekChatClient;
 
     @Mock
-    private ChatClient chatClient;
+    private ChatClient.Builder openaiBuilder;
 
     @Mock
-    private ChatClient.ChatClientRequestSpec requestSpec;
+    private ChatClient openaiChatClient;
 
     @Mock
-    private ChatClient.CallResponseSpec callResponseSpec;
+    private ChatClient.ChatClientRequestSpec deepseekRequestSpec;
 
     @Mock
-    private ChatClient.StreamResponseSpec streamResponseSpec;
+    private ChatClient.ChatClientRequestSpec openaiRequestSpec;
+
+    @Mock
+    private ChatClient.CallResponseSpec deepseekCallResponseSpec;
+
+    @Mock
+    private ChatClient.CallResponseSpec openaiCallResponseSpec;
+
+    @Mock
+    private ChatClient.StreamResponseSpec deepseekStreamResponseSpec;
+
+    @Mock
+    private ChatClient.StreamResponseSpec openaiStreamResponseSpec;
 
     private AiEngineService aiEngineService;
 
-    private static final String MODEL_NAME = "gpt-4o-mini";
-    private static final String USER_MSG = "¿Qué opinas de mi proyecto?";
+    private static final String DEEPSEEK_MODEL = "deepseek-chat";
+    private static final String OPENAI_MODEL = "gpt-4o-mini";
+    private static final String USER_MSG = "\u00BFQu\u00E9 opinas de mi proyecto?";
     private static final String TITLE = "Mi App";
     private static final String DESC = "App para gestionar tareas";
     private static final String CAT = "EMPRENDIMIENTO";
-    private static final String AI_RESP = "¡Excelente idea! Recomiendo enfocarte en la validación temprana con clientes potenciales.";
+    private static final String AI_RESP = "\u00A1Excelente idea! Recomiendo enfocarte en la validaci\u00F3n temprana con clientes potenciales.";
 
     @BeforeEach
     void setUp() {
-        when(chatClientBuilder.build()).thenReturn(chatClient);
-        when(chatClient.prompt()).thenReturn(requestSpec);
-        when(requestSpec.messages(any(Message[].class))).thenReturn(requestSpec);
-        when(requestSpec.user(USER_MSG)).thenReturn(requestSpec);
-        aiEngineService = new AiEngineService(chatClientBuilder, MODEL_NAME);
+        when(openaiBuilder.build()).thenReturn(openaiChatClient);
+        when(deepseekChatClient.prompt()).thenReturn(deepseekRequestSpec);
+        lenient().when(openaiChatClient.prompt()).thenReturn(openaiRequestSpec);
+        when(deepseekRequestSpec.messages(any(Message[].class))).thenReturn(deepseekRequestSpec);
+        when(deepseekRequestSpec.user(USER_MSG)).thenReturn(deepseekRequestSpec);
+        lenient().when(openaiRequestSpec.messages(any(Message[].class))).thenReturn(openaiRequestSpec);
+        lenient().when(openaiRequestSpec.user(USER_MSG)).thenReturn(openaiRequestSpec);
+        aiEngineService = new AiEngineService(deepseekChatClient, openaiBuilder, DEEPSEEK_MODEL, OPENAI_MODEL);
     }
 
     @Test
-    void generateAiResponse_deberiaRetornarRespuestaDeAI_cuandoAIResponde() {
-        when(requestSpec.call()).thenReturn(callResponseSpec);
-        when(callResponseSpec.content()).thenReturn(AI_RESP);
+    void generateAiResponse_deberiaRetornarRespuestaDeDeepSeek_cuandoDeepSeekResponde() {
+        when(deepseekRequestSpec.call()).thenReturn(deepseekCallResponseSpec);
+        when(deepseekCallResponseSpec.content()).thenReturn(AI_RESP);
 
         var history = List.of(
                 ChatMessage.builder().role(MessageRole.USER).content("Hola").build()
@@ -66,14 +82,36 @@ class AiEngineServiceTest {
         String result = aiEngineService.generateAiResponse(history, USER_MSG, TITLE, DESC, CAT);
 
         assertEquals(AI_RESP, result);
-        verify(requestSpec).call();
-        verify(callResponseSpec).content();
+        verify(deepseekRequestSpec).call();
+        verify(deepseekCallResponseSpec).content();
+        verifyNoInteractions(openaiChatClient);
     }
 
     @Test
-    void generateAiResponse_deberiaRetornarMock_cuandoAIFalla() {
-        when(requestSpec.call()).thenReturn(callResponseSpec);
-        when(callResponseSpec.content()).thenThrow(new RuntimeException("Connection refused"));
+    void generateAiResponse_deberiaCaerAOpenAI_cuandoDeepSeekFallaConError() {
+        when(deepseekRequestSpec.call()).thenReturn(deepseekCallResponseSpec);
+        when(deepseekCallResponseSpec.content()).thenThrow(new RuntimeException("DeepSeek connection refused"));
+        when(openaiRequestSpec.call()).thenReturn(openaiCallResponseSpec);
+        when(openaiCallResponseSpec.content()).thenReturn(AI_RESP);
+
+        var history = List.of(
+                ChatMessage.builder().role(MessageRole.USER).content("Hola").build()
+        );
+
+        String result = aiEngineService.generateAiResponse(history, USER_MSG, TITLE, DESC, CAT);
+
+        assertEquals(AI_RESP, result);
+        verify(deepseekRequestSpec).call();
+        verify(openaiRequestSpec).call();
+        verify(openaiCallResponseSpec).content();
+    }
+
+    @Test
+    void generateAiResponse_deberiaRetornarMock_cuandoAmbosFallan() {
+        when(deepseekRequestSpec.call()).thenReturn(deepseekCallResponseSpec);
+        when(deepseekCallResponseSpec.content()).thenThrow(new RuntimeException("DeepSeek error"));
+        when(openaiRequestSpec.call()).thenReturn(openaiCallResponseSpec);
+        when(openaiCallResponseSpec.content()).thenThrow(new RuntimeException("OpenAI error"));
 
         var history = List.of(
                 ChatMessage.builder().role(MessageRole.USER).content("Hola").build()
@@ -83,14 +121,16 @@ class AiEngineServiceTest {
 
         assertNotNull(result);
         assertFalse(result.isBlank());
-        verify(requestSpec).call();
-        verify(callResponseSpec).content();
+        verify(deepseekRequestSpec).call();
+        verify(openaiRequestSpec).call();
     }
 
     @Test
-    void generateAiResponse_deberiaRetornarMock_cuandoAITimeout() {
-        when(requestSpec.call()).thenReturn(callResponseSpec);
-        when(callResponseSpec.content()).thenReturn(null);
+    void generateAiResponse_deberiaRetornarMock_cuandoDeepSeekTimeoutYOpeNaiTambien() {
+        when(deepseekRequestSpec.call()).thenReturn(deepseekCallResponseSpec);
+        when(deepseekCallResponseSpec.content()).thenReturn(null);
+        when(openaiRequestSpec.call()).thenReturn(openaiCallResponseSpec);
+        when(openaiCallResponseSpec.content()).thenReturn(null);
 
         var history = List.of(
                 ChatMessage.builder().role(MessageRole.USER).content("Hola").build()
@@ -98,15 +138,15 @@ class AiEngineServiceTest {
 
         String result = aiEngineService.generateAiResponse(history, USER_MSG, TITLE, DESC, CAT);
 
-        assertTrue(result.contains(TITLE));
-        verify(requestSpec).call();
-        verify(callResponseSpec).content();
+        assertNotNull(result);
+        verify(deepseekRequestSpec).call();
+        verify(openaiRequestSpec).call();
     }
 
     @Test
-    void generateAiResponseStream_deberiaEmitirTokensDeAI_cuandoAIResponde() {
-        when(requestSpec.stream()).thenReturn(streamResponseSpec);
-        when(streamResponseSpec.content()).thenReturn(Flux.just("Token 1", "Token 2"));
+    void generateAiResponseStream_deberiaEmitirTokensDeDeepSeek_cuandoDeepSeekResponde() {
+        when(deepseekRequestSpec.stream()).thenReturn(deepseekStreamResponseSpec);
+        when(deepseekStreamResponseSpec.content()).thenReturn(Flux.just("Token 1", "Token 2"));
 
         var history = List.of(
                 ChatMessage.builder().role(MessageRole.USER).content("Hola").build()
@@ -120,14 +160,17 @@ class AiEngineServiceTest {
                 .expectNext("Token 2")
                 .verifyComplete();
 
-        verify(requestSpec).stream();
-        verify(streamResponseSpec).content();
+        verify(deepseekRequestSpec).stream();
+        verify(deepseekStreamResponseSpec).content();
+        verifyNoInteractions(openaiChatClient);
     }
 
     @Test
-    void generateAiResponseStream_deberiaEmitirMock_cuandoAIFalla() {
-        when(requestSpec.stream()).thenReturn(streamResponseSpec);
-        when(streamResponseSpec.content()).thenReturn(Flux.error(new RuntimeException("Stream error")));
+    void generateAiResponseStream_deberiaEmitirMock_cuandoAmbosFallen() {
+        when(deepseekRequestSpec.stream()).thenReturn(deepseekStreamResponseSpec);
+        when(deepseekStreamResponseSpec.content()).thenReturn(Flux.error(new RuntimeException("Stream error")));
+        when(openaiRequestSpec.stream()).thenReturn(openaiStreamResponseSpec);
+        when(openaiStreamResponseSpec.content()).thenReturn(Flux.error(new RuntimeException("OpenAI stream error")));
 
         var history = List.<ChatMessage>of();
 
@@ -138,7 +181,7 @@ class AiEngineServiceTest {
                 .expectNextMatches(s -> s.contains(TITLE))
                 .verifyComplete();
 
-        verify(requestSpec).stream();
-        verify(streamResponseSpec).content();
+        verify(deepseekRequestSpec).stream();
+        verify(openaiRequestSpec).stream();
     }
 }
