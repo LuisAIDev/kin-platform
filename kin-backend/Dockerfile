@@ -1,7 +1,7 @@
 FROM maven:3.9-eclipse-temurin-17-alpine AS build
 WORKDIR /app
 COPY . .
-RUN mvn package -DskipTests -q
+RUN mvn clean package -DskipTests -e
 
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
