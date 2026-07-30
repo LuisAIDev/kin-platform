@@ -9,6 +9,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -29,32 +30,51 @@ public class AiEngineService {
     private static final Logger log = LoggerFactory.getLogger(AiEngineService.class);
     private static final int AI_TIMEOUT_SECONDS = 120;
     private static final int MAX_RETRY_ATTEMPTS = 3;
-    private static final String RATE_LIMIT_MESSAGE = "⏳ Hay mucho tráfico en este momento. Por favor, intentá de nuevo en unos segundos.";
+    private static final String RATE_LIMIT_MESSAGE = "\u23F3 Hay mucho tr\u00E1fico en este momento. Por favor, intent\u00E1 de nuevo en unos segundos.";
 
-    private final ChatClient chatClient;
-    private final String modelName;
+    private final ChatClient deepseekClient;
+    private final ChatClient openaiClient;
+    private final String deepseekModel;
+    private final String openaiModel;
 
-    public AiEngineService(ChatClient.Builder chatClientBuilder,
-                           @Value("${spring.ai.openai.chat.model}") String modelName) {
-        this.chatClient = chatClientBuilder.build();
-        this.modelName = modelName;
+    public AiEngineService(
+            @Qualifier("deepseekChatClient") ChatClient deepseekClient,
+            ChatClient.Builder openaiBuilder,
+            @Value("${deepseek.model}") String deepseekModel,
+            @Value("${spring.ai.openai.chat.model}") String openaiModel) {
+        this.deepseekClient = deepseekClient;
+        this.openaiClient = openaiBuilder.build();
+        this.deepseekModel = deepseekModel;
+        this.openaiModel = openaiModel;
     }
 
     @PostConstruct
     void logStartup() {
-        log.info("OpenAI configured — using model {}", modelName);
+        log.info("AI providers: primary=DeepSeek ({}), fallback=OpenAI ({})", deepseekModel, openaiModel);
     }
 
     public String generateAiResponse(List<ChatMessage> history, String userMessage,
                                      String projectTitle, String projectDescription, String projectCategory) {
         var messages = buildMessages(history, projectTitle, projectDescription, projectCategory);
 
-        log.debug("Calling AI ({} messages in history, model: {})", history.size(), modelName);
+        String response = tryProviderBlocking(deepseekClient, "DeepSeek", messages, userMessage, history);
+        if (response != null) return response;
 
+        log.warn("DeepSeek failed for this request — falling back to OpenAI (history={})", history.size());
+        response = tryProviderBlocking(openaiClient, "OpenAI", messages, userMessage, history);
+        if (response != null) return response;
+
+        log.error("Both DeepSeek and OpenAI failed for this request (history={})", history.size());
+        return RATE_LIMIT_MESSAGE;
+    }
+
+    private String tryProviderBlocking(ChatClient client, String provider,
+                                       List<Message> messages, String userMessage,
+                                       List<ChatMessage> history) {
         for (int attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
             try {
                 var future = CompletableFuture.supplyAsync(() ->
-                    chatClient.prompt()
+                    client.prompt()
                         .messages(messages.toArray(new Message[0]))
                         .user(userMessage)
                         .call()
@@ -64,48 +84,51 @@ public class AiEngineService {
                 var response = future.get(AI_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
                 if (response != null && !response.isBlank()) {
-                    log.debug("AI responded successfully ({} chars, attempt {}/{})",
-                            response.length(), attempt, MAX_RETRY_ATTEMPTS);
+                    log.info("{} responded successfully ({} chars, attempt {}/{}, history={})",
+                            provider, response.length(), attempt, MAX_RETRY_ATTEMPTS, history.size());
                     return response;
                 }
 
-                log.warn("AI returned empty response (history={}, attempt={})", history.size(), attempt);
-                break;
+                log.warn("{} returned empty response (history={}, attempt={})", provider, history.size(), attempt);
+                return null;
             } catch (TimeoutException e) {
-                log.error("AI timed out after {}s (history={}, userMsgLen={})",
-                        AI_TIMEOUT_SECONDS, history.size(), userMessage.length());
-                break;
+                log.error("{} timed out after {}s (history={})", provider, AI_TIMEOUT_SECONDS, history.size());
+                return null;
             } catch (Exception e) {
                 if (isRateLimitError(e) && attempt < MAX_RETRY_ATTEMPTS) {
                     long delay = (long) Math.pow(2, attempt) * 1000L;
-                    log.warn("Rate limit (429) on attempt {}/{} — retrying in {}ms (history={})",
-                            attempt, MAX_RETRY_ATTEMPTS, delay, history.size());
+                    log.warn("{} rate limited (429) on attempt {}/{} — retrying in {}ms (history={})",
+                            provider, attempt, MAX_RETRY_ATTEMPTS, delay, history.size());
                     try {
                         Thread.sleep(delay);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
-                        break;
+                        return null;
                     }
                     continue;
                 }
 
                 if (isRateLimitError(e)) {
-                    log.error("Rate limit (429) — all {} retries exhausted (history={})",
-                            MAX_RETRY_ATTEMPTS - 1, history.size());
-                    return RATE_LIMIT_MESSAGE;
+                    log.warn("{} exhausted {} retries (429) — will try fallback (history={})",
+                            provider, MAX_RETRY_ATTEMPTS, history.size());
+                    return null;
                 }
 
-                log.error("AI call failed (history={}, userMsgLen={}): type={}, msg={}",
-                        history.size(), userMessage.length(),
-                        e.getClass().getName(), e.getMessage());
-                if (log.isDebugEnabled()) {
-                    log.debug("AI failure stacktrace", e);
+                if (isAuthError(e)) {
+                    log.warn("{} authentication failed (401) — skipping to fallback (history={})",
+                            provider, history.size());
+                    return null;
                 }
-                break;
+
+                log.error("{} call failed (history={}): type={}, msg={}",
+                        provider, history.size(), e.getClass().getName(), e.getMessage());
+                if (log.isDebugEnabled()) {
+                    log.debug("{} failure stacktrace", provider, e);
+                }
+                return null;
             }
         }
-
-        return mockResponse(history.size(), projectTitle);
+        return null;
     }
 
     public Flux<String> generateAiResponseStream(
@@ -114,46 +137,56 @@ public class AiEngineService {
     ) {
         var messages = buildMessages(history, projectTitle, projectDescription, projectCategory);
 
-        log.debug("Streaming from AI ({} messages in history, model: {})", history.size(), modelName);
-
-        return Flux.defer(() -> chatClient.prompt()
-                .messages(messages.toArray(new Message[0]))
-                .user(userMessage)
-                .stream()
-                .content()
-        )
-                .retryWhen(Retry.backoff(MAX_RETRY_ATTEMPTS, Duration.ofSeconds(1))
-                        .maxBackoff(Duration.ofSeconds(2))
-                        .filter(e -> isRateLimitError(e))
-                        .doBeforeRetry(rs -> {
-                            Throwable cause = rs.failure();
-                            log.warn("Stream attempt {}/{} failed — type={}, msg={} (history={})",
-                                    rs.totalRetries() + 1, MAX_RETRY_ATTEMPTS,
-                                    cause.getClass().getName(), cause.getMessage(),
-                                    history.size());
-                            if (log.isDebugEnabled()) {
-                                log.debug("Stream attempt {} failure detail", rs.totalRetries() + 1, cause);
-                            }
-                        })
-                )
+        return tryProviderStream(deepseekClient, "DeepSeek", messages, userMessage, history, projectTitle)
                 .onErrorResume(e -> {
-                    Throwable actual = e;
-                    if (e.getClass().getName().contains("RetryExhaustedException")) {
-                        actual = e.getCause() != null ? e.getCause() : e;
-                    }
+                    Throwable actual = unwrapRetryExhausted(e);
+                    log.warn("DeepSeek stream failed ({}: {}) — falling back to OpenAI (history={})",
+                            actual.getClass().getSimpleName(), actual.getMessage(), history.size());
+                    return tryProviderStream(openaiClient, "OpenAI", messages, userMessage, history, projectTitle);
+                })
+                .onErrorResume(e -> {
+                    Throwable actual = unwrapRetryExhausted(e);
+                    log.error("All AI providers failed for stream (history={}): {}: {}",
+                            history.size(), actual.getClass().getSimpleName(), actual.getMessage());
                     if (isRateLimitError(actual)) {
-                        log.error("Rate limit (429) after retries — last error type={}, msg={} (history={})",
-                                actual.getClass().getName(), actual.getMessage(), history.size());
                         return Flux.just(RATE_LIMIT_MESSAGE);
-                    }
-                    log.error("AI stream failed (history={}, userMsgLen={}): type={}, msg={}",
-                            history.size(), userMessage.length(),
-                            actual.getClass().getName(), actual.getMessage());
-                    if (log.isDebugEnabled()) {
-                        log.debug("AI stream failure stacktrace", actual);
                     }
                     return Flux.just(mockResponse(history.size(), projectTitle));
                 });
+    }
+
+    private Flux<String> tryProviderStream(ChatClient client, String provider,
+                                           List<Message> messages, String userMessage,
+                                           List<ChatMessage> history, String projectTitle) {
+        return Flux.defer(() -> {
+            log.debug("Streaming from {} ({} messages in history)", provider, history.size());
+            return client.prompt()
+                    .messages(messages.toArray(new Message[0]))
+                    .user(userMessage)
+                    .stream()
+                    .content()
+                    .doOnComplete(() -> log.info("{} stream completed successfully (history={})", provider, history.size()));
+        })
+        .retryWhen(Retry.backoff(MAX_RETRY_ATTEMPTS, Duration.ofSeconds(1))
+                .maxBackoff(Duration.ofSeconds(2))
+                .filter(e -> isRateLimitError(e))
+                .doBeforeRetry(rs -> {
+                    Throwable cause = rs.failure();
+                    log.warn("{} stream attempt {}/{} failed — type={}, msg={} (history={})",
+                            provider, rs.totalRetries() + 1, MAX_RETRY_ATTEMPTS,
+                            cause.getClass().getName(), cause.getMessage(), history.size());
+                    if (log.isDebugEnabled()) {
+                        log.debug("{} stream attempt {} failure detail", provider, rs.totalRetries() + 1, cause);
+                    }
+                })
+        );
+    }
+
+    private Throwable unwrapRetryExhausted(Throwable e) {
+        if (e.getClass().getName().contains("RetryExhaustedException")) {
+            return e.getCause() != null ? e.getCause() : e;
+        }
+        return e;
     }
 
     private List<Message> buildMessages(
@@ -174,6 +207,21 @@ public class AiEngineService {
         return messages;
     }
 
+    private boolean isAuthError(Throwable e) {
+        Throwable t = e;
+        if (t instanceof java.util.concurrent.ExecutionException) {
+            t = t.getCause() != null ? t.getCause() : t;
+        }
+        if (t instanceof HttpClientErrorException) {
+            return ((HttpClientErrorException) t).getStatusCode().value() == 401;
+        }
+        if (t instanceof WebClientResponseException) {
+            return ((WebClientResponseException) t).getStatusCode().value() == 401;
+        }
+        String msg = t.getMessage();
+        return msg != null && (msg.contains("401") || msg.contains("Unauthorized"));
+    }
+
     private boolean isRateLimitError(Throwable e) {
         Throwable t = e;
         if (t instanceof java.util.concurrent.ExecutionException) {
@@ -192,32 +240,32 @@ public class AiEngineService {
     }
 
     private SystemMessage buildSystemMessage(String title, String description, String category) {
-        var desc = (description != null && !description.isBlank()) ? description : "Sin descripción disponible.";
+        var desc = (description != null && !description.isBlank()) ? description : "Sin descripci\u00F3n disponible.";
         var prompt = String.format("""
-                Eres KIN (Knowledge, Innovation & Navigation), un consultor empresarial experto, empático y directo. \
-                Tu misión es guiar al usuario a estructurar su proyecto en menos de 60 minutos mediante una conversación \
+                Eres KIN (Knowledge, Innovation & Navigation), un consultor empresarial experto, emp\u00E1tico y directo. \
+                Tu misi\u00F3n es guiar al usuario a estructurar su proyecto en menos de 60 minutos mediante una conversaci\u00F3n \
                 fluida y progresiva.
 
                 ## Proyecto activo del usuario:
-                - **Título**: %s
-                - **Descripción**: %s
-                - **Categoría**: %s
+                - **T\u00EDtulo**: %s
+                - **Descripci\u00F3n**: %s
+                - **Categor\u00EDa**: %s
 
-                Cada respuesta que des debe estar contextualizada a este proyecto específico. \
-                Usa el título y la descripción para personalizar tus preguntas y recomendaciones.
+                Cada respuesta que des debe estar contextualizada a este proyecto espec\u00EDfico. \
+                Usa el t\u00EDtulo y la descripci\u00F3n para personalizar tus preguntas y recomendaciones.
 
                 ## Reglas de conducta:
-                1. Sé empático pero directo. No divagues ni alargues la conversación innecesariamente.
-                2. Haz una sola pregunta a la vez. No abrumes al usuario con múltiples preguntas.
+                1. S\u00E9 emp\u00E1tico pero directo. No divagues ni alargues la conversaci\u00F3n innecesariamente.
+                2. Haz una sola pregunta a la vez. No abrumes al usuario con m\u00FAltiples preguntas.
                 3. Avanza progresivamente por las 4 dimensiones del proyecto:
-                   - **Problema**: ¿Qué necesidad o dolor resuelve?
-                   - **Solución**: ¿Cuál es la propuesta de valor concreta?
-                   - **Clientes**: ¿Quién paga? ¿Cuál es el mercado objetivo?
-                   - **Costos**: ¿Recursos, tiempo e inversión necesaria?
-                4. Cuando completes una dimensión, confirma con el usuario antes de avanzar a la siguiente.
-                5. Si el usuario se desvía, retoma el hilo con amabilidad.
-                6. Responde SIEMPRE en español, con tono profesional y cercano.
-                7. Al final de la conversación, entrega un resumen estructurado de las 4 dimensiones.
+                   - **Problema**: \u00BFQu\u00E9 necesidad o dolor resuelve?
+                   - **Soluci\u00F3n**: \u00BFCu\u00E1l es la propuesta de valor concreta?
+                   - **Clientes**: \u00BFQui\u00E9n paga? \u00BFCu\u00E1l es el mercado objetivo?
+                   - **Costos**: \u00BFRecursos, tiempo e inversi\u00F3n necesaria?
+                4. Cuando completes una dimensi\u00F3n, confirma con el usuario antes de avanzar a la siguiente.
+                5. Si el usuario se desv\u00EDa, retoma el hilo con amabilidad.
+                6. Responde SIEMPRE en espa\u00F1ol, con tono profesional y cercano.
+                7. Al final de la conversaci\u00F3n, entrega un resumen estructurado de las 4 dimensiones.
 
                 Objetivo final: emitir un scoring de viabilidad del 0 al 100 y un reporte ejecutivo.
                 """, title, desc, category);
@@ -227,62 +275,62 @@ public class AiEngineService {
     private String mockResponse(int turn, String projectTitle) {
         if (turn <= 1) {
             return String.format("""
-                    ¡Hola! Soy KIN, tu consultor empresarial especializado en estructuración de proyectos. \
-                    Estoy aquí para ayudarte a desarrollar **%s**.
+                    \u00A1Hola! Soy KIN, tu consultor empresarial especializado en estructuraci\u00F3n de proyectos. \
+                    Estoy aqu\u00ED para ayudarte a desarrollar **%s**.
 
-                    Cuéntame, ¿qué problema o necesidad has identificado que motiva este proyecto? \
-                    Descríbeme tu idea con tus propias palabras.""", projectTitle);
+                    Cu\u00E9ntame, \u00BFqu\u00E9 problema o necesidad has identificado que motiva este proyecto? \
+                    Descr\u00EDbeme tu idea con tus propias palabras.""", projectTitle);
         } else if (turn <= 3) {
             return String.format("""
-                    Entiendo muy bien el contexto de **%s**. Ahora hablemos de la **solución concreta** que propones:
+                    Entiendo muy bien el contexto de **%s**. Ahora hablemos de la **soluci\u00F3n concreta** que propones:
 
-                    - ¿Cuál es tu propuesta de valor específica?
-                    - ¿Cómo resuelve el problema que describiste?
-                    - ¿Qué hace única a tu solución frente a otras opciones del mercado?
+                    - \u00BFCu\u00E1l es tu propuesta de valor espec\u00EDfica?
+                    - \u00BFC\u00F3mo resuelve el problema que describiste?
+                    - \u00BFQu\u00E9 hace \u00FAnica a tu soluci\u00F3n frente a otras opciones del mercado?
 
-                    Cuanto más clara sea la solución, mejor podré ayudarte a validarla.""", projectTitle);
+                    Cuanto m\u00E1s clara sea la soluci\u00F3n, mejor podr\u00E9 ayudarte a validarla.""", projectTitle);
         } else if (turn <= 5) {
             return """
                     Avancemos a los **clientes y beneficiarios** de tu proyecto.
 
-                    - ¿Quién utilizaría directamente tu solución?
-                    - ¿Quién pagaría por ella? (usuarios finales, empresas, gobiernos, etc.)
-                    - ¿Cuál es el tamaño aproximado de ese mercado?
+                    - \u00BFQui\u00E9n utilizar\u00EDa directamente tu soluci\u00F3n?
+                    - \u00BFQui\u00E9n pagar\u00EDa por ella? (usuarios finales, empresas, gobiernos, etc.)
+                    - \u00BFCu\u00E1l es el tama\u00F1o aproximado de ese mercado?
 
-                    Identificar bien a tu público objetivo es clave para la viabilidad del proyecto.""";
+                    Identificar bien a tu p\u00FAblico objetivo es clave para la viabilidad del proyecto.""";
         } else if (turn <= 7) {
             return """
-                    Perfecto, enfoquémonos ahora en los **costos y recursos necesarios**.
+                    Perfecto, enfoqu\u00E9monos ahora en los **costos y recursos necesarios**.
 
-                    - ¿Qué recursos necesitas para construir la primera versión? (equipo, tecnología, materiales)
-                    - ¿Cuánto tiempo estimas para tener un prototipo funcional?
-                    - ¿Qué inversión inicial requerirías y cómo planeas financiarlo?
+                    - \u00BFQu\u00E9 recursos necesitas para construir la primera versi\u00F3n? (equipo, tecnolog\u00EDa, materiales)
+                    - \u00BFCu\u00E1nto tiempo estimas para tener un prototipo funcional?
+                    - \u00BFQu\u00E9 inversi\u00F3n inicial requerir\u00EDas y c\u00F3mo planeas financiarlo?
 
                     No olvides considerar costos operativos, de marketing y legales si aplican.""";
         } else {
             return String.format("""
-                    Has avanzado muchísimo en la estructuración de **%s**. Aquí tienes un **resumen ejecutivo** \
+                    Has avanzado much\u00EDsimo en la estructuraci\u00F3n de **%s**. Aqu\u00ED tienes un **resumen ejecutivo** \
                     de las 4 dimensiones que hemos trabajado:
 
                     ### Resumen del Proyecto
 
-                    **Problema:** Identificaste una necesidad u oportunidad específica.
+                    **Problema:** Identificaste una necesidad u oportunidad espec\u00EDfica.
 
-                    **Solución:** Propusiste un enfoque concreto para resolverla.
+                    **Soluci\u00F3n:** Propusiste un enfoque concreto para resolverla.
 
-                    **Clientes:** Definiste quiénes usarán la solución y quiénes la financiarán.
+                    **Clientes:** Definiste qui\u00E9nes usar\u00E1n la soluci\u00F3n y qui\u00E9nes la financiar\u00E1n.
 
                     **Costos:** Estimaste los recursos necesarios y las inversiones clave.
 
                     ---
                     ### Scoring de Viabilidad Estimado: **78/100**
 
-                    Tu proyecto tiene un potencial alto. Para fortalecerlo aún más, te recomendaría:
+                    Tu proyecto tiene un potencial alto. Para fortalecerlo a\u00FAn m\u00E1s, te recomendar\u00EDa:
                     1. Validar tu propuesta con al menos 10 potenciales clientes
                     2. Investigar fuentes de financiamiento o subsidios disponibles
-                    3. Buscar alianzas estratégicas en tu sector
+                    3. Buscar alianzas estrat\u00E9gicas en tu sector
 
-                    ¿Te gustaría profundizar en alguna de estas áreas o tienes alguna otra pregunta?""", projectTitle);
+                    \u00BFTe gustar\u00EDa profundizar en alguna de estas \u00E1reas o tienes alguna otra pregunta?""", projectTitle);
         }
     }
 }

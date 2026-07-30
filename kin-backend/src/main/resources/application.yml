@@ -76,7 +76,7 @@ spring:
     default-property-inclusion: non_null
 
   # -----------------------------------------------------------
-  # Spring AI — OpenAI (production)
+  # Spring AI — OpenAI (fallback)
   # -----------------------------------------------------------
   ai:
     openai:
@@ -85,6 +85,14 @@ spring:
         model: gpt-4o-mini
         options:
           temperature: 0.7
+
+# -----------------------------------------------------------
+# DeepSeek — proveedor principal de IA
+# -----------------------------------------------------------
+deepseek:
+  api-key: ${DEEPSEEK_API_KEY:}
+  base-url: https://api.deepseek.com
+  model: deepseek-v3-flash
 
 # -----------------------------------------------------------
 # Actuator — health check endpoints
