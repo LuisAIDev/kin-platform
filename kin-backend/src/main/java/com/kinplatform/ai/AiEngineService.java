@@ -120,11 +120,7 @@ public class AiEngineService {
                     return null;
                 }
 
-                log.error("{} call failed (history={}): type={}, msg={}",
-                        provider, history.size(), e.getClass().getName(), e.getMessage());
-                if (log.isDebugEnabled()) {
-                    log.debug("{} failure stacktrace", provider, e);
-                }
+                logDetailedError(provider, attempt, e);
                 return null;
             }
         }
@@ -140,14 +136,14 @@ public class AiEngineService {
         return tryProviderStream(deepseekClient, "DeepSeek", messages, userMessage, history, projectTitle)
                 .onErrorResume(e -> {
                     Throwable actual = unwrapRetryExhausted(e);
-                    log.warn("DeepSeek stream failed ({}: {}) — falling back to OpenAI (history={})",
-                            actual.getClass().getSimpleName(), actual.getMessage(), history.size());
+                    logDetailedError("DeepSeek", MAX_RETRY_ATTEMPTS, actual);
+                    log.warn("DeepSeek stream failed — falling back to OpenAI (history={})", history.size());
                     return tryProviderStream(openaiClient, "OpenAI", messages, userMessage, history, projectTitle);
                 })
                 .onErrorResume(e -> {
                     Throwable actual = unwrapRetryExhausted(e);
-                    log.error("All AI providers failed for stream (history={}): {}: {}",
-                            history.size(), actual.getClass().getSimpleName(), actual.getMessage());
+                    logDetailedError("OpenAI", MAX_RETRY_ATTEMPTS, actual);
+                    log.error("Both AI providers failed for stream (history={})", history.size());
                     if (isRateLimitError(actual)) {
                         return Flux.just(RATE_LIMIT_MESSAGE);
                     }
@@ -171,13 +167,7 @@ public class AiEngineService {
                 .maxBackoff(Duration.ofSeconds(2))
                 .filter(e -> isRateLimitError(e))
                 .doBeforeRetry(rs -> {
-                    Throwable cause = rs.failure();
-                    log.warn("{} stream attempt {}/{} failed — type={}, msg={} (history={})",
-                            provider, rs.totalRetries() + 1, MAX_RETRY_ATTEMPTS,
-                            cause.getClass().getName(), cause.getMessage(), history.size());
-                    if (log.isDebugEnabled()) {
-                        log.debug("{} stream attempt {} failure detail", provider, rs.totalRetries() + 1, cause);
-                    }
+                    logDetailedError(provider, (int) rs.totalRetries() + 1, rs.failure());
                 })
         );
     }
@@ -237,6 +227,58 @@ public class AiEngineService {
 
         String msg = t.getMessage();
         return msg != null && (msg.contains("429") || msg.contains("Too Many Requests"));
+    }
+
+    private void logDetailedError(String provider, int attempt, Throwable e) {
+        var sb = new StringBuilder();
+        sb.append("\n==============================\n");
+        sb.append("Provider: ").append(provider).append("\n");
+        sb.append("Attempt: ").append(attempt).append("\n");
+
+        Throwable real = e;
+        if (real instanceof java.util.concurrent.ExecutionException) {
+            real = real.getCause();
+        }
+        if (real != null && real.getClass().getName().contains("CompletionException")) {
+            real = real.getCause();
+        }
+
+        String httpStatus = "N/A";
+        String responseBody = "N/A";
+        Throwable walker = real;
+        while (walker != null) {
+            if (walker instanceof HttpClientErrorException httpExc) {
+                httpStatus = String.valueOf(httpExc.getStatusCode().value());
+                try { responseBody = httpExc.getResponseBodyAsString(); } catch (Exception ignored) {}
+                break;
+            }
+            if (walker instanceof WebClientResponseException webExc) {
+                httpStatus = String.valueOf(webExc.getStatusCode().value());
+                responseBody = webExc.getResponseBodyAsString();
+                break;
+            }
+            walker = walker.getCause();
+        }
+
+        Throwable root = real;
+        while (root != null && root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        String rootType = root != null ? root.getClass().getName() : "N/A";
+        String rootMsg = root != null && root.getMessage() != null ? root.getMessage() : "N/A";
+        String realType = real != null ? real.getClass().getName() : "null";
+        String realMsg = real != null && real.getMessage() != null ? real.getMessage() : "null";
+
+        sb.append("HTTP Status: ").append(httpStatus).append("\n");
+        sb.append("Exception Type (after unwrap): ").append(realType).append("\n\n");
+        sb.append("Message:\n").append(realMsg).append("\n\n");
+        sb.append("Root Cause Type: ").append(rootType).append("\n");
+        sb.append("Root Cause Message: ").append(rootMsg).append("\n\n");
+        sb.append("Response Body:\n").append(responseBody).append("\n");
+        sb.append("==============================");
+
+        log.error(sb.toString());
+        log.error("Complete stacktrace for {}:", provider, e);
     }
 
     private SystemMessage buildSystemMessage(String title, String description, String category) {
