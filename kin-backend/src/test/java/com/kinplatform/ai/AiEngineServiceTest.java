@@ -166,7 +166,7 @@ class AiEngineServiceTest {
     }
 
     @Test
-    void generateAiResponseStream_deberiaEmitirMock_cuandoAmbosFallen() {
+    void generateAiResponseStream_deberiaEmitirErrorTecnico_cuandoAmbosFallen() {
         when(deepseekRequestSpec.stream()).thenReturn(deepseekStreamResponseSpec);
         when(deepseekStreamResponseSpec.content()).thenReturn(Flux.error(new RuntimeException("Stream error")));
         when(openaiRequestSpec.stream()).thenReturn(openaiStreamResponseSpec);
@@ -178,7 +178,7 @@ class AiEngineServiceTest {
                 history, USER_MSG, TITLE, DESC, CAT);
 
         StepVerifier.create(result)
-                .expectNextMatches(s -> s.contains(TITLE))
+                .expectNextMatches(s -> s.contains("dificultades temporales"))
                 .verifyComplete();
 
         verify(deepseekRequestSpec).stream();

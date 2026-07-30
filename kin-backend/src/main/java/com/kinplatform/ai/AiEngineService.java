@@ -31,6 +31,7 @@ public class AiEngineService {
     private static final int AI_TIMEOUT_SECONDS = 120;
     private static final int MAX_RETRY_ATTEMPTS = 3;
     private static final String RATE_LIMIT_MESSAGE = "\u23F3 Hay mucho tr\u00E1fico en este momento. Por favor, intent\u00E1 de nuevo en unos segundos.";
+    private static final String AI_UNAVAILABLE_MESSAGE = "Estoy teniendo dificultades temporales para conectarme con mi motor de IA. Por favor, intent\u00E1 de nuevo en unos segundos.";
 
     private final ChatClient deepseekClient;
     private final ChatClient openaiClient;
@@ -149,34 +150,28 @@ public class AiEngineService {
     ) {
         var messages = buildMessages(history, projectTitle, projectDescription, projectCategory);
 
-        return tryProviderStream(deepseekClient, "DeepSeek", messages, userMessage, history, projectTitle)
+        return tryProviderStream(deepseekClient, "DeepSeek", messages, userMessage, history)
                 .onErrorResume(e -> {
                     Throwable actual = unwrapRetryExhausted(e);
                     logDetailedError("DeepSeek", MAX_RETRY_ATTEMPTS, actual);
                     if (!openaiEnabled) {
                         log.warn("OpenAI fallback is disabled via configuration — DeepSeek stream failure is final (history={})", history.size());
-                        if (isRateLimitError(actual)) {
-                            return Flux.just(RATE_LIMIT_MESSAGE);
-                        }
-                        return Flux.just(mockResponse(history.size(), projectTitle));
+                        return Flux.just(RATE_LIMIT_MESSAGE);
                     }
                     log.warn("DeepSeek stream failed — falling back to OpenAI (history={})", history.size());
-                    return tryProviderStream(openaiClient, "OpenAI", messages, userMessage, history, projectTitle);
+                    return tryProviderStream(openaiClient, "OpenAI", messages, userMessage, history);
                 })
                 .onErrorResume(e -> {
                     Throwable actual = unwrapRetryExhausted(e);
                     logDetailedError("OpenAI", MAX_RETRY_ATTEMPTS, actual);
                     log.error("Both AI providers failed for stream (history={})", history.size());
-                    if (isRateLimitError(actual)) {
-                        return Flux.just(RATE_LIMIT_MESSAGE);
-                    }
-                    return Flux.just(mockResponse(history.size(), projectTitle));
+                    return Flux.just(AI_UNAVAILABLE_MESSAGE);
                 });
     }
 
     private Flux<String> tryProviderStream(ChatClient client, String provider,
                                            List<Message> messages, String userMessage,
-                                           List<ChatMessage> history, String projectTitle) {
+                                           List<ChatMessage> history) {
         return Flux.defer(() -> {
             log.info("=== SENDING REQUEST TO {} === messages={}, streaming", provider, messages.size());
             return client.prompt()
@@ -308,18 +303,10 @@ public class AiEngineService {
     private SystemMessage buildSystemMessage(String title, String description, String category) {
         var desc = (description != null && !description.isBlank()) ? description : "Sin descripción disponible.";
         var prompt = String.format("""
-                Eres KIN (Knowledge, Innovation & Navigation), un consultor empresarial experto, empático y directo.
-                Tu misión es guiar al usuario a estructurar, validar y mejorar su proyecto mediante una conversación
-                fluida y progresiva.
-
-                ==============================
-                FILOSOFÍA DE KIN
-                ==============================
-                KIN cree que toda idea puede mejorarse. Tu rol no es juzgar, sino construir.
-                Cada interacción debe dejar al usuario con mayor claridad que al inicio.
-                No solo evalúas proyectos: ayudas a fortalecerlos mediante recomendaciones
-                prácticas y accionables. Actúas como un consultor de innovación, emprendimiento
-                y estrategia empresarial con experiencia en validación de modelos de negocio.
+                Eres KIN (Knowledge, Innovation & Navigation), un consultor empresarial basado en inteligencia artificial.
+                Ayuda al usuario a estructurar, analizar y mejorar sus ideas de negocio.
+                Responde las preguntas del usuario de forma natural y conversacional.
+                Haz preguntas cuando sean necesarias, pero no sigas una secuencia fija obligatoria.
 
                 ==============================
                 PROYECTO ACTIVO DEL USUARIO
@@ -329,118 +316,19 @@ public class AiEngineService {
                 - **Categoría**: %s
 
                 Cada respuesta debe estar contextualizada a este proyecto específico.
-                Usa el título y la descripción para personalizar tus preguntas y recomendaciones.
-
-                ==============================
-                REGLAS DE COMPORTAMIENTO
-                ==============================
-                1. Sé empático pero directo. No divagues ni alargues la conversación innecesariamente.
-                2. Haz una sola pregunta a la vez. No abrumes al usuario con múltiples preguntas.
-                3. Avanza progresivamente por las 4 dimensiones del proyecto:
-                   - **Problema**: ¿Qué necesidad o dolor resuelve?
-                   - **Solución**: ¿Cuál es la propuesta de valor concreta?
-                   - **Clientes**: ¿Quién paga? ¿Cuál es el mercado objetivo?
-                   - **Costos**: ¿Recursos, tiempo e inversión necesaria?
-                4. Cuando completes una dimensión, confirma con el usuario antes de avanzar a la siguiente.
-                5. Si el usuario se desvía, retoma el hilo con amabilidad.
-                6. Responde SIEMPRE en español, con tono profesional y cercano.
-                7. Al final de la conversación, entrega un resumen estructurado de las 4 dimensiones.
-                Objetivo final: emitir un scoring de viabilidad del 0 al 100 y un reporte ejecutivo.
+                Usa el título y la descripción para personalizar tus respuestas.
 
                 ==============================
                 PRINCIPIOS DE EVALUACIÓN
                 ==============================
-                Cuando presentes información, distingue claramente entre:
-                - ✅ Información confirmada por el usuario.
-                - 🔍 Inferencias realizadas por KIN.
-                - 💡 Recomendaciones generadas por KIN.
+                - No inventes nombres de empresas, clientes, alianzas, ingresos, inversiones
+                  o datos financieros que el usuario no haya mencionado.
+                - Si utilizas cifras de mercado o tendencias, aclara que son referencias
+                  generales.
+                - Cuando detectes riesgos, acompáñalos con propuestas para mitigarlos.
 
-                Reglas:
-                1. Nunca presentes una inferencia como si fuera un hecho confirmado.
-                2. Cuando existan varios escenarios posibles, indícalos y explica cuál
-                   consideras más probable y por qué.
-                3. Si utilizas cifras de mercado, estadísticas o tendencias, aclara que son
-                   referencias generales y recomienda validarlas con fuentes actualizadas.
-                4. No inventes nombres de empresas, clientes, alianzas, ingresos, inversiones
-                   o datos financieros que el usuario no haya mencionado.
-                5. Cada puntuación (scoring) debe incluir una breve explicación del motivo
-                   de la calificación.
-                6. Cuando detectes riesgos, acompáñalos siempre con una propuesta concreta
-                   para mitigarlos.
-                7. Finaliza siempre con un plan de acción priorizado, ordenado desde el paso
-                   más importante hasta el menos urgente.
-
-                ==============================
-                ENFOQUE DE CONSULTOR
-                ==============================
-                1. No te limites a identificar problemas. Por cada debilidad detectada,
-                   propone al menos una recomendación práctica para mejorarla.
-                2. El usuario debe terminar cada conversación con mayor claridad que al iniciarla.
-                3. Actúa como un consultor de innovación, emprendimiento y estrategia empresarial
-                   con experiencia en validación de modelos de negocio.
+                Responde SIEMPRE en español, con tono profesional y cercano.
                 """, title, desc, category);
         return new SystemMessage(prompt);
-    }
-
-    private String mockResponse(int turn, String projectTitle) {
-        if (turn <= 1) {
-            return String.format("""
-                    \u00A1Hola! Soy KIN, tu consultor empresarial especializado en estructuraci\u00F3n de proyectos. \
-                    Estoy aqu\u00ED para ayudarte a desarrollar **%s**.
-
-                    Cu\u00E9ntame, \u00BFqu\u00E9 problema o necesidad has identificado que motiva este proyecto? \
-                    Descr\u00EDbeme tu idea con tus propias palabras.""", projectTitle);
-        } else if (turn <= 3) {
-            return String.format("""
-                    Entiendo muy bien el contexto de **%s**. Ahora hablemos de la **soluci\u00F3n concreta** que propones:
-
-                    - \u00BFCu\u00E1l es tu propuesta de valor espec\u00EDfica?
-                    - \u00BFC\u00F3mo resuelve el problema que describiste?
-                    - \u00BFQu\u00E9 hace \u00FAnica a tu soluci\u00F3n frente a otras opciones del mercado?
-
-                    Cuanto m\u00E1s clara sea la soluci\u00F3n, mejor podr\u00E9 ayudarte a validarla.""", projectTitle);
-        } else if (turn <= 5) {
-            return """
-                    Avancemos a los **clientes y beneficiarios** de tu proyecto.
-
-                    - \u00BFQui\u00E9n utilizar\u00EDa directamente tu soluci\u00F3n?
-                    - \u00BFQui\u00E9n pagar\u00EDa por ella? (usuarios finales, empresas, gobiernos, etc.)
-                    - \u00BFCu\u00E1l es el tama\u00F1o aproximado de ese mercado?
-
-                    Identificar bien a tu p\u00FAblico objetivo es clave para la viabilidad del proyecto.""";
-        } else if (turn <= 7) {
-            return """
-                    Perfecto, enfoqu\u00E9monos ahora en los **costos y recursos necesarios**.
-
-                    - \u00BFQu\u00E9 recursos necesitas para construir la primera versi\u00F3n? (equipo, tecnolog\u00EDa, materiales)
-                    - \u00BFCu\u00E1nto tiempo estimas para tener un prototipo funcional?
-                    - \u00BFQu\u00E9 inversi\u00F3n inicial requerir\u00EDas y c\u00F3mo planeas financiarlo?
-
-                    No olvides considerar costos operativos, de marketing y legales si aplican.""";
-        } else {
-            return String.format("""
-                    Has avanzado much\u00EDsimo en la estructuraci\u00F3n de **%s**. Aqu\u00ED tienes un **resumen ejecutivo** \
-                    de las 4 dimensiones que hemos trabajado:
-
-                    ### Resumen del Proyecto
-
-                    **Problema:** Identificaste una necesidad u oportunidad espec\u00EDfica.
-
-                    **Soluci\u00F3n:** Propusiste un enfoque concreto para resolverla.
-
-                    **Clientes:** Definiste qui\u00E9nes usar\u00E1n la soluci\u00F3n y qui\u00E9nes la financiar\u00E1n.
-
-                    **Costos:** Estimaste los recursos necesarios y las inversiones clave.
-
-                    ---
-                    ### Scoring de Viabilidad Estimado: **78/100**
-
-                    Tu proyecto tiene un potencial alto. Para fortalecerlo a\u00FAn m\u00E1s, te recomendar\u00EDa:
-                    1. Validar tu propuesta con al menos 10 potenciales clientes
-                    2. Investigar fuentes de financiamiento o subsidios disponibles
-                    3. Buscar alianzas estrat\u00E9gicas en tu sector
-
-                    \u00BFTe gustar\u00EDa profundizar en alguna de estas \u00E1reas o tienes alguna otra pregunta?""", projectTitle);
-        }
     }
 }

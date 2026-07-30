@@ -51,6 +51,8 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
 
         log.info("=== RESPONSE SENT TO FRONTEND === messageId={}, chars={}",
                 assistantMessage.getId(), aiResponse != null ? aiResponse.length() : 0);
+        log.info("=== FINAL RESPONSE SENT TO USER === preview={}",
+                aiResponse != null ? aiResponse.substring(0, Math.min(200, aiResponse.length())) : "null");
         return ChatResponse.builder()
                 .userMessageId(userMessage.getId())
                 .assistantMessageId(assistantMessage.getId())
@@ -101,6 +103,8 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                     var finalContent = fullContent.toString();
                     log.info("=== AI RESPONSE RECEIVED === chars={}", finalContent.length());
                     log.info("=== RESPONSE SENT TO FRONTEND === chars={}", finalContent.length());
+                    log.info("=== FINAL RESPONSE SENT TO USER === preview={}",
+                            finalContent.substring(0, Math.min(200, finalContent.length())));
                     try {
                         var assistantMessage = saveAssistantMessage(userId, projectId, finalContent);
                         var donePayload = Map.of(
