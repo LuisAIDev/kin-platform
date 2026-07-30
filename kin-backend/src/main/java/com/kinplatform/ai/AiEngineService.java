@@ -66,19 +66,43 @@ public class AiEngineService {
         var messages = buildMessages(history, projectTitle, projectDescription, projectCategory);
 
         String response = tryProviderBlocking(deepseekClient, "DeepSeek", messages, userMessage, history);
-        if (response != null) return response;
+        if (response != null) {
+            if (RATE_LIMIT_MESSAGE.equals(response)) {
+                log.warn("=== RETURNING RATE_LIMIT_MESSAGE === reason=DeepSeek_rate_limit_exhausted_after_retries, provider=DeepSeek");
+                if (!openaiEnabled) return RATE_LIMIT_MESSAGE;
+                log.warn("DeepSeek was rate limited — falling back to OpenAI (history={})", history.size());
+                String oaResponse = tryProviderBlocking(openaiClient, "OpenAI", messages, userMessage, history);
+                if (oaResponse != null) {
+                    if (RATE_LIMIT_MESSAGE.equals(oaResponse)) {
+                        log.warn("=== RETURNING RATE_LIMIT_MESSAGE === reason=both_providers_rate_limited");
+                        return RATE_LIMIT_MESSAGE;
+                    }
+                    return oaResponse;
+                }
+                log.warn("=== RETURNING AI_UNAVAILABLE === reason=DeepSeek_rate_limit_then_OpenAI_other_error");
+                return AI_UNAVAILABLE_MESSAGE;
+            }
+            return response;
+        }
 
+        log.warn("=== DeepSeek failed (non-rate-limit) — history={}, openaiEnabled={}", history.size(), openaiEnabled);
         if (!openaiEnabled) {
-            log.warn("OpenAI fallback is disabled via configuration — DeepSeek failure is final (history={})", history.size());
-            return RATE_LIMIT_MESSAGE;
+            log.warn("=== RETURNING AI_UNAVAILABLE === reason=DeepSeek_error_and_OpenAI_disabled");
+            return AI_UNAVAILABLE_MESSAGE;
         }
 
         log.warn("DeepSeek failed for this request — falling back to OpenAI (history={})", history.size());
         response = tryProviderBlocking(openaiClient, "OpenAI", messages, userMessage, history);
-        if (response != null) return response;
+        if (response != null) {
+            if (RATE_LIMIT_MESSAGE.equals(response)) {
+                log.warn("=== RETURNING RATE_LIMIT_MESSAGE === reason=OpenAI_rate_limited_after_DeepSeek_other_error");
+                return RATE_LIMIT_MESSAGE;
+            }
+            return response;
+        }
 
-        log.error("Both DeepSeek and OpenAI failed for this request (history={})", history.size());
-        return RATE_LIMIT_MESSAGE;
+        log.error("=== RETURNING AI_UNAVAILABLE === reason=both_providers_failed_non_rate_limit (history={})", history.size());
+        return AI_UNAVAILABLE_MESSAGE;
     }
 
     private String tryProviderBlocking(ChatClient client, String provider,
@@ -106,12 +130,28 @@ public class AiEngineService {
                     return response;
                 }
 
-                log.warn("{} returned empty response (history={}, attempt={})", provider, history.size(), attempt);
+                log.warn("=== {} RESPONSE EMPTY === provider={}, history={}, attempt={}",
+                        provider, provider, history.size(), attempt);
                 return null;
             } catch (TimeoutException e) {
-                log.error("{} timed out after {}s (history={})", provider, AI_TIMEOUT_SECONDS, history.size());
+                log.error("=== {} TIMEOUT === provider={}, timeoutSeconds={}, history={}",
+                        provider, provider, AI_TIMEOUT_SECONDS, history.size());
+                log.error("=== STACK TRACE ===", e);
                 return null;
             } catch (Exception e) {
+                String httpStatus = extractHttpStatus(e);
+                String exceptionClass = e.getClass().getName();
+                String exceptionMsg = e.getMessage() != null ? e.getMessage() : "";
+                String rootCause = extractRootCauseMessage(e);
+
+                log.error("=== {} ERROR === provider={}, attempt={}/{}", provider, provider, attempt, MAX_RETRY_ATTEMPTS);
+                log.error("=== HTTP STATUS === {}", httpStatus);
+                log.error("=== EXCEPTION CLASS === {}", exceptionClass);
+                log.error("=== EXCEPTION MESSAGE === {}", exceptionMsg);
+                log.error("=== ROOT CAUSE === {}", rootCause);
+                log.error("=== ERROR BODY === {}", extractResponseBody(e));
+                log.error("=== STACK TRACE ===", e);
+
                 if (isRateLimitError(e) && attempt < MAX_RETRY_ATTEMPTS) {
                     long delay = (long) Math.pow(2, attempt) * 1000L;
                     log.warn("{} rate limited (429) on attempt {}/{} — retrying in {}ms (history={})",
@@ -126,15 +166,9 @@ public class AiEngineService {
                 }
 
                 if (isRateLimitError(e)) {
-                    log.warn("{} exhausted {} retries (429) — will try fallback (history={})",
-                            provider, MAX_RETRY_ATTEMPTS, history.size());
-                    return null;
-                }
-
-                if (isAuthError(e)) {
-                    log.warn("{} authentication failed (401) — skipping to fallback (history={})",
-                            provider, history.size());
-                    return null;
+                    log.warn("=== {} RATE LIMIT EXHAUSTED === provider={}, retries={}, history={}",
+                            provider, provider, MAX_RETRY_ATTEMPTS, history.size());
+                    return RATE_LIMIT_MESSAGE;
                 }
 
                 logDetailedError(provider, attempt, e);
@@ -142,6 +176,47 @@ public class AiEngineService {
             }
         }
         return null;
+    }
+
+    private String extractHttpStatus(Throwable e) {
+        Throwable t = unwrapExecutionException(e);
+        if (t instanceof HttpClientErrorException httpExc) {
+            return String.valueOf(httpExc.getStatusCode().value());
+        }
+        if (t instanceof WebClientResponseException webExc) {
+            return String.valueOf(webExc.getStatusCode().value());
+        }
+        if (t.getMessage() != null) {
+            for (var code : new String[]{"400","401","402","403","404","408","429","500","502","503","504"}) {
+                if (t.getMessage().contains(code)) return code;
+            }
+        }
+        return "N/A";
+    }
+
+    private String extractResponseBody(Throwable e) {
+        Throwable t = unwrapExecutionException(e);
+        try {
+            if (t instanceof HttpClientErrorException httpExc) return httpExc.getResponseBodyAsString();
+            if (t instanceof WebClientResponseException webExc) return webExc.getResponseBodyAsString();
+        } catch (Exception ignored) {}
+        return "N/A";
+    }
+
+    private String extractRootCauseMessage(Throwable e) {
+        Throwable root = e;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        return root.getMessage() != null ? root.getMessage() : "N/A";
+    }
+
+    private Throwable unwrapExecutionException(Throwable e) {
+        Throwable t = e;
+        if (t instanceof java.util.concurrent.ExecutionException) {
+            t = t.getCause() != null ? t.getCause() : t;
+        }
+        return t;
     }
 
     public Flux<String> generateAiResponseStream(
@@ -154,9 +229,13 @@ public class AiEngineService {
                 .onErrorResume(e -> {
                     Throwable actual = unwrapRetryExhausted(e);
                     logDetailedError("DeepSeek", MAX_RETRY_ATTEMPTS, actual);
-                    if (!openaiEnabled) {
-                        log.warn("OpenAI fallback is disabled via configuration — DeepSeek stream failure is final (history={})", history.size());
+                    if (isRateLimitError(actual)) {
+                        log.warn("=== RETURNING RATE_LIMIT_MESSAGE === reason=DeepSeek_stream_rate_limit, provider=DeepSeek");
                         return Flux.just(RATE_LIMIT_MESSAGE);
+                    }
+                    if (!openaiEnabled) {
+                        log.warn("=== RETURNING AI_UNAVAILABLE === reason=DeepSeek_stream_error_and_OpenAI_disabled");
+                        return Flux.just(AI_UNAVAILABLE_MESSAGE);
                     }
                     log.warn("DeepSeek stream failed — falling back to OpenAI (history={})", history.size());
                     return tryProviderStream(openaiClient, "OpenAI", messages, userMessage, history);
@@ -164,7 +243,11 @@ public class AiEngineService {
                 .onErrorResume(e -> {
                     Throwable actual = unwrapRetryExhausted(e);
                     logDetailedError("OpenAI", MAX_RETRY_ATTEMPTS, actual);
-                    log.error("Both AI providers failed for stream (history={})", history.size());
+                    if (isRateLimitError(actual)) {
+                        log.warn("=== RETURNING RATE_LIMIT_MESSAGE === reason=OpenAI_stream_rate_limit_after_DeepSeek_failure");
+                        return Flux.just(RATE_LIMIT_MESSAGE);
+                    }
+                    log.error("=== RETURNING AI_UNAVAILABLE === reason=both_stream_providers_failed_non_rate_limit (history={})", history.size());
                     return Flux.just(AI_UNAVAILABLE_MESSAGE);
                 });
     }
