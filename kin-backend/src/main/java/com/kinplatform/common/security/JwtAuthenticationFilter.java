@@ -5,6 +5,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,6 +21,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
     private final JwtService jwtService;
 
     @Override
@@ -28,6 +32,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         var authHeader = request.getHeader("Authorization");
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        log.info("=== JWT FILTER === method={}, requestURI={}, servletPath={}, contextPath={}, hasAuthorization={}, authenticatedUser={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                request.getServletPath(),
+                request.getContextPath(),
+                authHeader != null,
+                auth != null ? auth.getName() : "none");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
