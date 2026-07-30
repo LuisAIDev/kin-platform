@@ -67,7 +67,7 @@ class AiEngineServiceTest {
         when(deepseekRequestSpec.user(USER_MSG)).thenReturn(deepseekRequestSpec);
         lenient().when(openaiRequestSpec.messages(any(Message[].class))).thenReturn(openaiRequestSpec);
         lenient().when(openaiRequestSpec.user(USER_MSG)).thenReturn(openaiRequestSpec);
-        aiEngineService = new AiEngineService(deepseekChatClient, openaiBuilder, DEEPSEEK_MODEL, OPENAI_MODEL);
+        aiEngineService = new AiEngineService(deepseekChatClient, openaiBuilder, DEEPSEEK_MODEL, OPENAI_MODEL, true);
     }
 
     @Test

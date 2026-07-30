@@ -36,21 +36,28 @@ public class AiEngineService {
     private final ChatClient openaiClient;
     private final String deepseekModel;
     private final String openaiModel;
+    private final boolean openaiEnabled;
 
     public AiEngineService(
             @Qualifier("deepseekChatClient") ChatClient deepseekClient,
             ChatClient.Builder openaiBuilder,
             @Value("${deepseek.model}") String deepseekModel,
-            @Value("${spring.ai.openai.chat.model}") String openaiModel) {
+            @Value("${spring.ai.openai.chat.model}") String openaiModel,
+            @Value("${ai.openai.enabled:true}") boolean openaiEnabled) {
         this.deepseekClient = deepseekClient;
         this.openaiClient = openaiBuilder.build();
         this.deepseekModel = deepseekModel;
         this.openaiModel = openaiModel;
+        this.openaiEnabled = openaiEnabled;
     }
 
     @PostConstruct
     void logStartup() {
-        log.info("AI providers: primary=DeepSeek ({}), fallback=OpenAI ({})", deepseekModel, openaiModel);
+        if (openaiEnabled) {
+            log.info("AI providers: primary=DeepSeek ({}), fallback=OpenAI ({})", deepseekModel, openaiModel);
+        } else {
+            log.warn("AI provider: DeepSeek only ({}) — OpenAI fallback is disabled via ai.openai.enabled=false", deepseekModel);
+        }
     }
 
     public String generateAiResponse(List<ChatMessage> history, String userMessage,
@@ -59,6 +66,11 @@ public class AiEngineService {
 
         String response = tryProviderBlocking(deepseekClient, "DeepSeek", messages, userMessage, history);
         if (response != null) return response;
+
+        if (!openaiEnabled) {
+            log.warn("OpenAI fallback is disabled via configuration — DeepSeek failure is final (history={})", history.size());
+            return RATE_LIMIT_MESSAGE;
+        }
 
         log.warn("DeepSeek failed for this request — falling back to OpenAI (history={})", history.size());
         response = tryProviderBlocking(openaiClient, "OpenAI", messages, userMessage, history);
@@ -137,6 +149,13 @@ public class AiEngineService {
                 .onErrorResume(e -> {
                     Throwable actual = unwrapRetryExhausted(e);
                     logDetailedError("DeepSeek", MAX_RETRY_ATTEMPTS, actual);
+                    if (!openaiEnabled) {
+                        log.warn("OpenAI fallback is disabled via configuration — DeepSeek stream failure is final (history={})", history.size());
+                        if (isRateLimitError(actual)) {
+                            return Flux.just(RATE_LIMIT_MESSAGE);
+                        }
+                        return Flux.just(mockResponse(history.size(), projectTitle));
+                    }
                     log.warn("DeepSeek stream failed — falling back to OpenAI (history={})", history.size());
                     return tryProviderStream(openaiClient, "OpenAI", messages, userMessage, history, projectTitle);
                 })

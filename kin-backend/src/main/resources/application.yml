@@ -95,6 +95,13 @@ deepseek:
   model: deepseek-v3-flash
 
 # -----------------------------------------------------------
+# AI provider control — enables/disables OpenAI fallback
+# -----------------------------------------------------------
+ai:
+  openai:
+    enabled: true
+
+# -----------------------------------------------------------
 # Actuator — health check endpoints
 # -----------------------------------------------------------
 management:
