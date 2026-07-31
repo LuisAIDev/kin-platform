@@ -5,6 +5,37 @@ Todos los cambios notables de este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/),
 y el versionado del proyecto en [SemVer](https://semver.org/lang/es/).
 
+## [Unreleased] - Fase 5.3 (OpportunityEngine)
+
+Enmienda de `v2.0.0-alpha.1` con ADR-010. **Estado: Architecture Stable (enmendado).**
+
+### Added
+
+- `kin.reporting.opportunity.OpportunityEngine`: motor de dominio puro que identifica oportunidades de mejora/capitalización del proyecto (ADR-010).
+- 8 analizadores auto-descubiertos (patrón coordinador + analizadores + ensamblador, mismo diseño que `RiskEngine`): `Market`, `Innovation`, `Technological`, `Financial`, `Competitive`, `Scalability`, `Automation`, `MonetizationOpportunityAnalyzer` — categorías: mercado, innovación, tecnológicas, financieras, competitivas, escalabilidad, automatización, monetización.
+- `Opportunity`, `OpportunityResult`, `OpportunityInput`, `OpportunityModel`, `OpportunityAssembler`, `OpportunityExplanation`, `OpportunityCategory`.
+- `OpportunityStage` (composición pura sobre `EngineStage`): pipeline de 9 etapas, entre `RiskStage` y `EventStage`.
+- Campo tipado aditivo `PipelineContext.opportunityResult` (mismo patrón que `riskResult`).
+- Documentación: `FASE5_3_OPPORTUNITY_ENGINE.md` (auditoría, diseño, UML, contratos), ADR-010.
+- 42 tests nuevos (de 130 a 172).
+
+### Changed
+
+- `KinConfig.chatPipeline(...)`: agrega `OpportunityStage` al pipeline (9 stages).
+- `KIN_ARCHITECTURE_GOVERNANCE.md` §6.2: `OpportunityEngine` pasa de "Futuro (KIN 3.0)" a existente.
+
+### Testing
+
+- `./mvnw clean verify`: **172 tests, 0 fallos, BUILD SUCCESS**.
+- Cobertura (JaCoCo): `kin.reporting.opportunity` 100 %; `kin.reporting*` agregado 98,6 %; `kin.reporting` 95,8 % (+ `risk` 99,5 %); `kin.scoring` 98,9 %; `kin.engine` 100 %. Requisito de ≥ 90 % cumplido.
+
+### Known Issues
+
+- Incidencia heredada: `pricing_plans` sin columnas NOT NULL aplicadas en dev (H2, `ddl-auto: update`). No bloquea el arranque (warnings). Fuera del alcance de esta fase.
+- `InMemoryDomainEventBus` sin async ni persistencia (KIN 2.4).
+- Heurística de longitud en `ScoringEngine` por reemplazar antes de KIN 2.5.
+- Cobertura baja en paquetes de infraestructura (auth, pricing, project, ai.provider) — fuera del requisito del dominio.
+
 ## [Unreleased] - Fase 5.2.1 (consolidación del runtime)
 
 Enmienda de `v2.0.0-alpha.1` con ADR-006…ADR-009. **Estado: Architecture Stable (enmendado).**

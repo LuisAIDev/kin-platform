@@ -431,8 +431,8 @@ Donde:
 | `ScoringEngine` | ✅ Existente | `ProjectContext` + `CompletenessEvaluation` | `ScoreResult` |
 | `RecommendationEngine` | ✅ Existente | `RecommendationInput` | `RecommendationResult` |
 | `RiskEngine` | ✅ Existente | `RiskInput` | `RiskResult` |
+| `OpportunityEngine` | ✅ Existente (Fase 5.3, ADR-010) | `OpportunityInput` | `OpportunityResult` |
 | `ReportEngine` | 🔮 Futuro (KIN 2.2/3.0) | `ProjectContext` + `ScoreResult` | `Report` |
-| `OpportunityEngine` | 🔮 Futuro (KIN 3.0) | `OpportunityInput` | `OpportunityResult` |
 | `KnowledgeEngine` | 🔮 Futuro (KIN 3.0) | `KnowledgeQuery` | `KnowledgeResult` |
 | `InnovationEngine` | 🔮 Futuro (KIN 3.0) | `InnovationInput` | `InnovationScore` |
 
