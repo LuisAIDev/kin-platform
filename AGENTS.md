@@ -1,5 +1,8 @@
 # KIN Platform — Agent Guide
 
+> **Milestone: KIN 2.0 Alpha 1 — `ARCHITECTURE STABLE`** (tag `v2.0.0-alpha.1`).
+> El contrato `kin/engine` y las APIs estables listadas en `kin-docs/BASELINE_ARCHITECTURE.md` NO pueden modificarse sin una ADR aprobada.
+
 ## Project
 Full-stack project management platform with AI-guided viability assessment.
 

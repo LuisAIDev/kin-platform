@@ -1,7 +1,9 @@
 # ARQUITECTURA BASE — KIN 2.0
 
+> **Milestone actual: KIN 2.0 Alpha 1 — `ARCHITECTURE STABLE`** (30 de julio de 2026).
 > Documento contractual. Toda implementación futura debe respetar esta arquitectura.
 > Cualquier desviación requiere una ADR (Architecture Decision Record) aprobada.
+> Las APIs públicas marcadas como **Estables** en `BASELINE_ARCHITECTURE.md` NO pueden modificarse.
 
 ---
 
@@ -847,18 +849,29 @@ common/config/ → kin/, ai/     ✓ Sin ciclos
 
 ### KIN 2.0 — Fase actual (Correcciones arquitectónicas)
 
-**Estado**: En progreso ✅
+**Estado**: Alpha 1 cerrado ✅ — `ARCHITECTURE STABLE` (hito `v2.0.0-alpha.1`)
+
+Completado en el milestone:
 
 - [x] Domain restructured (`kin/context/` owns domain types)
 - [x] JPA dependency removed from domain (`Message` record)
 - [x] ProviderRouter OCP-compliant
-- [ ] Provider deduplication (`AbstractAIProvider`)
-- [ ] `PromptAssembler` extraction
-- [ ] Pipeline error handling
-- [ ] Scoring audit trail
-- [ ] EventBus async abstraction
-- [ ] Streaming path refactored to use `KinMethod`
-- [ ] Unit tests for all corrections
+- [x] Provider IA y capa de contexto (Fase 4.0)
+- [x] `RecommendationEngine` (Fase 5.0)
+- [x] `RiskEngine` + `RiskAssembler` (Fase 5.1)
+- [x] Infraestructura común de motores: `kin/engine` + `EngineStage` + `KinConfig` (Fase 5.2)
+- [x] ADR-001 a ADR-005
+- [x] 102 tests verdes y cobertura de dominio ≥ 90 %
+
+Pendiente (trackeado en fases siguientes, no bloquea el milestone):
+
+- [ ] Provider deduplication (`AbstractAIProvider`) → KIN 2.3
+- [ ] `PromptAssembler` extraction → KIN 2.3
+- [ ] Pipeline error handling → KIN 2.1
+- [ ] Scoring audit trail → KIN 2.4
+- [ ] EventBus async abstraction → KIN 2.4
+- [ ] Streaming path refactored to use `KinMethod` → KIN 2.1
+- [ ] Unit tests for all corrections → KIN 2.1
 
 ### KIN 2.1 — Pipeline Estabilizado
 
@@ -970,5 +983,5 @@ common/config/ → kin/, ai/     ✓ Sin ciclos
 ---
 
 *Documento generado el 30 de julio de 2026.*
-*Versión: KIN 2.0-ARCH-001*
+*Versión: KIN 2.0-ARCH-001 — Milestone: KIN 2.0 Alpha 1 (`v2.0.0-alpha.1`) — Estado: Architecture Stable*
 *Próxima revisión: al completar KIN 2.1*
