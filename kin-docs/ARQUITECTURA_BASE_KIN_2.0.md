@@ -204,14 +204,14 @@ com.kinplatform.infrastructure/ → Adapters (persistence, ai providers)
 
 | Componente | Contexto | Coordina |
 |-----------|----------|----------|
-| `KinMethod` | Consulting | Pipeline completo + Domain Events |
-| `ChatOrchestratorServiceImpl` | Conversation | KinMethod o flujo inline (bloqueante vs streaming) |
-| `AiEngineService` | AI | Llamada a proveedores AI con fallback |
+| `KinMethod` | Consulting | Pipeline completo (bloqueante y streaming) + Domain Events + `ContextRepository` |
+| `ChatOrchestratorServiceImpl` | Conversation | I/O puro: delega en `KinMethod.execute` / `executeStream` (ADR-006) |
+| `AiEngineService` | AI | Adaptador de `AIResponder` (llamada a proveedores con fallback) |
 | `ProviderRouter` | AI | Enrutamiento entre proveedores AI |
 | `ChatServiceImpl` | Conversation | Persistencia de ChatMessage |
 | `ProjectServiceImpl` | Project | CRUD de proyectos |
 | `AuthServiceImpl` | Auth | Registro, login, JWT |
-| `ProjectContextService` | Conversation | Caché de ProjectContext por proyecto |
+| `JpaContextRepository` | Conversation | Persistencia durable de `ProjectContext` (ADAPTER de `ContextRepository`) |
 | `SubscriptionValidatorService` | Billing | Validación de límites por plan |
 
 ### 3.5 Ports (interfaces en dominio)
@@ -219,6 +219,8 @@ com.kinplatform.infrastructure/ → Adapters (persistence, ai providers)
 | Puerto | Contexto | Implementación |
 |--------|----------|---------------|
 | `ContextAnalyzerPort` | Conversation | `HeuristicContextAnalyzerAdapter` |
+| `ContextRepository` | Consulting | `JpaContextRepository` (JPA, durable — ADR-007) |
+| `AIResponder` | Consulting | `AiEngineService` (ADR-008) |
 | `DomainEventBus` | Consulting | `InMemoryDomainEventBus` |
 | `AIProvider` | AI | `DeepSeekProvider`, `OpenAIProvider` |
 
@@ -303,9 +305,11 @@ com.kinplatform
 │   │   ├── OpenAIProvider.java              [Infrastructure Adapter]
 │   │   └── ProviderRouter.java              [Application Service]
 │   └── context/
-│       ├── ProjectContextService.java       [Application Service]
 │       └── adapter/
-│           └── HeuristicContextAnalyzerAdapter.java [Infrastructure Adapter]
+│           ├── HeuristicContextAnalyzerAdapter.java [Infrastructure Adapter]
+│           ├── ProjectContextEntity.java       [JPA Entity — Infrastructure]
+│           ├── ProjectContextJpaRepository.java [Infrastructure Repository]
+│           └── JpaContextRepository.java       [Infrastructure Adapter — ContextRepository (ADR-007)]
 │
 ├── chat/                                    *** APPLICATION / INFRASTRUCTURE ***
 │   ├── ChatService.java                     [Application Service — interface]
@@ -394,7 +398,7 @@ com.kinplatform
 
 1. **`InMemoryDomainEventBus` está en `kin/event/`** — es una implementación en memoria, debería estar en infraestructura. Se mantiene aquí temporalmente por simplicidad hasta que se introduzca una implementación con RabbitMQ/Kafka.
 2. **Los Pipeline Stages están en `kin/pipeline/stage/`** — son parte del dominio (son la implementación del patrón Pipeline). Correcto.
-3. **`ProjectContextService` está en `ai/context/`** — es un Application Service. Correcto.
+3. **`JpaContextRepository` y sus entidades están en `ai/context/adapter/`** — son el adaptador de infraestructura del puerto `ContextRepository` (`kin/context`). Correcto (ADR-007). `ProjectContextService` fue eliminado.
 4. **`ChatMessage`, `Project`, `User` son JPA entities en sus respectivos paquetes** — mezclan responsabilidad de dominio con persistencia. En KIN 3.0 se separarán.
 
 ---
@@ -766,30 +770,19 @@ common/config/ → kin/, ai/     ✓ Sin ciclos
 - `missingDimensions()` y `toPromptSnippet()` son cálculos derivados → podrían ser Domain Services si crecen.
 - Si supera 20 métodos públicos, extraer `ProjectContextAnalyzer` como Domain Service separado.
 
-### 7.3 ChatOrchestratorServiceImpl — RIESGO ALTO 🟠
+### 7.3 ChatOrchestratorServiceImpl — ✅ RESUELTO (Fase 5.2.1)
 
-**Síntomas actuales**: 211 líneas, dos flujos (bloqueante y streaming) con paths divergentes. Es el orquestador principal.
+**Síntomas históricos**: dos flujos (bloqueante y streaming) con paths divergentes; el streaming no usaba `KinMethod`.
 
-**Riesgo**: 
-- El flujo bloqueante usa `KinMethod` (limpio).
-- El flujo streaming **no usa KinMethod** — hace análisis, evaluación, decisión manualmente.  
-- Esto crea dos caminos de ejecución que deben mantenerse sincronizados.
-
-**Solución propuesta**:
-- Refactorizar el flujo streaming para que también use `KinMethod` (con un callback SSE).
-- Extraer la lógica de SSE en un helper `SseStreamHandler` separado.
+**Estado actual**: desde la **Fase 5.2.1 (ADR-006)**, `ChatOrchestratorServiceImpl` es un adaptador de I/O puro: ambos endpoints delegan en `KinMethod.execute` / `KinMethod.executeStream`. La lógica de negocio vive en el pipeline; el SSE se emite desde el orquestador suscribiendo el `Flux` de `PipelineContext.aiResponseFlux`. (~180 líneas, estable.)
+- Extraer la lógica de SSE en un helper `SseStreamHandler` separado (opcional, mejora de legibilidad).
 - **Límite**: si supera 300 líneas, debe dividirse.
 
-### 7.4 AiEngineService — RIESGO MEDIO 🟡
+### 7.4 AiEngineService — ✅ RESUELTO (Fase 5.2.1)
 
-**Síntomas actuales**: 202 líneas, contiene el system prompt de 107 líneas inline.
+**Síntomas históricos**: contenía el system prompt de 107 líneas inline, acoplado al servicio.
 
-**Riesgo**: El system prompt es lógica de dominio de AI que está acoplada al servicio. Cada cambio en el prompt requiere modificar la clase.
-
-**Solución propuesta**:
-- Extraer `buildSystemPrompt()` a un `PromptAssembler` separado (ya identificado como corrección pendiente).
-- Extraer `buildStrategySnippet()` al mismo `PromptAssembler`.
-- Una vez extraído, `AiEngineService` quedaría en ~50 líneas (estable).
+**Estado actual**: desde la **Fase 5.2.1 (ADR-008)**, el prompt vive en `PromptAssembler` (dominio) y `AiEngineService` implementa el puerto `AIResponder`. (~110 líneas, estable como adaptador.)
 
 ### 7.5 ScoringEngine — RIESGO MEDIO 🟡
 
@@ -833,7 +826,7 @@ common/config/ → kin/, ai/     ✓ Sin ciclos
 | `ConversationStrategist` | Pueden agregarse nuevas estrategias. API `decide(ctx, eval) → ConversationDecision` se mantiene. |
 | `ScoringEngine` | Se reemplazará heurística de longitud. API `evaluate(ctx, eval) → ScoreResult` se mantiene. |
 | `PipelineContext` | Se monitoreará contra God Class. API de acceso a campos se mantiene. |
-| `EventStage` | Actualmente siempre dispara `ConversationCompleted`. Debe corregirse para disparar eventos basados en el flujo real. |
+| `EventStage` | En 5.2.1 ya distingue la decisión (ASK→Question, REPORT→Report+Score). Semántica completa → KIN 2.1. |
 
 ### 8.3 Componentes Experimentales (pueden cambiar significativamente)
 
@@ -841,7 +834,7 @@ common/config/ → kin/, ai/     ✓ Sin ciclos
 |-----------|-------|
 | `InMemoryDomainEventBus` | Implementación temporal. Será reemplazada por una versión con soporte async y persistencia. |
 | `HeuristicContextAnalyzerAdapter` | Análisis basado en regex. Será reemplazado por NLP/AI más adelante. |
-| `ChatOrchestratorServiceImpl` flujo streaming | Debe refactorizarse para usar KinMethod. Es el componente más inestable actualmente. |
+| `JpaContextRepository` (formato JSON) | Versionado si cambia el estado del dominio; tabla y puerto estables. |
 
 ---
 
@@ -849,7 +842,7 @@ common/config/ → kin/, ai/     ✓ Sin ciclos
 
 ### KIN 2.0 — Fase actual (Correcciones arquitectónicas)
 
-**Estado**: Alpha 1 cerrado ✅ — `ARCHITECTURE STABLE` (hito `v2.0.0-alpha.1`)
+**Estado**: Alpha 1 cerrado ✅ — `ARCHITECTURE STABLE` (hito `v2.0.0-alpha.1`) + **Fase 5.2.1** (ADR-006…009)
 
 Completado en el milestone:
 
@@ -862,15 +855,18 @@ Completado en el milestone:
 - [x] Infraestructura común de motores: `kin/engine` + `EngineStage` + `KinConfig` (Fase 5.2)
 - [x] ADR-001 a ADR-005
 - [x] 102 tests verdes y cobertura de dominio ≥ 90 %
+- [x] **Consolidación del runtime (Fase 5.2.1)**: streaming usa `KinMethod.executeStream` (ADR-006)
+- [x] **Contexto durable**: `ContextRepository` + `JpaContextRepository` (ADR-007)
+- [x] **`PromptAssembler` extraído** a `kin.ai` + puerto `AIResponder` (ADR-008)
+- [x] **Scoring canonizado** (ADR-009) + `EngineInput` como marcador
+- [x] **130 tests verdes** y cobertura de dominio ≥ 90 % (engine 100 %, scoring 100 %, reporting 95,8 %)
 
 Pendiente (trackeado en fases siguientes, no bloquea el milestone):
 
 - [ ] Provider deduplication (`AbstractAIProvider`) → KIN 2.3
-- [ ] `PromptAssembler` extraction → KIN 2.3
 - [ ] Pipeline error handling → KIN 2.1
 - [ ] Scoring audit trail → KIN 2.4
 - [ ] EventBus async abstraction → KIN 2.4
-- [ ] Streaming path refactored to use `KinMethod` → KIN 2.1
 - [ ] Unit tests for all corrections → KIN 2.1
 
 ### KIN 2.1 — Pipeline Estabilizado
@@ -878,11 +874,11 @@ Pendiente (trackeado en fases siguientes, no bloquea el milestone):
 **Objetivo**: Pipeline completamente funcional y testeado en ambos flujos.
 
 - [ ] Pipeline error handling with retry/fail strategies
-- [ ] EventStage fires correct events (not always ConversationCompleted)
+- [ ] EventStage fires correct events (not always ConversationCompleted) — parcialmente resuelto en 5.2.1
 - [ ] Pipeline timeout per stage
 - [ ] Pipeline metrics (stage duration, success/failure rates)
-- [ ] Streaming path uses KinMethod
-- [ ] All 6 pipeline stages have unit tests
+- [x] Streaming path uses KinMethod (resuelto en Fase 5.2.1)
+- [x] All 8 pipeline stages have unit tests (resuelto en Fase 5.2.1)
 - [ ] Integration test: ChatController → Orchestrator → KinMethod → Pipeline → DB
 
 ### KIN 2.2 — Report Engine

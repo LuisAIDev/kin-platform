@@ -3,18 +3,48 @@ package com.kinplatform.kin.scoring;
 import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.CompletenessEvaluation;
 import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.kin.engine.DomainEngine;
+import com.kinplatform.kin.engine.EngineMetadata;
+import com.kinplatform.kin.engine.EnginePhase;
+import com.kinplatform.kin.engine.EngineType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ScoringEngine {
+/**
+ * Motor determinista de scoring de viabilidad. Evalúa el contexto del proyecto
+ * y la evaluación de completitud para producir un puntaje, desglose por
+ * dimensión, fortalezas y debilidades.
+ *
+ * <p>Servicio de dominio puro (sin Spring, sin IA): implementa
+ * {@link DomainEngine} para integrarse con la infraestructura común de motores
+ * (registry + executor) sin modificar su lógica.</p>
+ */
+public class ScoringEngine implements DomainEngine<ScoringInput, ScoreResult> {
+
+    public static final String GENERATOR_NAME = "ScoringEngine";
+    public static final String ENGINE_VERSION = "v1";
 
     private final ScoringModel model;
 
     public ScoringEngine(ScoringModel model) {
         this.model = model;
+    }
+
+    @Override
+    public EngineMetadata metadata() {
+        return EngineMetadata.of(GENERATOR_NAME, model.version(), "KIN Architecture Team",
+            EnginePhase.SCORING, EngineType.DOMAIN, 30);
+    }
+
+    @Override
+    public ScoreResult evaluate(ScoringInput input) {
+        if (input == null || input.projectContext() == null || input.evaluation() == null) {
+            return ScoreResult.empty();
+        }
+        return evaluate(input.projectContext(), input.evaluation());
     }
 
     public ScoreResult evaluate(ProjectContext context, CompletenessEvaluation evaluation) {

@@ -135,6 +135,25 @@ CREATE INDEX idx_viability_scores_risk ON viability_scores (risk_level);
 CREATE INDEX idx_viability_scores_ai_insights ON viability_scores USING GIN (ai_insights);
 
 -- ============================================================
+-- TABLE: project_context
+-- Estado durable del ProjectContext de cada proyecto (1:1).
+-- Gestionado por el adaptador JPA de ContextRepository (Fase 5.2.1).
+-- ============================================================
+
+CREATE TABLE project_context (
+    project_id      UUID PRIMARY KEY,
+    context_data    TEXT NOT NULL,
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_project_context_project
+        FOREIGN KEY (project_id)
+        REFERENCES projects (id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX idx_project_context_updated_at ON project_context (updated_at);
+
+-- ============================================================
 -- FUNCTION: auto-update updated_at
 -- ============================================================
 

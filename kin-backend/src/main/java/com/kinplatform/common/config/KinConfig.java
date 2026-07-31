@@ -1,12 +1,14 @@
 package com.kinplatform.common.config;
 
-import com.kinplatform.ai.AiEngineService;
 import com.kinplatform.ai.provider.AIProvider;
 import com.kinplatform.ai.provider.DeepSeekProvider;
 import com.kinplatform.ai.provider.OpenAIProvider;
 import com.kinplatform.ai.provider.ProviderRouter;
+import com.kinplatform.kin.ai.AIResponder;
+import com.kinplatform.kin.ai.PromptAssembler;
 import com.kinplatform.kin.context.CompletenessEvaluator;
 import com.kinplatform.kin.context.ContextAnalyzerPort;
+import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.context.EvaluationPolicies;
 import com.kinplatform.kin.context.ExplorationPriority;
 import com.kinplatform.kin.context.strategy.ConversationStrategist;
@@ -92,6 +94,11 @@ public class KinConfig {
     }
 
     @Bean
+    public PromptAssembler promptAssembler() {
+        return new PromptAssembler();
+    }
+
+    @Bean
     public AnalyzerStage analyzerStage(ContextAnalyzerPort analyzer) {
         return new AnalyzerStage(analyzer);
     }
@@ -107,8 +114,8 @@ public class KinConfig {
     }
 
     @Bean
-    public ConsultorStage consultorStage(AiEngineService aiEngineService) {
-        return new ConsultorStage(aiEngineService);
+    public ConsultorStage consultorStage(AIResponder aiResponder, PromptAssembler promptAssembler) {
+        return new ConsultorStage(aiResponder, promptAssembler);
     }
 
     @Bean
@@ -196,7 +203,7 @@ public class KinConfig {
     }
 
     @Bean
-    public KinMethod kinMethod(Pipeline chatPipeline, DomainEventBus eventBus) {
-        return new KinMethod(chatPipeline, eventBus);
+    public KinMethod kinMethod(Pipeline chatPipeline, DomainEventBus eventBus, ContextRepository contextRepository) {
+        return new KinMethod(chatPipeline, eventBus, contextRepository);
     }
 }

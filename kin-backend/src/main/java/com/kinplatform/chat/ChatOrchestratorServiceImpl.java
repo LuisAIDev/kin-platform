@@ -1,12 +1,9 @@
 package com.kinplatform.chat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.ai.AiEngineService;
-import com.kinplatform.ai.context.ProjectContextService;
 import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.KinMethodCommand;
 import com.kinplatform.kin.context.Message;
-import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.ChatRequest;
 import com.kinplatform.chat.dto.ChatResponse;
@@ -25,6 +22,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Orquestador de chat. Tras la consolidación del runtime (Fase 5.2.1) NO
+ * contiene lógica de negocio ni flujos ad-hoc: ambos endpoints ({@code /chat}
+ * y {@code /chat/stream}) delegan en {@link KinMethod}, el único punto de
+ * entrada del pipeline. Este servicio solo se ocupa de la I/O HTTP: persistir
+ * los mensajes y emitir el SSE.
+ */
 @Service
 @RequiredArgsConstructor
 public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
@@ -33,10 +37,8 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
     private static final long SSE_TIMEOUT = 180_000L;
 
     private final ChatService chatService;
-    private final AiEngineService aiEngineService;
     private final ProjectRepository projectRepository;
     private final ObjectMapper objectMapper;
-    private final ProjectContextService projectContextService;
     private final KinMethod kinMethod;
 
     @Override
@@ -45,14 +47,13 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         var project = findProject(userId, projectId);
         var userMessage = saveUserMessage(userId, projectId, request.getContent());
         var history = loadHistoryForContext(userId, projectId);
-        var context = projectContextService.getContext(projectId);
         var command = new KinMethodCommand(
             projectId, userId, request.getContent(), history,
             project.getTitle(), project.getDescription(), project.getCategory() != null ? project.getCategory().name() : null
         );
         var result = kinMethod.execute(command);
         log.info("=== KIN METHOD RESULT === action={}, chars={}, events={}",
-                result.decision().action(),
+                result.decision() != null ? result.decision().action() : null,
                 result.aiResponse() != null ? result.aiResponse().length() : 0,
                 result.events().size());
         var assistantMessage = saveAssistantMessage(userId, projectId, result.aiResponse());
@@ -69,19 +70,17 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         var project = findProject(userId, projectId);
         var userMessage = saveUserMessage(userId, projectId, request.getContent());
         var history = loadHistoryForContext(userId, projectId);
-        var context = projectContextService.analyzeMessage(projectId, request.getContent());
+        var command = new KinMethodCommand(
+            projectId, userId, request.getContent(), history,
+            project.getTitle(), project.getDescription(), project.getCategory() != null ? project.getCategory().name() : null
+        );
 
-        log.info("=== STREAMING AI RESPONSE === project={}, userId={}, historySize={}, contextDimensions={}",
-                projectId, userId, history.size(), context.knownDimensionsCount());
+        log.info("=== STREAMING AI RESPONSE === project={}, userId={}, historySize={}",
+                projectId, userId, history.size());
 
+        var flux = kinMethod.executeStream(command);
         var emitter = new SseEmitter(SSE_TIMEOUT);
         var fullContent = new StringBuilder();
-
-        var flux = aiEngineService.generateAiResponseStream(
-                history, request.getContent(),
-                project.getTitle(), project.getDescription(), project.getCategory() != null ? project.getCategory().name() : null,
-                context
-        );
 
         flux.subscribe(
                 token -> {

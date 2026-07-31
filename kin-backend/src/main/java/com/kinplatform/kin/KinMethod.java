@@ -1,43 +1,50 @@
 package com.kinplatform.kin;
 
+import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.pipeline.Pipeline;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
+/**
+ * Punto de entrada único del runtime de KIN (consolidación de la Fase 5.2.1).
+ *
+ * <p>Todo el procesamiento —bloqueante ({@link #execute}) y streaming
+ * ({@link #executeStream})— pasa por el mismo {@link Pipeline} y por el mismo
+ * {@link ContextRepository}: no existen flujos paralelos ni lógica de negocio
+ * fuera del pipeline.</p>
+ *
+ * <p>El contexto del proyecto se carga desde el repositorio (durable) y se
+ * re-persiste tras la ejecución, con lo que todas las etapas (Analizador,
+ * Evaluador, Estratega, Consultor, Scoring, Recomendaciones, Riesgos,
+ * Eventos) reciben siempre un {@code projectContext} no nulo.</p>
+ */
 public class KinMethod {
 
     private static final Logger log = LoggerFactory.getLogger(KinMethod.class);
 
     private final Pipeline pipeline;
     private final DomainEventBus eventBus;
+    private final ContextRepository contextRepository;
 
-    public KinMethod(Pipeline pipeline, DomainEventBus eventBus) {
+    public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository) {
         this.pipeline = pipeline;
         this.eventBus = eventBus;
+        this.contextRepository = contextRepository;
     }
 
     public KinMethodResult execute(KinMethodCommand command) {
         log.info("KinMethod executing for project={}, userId={}", command.projectId(), command.userId());
 
-        var ctx = new PipelineContext(
-            command.projectId(),
-            command.userId(),
-            command.userMessage(),
-            command.history(),
-            command.projectTitle(),
-            command.projectDescription(),
-            command.projectCategory()
-        );
-
+        var ctx = prepare(command);
         var result = pipeline.execute(ctx);
-
-        for (var event : result.events()) {
-            eventBus.publish(event);
-        }
+        contextRepository.save(command.projectId(), result.projectContext());
+        publish(result.events());
 
         return new KinMethodResult(
             result.projectContext(),
@@ -47,5 +54,49 @@ public class KinMethod {
             result.scoreResult(),
             result.events()
         );
+    }
+
+    /**
+     * Variante streaming: ejecuta el pipeline completo de forma síncrona
+     * (todas las etapas deterministas), pero la etapa Consultor deja el
+     * {@code Flux} de tokens en el contexto en lugar de bloquear. Devuelve ese
+     * flux para que el orquestador SSE lo suscriba.
+     */
+    public Flux<String> executeStream(KinMethodCommand command) {
+        log.info("KinMethod streaming for project={}, userId={}", command.projectId(), command.userId());
+
+        var ctx = prepare(command);
+        ctx.streaming(true);
+        var result = pipeline.execute(ctx);
+        contextRepository.save(command.projectId(), result.projectContext());
+        publish(result.events());
+
+        return result.aiResponseFlux();
+    }
+
+    private PipelineContext prepare(KinMethodCommand command) {
+        var ctx = new PipelineContext(
+            command.projectId(),
+            command.userId(),
+            command.userMessage(),
+            command.history(),
+            command.projectTitle(),
+            command.projectDescription(),
+            command.projectCategory()
+        );
+        var projectContext = contextRepository.findOrCreate(
+            command.projectId(),
+            command.projectTitle(),
+            command.projectDescription(),
+            command.projectCategory()
+        );
+        ctx.projectContext(projectContext);
+        return ctx;
+    }
+
+    private void publish(List<DomainEvent> events) {
+        for (var event : events) {
+            eventBus.publish(event);
+        }
     }
 }

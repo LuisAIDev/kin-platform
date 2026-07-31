@@ -33,6 +33,32 @@ public class ProjectContext {
         return ctx;
     }
 
+    /**
+     * Reconstruye un contexto persistido desde su estado serializado.
+     *
+     * <p>Método de dominio usado por los adaptadores de persistencia (p. ej.
+     * {@code ContextRepository}) para restaurar un {@code ProjectContext} sin
+     * pasar por {@link #update(AnalysisResult)} (que incrementa el contador de
+     * intercambios) ni por {@code fromProject} (que siembra datos).</p>
+     */
+    public static ProjectContext restore(Map<AnalyzedDimension, String> data,
+                                         Set<AnalyzedDimension> dimensionsCovered,
+                                         ConversationDecision decision,
+                                         int exchangeCount,
+                                         boolean reportGenerated) {
+        var ctx = new ProjectContext();
+        if (data != null) {
+            ctx.data.putAll(data);
+        }
+        if (dimensionsCovered != null) {
+            ctx.dimensionsCovered.addAll(dimensionsCovered);
+        }
+        ctx.currentDecision = decision;
+        ctx.exchangeCount = exchangeCount;
+        ctx.reportGenerated = reportGenerated;
+        return ctx;
+    }
+
     public void update(AnalysisResult result) {
         for (var entry : result.extracted().entrySet()) {
             var value = entry.getValue();

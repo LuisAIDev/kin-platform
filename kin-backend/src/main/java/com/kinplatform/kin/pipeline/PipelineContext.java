@@ -8,6 +8,7 @@ import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.reporting.RecommendationResult;
 import com.kinplatform.kin.reporting.risk.RiskResult;
 import com.kinplatform.kin.scoring.ScoreResult;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +38,8 @@ public class PipelineContext {
     private final Map<String, EngineResult> engineResults = new HashMap<>();
     private boolean completed;
     private String currentStage;
+    private boolean streaming;
+    private Flux<String> aiResponseFlux;
 
     public PipelineContext(UUID projectId, UUID userId, String userMessage,
                            List<com.kinplatform.kin.context.Message> history,
@@ -96,4 +99,10 @@ public class PipelineContext {
 
     public String currentStage() { return currentStage; }
     public void currentStage(String stage) { this.currentStage = stage; }
+
+    public boolean streaming() { return streaming; }
+    public void streaming(boolean streaming) { this.streaming = streaming; }
+
+    public Flux<String> aiResponseFlux() { return aiResponseFlux; }
+    public void aiResponseFlux(Flux<String> flux) { this.aiResponseFlux = flux; }
 }

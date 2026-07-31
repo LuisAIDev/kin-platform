@@ -44,7 +44,7 @@ spring:
     show-sql: true
     open-in-view: false
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
@@ -58,10 +58,12 @@ spring:
           provider_disables_autocommit: false
 
   # -----------------------------------------------------------
-  # Flyway — migraciones gestionadas
+  # Flyway — migraciones solo para PRODUCCIÓN (PostgreSQL).
+  # Dev (H2 file-based) usa ddl-auto: update: el esquema lo gestiona JPA,
+  # sin Docker ni migraciones. Prod re-habilita Flyway vía application-prod.
   # -----------------------------------------------------------
   flyway:
-    enabled: true
+    enabled: false
     baseline-on-migrate: true
     locations: classpath:db/migration
 

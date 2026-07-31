@@ -6,6 +6,8 @@
 > **Commit**: `91426e5` (`feat: implement KIN 2.0 architecture phases 4-5.2` + `fix: update pricing plans database schema`)
 > **Branch**: `main`
 > **Tag**: `v2.0.0-alpha.1`
+>
+> ⚠️ **Nota histórica**: estas notas corresponden al milestone original. La **Fase 5.2.1** (ADR-006…009) enmienda el baseline: streaming consolidado en `KinMethod`, contexto durable (`ContextRepository`), puerto `AIResponder` + `PromptAssembler` y scoring canonizado. Ver `kin-docs/FASE5_2_1_RUNTIME_CONSOLIDATION.md` y `BASELINE_ARCHITECTURE.md`.
 
 ---
 
@@ -112,10 +114,11 @@ Requisito de dominio (≥ 90 % en `kin.reporting` y `kin.engine`): **CUMPLIDO**.
 ## 6. Problemas conocidos
 
 > Nada en esta lista bloquea el milestone; ninguno corresponde al alcance de este hito.
+> Los ítems marcados ✅ fueron resueltos por la **Fase 5.2.1**.
 
-1. **Boot con Flyway + H2**: el script `V2__add_viability_scoring_column.sql` falla en H2 (tipo/DDL no portable). El arranque funciona con Flyway deshabilitado (`spring.flyway.enabled=false`). Es un problema de configuración de dev, no de dominio.
-2. **`ChatOrchestratorServiceImpl` streaming**: aún no usa `KinMethod` en el flujo streaming (pendiente planificado en roadmap KIN 2.1). Es el componente más inestable del proyecto.
-3. **`EventStage`**: dispara `ConversationCompleted` de forma fija; debe corregirse para disparar eventos según el flujo real (KIN 2.1).
+1. **Boot con Flyway + H2**: el script `V2__add_viability_scoring_column.sql` falla en H2 (tipo/DDL no portable). El arranque funciona con Flyway deshabilitado (`spring.flyway.enabled=false`). Es un problema de configuración de dev, no de dominio. ✅ **resuelto** en 5.2.1 (dev usa `ddl-auto: update`; Flyway solo en prod).
+2. ✅ **`ChatOrchestratorServiceImpl` streaming**: usa `KinMethod.executeStream` desde la Fase 5.2.1 (ADR-006). Ya no es el componente más inestable.
+3. ✅ **`EventStage`**: en 5.2.1 distingue la decisión real (ASK → `QuestionGeneratedEvent`; REPORT → `ReportGeneratedEvent` + `ScoreCalculatedEvent`; siempre `ConversationCompletedEvent`). La semántica completa queda para KIN 2.1.
 4. **`InMemoryDomainEventBus`**: implementación en memoria, sin async ni persistencia (KIN 2.4).
 5. **Heurística de longitud en `ScoringEngine`**: debe reemplazarse antes de KIN 2.5 (regla absoluta #18).
 6. **Cobertura general del proyecto**: los paquetes de infraestructura (auth, pricing, project, ai.provider) tienen cobertura baja. El requisito de ≥ 90 % aplica solo a `kin.reporting` y `kin.engine`.
@@ -125,7 +128,7 @@ Requisito de dominio (≥ 90 % en `kin.reporting` y `kin.engine`): **CUMPLIDO**.
 ## 7. Pendientes fuera de alcance
 
 - Fase 5.3 y siguientes (ver `BASELINE_ARCHITECTURE.md` → Preparación para la siguiente fase).
-- Refactor del streaming a `KinMethod`.
+- ✅ ~~Refactor del streaming a `KinMethod`.~~ — resuelto en la Fase 5.2.1 (ADR-006).
 - Pipeline error handling, timeout y métricas.
 - Event bus async con persistencia (outbox).
 - Report Engine y Knowledge Engine (KIN 3.0).

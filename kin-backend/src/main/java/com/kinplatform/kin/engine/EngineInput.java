@@ -1,27 +1,19 @@
 package com.kinplatform.kin.engine;
 
-import com.kinplatform.kin.context.CompletenessEvaluation;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
-import com.kinplatform.kin.scoring.ScoreResult;
-
 /**
- * Contrato común de entrada de los motores que consumen la información ya
- * producida por Java en la conversación: contexto del proyecto, evaluación de
- * completitud, decisión y score.
+ * Contrato común de entrada de los motores de dominio.
  *
- * <p>Mantiene tipado fuerte: cada implementación concreta (por ejemplo
- * {@code RecommendationInput}) conserva sus métodos tipados y este contrato
- * garantiza que el pipeline y el {@link EngineExecutor} puedan construir y
- * consumir entradas sin acoplarse a un motor específico.</p>
+ * <p>Interfaz marcadora: no impone métodos, porque cada motor consume un
+ * subconjunto distinto de la información producida por Java en la
+ * conversación. Los motores existentes (Recommendation, Risk, Scoring)
+ * exponen sus campos tipados ({@code projectContext()}, {@code evaluation()},
+ * {@code decision()}, {@code score()}) en sus propios records; los motores
+ * futuros (Market, Competition, Innovation, Financial, etc.) declararán solo
+ * lo que realmente necesitan.</p>
+ *
+ * <p>La marca {@code EngineInput} garantiza que el {@link EngineExecutor} y el
+ * {@code EngineStage} puedan construir y consumir entradas con tipado fuerte
+ * sin acoplarse a un motor específico.</p>
  */
 public interface EngineInput {
-
-    ProjectContext projectContext();
-
-    CompletenessEvaluation evaluation();
-
-    ConversationDecision decision();
-
-    ScoreResult score();
 }

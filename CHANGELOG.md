@@ -5,6 +5,48 @@ Todos los cambios notables de este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/),
 y el versionado del proyecto en [SemVer](https://semver.org/lang/es/).
 
+## [Unreleased] - Fase 5.2.1 (consolidación del runtime)
+
+Enmienda de `v2.0.0-alpha.1` con ADR-006…ADR-009. **Estado: Architecture Stable (enmendado).**
+
+### Added
+
+- `KinMethod.executeStream(KinMethodCommand) → Flux<String>`: punto de entrada único del runtime para streaming; `ConsultorStage` deja el `Flux` en `PipelineContext.aiResponseFlux`.
+- `ContextRepository` (puerto, `kin.context`) + `ProjectContext.restore(...)`: contexto durable.
+- Adaptador JPA durable: `JpaContextRepository`, `ProjectContextEntity`, `ProjectContextJpaRepository` (`ai.context.adapter`, tabla `project_context`).
+- Puerto `AIResponder` + `AIRequest` + `PromptAssembler` (`kin.ai`).
+- `ScoringInput` y canonización de `ScoringEngine`/`ScoreResult`/`ScoringStage` bajo `DomainEngine` (ADR-009).
+- Migración Flyway `V3__create_project_context.sql` + tabla en `kin-database/init.sql`.
+- ADRs 006 (runtime), 007 (context repository), 008 (AI responder/prompt assembler), 009 (engine canonization).
+- Documentación: `FASE5_2_1_RUNTIME_CONSOLIDATION.md` (UML antes/después).
+- 28 tests nuevos (de 102 a 130).
+
+### Changed
+
+- `ChatOrchestratorServiceImpl` ahora es I/O puro: ambos endpoints (`/chat` y `/chat/stream`) delegan en `KinMethod`.
+- `ConsultorStage` depende de `AIResponder` + `PromptAssembler` (no del servicio concreto).
+- `EngineInput` pasa de record a interfaz marcadora.
+- `ScoringStage` compone `EngineStage` (elimina requisito `scoreResult() != null`).
+- Dev: `application.yml` con `ddl-auto: update` + Flyway deshabilitado; prod (Flyway) sin cambios.
+- `SecurityConfig`: `/test/**` requiere rol `ADMIN`.
+- `DeepSeekConfig`: ya no loguea el prefijo/longitud de la API key.
+
+### Removed
+
+- `ProjectContextService` (`ai/context/`) y su cableado — el ciclo de vida del contexto pasa a `ContextRepository`.
+
+### Testing
+
+- `./mvnw clean test`: **130 tests, 0 fallos, BUILD SUCCESS**.
+- Cobertura (JaCoCo): `kin.engine` 100 %; `kin.reporting` 95,8 % (+ `kin.reporting.risk` 99,5 %); `kin.scoring` 100 %. Requisito de ≥ 90 % cumplido.
+
+### Known Issues
+
+- Incidencia heredada: `pricing_plans` sin columnas NOT NULL aplicadas en dev (H2, `ddl-auto: update`). No bloquea el arranque (warnings). Fuera del alcance de esta fase.
+- `InMemoryDomainEventBus` sin async ni persistencia (KIN 2.4).
+- Heurística de longitud en `ScoringEngine` por reemplazar antes de KIN 2.5.
+- Cobertura baja en paquetes de infraestructura (auth, pricing, project, ai.provider) — fuera del requisito del dominio.
+
 ## [v2.0.0-alpha.1] - 2026-07-30
 
 Primer hito oficial de la arquitectura KIN 2.0. **Estado: Architecture Stable**.
