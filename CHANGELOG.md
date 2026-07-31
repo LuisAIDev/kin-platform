@@ -16,7 +16,7 @@ Enmienda de `v2.0.0-alpha.1` con ADR-010. **Estado: Architecture Stable (enmenda
 - `Opportunity`, `OpportunityResult`, `OpportunityInput`, `OpportunityModel`, `OpportunityAssembler`, `OpportunityExplanation`, `OpportunityCategory`.
 - `OpportunityStage` (composición pura sobre `EngineStage`): pipeline de 9 etapas, entre `RiskStage` y `EventStage`.
 - Campo tipado aditivo `PipelineContext.opportunityResult` (mismo patrón que `riskResult`).
-- Documentación: `FASE5_3_OPPORTUNITY_ENGINE.md` (auditoría, diseño, UML, contratos), ADR-010.
+- Documentación: `FASE5_3_OPPORTUNITY_ENGINE.md` (auditoría, diseño, UML, contratos), ADR-010, release notes en `kin-docs/releases/KIN_2_0_FASE_5_3_OPPORTUNITY_ENGINE.md`.
 - 42 tests nuevos (de 130 a 172).
 
 ### Changed

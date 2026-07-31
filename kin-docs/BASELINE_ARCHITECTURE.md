@@ -292,7 +292,7 @@ puede añadir un nuevo motor (p. ej. `ReportEngine` o `MarketEngine`) o una nuev
 
 ### 7.3 Bloqueantes
 
-- **Ningún bloqueante** para iniciar la Fase 5.3.
+- **Ningún bloqueante** para iniciar la Fase 5.4.
 
 ### 7.4 Dependencias
 

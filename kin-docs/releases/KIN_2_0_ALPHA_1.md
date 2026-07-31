@@ -7,7 +7,7 @@
 > **Branch**: `main`
 > **Tag**: `v2.0.0-alpha.1`
 >
-> ⚠️ **Nota histórica**: estas notas corresponden al milestone original. La **Fase 5.2.1** (ADR-006…009) enmienda el baseline: streaming consolidado en `KinMethod`, contexto durable (`ContextRepository`), puerto `AIResponder` + `PromptAssembler` y scoring canonizado. Ver `kin-docs/FASE5_2_1_RUNTIME_CONSOLIDATION.md` y `BASELINE_ARCHITECTURE.md`.
+> ⚠️ **Nota histórica**: estas notas corresponden al milestone original. La **Fase 5.2.1** (ADR-006…009) enmienda el baseline: streaming consolidado en `KinMethod`, contexto durable (`ContextRepository`), puerto `AIResponder` + `PromptAssembler` y scoring canonizado. La **Fase 5.3** (ADR-010) agrega `OpportunityEngine` al pipeline (9 etapas). Ver `kin-docs/FASE5_2_1_RUNTIME_CONSOLIDATION.md`, `kin-docs/releases/KIN_2_0_FASE_5_3_OPPORTUNITY_ENGINE.md` y `BASELINE_ARCHITECTURE.md`.
 
 ---
 
