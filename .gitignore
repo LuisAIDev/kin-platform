@@ -26,3 +26,6 @@ docker-compose.override.yml
 
 # Session transcripts / logs
 Iniciando_proyecto.md
+
+# Build artifacts / stray compiled classes
+org/

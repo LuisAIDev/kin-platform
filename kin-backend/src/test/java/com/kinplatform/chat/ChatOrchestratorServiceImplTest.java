@@ -2,6 +2,9 @@ package com.kinplatform.chat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.ai.AiEngineService;
+import com.kinplatform.ai.context.ProjectContextService;
+import com.kinplatform.kin.KinMethod;
+import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.ChatRequest;
 import com.kinplatform.chat.dto.SaveMessageRequest;
@@ -41,6 +44,12 @@ class ChatOrchestratorServiceImplTest {
     @Mock
     private ProjectRepository projectRepository;
 
+    @Mock
+    private ProjectContextService projectContextService;
+
+    @Mock
+    private KinMethod kinMethod;
+
     private ObjectMapper objectMapper;
     private ChatOrchestratorServiceImpl orchestrator;
 
@@ -58,7 +67,7 @@ class ChatOrchestratorServiceImplTest {
         objectMapper = spy(new ObjectMapper());
 
         orchestrator = new ChatOrchestratorServiceImpl(
-                chatService, aiEngineService, projectRepository, objectMapper);
+                chatService, aiEngineService, projectRepository, objectMapper, projectContextService, kinMethod);
 
         request = new ChatRequest();
         request.setContent(CONTENT);
@@ -106,6 +115,8 @@ class ChatOrchestratorServiceImplTest {
                 .thenReturn(assistantMsgResponse);
         when(chatService.getConversationHistory(USER_ID, PROJECT_ID))
                 .thenReturn(List.of());
+        when(projectContextService.analyzeMessage(eq(PROJECT_ID), anyString()))
+                .thenReturn(mock(ProjectContext.class));
     }
 
     // ---------------------------------------------------------------
@@ -115,7 +126,7 @@ class ChatOrchestratorServiceImplTest {
     void processMessageStream_deberiaEmitirTokensYDone_cuandoFlujoExitoso() throws Exception {
         stubCommonDependencies();
         when(aiEngineService.generateAiResponseStream(
-                anyList(), eq(CONTENT), anyString(), anyString(), anyString()))
+                anyList(), eq(CONTENT), anyString(), anyString(), anyString(), any()))
                 .thenReturn(Flux.just("A", "B"));
 
         try (var mocked = mockConstruction(SseEmitter.class)) {
@@ -176,7 +187,7 @@ class ChatOrchestratorServiceImplTest {
     void processMessageStream_deberiaEmitirError_cuandoFlujoFalla() throws Exception {
         stubCommonDependencies();
         when(aiEngineService.generateAiResponseStream(
-                anyList(), eq(CONTENT), anyString(), anyString(), anyString()))
+                anyList(), eq(CONTENT), anyString(), anyString(), anyString(), any()))
                 .thenReturn(Flux.error(new RuntimeException("AI model unavailable")));
 
         try (var mocked = mockConstruction(SseEmitter.class)) {
@@ -218,9 +229,11 @@ class ChatOrchestratorServiceImplTest {
                 .thenThrow(new RuntimeException("DB error"));
         when(chatService.getConversationHistory(USER_ID, PROJECT_ID))
                 .thenReturn(List.of());
+        when(projectContextService.analyzeMessage(eq(PROJECT_ID), anyString()))
+                .thenReturn(mock(ProjectContext.class));
         when(aiEngineService.generateAiResponseStream(
-                anyList(), eq(CONTENT), anyString(), anyString(), anyString()))
-                .thenReturn(Flux.just("Token único"));
+                anyList(), eq(CONTENT), anyString(), anyString(), anyString(), any()))
+                .thenReturn(Flux.just("Token \u00FAnico"));
 
         try (var mocked = mockConstruction(SseEmitter.class)) {
             SseEmitter result = orchestrator
@@ -244,13 +257,13 @@ class ChatOrchestratorServiceImplTest {
             @SuppressWarnings("unchecked")
             Map<String, Object> tokenPayload =
                     (Map<String, Object>) payloads.get(0);
-            assertEquals("Token único", tokenPayload.get("token"));
+            assertEquals("Token \u00FAnico", tokenPayload.get("token"));
 
             @SuppressWarnings("unchecked")
             Map<String, Object> donePayload =
                     (Map<String, Object>) payloads.get(1);
             assertEquals(true, donePayload.get("done"));
-            assertEquals("Token único", donePayload.get("content"));
+            assertEquals("Token \u00FAnico", donePayload.get("content"));
             assertEquals("", donePayload.get("assistantMessageId"));
             assertEquals(0, donePayload.get("tokensUsed"));
         }
@@ -263,7 +276,7 @@ class ChatOrchestratorServiceImplTest {
     void processMessageStream_deberiaCompletarConError_cuandoSendLanzaIOException() throws Exception {
         stubCommonDependencies();
         when(aiEngineService.generateAiResponseStream(
-                anyList(), eq(CONTENT), anyString(), anyString(), anyString()))
+                anyList(), eq(CONTENT), anyString(), anyString(), anyString(), any()))
                 .thenReturn(Flux.just("A"));
 
         try (var mocked = mockConstruction(SseEmitter.class,
@@ -291,7 +304,7 @@ class ChatOrchestratorServiceImplTest {
     void processMessageStream_deberiaEmitirDoneConContenidoVacio_cuandoFluxVacio() throws Exception {
         stubCommonDependencies();
         when(aiEngineService.generateAiResponseStream(
-                anyList(), eq(CONTENT), anyString(), anyString(), anyString()))
+                anyList(), eq(CONTENT), anyString(), anyString(), anyString(), any()))
                 .thenReturn(Flux.empty());
 
         try (var mocked = mockConstruction(SseEmitter.class)) {

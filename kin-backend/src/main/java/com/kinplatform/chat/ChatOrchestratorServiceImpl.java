@@ -2,11 +2,15 @@ package com.kinplatform.chat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.ai.AiEngineService;
+import com.kinplatform.ai.context.ProjectContextService;
+import com.kinplatform.kin.KinMethod;
+import com.kinplatform.kin.KinMethodCommand;
+import com.kinplatform.kin.context.Message;
+import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.ChatRequest;
 import com.kinplatform.chat.dto.ChatResponse;
 import com.kinplatform.chat.dto.SaveMessageRequest;
-import com.kinplatform.project.Project;
 import com.kinplatform.project.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -32,31 +36,30 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
     private final AiEngineService aiEngineService;
     private final ProjectRepository projectRepository;
     private final ObjectMapper objectMapper;
+    private final ProjectContextService projectContextService;
+    private final KinMethod kinMethod;
 
     @Override
     @Transactional
     public ChatResponse processMessage(UUID userId, UUID projectId, ChatRequest request) {
         var project = findProject(userId, projectId);
         var userMessage = saveUserMessage(userId, projectId, request.getContent());
-        var history = loadHistoryForContext(userId, projectId, userMessage);
-        log.info("=== CALLING AI ENGINE === project={}, userId={}, historySize={}", projectId, userId, history.size());
-        var aiResponse = aiEngineService.generateAiResponse(
-                history, request.getContent(),
-                project.getTitle(), project.getDescription(), project.getCategory().name()
+        var history = loadHistoryForContext(userId, projectId);
+        var context = projectContextService.getContext(projectId);
+        var command = new KinMethodCommand(
+            projectId, userId, request.getContent(), history,
+            project.getTitle(), project.getDescription(), project.getCategory() != null ? project.getCategory().name() : null
         );
-        log.info("=== AI RESPONSE RECEIVED === chars={}, responsePreview={}",
-                aiResponse != null ? aiResponse.length() : 0,
-                aiResponse != null ? aiResponse.substring(0, Math.min(100, aiResponse.length())) : "null");
-        var assistantMessage = saveAssistantMessage(userId, projectId, aiResponse);
-
-        log.info("=== RESPONSE SENT TO FRONTEND === messageId={}, chars={}",
-                assistantMessage.getId(), aiResponse != null ? aiResponse.length() : 0);
-        log.info("=== FINAL RESPONSE SENT TO USER === preview={}",
-                aiResponse != null ? aiResponse.substring(0, Math.min(200, aiResponse.length())) : "null");
+        var result = kinMethod.execute(command);
+        log.info("=== KIN METHOD RESULT === action={}, chars={}, events={}",
+                result.decision().action(),
+                result.aiResponse() != null ? result.aiResponse().length() : 0,
+                result.events().size());
+        var assistantMessage = saveAssistantMessage(userId, projectId, result.aiResponse());
         return ChatResponse.builder()
                 .userMessageId(userMessage.getId())
                 .assistantMessageId(assistantMessage.getId())
-                .content(aiResponse)
+                .content(result.aiResponse())
                 .tokensUsed(assistantMessage.getTokensUsed())
                 .build();
     }
@@ -65,15 +68,19 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
     public SseEmitter processMessageStream(UUID userId, UUID projectId, ChatRequest request) {
         var project = findProject(userId, projectId);
         var userMessage = saveUserMessage(userId, projectId, request.getContent());
-        var history = loadHistoryForContext(userId, projectId, userMessage);
-        log.info("=== CALLING AI ENGINE === project={}, userId={}, historySize={}", projectId, userId, history.size());
+        var history = loadHistoryForContext(userId, projectId);
+        var context = projectContextService.analyzeMessage(projectId, request.getContent());
+
+        log.info("=== STREAMING AI RESPONSE === project={}, userId={}, historySize={}, contextDimensions={}",
+                projectId, userId, history.size(), context.knownDimensionsCount());
 
         var emitter = new SseEmitter(SSE_TIMEOUT);
         var fullContent = new StringBuilder();
 
         var flux = aiEngineService.generateAiResponseStream(
                 history, request.getContent(),
-                project.getTitle(), project.getDescription(), project.getCategory().name()
+                project.getTitle(), project.getDescription(), project.getCategory() != null ? project.getCategory().name() : null,
+                context
         );
 
         flux.subscribe(
@@ -102,9 +109,6 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                 () -> {
                     var finalContent = fullContent.toString();
                     log.info("=== AI RESPONSE RECEIVED === chars={}", finalContent.length());
-                    log.info("=== RESPONSE SENT TO FRONTEND === chars={}", finalContent.length());
-                    log.info("=== FINAL RESPONSE SENT TO USER === preview={}",
-                            finalContent.substring(0, Math.min(200, finalContent.length())));
                     try {
                         var assistantMessage = saveAssistantMessage(userId, projectId, finalContent);
                         var donePayload = Map.of(
@@ -141,7 +145,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         return emitter;
     }
 
-    private Project findProject(UUID userId, UUID projectId) {
+    private com.kinplatform.project.Project findProject(UUID userId, UUID projectId) {
         var project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
         if (!project.getUser().getId().equals(userId)) {
@@ -164,27 +168,12 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         return chatService.saveMessage(userId, projectId, request);
     }
 
-    private List<com.kinplatform.chat.ChatMessage> loadHistoryForContext(
-            UUID userId, UUID projectId, ChatMessageResponse lastMessage
-    ) {
+    private List<Message> loadHistoryForContext(UUID userId, UUID projectId) {
         var history = chatService.getConversationHistory(userId, projectId);
-        var entities = new ArrayList<com.kinplatform.chat.ChatMessage>();
-
+        var messages = new ArrayList<Message>(history.size());
         for (var msg : history) {
-            var role = switch (msg.getRole()) {
-                case USER -> "USER";
-                case ASSISTANT -> "ASSISTANT";
-                case SYSTEM -> "SYSTEM";
-            };
-
-            var entity = com.kinplatform.chat.ChatMessage.builder()
-                    .role(msg.getRole())
-                    .content(msg.getContent())
-                    .build();
-
-            entities.add(entity);
+            messages.add(new Message(msg.getRole().name(), msg.getContent()));
         }
-
-        return entities;
+        return messages;
     }
 }

@@ -34,7 +34,7 @@ docker compose up --build                      # from repo root
 - **Dual CORS config**: both `CorsConfig.java` and `SecurityConfig.java` configure CORS. `SecurityConfig` takes precedence (Spring Security filter chain). Add new origins to both.
 - **AI engine** (`AiEngineService.java`) calls Ollama (`llama3.2`) but falls back to Spanish mock responses on failure — safe to develop without Ollama running.
 - **Auth middleware** is in `src/proxy.ts` (frontend middleware, not backend). Protects `/dashboard` and redirects `/login` when authenticated.
-- **Tests** exist in `kin-backend/src/test/java/`. Run with `cd kin-backend && ./mvnw test`. Currently 10 tests (5 in `AiEngineServiceTest`, 5 in `ChatOrchestratorServiceImplTest`). Tests use Mockito + JUnit 5 + reactor-test; the AI engine tests exercise the mock fallback path (no Ollama needed). No frontend tests or integration tests yet.
+- **Tests** exist in `kin-backend/src/test/java/`. Run with `cd kin-backend && ./mvnw test`. Currently 102 tests: 5 in `AiEngineServiceTest`, 5 in `ChatOrchestratorServiceImplTest`, 31 in `kin/engine/` (EngineRegistry/EngineExecutor/EngineMetadata/DeterministicId) + `pipeline/stage/` (EngineStage) + `reporting/risk/` (RiskAssembler), and 61 in `kin/reporting/` + `pipeline/stage/` (RecommendationEngine/Result/Stage, RiskEngine/Result/Stage, RiskAnalyzers). JaCoCo is configured (`jacoco-maven-plugin`), report at `target/site/jacoco/index.html`. Domain coverage requirement: ≥90% instructions in `kin.reporting` and `kin.engine` (current: 100% in `kin.reporting.risk`, `kin.engine`, `EngineStage`, `RiskAssembler`; 96.9% in `EngineRegistry`). Tests use Mockito + JUnit 5 + reactor-test; the AI engine tests exercise the mock fallback path (no Ollama needed). No frontend tests or integration tests yet.
 - **E2E tests** (`kin-frontend/tests/`): 3 login-flow tests with Playwright. Run with `cd kin-frontend && npx playwright test`. The webServer auto-starts only the Next.js frontend. **Before running, start the backend manually**: `cd kin-backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=test` (H2 in-memory, no Docker needed).
 - **`.env` is gitignored** — never commit secrets. Copy `.env.example` to `.env`.
 - **Frontend API URL**: controlled by `NEXT_PUBLIC_API_URL` env var (defaults to `http://localhost:8080/api/v1`).
@@ -50,7 +50,9 @@ docker compose up --build                      # from repo root
 | `project` | CRUD + categories, status, viability scoring |
 | `chat` | Message history, streaming SSE (`/chat/stream`), orchestration |
 | `ai` | Ollama integration + mock fallback |
-| `common.config` | CORS + Security filter chain (stateless JWT) |
+| `engine` | Engine infrastructure: `DomainEngine<E,R>` contract, `EngineMetadata`, `EnginePhase`, `EngineRegistry` (auto-discovery via `List<DomainEngine>`), `EngineExecutor` (sequential/conditional/optional; parallel designed not active), `DeterministicId` |
+| `pipeline.stage.EngineStage` | Generic engine stage (composition); `RecommendationStage`/`RiskStage` delegate to it |
+| `common.config` | CORS + Security filter chain (stateless JWT) + `KinConfig` wiring (registry/executor auto-discovery) |
 | `common.security` | `JwtService`, `JwtAuthenticationFilter` |
 
 ## Database
