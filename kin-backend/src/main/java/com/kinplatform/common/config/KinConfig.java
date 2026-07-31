@@ -26,6 +26,7 @@ import com.kinplatform.kin.pipeline.stage.EvaluatorStage;
 import com.kinplatform.kin.pipeline.stage.EventStage;
 import com.kinplatform.kin.pipeline.stage.OpportunityStage;
 import com.kinplatform.kin.pipeline.stage.RecommendationStage;
+import com.kinplatform.kin.pipeline.stage.ReportStage;
 import com.kinplatform.kin.pipeline.stage.RiskStage;
 import com.kinplatform.kin.pipeline.stage.ScoringStage;
 import com.kinplatform.kin.pipeline.stage.StrategistStage;
@@ -49,6 +50,19 @@ import com.kinplatform.kin.reporting.opportunity.OpportunityEngine;
 import com.kinplatform.kin.reporting.opportunity.OpportunityModel;
 import com.kinplatform.kin.reporting.opportunity.ScalabilityOpportunityAnalyzer;
 import com.kinplatform.kin.reporting.opportunity.TechnologicalOpportunityAnalyzer;
+import com.kinplatform.kin.reporting.report.ReportAssemblers;
+import com.kinplatform.kin.reporting.report.ReportEngine;
+import com.kinplatform.kin.reporting.report.ReportModel;
+import com.kinplatform.kin.reporting.report.assembler.ExecutiveSummaryAssembler;
+import com.kinplatform.kin.reporting.report.assembler.FinancialSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.InnovationSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.MarketSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.NextStepsSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.OpportunitiesSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.RecommendationsSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.ReportMetadataAssembler;
+import com.kinplatform.kin.reporting.report.assembler.RisksSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.ScoresSectionAssembler;
 import com.kinplatform.kin.scoring.ScoringEngine;
 import com.kinplatform.kin.scoring.ScoringModel;
 import org.springframework.beans.factory.annotation.Value;
@@ -241,6 +255,87 @@ public class KinConfig {
     }
 
     @Bean
+    public ReportModel reportModel() {
+        return ReportModel.defaultModel();
+    }
+
+    @Bean
+    public ExecutiveSummaryAssembler executiveSummaryAssembler() {
+        return new ExecutiveSummaryAssembler();
+    }
+
+    @Bean
+    public ScoresSectionAssembler scoresSectionAssembler() {
+        return new ScoresSectionAssembler();
+    }
+
+    @Bean
+    public RecommendationsSectionAssembler recommendationsSectionAssembler() {
+        return new RecommendationsSectionAssembler();
+    }
+
+    @Bean
+    public RisksSectionAssembler risksSectionAssembler() {
+        return new RisksSectionAssembler();
+    }
+
+    @Bean
+    public OpportunitiesSectionAssembler opportunitiesSectionAssembler() {
+        return new OpportunitiesSectionAssembler();
+    }
+
+    @Bean
+    public FinancialSectionAssembler financialSectionAssembler() {
+        return new FinancialSectionAssembler();
+    }
+
+    @Bean
+    public MarketSectionAssembler marketSectionAssembler() {
+        return new MarketSectionAssembler();
+    }
+
+    @Bean
+    public InnovationSectionAssembler innovationSectionAssembler() {
+        return new InnovationSectionAssembler();
+    }
+
+    @Bean
+    public NextStepsSectionAssembler nextStepsSectionAssembler(ReportModel reportModel) {
+        return new NextStepsSectionAssembler(reportModel);
+    }
+
+    @Bean
+    public ReportMetadataAssembler reportMetadataAssembler(ReportModel reportModel) {
+        return new ReportMetadataAssembler(reportModel);
+    }
+
+    @Bean
+    public ReportAssemblers reportAssemblers(
+            ExecutiveSummaryAssembler executiveSummary,
+            ScoresSectionAssembler scores,
+            RecommendationsSectionAssembler recommendations,
+            RisksSectionAssembler risks,
+            OpportunitiesSectionAssembler opportunities,
+            FinancialSectionAssembler financial,
+            MarketSectionAssembler market,
+            InnovationSectionAssembler innovation,
+            NextStepsSectionAssembler nextSteps,
+            ReportMetadataAssembler metadata) {
+        return new ReportAssemblers(executiveSummary, scores, recommendations, risks,
+            opportunities, financial, market, innovation, nextSteps, metadata);
+    }
+
+    @Bean
+    public ReportEngine reportEngine(ReportAssemblers reportAssemblers, ReportModel reportModel) {
+        return new ReportEngine(reportAssemblers, reportModel);
+    }
+
+    @Bean
+    public ReportStage reportStage(ReportEngine reportEngine) {
+        return new ReportStage(reportEngine);
+    }
+
+    @Bean
     public EventStage eventStage() {
         return new EventStage();
     }
@@ -265,9 +360,10 @@ public class KinConfig {
             RecommendationStage recommendation,
             RiskStage risk,
             OpportunityStage opportunity,
+            ReportStage report,
             EventStage eventStage) {
         return new Pipeline(List.of(analyzer, evaluator, strategist, consultor,
-            scoring, recommendation, risk, opportunity, eventStage));
+            scoring, recommendation, risk, opportunity, report, eventStage));
     }
 
     @Bean

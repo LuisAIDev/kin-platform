@@ -21,12 +21,31 @@ import com.kinplatform.kin.pipeline.stage.AnalyzerStage;
 import com.kinplatform.kin.pipeline.stage.ConsultorStage;
 import com.kinplatform.kin.pipeline.stage.EvaluatorStage;
 import com.kinplatform.kin.pipeline.stage.EventStage;
+import com.kinplatform.kin.pipeline.stage.OpportunityStage;
 import com.kinplatform.kin.pipeline.stage.RecommendationStage;
+import com.kinplatform.kin.pipeline.stage.ReportStage;
 import com.kinplatform.kin.pipeline.stage.RiskStage;
 import com.kinplatform.kin.pipeline.stage.ScoringStage;
 import com.kinplatform.kin.pipeline.stage.StrategistStage;
 import com.kinplatform.kin.reporting.RecommendationEngine;
 import com.kinplatform.kin.reporting.RecommendationModel;
+import com.kinplatform.kin.reporting.opportunity.MarketOpportunityAnalyzer;
+import com.kinplatform.kin.reporting.opportunity.MonetizationOpportunityAnalyzer;
+import com.kinplatform.kin.reporting.opportunity.OpportunityEngine;
+import com.kinplatform.kin.reporting.opportunity.OpportunityModel;
+import com.kinplatform.kin.reporting.report.ReportAssemblers;
+import com.kinplatform.kin.reporting.report.ReportEngine;
+import com.kinplatform.kin.reporting.report.ReportModel;
+import com.kinplatform.kin.reporting.report.assembler.ExecutiveSummaryAssembler;
+import com.kinplatform.kin.reporting.report.assembler.FinancialSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.InnovationSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.MarketSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.NextStepsSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.OpportunitiesSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.RecommendationsSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.ReportMetadataAssembler;
+import com.kinplatform.kin.reporting.report.assembler.RisksSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.ScoresSectionAssembler;
 import com.kinplatform.kin.reporting.risk.BusinessRiskAnalyzer;
 import com.kinplatform.kin.reporting.risk.MarketRiskAnalyzer;
 import com.kinplatform.kin.reporting.risk.RiskEngine;
@@ -81,9 +100,28 @@ class KinMethodTest {
             new RiskStage(new RiskEngine(
                 List.of(new BusinessRiskAnalyzer(), new MarketRiskAnalyzer()),
                 RiskModel.defaultModel())),
+            new OpportunityStage(new OpportunityEngine(
+                List.of(new MarketOpportunityAnalyzer(), new MonetizationOpportunityAnalyzer()),
+                OpportunityModel.defaultModel())),
+            new ReportStage(reportEngine()),
             new EventStage()
         ));
         kinMethod = new KinMethod(pipeline, eventBus, contextRepository);
+    }
+
+    private ReportEngine reportEngine() {
+        var model = ReportModel.defaultModel();
+        return new ReportEngine(new ReportAssemblers(
+            new ExecutiveSummaryAssembler(),
+            new ScoresSectionAssembler(),
+            new RecommendationsSectionAssembler(),
+            new RisksSectionAssembler(),
+            new OpportunitiesSectionAssembler(),
+            new FinancialSectionAssembler(),
+            new MarketSectionAssembler(),
+            new InnovationSectionAssembler(),
+            new NextStepsSectionAssembler(model),
+            new ReportMetadataAssembler(model)), model);
     }
 
     private KinMethodCommand command(String message) {
@@ -139,6 +177,10 @@ class KinMethodTest {
 
         assertTrue(result.events().stream().anyMatch(e -> e instanceof ReportGeneratedEvent));
         assertTrue(result.events().stream().anyMatch(e -> e instanceof ScoreCalculatedEvent));
+
+        assertNotNull(result.consultingReport());
+        assertEquals("ReportEngine", result.consultingReport().generatedBy());
+        assertEquals(10, result.consultingReport().metadata().sectionsIncluded().size());
     }
 
     @Test

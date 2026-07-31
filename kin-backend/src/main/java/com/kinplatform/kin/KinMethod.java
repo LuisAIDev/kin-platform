@@ -52,7 +52,8 @@ public class KinMethod {
             result.decision(),
             result.aiResponse(),
             result.scoreResult(),
-            result.events()
+            result.events(),
+            result.consultingReport()
         );
     }
 
