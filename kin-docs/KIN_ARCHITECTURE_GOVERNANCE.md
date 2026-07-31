@@ -432,7 +432,7 @@ Donde:
 | `RecommendationEngine` | ✅ Existente | `RecommendationInput` | `RecommendationResult` |
 | `RiskEngine` | ✅ Existente | `RiskInput` | `RiskResult` |
 | `OpportunityEngine` | ✅ Existente (Fase 5.3, ADR-010) | `OpportunityInput` | `OpportunityResult` |
-| `ReportEngine` | 🔮 Futuro (KIN 2.2/3.0) | `ProjectContext` + `ScoreResult` | `Report` |
+| `ReportEngine` | ✅ Existente (Fase 5.4, ADR-011) | `ReportInput` | `ConsultingReport` |
 | `KnowledgeEngine` | 🔮 Futuro (KIN 3.0) | `KnowledgeQuery` | `KnowledgeResult` |
 | `InnovationEngine` | 🔮 Futuro (KIN 3.0) | `InnovationInput` | `InnovationScore` |
 

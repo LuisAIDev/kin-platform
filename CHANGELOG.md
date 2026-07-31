@@ -5,9 +5,41 @@ Todos los cambios notables de este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/),
 y el versionado del proyecto en [SemVer](https://semver.org/lang/es/).
 
-## [Unreleased] - Fase 5.3 (OpportunityEngine)
+## [Unreleased] - Fase 5.4 (ReportEngine)
 
-Enmienda de `v2.0.0-alpha.1` con ADR-010. **Estado: Architecture Stable (enmendado).**
+Enmienda de `v2.0.0-alpha.1` con ADR-011. **Estado: Architecture Stable (enmendado).**
+
+### Added
+
+- `kin.reporting.report.ReportEngine`: motor de dominio puro, orquestador del `ConsultingReport` (ADR-011). Prioridad 70, fase REPORTING.
+- Modelo completo del reporte: `ConsultingReport` (VO raíz inmutable, 10 secciones, ID determinista via `DeterministicId`), `ReportBuilder` (contrato estricto: `validate()`, nulos, duplicados), `ReportMetadata` (versiones, coverage, confidence, `sectionsIncluded` derivado).
+- 9 secciones de contenido: `ExecutiveSummary`, `ScoresSection`, `RecommendationsSection`, `RisksSection`, `OpportunitiesSection`, `FinancialSection`, `MarketSection`, `InnovationSection`, `NextStepsSection`.
+- VOs auxiliares: `DimensionCoverage` (proyección de `ProjectContext.isDimensionCovered`), `NextStep` (agregación top-3 rec/riesgos/opps con fuente y prioridad ya existente).
+- 10 `SectionAssembler` tipados (patrón coordinador): `ExecutiveSummaryAssembler`, `ScoresSectionAssembler`, `RecommendationsSectionAssembler`, `RisksSectionAssembler`, `OpportunitiesSectionAssembler`, `FinancialSectionAssembler`, `MarketSectionAssembler`, `InnovationSectionAssembler`, `NextStepsSectionAssembler`, `ReportMetadataAssembler` — agrupados en `ReportAssemblers` (record tipado, sin casts).
+- `ReportStage` (composición pura sobre `EngineStage`): predicado exige 4 resultados + decisión REPORT; 10ª etapa del pipeline entre `OpportunityStage` y `EventStage`.
+- Cambios aditivos a contratos congelados (BASELINE §4.1): `PipelineContext.consultingReport` (campo tipado), `KinMethodResult.consultingReport` (componente record) — compatibilidad hacia atrás.
+- Documentación: `FASE5_4_REPORT_ENGINE.md` (diseño completo), ADR-011, release notes en `kin-docs/releases/KIN_2_0_FASE_5_4_REPORT_ENGINE.md`.
+- 102 tests nuevos (de 172 a 274): modelo (inmutabilidad, copyOf, empty), builder (validate, nulos, duplicados, ID determinista), assemblers (proyección pura, frontera), engine (orquestación, nulidad→empty), stage (predicado, engineResults), integración pipeline 10 etapas.
+
+### Changed
+
+- `KinConfig.chatPipeline(...)`: agrega `ReportStage` al pipeline (10 stages).
+- `KIN_ARCHITECTURE_GOVERNANCE.md` §6.2: `ReportEngine` pasa de "Futuro (KIN 2.2/3.0)" a "Existente (Fase 5.4)".
+- `BASELINE_ARCHITECTURE.md`: inventario +1 motor, pipeline 10 stages, contratos + ReportEngine/ConsultingReport/ReportStage, cobertura actualizada.
+
+### Testing
+
+- `./mvnw clean verify`: **274 tests, 0 fallos, BUILD SUCCESS**.
+- Cobertura (JaCoCo): `kin.reporting.report.model` 99 %; `kin.reporting.report.assembler` 100 %; `kin.reporting.report` 100 %; `kin.pipeline.stage` 99 %. Requisito de ≥ 90 % en dominio cumplido (agregado: 98,6 % → 99 %+).
+
+### Known Issues
+
+- Incidencia heredada: `pricing_plans` sin columnas NOT NULL aplicadas en dev (H2, `ddl-auto: update`). No bloquea el arranque (warnings). Fuera del alcance de esta fase.
+- `InMemoryDomainEventBus` sin async ni persistencia (KIN 2.4).
+- Heurística de longitud en `ScoringEngine` por reemplazar antes de KIN 2.5.
+- Cobertura baja en paquetes de infraestructura (auth, pricing, project, ai.provider) — fuera del requisito del dominio.
+
+## [Unreleased] - Fase 5.3 (OpportunityEngine)
 
 ### Added
 

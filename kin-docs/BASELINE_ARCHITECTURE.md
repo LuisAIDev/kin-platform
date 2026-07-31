@@ -1,8 +1,8 @@
 # BASELINE ARCHITECTURE — KIN 2.0 Alpha 1 (+ Fase 5.2.1)
 
 > **Milestone**: `v2.0.0-alpha.1` — 30 de julio de 2026
-> **Estado**: `ARCHITECTURE STABLE` (enmendado por ADR-006 … ADR-009 — Fase 5.2.1)
-> **Commit**: `91426e5` — Branch: `main`
+> **Estado**: `ARCHITECTURE STABLE` (enmendado por ADR-006 … ADR-010 — Fases 5.2.1 y 5.3, y ADR-011 — Fase 5.4)
+> **Commit**: `577bb94` — Branch: `main`
 >
 > Este documento es el **baseline contractual** del milestone: define qué existe hoy, qué está
 > completo, qué contratos NO deben romperse, qué componente es estable/evolutivo/experimental
@@ -45,7 +45,7 @@ Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven
 | `chat` | `com.kinplatform.chat` | Historial de mensajes, streaming SSE (`/chat/stream`), orquestación (I/O puro) |
 | `ai` | `com.kinplatform.ai` | Adaptadores de IA: `AiEngineService` (implementa `AIResponder`), providers, analizador heurístico |
 | `pricing` | `com.kinplatform.pricing` | Planes, Stripe |
-| `reporting` | `com.kinplatform.kin.reporting` | Motores de dominio (recomendación, riesgo, oportunidad) + scoring |
+| `reporting` | `com.kinplatform.kin.reporting` | Motores de dominio (recomendación, riesgo, oportunidad, reporte) + scoring |
 | `engine` | `com.kinplatform.kin.engine` | Infraestructura común de motores (contrato estable) |
 | `pipeline` | `com.kinplatform.kin.pipeline` | Pipeline de análisis + stages genéricos |
 | `context` | `com.kinplatform.kin.context` | Tipos de dominio de contexto (ProjectContext, evaluación, decisión, `ContextRepository`) |
@@ -76,6 +76,7 @@ Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven
 | `RiskAssembler` | Analizadores de riesgo | `RiskResult` consolidado determinista | ✅ estable |
 | `OpportunityEngine` | `OpportunityInput` | `OpportunityResult` (oportunidades priorizadas, top) | ✅ estable como motor (Fase 5.3, ADR-010) |
 | `OpportunityAssembler` | Analizadores de oportunidad | `Opportunity` consolidada determinista | ✅ estable (Fase 5.3, ADR-010) |
+| `ReportEngine` | `ReportInput` (4 resultados ya calculados) | `ConsultingReport` (10 secciones inmutables) | ✅ existente (Fase 5.4, ADR-011): orquestador puro, prioridad 70, fase REPORTING |
 
 ### 2.4 Pipeline — `kin/pipeline`
 
@@ -91,10 +92,11 @@ Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven
 | `RecommendationStage` | Compone `EngineStage` → `RecommendationEngine` (predicado REPORT) |
 | `RiskStage` | Compone `EngineStage` → `RiskEngine` (predicado REPORT) |
 | `OpportunityStage` | Compone `EngineStage` → `OpportunityEngine` (predicado REPORT) |
+| `ReportStage` | Compone `EngineStage` → `ReportEngine` (predicado: 4 resultados presentes) |
 | `EventStage` | Publica eventos según decisión (ASK→Question, REPORT→Report+Score, siempre ConversationCompleted) |
 | `PipelineContext` | Flujo de datos mutable entre stages + `engineResults` + flag `streaming` + `aiResponseFlux` |
 
-El pipeline actual tiene **9 stages**: Analizador → Evaluador → Estratega → Consultor → Scoring → Recomendaciones → Riesgos → Oportunidades → Eventos.
+El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega → Consultor → Scoring → Recomendaciones → Riesgos → Oportunidades → **Reporte** → Eventos.
 
 ### 2.5 AI — `ai/` y `kin/ai`
 
@@ -143,11 +145,13 @@ El pipeline actual tiene **9 stages**: Analizador → Evaluador → Estratega �
 - [x] **Fase 5.1** — `RiskEngine` + `RiskAssembler` (ADR-004).
 - [x] **Fase 5.2** — Infraestructura común de motores (ADR-005): `kin/engine`, `EngineStage`, `KinConfig`.
 - [x] **Fase 5.2.1** — Consolidación del runtime (ADR-006 … ADR-009): pipeline único para `/chat` y `/chat/stream`, `ContextRepository` JPA durable, `AIResponder`/`PromptAssembler`, scoring canonizado.
+- [x] **Fase 5.3** — `OpportunityEngine` (ADR-010): 8 analizadores auto-descubiertos, `OpportunityStage` (9ª etapa).
+- [x] **Fase 5.4** — `ReportEngine` (ADR-011): orquestador puro del `ConsultingReport` (10 secciones), `ReportStage` (10ª etapa), ID determinista, cobertura ≥90%.
 - [x] Motores, inputs y results canonizados bajo el contrato `DomainEngine`.
-- [x] **130 tests verdes** (`./mvnw clean test`), BUILD SUCCESS.
-- [x] **Cobertura de dominio ≥ 90 %**: `kin.engine` 99,1 % (ramas 100 %), `kin.reporting` 96,2 % (+ `kin.reporting.risk` 99,6 %), `kin.scoring` 95,1 %.
-- [x] **9 ADRs** aprobadas (ADR-001 … ADR-009).
-- [x] Documentación por fase (FASE5_0/5_1/5_2/5_2_1) + Gobernanza + AGENTS.md + CHANGELOG + Release Notes.
+- [x] **274 tests verdes** (`./mvnw clean verify`), BUILD SUCCESS.
+- [x] **Cobertura de dominio ≥ 90 %**: `kin.engine` 100 %, `kin.reporting.report` 99–100 %, `kin.reporting.opportunity` 100 %, `kin.reporting.risk` 99.5 %, `kin.scoring` 98.9 %.
+- [x] **11 ADRs** aprobadas (ADR-001 … ADR-011).
+- [x] Documentación por fase (FASE5_0/5_1/5_2/5_2_1/5_3/5_4) + Gobernanza + AGENTS.md + CHANGELOG + Release Notes.
 
 ---
 
@@ -169,6 +173,9 @@ El pipeline actual tiene **9 stages**: Analizador → Evaluador → Estratega �
 | `EngineStage` | `name()`, `supports()`, `execute()` |
 | `RecommendationEngine` / `RecommendationResult` | Contrato público (input/output) |
 | `RiskEngine` / `RiskResult` | Contrato público (input/output) |
+| `OpportunityEngine` / `OpportunityResult` | Contrato público (input/output; ADR-010) |
+| `ReportEngine` / `ConsultingReport` | Contrato público (input/output; ADR-011) |
+| `ReportStage` | Stage de pipeline (composición pura sobre `EngineStage`; ADR-011) |
 | `ScoringEngine` / `ScoreResult` | Contrato público (input/output; ADR-009) |
 | `KinMethod` | Fachada única `execute(KinMethodCommand) → KinMethodResult` + `executeStream(KinMethodCommand) → Flux<String>` |
 | `ContextRepository` | `findOrCreate / find / save / delete` (ADR-007) |
@@ -216,7 +223,11 @@ El pipeline actual tiene **9 stages**: Analizador → Evaluador → Estratega �
 | `kin.pipeline.stage.EngineStage` | Stage genérico de composición; 100 % cobertura |
 | `kin.reporting.RecommendationEngine` | Motor de recomendaciones ADR-003; estable |
 | `kin.reporting.risk.RiskEngine` / `RiskAssembler` | Motor de riesgos ADR-004; consolidación determinista |
-| `RecommendationResult` / `RiskResult` / `ScoreResult` | Outputs inmutables que implementan `EngineResult` |
+| `kin.reporting.opportunity.OpportunityEngine` / `OpportunityAssembler` | Motor de oportunidades ADR-010; estable |
+| `kin.reporting.report.ReportEngine` | Motor de reporte ADR-011; orquestador puro, estable |
+| `ReportStage` | Stage de pipeline ADR-011; composición pura sobre `EngineStage` |
+| `ConsultingReport` | VO raíz inmutable del reporte, implementa `EngineResult` |
+| `RecommendationResult` / `RiskResult` / `OpportunityResult` / `ScoreResult` | Outputs inmutables que implementan `EngineResult` |
 | `kin.scoring.ScoringEngine` | Canonizado por ADR-009; implementa `DomainEngine` (SCORING/DOMAIN/30) |
 | `KinMethod` / `KinMethodCommand` / `KinMethodResult` | Fachada única del runtime (contrato KIN 2.0 / ADR-006) |
 | `ContextRepository` / `AIResponder` / `PromptAssembler` | Puertos/servicios de dominio (ADR-007/ADR-008) |
@@ -225,7 +236,7 @@ El pipeline actual tiene **9 stages**: Analizador → Evaluador → Estratega �
 | `DomainEvent` / `DomainEventBus` | Interfaces base del event-driven |
 | `AIProvider` | Puertos `generateBlocking`/`generateStream` |
 | `PipelineStage` / `Pipeline` | Interfaces y algoritmo de ejecución |
-| `PipelineContext` | Flujo de datos entre stages + `engineResults` + streaming |
+| `PipelineContext` | Flujo de datos entre stages + `engineResults` + `consultingReport` + streaming |
 
 ### 5.2 EN EVOLUCIÓN — cambiarán pero manteniendo la API pública
 
@@ -305,8 +316,8 @@ puede añadir un nuevo motor (p. ej. `ReportEngine` o `MarketEngine`) o una nuev
 
 ### 7.5 Recomendaciones para la siguiente fase
 
-1. **Prioridad 1**: añadir el motor/etapa de la Fase 5.4 sobre `kin/engine` reutilizando `EngineStage` — el contrato ya está listo.
-2. **Prioridad 2**: `ReportEngine`/`KnowledgeEngine` consumiendo el `ContextRepository` durable.
+1. **Prioridad 1**: Fase 5.5 — `PromptAssembler` + explicación LLM sobre `ConsultingReport` ya calculado (ADR-011 §11).
+2. **Prioridad 2**: `KnowledgeEngine` + RAG consumiendo `ContextRepository` durable (KIN 3.0 / Fase 6).
 3. Mantener el requisito de ≥ 90 % de cobertura en `kin.reporting` y `kin.engine` al añadir código nuevo.
 4. No romper ninguno de los contratos de §4 sin ADR.
 
@@ -315,12 +326,12 @@ puede añadir un nuevo motor (p. ej. `ReportEngine` o `MarketEngine`) o una nuev
 ## 8. Verificación
 
 ```bash
-cd kin-backend && ./mvnw clean verify       # 172 tests, 0 fallos, BUILD SUCCESS
-# Cobertura: kin.engine 100 %, kin.reporting* 98,6 % (opportunity 100 %, risk 99,5 %), kin.scoring 98,9 %
+cd kin-backend && ./mvnw clean verify       # 274 tests, 0 fallos, BUILD SUCCESS
+# Cobertura: kin.engine 100 %, kin.reporting.report 99–100 %, kin.reporting.opportunity 100 %, kin.reporting.risk 99.5 %, kin.scoring 98.9 %
 cd kin-backend && ./mvnw spring-boot:run     # arranque dev H2 (project_context auto-creado)
 git status                                   # working tree clean (tras commit de la fase)
 ```
 
 ---
 
-*Baseline KIN 2.0 Alpha 1 (enmendado por ADR-006 … ADR-010). Cualquier desviación requiere ADR aprobada.*
+*Baseline KIN 2.0 Alpha 1 (enmendado por ADR-006 … ADR-011). Cualquier desviación requiere ADR aprobada.*
