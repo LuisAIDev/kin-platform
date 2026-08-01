@@ -36,6 +36,12 @@ import com.kinplatform.kin.engine.DomainEngine;
 import com.kinplatform.kin.engine.EngineExecutor;
 import com.kinplatform.kin.engine.EngineRegistry;
 import com.kinplatform.kin.KinMethod;
+import com.kinplatform.kin.knowledge.KnowledgeSource;
+import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.kin.knowledge.engine.KnowledgeGateway;
+import com.kinplatform.kin.knowledge.engine.SourceRegistry;
+import com.kinplatform.kin.knowledge.engine.SourceValidator;
+import com.kinplatform.kin.knowledge.stage.KnowledgeStage;
 import com.kinplatform.kin.pipeline.Pipeline;
 import com.kinplatform.kin.pipeline.stage.AnalyzerStage;
 import com.kinplatform.kin.pipeline.stage.ConsultorStage;
@@ -430,10 +436,36 @@ public class KinConfig {
     }
 
     @Bean
+    public SourceValidator sourceValidator() {
+        return SourceValidator.strict();
+    }
+
+    @Bean
+    public SourceRegistry sourceRegistry(List<KnowledgeSource> knowledgeSources) {
+        return new SourceRegistry(knowledgeSources);
+    }
+
+    @Bean
+    public KnowledgeGateway knowledgeGateway(SourceRegistry sourceRegistry, SourceValidator sourceValidator) {
+        return new KnowledgeGateway(sourceRegistry, sourceValidator);
+    }
+
+    @Bean
+    public KnowledgeEngine knowledgeEngine(KnowledgeGateway knowledgeGateway) {
+        return new KnowledgeEngine(knowledgeGateway);
+    }
+
+    @Bean
+    public KnowledgeStage knowledgeStage(KnowledgeEngine knowledgeEngine) {
+        return new KnowledgeStage(knowledgeEngine);
+    }
+
+    @Bean
     public Pipeline chatPipeline(
             AnalyzerStage analyzer,
             EvaluatorStage evaluator,
             StrategistStage strategist,
+            KnowledgeStage knowledge,
             ConsultorStage consultor,
             ScoringStage scoring,
             RecommendationStage recommendation,
@@ -441,7 +473,7 @@ public class KinConfig {
             OpportunityStage opportunity,
             ReportStage report,
             EventStage eventStage) {
-        return new Pipeline(List.of(analyzer, evaluator, strategist,
+        return new Pipeline(List.of(analyzer, evaluator, strategist, knowledge,
             scoring, recommendation, risk, opportunity, report, consultor, eventStage));
     }
 

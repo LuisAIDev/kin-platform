@@ -7,6 +7,7 @@ import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.engine.EngineResult;
 import com.kinplatform.kin.event.DomainEvent;
+import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.reporting.RecommendationResult;
 import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
@@ -39,6 +40,7 @@ public class PipelineContext {
     private RiskResult riskResult;
     private OpportunityResult opportunityResult;
     private ConsultingReport consultingReport;
+    private KnowledgeResult knowledgeResult;
     private final List<DomainEvent> events = new ArrayList<>();
     private final Map<String, Object> attributes = new HashMap<>();
     private final Map<String, EngineResult> engineResults = new HashMap<>();
@@ -95,6 +97,9 @@ public class PipelineContext {
 
     public ConsultingReport consultingReport() { return consultingReport; }
     public void consultingReport(ConsultingReport r) { this.consultingReport = r; }
+
+    public KnowledgeResult knowledgeResult() { return knowledgeResult; }
+    public void knowledgeResult(KnowledgeResult r) { this.knowledgeResult = r; }
 
     public void setEngineResult(String engineName, EngineResult result) { engineResults.put(engineName, result); }
     @SuppressWarnings("unchecked")

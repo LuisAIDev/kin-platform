@@ -4,7 +4,8 @@
 > Aprobada el 30 de julio de 2026 — Vinculante para todo desarrollo futuro.
 > Toda desviación requiere una ADR aprobada antes de implementar.
 > Enmendada por ADR-013 (Fase 5.6, 2026-07-31): el ciclo de conversación pasa a estar dirigido por `kin.conversation` (Conversation Orchestrator).
-> **Release oficial**: KIN 2.0 Alpha 1 (`v2.0.0-alpha1`, 2026-07-31) — núcleo inteligente estable (fases 4.0–5.6, ADR-001…013). Ver `kin-docs/releases/KIN_2_0_ALPHA_1.md`.
+> **Enmendada por ADR-014 (Fase 6, 2026-07-31): la adquisición de conocimiento externo pasa a estar dirigida por `kin.knowledge` (KnowledgeEngine + KnowledgeGateway + SourceValidator); "Java decide. Las fuentes únicamente aportan conocimiento."**
+> **Release oficial**: KIN 2.0 Alpha 1 (`v2.0.0-alpha1`, 2026-07-31) — núcleo inteligente estable (fases 4.0–5.6, ADR-001…013) + Fase 6 (ADR-014). Ver `kin-docs/releases/KIN_2_0_ALPHA_1.md`.
 
 ---
 
@@ -135,8 +136,11 @@ Ningún paquete puede depender de otro que esté en una capa superior. Verificar
 - `HistoryWindow` (Java) decide: ¿qué fragmento del historial ve el LLM? (presupuesto por número de mensajes, ADR-013)
 - `ResponseGuard` (Java) valida: ¿la comunicación del LLM cumple la directiva? (longitud, pregunta única, marcadores prohibidos) — nunca infiere intención ni decisión del texto (ADR-013)
 - `ConversationOrchestrator` (Java) dirige el ciclo de turno (directiva pre-pipeline + validación post-pipeline) y delega la ejecución al pipeline (ADR-013)
+- `KnowledgeGateway` (Java) decide: ¿qué conocimiento externo se adquiere, valida y selecciona? (ADR-014)
+- `SourceValidator` (Java) decide: ¿una fuente es válida y con qué nivel de confianza? (HTTPS, allowlist, estado, frescura, dedup — ADR-014)
+- `KnowledgeEngine` (Java) decide: ¿qué hechos verificados enriquecen el análisis? (ADR-014)
 - El LLM solo recibe una instrucción estratégica y genera texto conversacional o un reporte.
-- El LLM NUNCA decide el flujo. NUNCA decide qué preguntar. NUNCA evalúa viabilidad.
+- El LLM NUNCA decide el flujo. NUNCA decide qué preguntar. NUNCA evalúa viabilidad. **El LLM NUNCA recupera, valida ni decide conocimiento: las fuentes únicamente aportan conocimiento, Java decide (ADR-014).**
 
 ---
 
@@ -439,7 +443,7 @@ Donde:
 | `RiskEngine` | ✅ Existente | `RiskInput` | `RiskResult` |
 | `OpportunityEngine` | ✅ Existente (Fase 5.3, ADR-010) | `OpportunityInput` | `OpportunityResult` |
 | `ReportEngine` | ✅ Existente (Fase 5.4, ADR-011) | `ReportInput` | `ConsultingReport` |
-| `KnowledgeEngine` | 🔮 Futuro (KIN 3.0) | `KnowledgeQuery` | `KnowledgeResult` |
+| `KnowledgeEngine` | ✅ Existente (Fase 6, ADR-014) | `KnowledgeInput` | `KnowledgeResult` |
 | `InnovationEngine` | 🔮 Futuro (KIN 3.0) | `InnovationInput` | `InnovationScore` |
 
 ### 6.3 Reglas Comunes
@@ -514,8 +518,9 @@ Donde:
    ) {}
    ```
 6. **El LLM solo comunica** — la decisión estratégica (`ConversationDecision`) es generada por `ConversationStrategist` en Java, y la directiva de turno (`TurnDirective`, fase/modo/restricciones) por `TurnPolicy` en Java (ADR-013). `ResponseGuard` valida la conformidad de la comunicación contra la directiva. El LLM recibe la decisión y la directiva como instrucción, genera texto y no participa en ninguna decisión.
-7. **Nunca se pasa el `PipelineContext` completo al LLM** — solo la información necesaria para generar la respuesta.
-8. **Versionado de prompts** — cada cambio en un prompt template debe incrementar su versión. El PromptAssembler debe registrar qué versión se usó en cada llamada (observabilidad).
+7. **Java decide sobre el conocimiento; las fuentes únicamente aportan conocimiento** (ADR-014) — la adquisición, validación, selección y caché del conocimiento externo son decisiones 100 % Java (`KnowledgeGateway` + `SourceValidator` en `kin.knowledge`). Los adaptadores (`ai.knowledge.adapter`) solo aportan candidatos crudos detrás del puerto `KnowledgeSource`; el LLM nunca recupera, valida ni decide conocimiento y no recibe fuentes crudas en el prompt (frontera ADR-012 intacta).
+8. **Nunca se pasa el `PipelineContext` completo al LLM** — solo la información necesaria para generar la respuesta.
+9. **Versionado de prompts** — cada cambio en un prompt template debe incrementar su versión. El PromptAssembler debe registrar qué versión se usó en cada llamada (observabilidad).
 
 ---
 
@@ -688,6 +693,7 @@ Cualquier regla de este documento puede ser eximida temporalmente mediante:
 
 *Documento generado el 30 de julio de 2026.*
 *Enmendado por ADR-013 el 31 de julio de 2026 (Fase 5.6 — Conversation Orchestrator).*
-*Versión: KIN-GOV-002*
+*Enmendado por ADR-014 el 31 de julio de 2026 (Fase 6 — External Knowledge Acquisition).*
+*Versión: KIN-GOV-003*
 *Próxima revisión: al completar KIN 2.3*
 *Próxima revisión mayor: al alcanzar KIN 3.0*

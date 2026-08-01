@@ -1,7 +1,7 @@
 # BASELINE ARCHITECTURE — KIN 2.0 Alpha 1 (núcleo inteligente estable)
 
 > **Milestone**: `v2.0.0-alpha1` — 31 de julio de 2026 (release oficial del núcleo inteligente; sobre el milestone original `v2.0.0-alpha.1`)
-> **Estado**: `ALPHA STABLE` (enmendado por ADR-006 … ADR-010 — Fases 5.2.1 y 5.3, ADR-011 — Fase 5.4, ADR-012 — Fase 5.5, y ADR-013 — Fase 5.6)
+> **Estado**: `ALPHA STABLE` (enmendado por ADR-006 … ADR-010 — Fases 5.2.1 y 5.3, ADR-011 — Fase 5.4, ADR-012 — Fase 5.5, ADR-013 — Fase 5.6, y **ADR-014 — Fase 6: External Knowledge Acquisition**)
 > **Commit**: `89b39b9` — Branch: `main`
 > **Release notes**: `kin-docs/releases/KIN_2_0_ALPHA_1.md`
 >
@@ -53,6 +53,9 @@ Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven
 | `ai` (dominio) | `com.kinplatform.kin.ai` | Puertos/servicios de IA de dominio (`AIResponder`, `AIRequest`, `PromptRequest`/`PromptType`, `PromptAssembler`) |
 | `ai.prompt` (dominio) | `com.kinplatform.kin.ai.prompt` | Ensamblado del prompt: `ConversationPromptBuilder`, `ReportPromptBuilder`, 10 `SectionFormatter` (frontera ADR-012: REPORT solo consume `ConsultingReport`) |
 | `conversation` (dominio) | `com.kinplatform.kin.conversation` | Ciclo de conversación dirigido (ADR-013): `ConversationOrchestrator` (fachada), `TurnPolicy`/`DefaultTurnPolicy` (directiva en Java), `ResponseGuard` (guardrail), `HistoryWindow` (presupuesto de contexto) + tipos de turno (`ConversationTurn`, `TurnDirective`, `TurnResult`, `ResponseValidation`, `TurnConstraints`, `ConversationPhase`, `CommunicationMode`) |
+| `knowledge` (dominio) | `com.kinplatform.kin.knowledge` | Adquisición de conocimiento externo (ADR-014): `KnowledgeEngine` (canonizado, fase KNOWLEDGE/DOMAIN/50), `KnowledgeGateway`, `SourceRegistry`, `SourceValidator`, puerto `KnowledgeSource`, puerto `KnowledgeRepository` (caché TTL), tipos (`KnowledgeRequest/Query/Candidate/Fact/Input/Result`, `SourceValidation`, `SourceTrust`) |
+| `knowledge.stage` (dominio) | `com.kinplatform.kin.knowledge.stage` | `KnowledgeStage` — etapa aditiva de pipeline (composición pura sobre `EngineStage`); escribe `PipelineContext.knowledgeResult` |
+| `knowledge.adapter` (infraestructura) | `com.kinplatform.ai.knowledge.adapter` | Adaptadores de fuentes de conocimiento: `CompositeKnowledgeSource`, `HttpKnowledgeSourceAdapter`, `PublicApiConnector`, `JdbcKnowledgeSource`, `RagKnowledgeSource`, `DocumentKnowledgeSource` (todos detrás del puerto `KnowledgeSource`/`KnowledgeRepository`; implementan el principio "Java decide. Las fuentes únicamente aportan conocimiento") |
 
 ### 2.2 Infraestructura de motores — `kin/engine` (CONTRATO CONGELADO)
 
@@ -80,6 +83,7 @@ Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven
 | `OpportunityEngine` | `OpportunityInput` | `OpportunityResult` (oportunidades priorizadas, top) | ✅ estable como motor (Fase 5.3, ADR-010) |
 | `OpportunityAssembler` | Analizadores de oportunidad | `Opportunity` consolidada determinista | ✅ estable (Fase 5.3, ADR-010) |
 | `ReportEngine` | `ReportInput` (4 resultados ya calculados) | `ConsultingReport` (10 secciones inmutables) | ✅ existente (Fase 5.4, ADR-011): orquestador puro, prioridad 70, fase REPORTING |
+| `KnowledgeEngine` | `KnowledgeInput` | `KnowledgeResult` (hechos verificados, fuentes usadas, validaciones, confianza) | ✅ existente (Fase 6, ADR-014): implementa `DomainEngine` (KNOWLEDGE/DOMAIN/50); delega en `KnowledgeGateway`; offline-first (`KnowledgeResult.empty()`) |
 
 ### 2.4 Pipeline — `kin/pipeline`
 
@@ -90,6 +94,7 @@ Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven
 | `AnalyzerStage` | Extrae dimensiones del mensaje → `ProjectContext.update(...)` |
 | `EvaluatorStage` | `CompletenessEvaluator` → `CompletenessEvaluation` |
 | `StrategistStage` | `ConversationStrategist` → `ConversationDecision` |
+| `KnowledgeStage` | Compone `EngineStage` → `KnowledgeEngine` (ADR-014); construye `KnowledgeRequest` desde el `ProjectContext` (topic, dimensiones cubiertas, keywords) y escribe `PipelineContext.knowledgeResult` |
 | `ConsultorStage` | Pide la respuesta al puerto `AIResponder` (bloqueante o streaming); selecciona `PromptRequest.forReport(...)` cuando `decision.shouldGenerateReport()` (lanza si falta el `ConsultingReport`), `forConversation(context, decision, turnDirective)` en caso contrario; en streaming aplica `ResponseGuard` (`attachStreamGuard`) y deja `responseValidation` en contexto (ADR-013) |
 | `ScoringStage` | Compone `EngineStage` → `ScoringEngine` (predicado REPORT) |
 | `RecommendationStage` | Compone `EngineStage` → `RecommendationEngine` (predicado REPORT) |
@@ -97,9 +102,9 @@ Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven
 | `OpportunityStage` | Compone `EngineStage` → `OpportunityEngine` (predicado REPORT) |
 | `ReportStage` | Compone `EngineStage` → `ReportEngine` (predicado: 4 resultados presentes) |
 | `EventStage` | Publica eventos según decisión (ASK→Question, REPORT→Report+Score, siempre ConversationCompleted) |
-| `PipelineContext` | Flujo de datos mutable entre stages + `engineResults` + flag `streaming` + `aiResponseFlux` + `turnDirective` + `responseValidation` (ADR-013) |
+| `PipelineContext` | Flujo de datos mutable entre stages + `engineResults` + flag `streaming` + `aiResponseFlux` + `turnDirective` + `responseValidation` (ADR-013) + `knowledgeResult` (ADR-014) |
 
-El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega → Scoring → Recomendaciones → Riesgos → Oportunidades → **Reporte** → **Consultor** → Eventos. `ConsultorStage` se reposicionó tras `ReportStage` (ADR-012) para que el LLM reciba el `ConsultingReport` en modo REPORT; en modo CONVERSATION `ReportStage` se omite.
+El pipeline actual tiene **11 stages**: Analizador → Evaluador → Estratega → **Conocimiento** → Scoring → Recomendaciones → Riesgos → Oportunidades → **Reporte** → **Consultor** → Eventos. `KnowledgeStage` se inserta entre `StrategistStage` y `ScoringStage` (ADR-014, integración aditiva patrón ADR-011). `ConsultorStage` se reposicionó tras `ReportStage` (ADR-012) para que el LLM reciba el `ConsultingReport` en modo REPORT; en modo CONVERSATION `ReportStage` y `KnowledgeStage` se omiten según predicado.
 
 ### 2.5 AI — `ai/` y `kin/ai`
 
@@ -163,11 +168,12 @@ El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega �
 - [x] **Fase 5.4** — `ReportEngine` (ADR-011): orquestador puro del `ConsultingReport` (10 secciones), `ReportStage` (10ª etapa), ID determinista, cobertura ≥90%.
 - [x] **Fase 5.5** — `PromptAssembler` (ADR-012): fachada pura + `ConversationPromptBuilder` + `ReportPromptBuilder` + 10 `SectionFormatter`; `ConsultorStage` reposicionado tras `ReportStage`.
 - [x] **Fase 5.6** — `ConversationOrchestrator` (ADR-013): `kin.conversation` (orquestador, `TurnPolicy`/`DefaultTurnPolicy`, `ResponseGuard`, `HistoryWindow`, 7 tipos de turno); directiva en Java pre-pipeline; integración aditiva (`KinMethodCommand.directive`, `PipelineContext.turnDirective`/`responseValidation`, overload `PromptRequest.forConversation`, `ConversationPromptBuilder` DIRECTIVA, `ConsultorStage` guard streaming); `/chat` y `/chat/stream` delegan en el orquestador.
+- [x] **Fase 6** — External Knowledge Acquisition (ADR-014): `kin.knowledge` (motor `KnowledgeEngine`, `KnowledgeGateway`, `SourceRegistry`, `SourceValidator`, puertos `KnowledgeSource`/`KnowledgeRepository`, tipos) + `ai.knowledge.adapter` (6 adaptadores: Composite/Http/PublicApi/Jdbc/Rag/Document) + integración aditiva (`KnowledgeStage` + `PipelineContext.knowledgeResult`). ADR-014 **Aprobada**.
 - [x] Motores, inputs y results canonizados bajo el contrato `DomainEngine`.
-- [x] **468 tests verdes** (`./mvnw clean verify`), BUILD SUCCESS.
-- [x] **Cobertura de dominio ≥ 90 %**: `kin.engine` 99.1 %, `kin.ai` 99.7 %, `kin.ai.prompt` 99.7 %, `kin.ai.prompt.formatter` 99.9 %, `kin.reporting*` 99.2 %, `kin.reporting.report` 99–100 %, `kin.reporting.opportunity` 100 %, `kin.reporting.risk` 99.5 %, `kin.scoring` 95.1 %, **`kin.conversation` 100 %**.
-- [x] **13 ADRs** aprobadas (ADR-001 … ADR-013).
-- [x] Documentación por fase (FASE5_0/5_1/5_2/5_2_1/5_3/5_4/5_5/5_6) + Gobernanza + AGENTS.md + CHANGELOG + Release Notes.
+- [x] **675 tests verdes** (`./mvnw clean verify`), BUILD SUCCESS, 0 fallos, 0 errores, 0 skipped.
+- [x] **Cobertura de dominio ≥ 90 %**: `kin.engine` 99.1 %, `kin.ai` 99.7 %, `kin.ai.prompt` 99.7 %, `kin.ai.prompt.formatter` 99.9 %, `kin.reporting*` 99.2 %, `kin.reporting.report` 99–100 %, `kin.reporting.opportunity` 100 %, `kin.reporting.risk` 99.5 %, `kin.scoring` 95.1 %, **`kin.conversation` 100 %**, **`kin.knowledge` 100 %** (engine 99.47 %, stage 100 %), **`ai.knowledge.adapter` 100 %**.
+- [x] **14 ADRs** aprobadas (ADR-001 … ADR-014).
+- [x] Documentación por fase (FASE5_0/5_1/5_2/5_2_1/5_3/5_4/5_5/5_6 + FASE6_0) + Gobernanza + AGENTS.md + CHANGELOG + Release Notes.
 
 ---
 
@@ -202,12 +208,16 @@ El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega �
 | `AIProvider` | `generateBlocking()`, `generateStream()` |
 | `PipelineStage` / `Pipeline` | `name()`, `supports()`, `execute()` + algoritmo de ejecución |
 | `ScoringModel` / `ScoreResult` | Records inmutables |
-| `PipelineContext` | Acceso a campos + `engineResults` + `streaming` + `aiResponseFlux` + `turnDirective` + `responseValidation` (ADR-013) |
+| `PipelineContext` | Acceso a campos + `engineResults` + `streaming` + `aiResponseFlux` + `turnDirective` + `responseValidation` (ADR-013) + `knowledgeResult` (ADR-014) |
 | `ConversationOrchestrator` | `orchestrate(ConversationTurn) → TurnResult` + `orchestrateStream(ConversationTurn) → Flux<String>` (ADR-013) |
 | `TurnPolicy` / `DefaultTurnPolicy` | `decide(ProjectContext, ConversationDecision) → TurnDirective` (ADR-013) |
 | `ResponseGuard` | `validate(String, TurnDirective) → ResponseValidation` (ADR-013) |
 | `HistoryWindow` | `window(List<Message>, int) → List<Message>` (ADR-013) |
 | `ConversationTurn` / `TurnDirective` / `TurnResult` / `ResponseValidation` / `TurnConstraints` / `ConversationPhase` / `CommunicationMode` | Tipos del ciclo de conversación (ADR-013) |
+| `KnowledgeEngine` / `KnowledgeResult` | Motor de conocimiento (ADR-014): `evaluate(KnowledgeInput) → KnowledgeResult` + `metadata()` |
+| `KnowledgeGateway` / `SourceRegistry` / `SourceValidator` | Coordinador de adquisición + registro de fuentes + validación determinista (ADR-014) |
+| `KnowledgeSource` / `KnowledgeRepository` | Puertos de fuente y de caché/persistencia de conocimiento (ADR-014) |
+| `KnowledgeStage` | Stage aditivo de pipeline (composición pura sobre `EngineStage`; ADR-014) |
 
 ### 4.2 Contratos de aplicación/API
 
@@ -250,6 +260,8 @@ El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega �
 | `ConsultingReport` | VO raíz inmutable del reporte, implementa `EngineResult` |
 | `RecommendationResult` / `RiskResult` / `OpportunityResult` / `ScoreResult` | Outputs inmutables que implementan `EngineResult` |
 | `kin.scoring.ScoringEngine` | Canonizado por ADR-009; implementa `DomainEngine` (SCORING/DOMAIN/30) |
+| `kin.knowledge.KnowledgeEngine` / `KnowledgeGateway` / `SourceRegistry` / `SourceValidator` | Motor y coordinadores de conocimiento (ADR-014); 100 % POJO, decisiones 100 % Java |
+| `kin.knowledge.stage.KnowledgeStage` | Stage aditivo de pipeline (ADR-014); composición pura sobre `EngineStage` |
 | `KinMethod` / `KinMethodCommand` / `KinMethodResult` | Fachada única del runtime (contrato KIN 2.0 / ADR-006) |
 | `ContextRepository` / `AIResponder` / `PromptAssembler` | Puertos/servicios de dominio (ADR-007/ADR-008) |
 | `PromptRequest` / `PromptType` / `kin.ai.prompt` builders | Contrato de ensamblado de prompt (ADR-012): REPORT consume solo `ConsultingReport` |
@@ -304,22 +316,24 @@ El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega �
 12. **El dominio depende de `AIResponder`/`PromptAssembler`, no de `AiEngineService`** — ADR-008.
 13. **El prompt REPORT consume solo `ConsultingReport`** (vía `PromptRequest.forReport`); las fuentes crudas (`ProjectContext`, `ScoreResult`, …) están prohibidas en modo REPORT — ADR-012.
 14. **Java decide en la conversación** (ADR-013): `TurnPolicy` decide fase/modo/restricciones, `HistoryWindow` decide el presupuesto de contexto y `ResponseGuard` valida la comunicación — nunca se parsean decisiones del texto del LLM. La directiva viaja aditivamente al pipeline (`KinMethodCommand.directive`) y enmarca el prompt (`PromptRequest.forConversation(context, decision, directive)` + sección DIRECTIVA).
+15. **Java decide sobre el conocimiento; las fuentes únicamente aportan conocimiento** (ADR-014): la adquisición, validación, selección y caché del conocimiento externo son decisiones deterministas de Java (`KnowledgeGateway` + `SourceValidator` en `kin.knowledge`). El LLM nunca recupera, valida ni decide conocimiento; los adaptadores (`ai.knowledge.adapter`) solo aportan candidatos. Integración aditiva: `KnowledgeStage` + `PipelineContext.knowledgeResult`.
 
 ---
 
-## 7. Preparación para la siguiente fase (Fase 6 — KnowledgeEngine + RAG)
+## 7. Preparación para la siguiente fase (Fase 7 — siguiente hito)
 
 > Análisis de preparación. NO implementación.
 
 ### 7.1 Estado de partida
 
-El runtime está consolidado (`KinMethod` único punto de entrada, bloqueante y streaming), el
+La Fase 6 (KnowledgeEngine + RAG) quedó **implementada y cerrada oficialmente** (ADR-014): el
+runtime está consolidado (`KinMethod` único punto de entrada, bloqueante y streaming), el
 contexto es durable (`ContextRepository`), la infraestructura de motores (`DomainEngine`,
-`EngineExecutor`, `EngineStage`) es reutilizable y el ciclo de conversación ya está dirigido:
-`ConversationOrchestrator` (ADR-013) decide la directiva en Java, acota el historial con
-`HistoryWindow`, valida la comunicación con `ResponseGuard` y devuelve un turno tipado
-(`TurnResult`). Una Fase 6 (KnowledgeEngine + RAG) puede consumir el `ProjectContext` durable y
-el turno tipado/directiva como punto de extensión, **sin tocar los contratos estables**.
+`EngineExecutor`, `EngineStage`) es reutilizable, el ciclo de conversación ya está dirigido
+(`ConversationOrchestrator`, ADR-013) y la adquisición de conocimiento externo es aditiva al
+pipeline (`KnowledgeStage`, ADR-014). Una Fase 7 puede consumir el `ProjectContext` durable, el
+turno tipado/directiva (`TurnResult`, `TurnDirective`) y el `KnowledgeResult` como puntos de
+extensión, **sin tocar los contratos estables**.
 
 ### 7.2 Riesgos
 
@@ -334,7 +348,7 @@ el turno tipado/directiva como punto de extensión, **sin tocar los contratos es
 
 ### 7.3 Bloqueantes
 
-- **Ningún bloqueante** para iniciar la Fase 6 (KnowledgeEngine + RAG).
+- **Ningún bloqueante** para iniciar la Fase 7.
 
 ### 7.4 Dependencias
 
@@ -344,12 +358,15 @@ el turno tipado/directiva como punto de extensión, **sin tocar los contratos es
 | PostgreSQL + Docker | No requerida en dev (H2) | Despliegue / validación de migraciones |
 | Frontend (`npm install`) | Requerida | E2E y desarrollo UI |
 | Backend (`./mvnw`) | Requerida | Tests y arranque |
+| Conocimiento externo (adaptadores `ai.knowledge.adapter`) | Opcional (offline-first: `KnowledgeResult.empty()`) | Enriquecimiento real del análisis (config allowlist/red) |
 
 ### 7.5 Recomendaciones para la siguiente fase
 
-1. **Prioridad 1**: Fase 6 — `KnowledgeEngine` + RAG consumiendo `ContextRepository` durable y el turno tipado/directiva (`TurnResult`, `TurnDirective`) como punto de extensión (ADR-013 §Consecuencias positivas).
+1. **Prioridad 1**: Fase 7 — consumir el `KnowledgeResult` de la Fase 6 en los analizadores de
+   dominio (mercado, innovación, financiero, competitivo) vía inputs aditivos, y/o exponer
+   conocimiento citado en la comunicación (exige ADR propia por la frontera ADR-012).
 2. **Prioridad 2**: consumir `ResponseValidation` (KIN 2.1): definir el fallback (respuesta enlatada / reintento) ante `accepted=false`, hoy artefacto de auditoría.
-3. Mantener el requisito de ≥ 90 % de cobertura en `kin.reporting`, `kin.engine`, `kin.ai` y `kin.conversation` al añadir código nuevo.
+3. Mantener el requisito de ≥ 90 % de cobertura en `kin.reporting`, `kin.engine`, `kin.ai`, `kin.conversation` y `kin.knowledge` al añadir código nuevo.
 4. No romper ninguno de los contratos de §4 sin ADR.
 
 ---
@@ -357,12 +374,12 @@ el turno tipado/directiva como punto de extensión, **sin tocar los contratos es
 ## 8. Verificación
 
 ```bash
-cd kin-backend && ./mvnw clean verify       # 468 tests, 0 fallos, BUILD SUCCESS
-# Cobertura: kin.conversation 100 %, kin.ai 99.7 %, kin.ai.prompt 99.7 %, kin.ai.prompt.formatter 99.9 %, kin.reporting* 99.2 %, kin.engine 99.1 %, kin.scoring 95.1 %
+cd kin-backend && ./mvnw clean verify       # 675 tests, 0 fallos, BUILD SUCCESS
+# Cobertura: kin.conversation 100 %, kin.knowledge 100 % (engine 99.47 %, stage 100 %), ai.knowledge.adapter 100 %, kin.ai 99.7 %, kin.ai.prompt 99.7 %, kin.ai.prompt.formatter 99.9 %, kin.reporting* 99.2 %, kin.engine 99.1 %, kin.scoring 95.1 %
 cd kin-backend && ./mvnw spring-boot:run     # arranque dev H2 (project_context auto-creado)
 git status                                   # working tree clean (tras commit de la fase)
 ```
 
 ---
 
-*Baseline KIN 2.0 Alpha 1 (enmendado por ADR-006 … ADR-013). Cualquier desviación requiere ADR aprobada.*
+*Baseline KIN 2.0 Alpha 1 (enmendado por ADR-006 … ADR-014). Cualquier desviación requiere ADR aprobada.*

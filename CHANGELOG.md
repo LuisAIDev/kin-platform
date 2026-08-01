@@ -5,6 +5,46 @@ Todos los cambios notables de este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/),
 y el versionado del proyecto en [SemVer](https://semver.org/lang/es/).
 
+### Fase 6 (External Knowledge Acquisition)
+
+Enmienda de `v2.0.0-alpha1` con ADR-014. **Estado: Architecture Stable (enmendado). FASE 6 CERRADA OFICIALMENTE (2026-07-31).**
+
+### Added
+
+- Nuevo paquete de dominio `com.kinplatform.kin.knowledge` (ADR-014, POJO puro, sin Spring):
+  - `KnowledgeEngine` — motor canonizado que implementa `DomainEngine<KnowledgeInput, KnowledgeResult>` (fase `KNOWLEDGE`, tipo `DOMAIN`, prioridad 50); delega en `KnowledgeGateway` y degrada a `KnowledgeResult.empty()` (offline-first).
+  - `KnowledgeGateway` — coordinador de la adquisición: deriva `KnowledgeQuery`, consulta `SourceRegistry`, delega la validación en `SourceValidator` y normaliza los `KnowledgeFact` con métricas deterministas (confianza/calidad).
+  - `SourceRegistry` — registro de `KnowledgeSource` por auto-descubrimiento (`List<KnowledgeSource>`, patrón `EngineRegistry`); orden preservado, vista inmutable.
+  - `SourceValidator` — validador determinista (HTTPS, allowlist de dominios, estado HTTP 2xx, tipo de contenido, formato, frescura TTL, deduplicación por `(sourceId, url)`, `SourceTrust`); stateless y reentrante; nunca consulta al LLM.
+  - Tipos puros: `KnowledgeRequest`, `KnowledgeQuery`, `KnowledgeCandidate`, `KnowledgeFact`, `KnowledgeInput`, `KnowledgeResult`, `SourceValidation`, `SourceTrust`, puerto `KnowledgeSource`, puerto `KnowledgeRepository` (caché TTL).
+- `com.kinplatform.kin.knowledge.stage.KnowledgeStage` — etapa aditiva de pipeline (composición pura sobre `EngineStage`, patrón ADR-011): construye la `KnowledgeRequest` desde el `ProjectContext` e invoca `KnowledgeEngine`; escribe `PipelineContext.knowledgeResult`.
+- Infraestructura `com.kinplatform.ai.knowledge.adapter` (E4…E5, todos detrás del puerto `KnowledgeSource`): `CompositeKnowledgeSource`, `HttpKnowledgeSourceAdapter` (allowlist de hosts, mitigación SSRF), `PublicApiConnector` (OCP), `JdbcKnowledgeSource`, `RagKnowledgeSource`, `DocumentKnowledgeSource`. Mocks en tests (sin red).
+- Integración aditiva al pipeline (E6):
+  - `PipelineContext` + campo `KnowledgeResult knowledgeResult` (+ getter/setter) — patrón ADR-011.
+  - `KinConfig` + beans `SourceValidator`, `SourceRegistry`, `KnowledgeGateway`, `KnowledgeEngine`, `KnowledgeStage`; `chatPipeline(...)` inserta `KnowledgeStage` entre `StrategistStage` y `ScoringStage` (pipeline de 11 etapas).
+- Documentación: ADR-014 (**Aprobada**), `FASE6_0_EXTERNAL_KNOWLEDGE.md` (diseño + bitácora E1…E7 + cierre), `AGENTS.md`, `BASELINE_ARCHITECTURE.md`, `KIN_ARCHITECTURE_GOVERNANCE.md` actualizados.
+
+### Changed
+
+- Pipeline de 10 → **11 etapas**: `Analizador → Evaluador → Estratega → Conocimiento → Scoring → Recomendaciones → Riesgos → Oportunidades → Reporte → Consultor → Eventos`.
+- `KIN_ARCHITECTURE_GOVERNANCE.md`: regla de IA §7.2 (nueva regla 7: *Java decide sobre el conocimiento; las fuentes únicamente aportan conocimiento*), §1.11 +3 decisiones Java (`KnowledgeGateway`, `SourceValidator`, `KnowledgeEngine`), §6.2 `KnowledgeEngine` → Existente.
+- `BASELINE_ARCHITECTURE.md`: inventario + bounded contexts `kin.knowledge`/`knowledge.stage`/`knowledge.adapter`, +1 motor, pipeline 11 etapas, contratos congelados +5, decisión congelada #15, cobertura actualizada.
+
+### Testing
+
+- 207 tests nuevos (de 468 a **675**): 22 en `kin/knowledge/` (tipos/enums/records 8, `SourceRegistryTest`/`SourceValidatorTest`/`KnowledgeGatewayTest`/`KnowledgeEngineTest` 10 en `engine/`, `KnowledgeStageTest` + `KnowledgeStagePipelineTest` 4 en `stage/`), 10 en `ai/knowledge/adapter/` (`CompositeKnowledgeSourceTest`, `HttpKnowledgeSourceAdapterTest`, `PublicApiConnectorTest`, `JdbcKnowledgeSourceTest`, `RagKnowledgeSourceTest`, `DocumentKnowledgeSourceTest`, `KnowledgeEngineAdapterIntegrationTest`, `KnowledgeAdapterGatewayPropagationTest`), `KinMethodTest` + pipeline de 11 etapas.
+- `./mvnw clean verify`: **675 tests, 0 fallos, 0 errores, 0 skipped, BUILD SUCCESS**.
+- Cobertura (JaCoCo): **`kin.knowledge` 100 %** (engine 99.47 %, stage 100 %), **`ai.knowledge.adapter` 100 %**; `kin.conversation` 100 %; `kin.ai` 99.7 %; `kin.ai.prompt` 99.7 %; `kin.ai.prompt.formatter` 99.9 %; `kin.reporting*` 99.2 %; `kin.engine` 99.1 %; `kin.scoring` 95.1 %. Requisito de ≥ 90 % en `kin.knowledge` cumplido.
+
+### Known Issues
+
+- Incidencia heredada: `pricing_plans` sin columnas NOT NULL aplicadas en dev (H2, `ddl-auto: update`). No bloquea el arranque (warnings). Fuera del alcance de esta fase.
+- `InMemoryDomainEventBus` sin async ni persistencia (KIN 2.4).
+- Heurística de longitud en `ScoringEngine` por reemplazar antes de KIN 2.5.
+- Cobertura baja en paquetes de infraestructura (auth, pricing, project, ai.provider) — fuera del requisito del dominio.
+- `ResponseValidation` (bloqueante y streaming) es hoy un artefacto de auditoría sin consumidor en producción; el fallback (respuesta enlatada) se define en KIN 2.1.
+- Los adaptadores de conocimiento (`ai.knowledge.adapter`) están implementados con mocks (sin red real); el enriquecimiento efectivo del análisis y la exposición de conocimiento citado en la comunicación (frontera ADR-012) son trabajo futuro.
+
 ## [v2.0.0-alpha1] - 2026-07-31
 
 **Primera release estable del núcleo inteligente de KIN.** Estado: `ALPHA STABLE` — Build
