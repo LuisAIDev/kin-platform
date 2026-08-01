@@ -1,7 +1,8 @@
 # KIN Platform — Agent Guide
 
-> **Milestone: KIN 2.0 Alpha 1 — `ARCHITECTURE STABLE`** (tag `v2.0.0-alpha.1`), enmendado por la Fase 5.2.1 (ADR-006…009: runtime consolidado, contexto durable, scoring canonizado), la Fase 5.3 (ADR-010: OpportunityEngine), la **Fase 5.4 (ADR-011: ReportEngine)**, la **Fase 5.5 (ADR-012: PromptAssembler)** y la **Fase 5.6 (ADR-013: Conversation Orchestrator)**.
+> **Milestone: KIN 2.0 Alpha 1 — `ALPHA STABLE`** (release oficial `v2.0.0-alpha1`, commit `89b39b9`; núcleo inteligente completo: fases 5.4–5.6 sobre el milestone original `v2.0.0-alpha.1`), enmendado por la Fase 5.2.1 (ADR-006…009: runtime consolidado, contexto durable, scoring canonizado), la Fase 5.3 (ADR-010: OpportunityEngine), la **Fase 5.4 (ADR-011: ReportEngine)**, la **Fase 5.5 (ADR-012: PromptAssembler)** y la **Fase 5.6 (ADR-013: Conversation Orchestrator)**.
 > El contrato `kin/engine` y las APIs estables listadas en `kin-docs/BASELINE_ARCHITECTURE.md` NO pueden modificarse sin una ADR aprobada.
+> Release notes: `kin-docs/releases/KIN_2_0_ALPHA_1.md`.
 
 ## Project
 Full-stack project management platform with AI-guided viability assessment.

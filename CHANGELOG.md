@@ -5,7 +5,34 @@ Todos los cambios notables de este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/),
 y el versionado del proyecto en [SemVer](https://semver.org/lang/es/).
 
-## [Unreleased] - Fase 5.6 (Conversation Orchestrator)
+## [v2.0.0-alpha1] - 2026-07-31
+
+**Primera release estable del núcleo inteligente de KIN.** Estado: `ALPHA STABLE` — Build
+reproducible, contratos congelados, arquitectura validada. Cierra las fases 5.4 (ReportEngine),
+5.5 (PromptAssembler) y 5.6 (Conversation Orchestrator). Tag: `v2.0.0-alpha1`. Commit: `89b39b9`.
+
+**Principio arquitectónico**: *Java decide. El LLM únicamente comunica.* Pipeline de 10 etapas
+(Analyzer → Evaluator → Strategist → Scoring → Recommendation → Risk → Opportunity →
+ReportEngine → Consultor → Events) que produce el `ConsultingReport` (10 secciones) con una
+conversación dirigida por `ConversationOrchestrator` (ADR-013). 13 ADRs aprobadas (ADR-001 …
+ADR-013), 21 paquetes de dominio `com.kinplatform.kin.*`.
+
+### Métricas
+
+- `./mvnw clean verify`: **468 tests, 0 fallos, 0 errores, 0 skipped, BUILD SUCCESS**.
+- Cobertura (JaCoCo): `kin.conversation*` 100 % (738/738); `kin.ai*` 99.7 %; `kin.ai.prompt`
+  99.7 %; `kin.ai.prompt.formatter` 99.9 %; `kin.reporting*` 99.2 %; `kin.engine` 99.1 %;
+  `kin.scoring` 95.1 %. Requisito de dominio ≥ 90 % cumplido.
+
+### Notas
+
+- Release notes oficiales en `kin-docs/releases/KIN_2_0_ALPHA_1.md`.
+- `README.md`, `AGENTS.md`, `BASELINE_ARCHITECTURE.md`, `KIN_ARCHITECTURE_GOVERNANCE.md`
+  actualizados para la release.
+- Documentación de fase agrupada a continuación (5.6 → 5.2.1); el milestone original 4.0–5.2 se
+  conserva en su entrada `[v2.0.0-alpha.1] - 2026-07-30`.
+
+### Fase 5.6 (Conversation Orchestrator)
 
 Enmienda de `v2.0.0-alpha.1` con ADR-013. **Estado: Architecture Stable (enmendado). FASE 5.6 CERRADA OFICIALMENTE (2026-07-31).**
 
@@ -50,7 +77,7 @@ Enmienda de `v2.0.0-alpha.1` con ADR-013. **Estado: Architecture Stable (enmenda
 - Cobertura baja en paquetes de infraestructura (auth, pricing, project, ai.provider) — fuera del requisito del dominio.
 - `ResponseValidation` (bloqueante y streaming) es hoy un artefacto de auditoría sin consumidor en producción; el fallback (respuesta enlatada) se define en KIN 2.1.
 
-## [Unreleased] - Fase 5.5 (PromptAssembler)
+### Fase 5.5 (PromptAssembler)
 
 Enmienda de `v2.0.0-alpha.1` con ADR-012. **Estado: Architecture Stable (enmendado).**
 
@@ -84,7 +111,7 @@ Enmienda de `v2.0.0-alpha.1` con ADR-012. **Estado: Architecture Stable (enmenda
 - Heurística de longitud en `ScoringEngine` por reemplazar antes de KIN 2.5.
 - Cobertura baja en paquetes de infraestructura (auth, pricing, project, ai.provider) — fuera del requisito del dominio.
 
-## [Unreleased] - Fase 5.4 (ReportEngine)
+### Fase 5.4 (ReportEngine)
 
 Enmienda de `v2.0.0-alpha.1` con ADR-011. **Estado: Architecture Stable (enmendado).**
 
@@ -118,7 +145,7 @@ Enmienda de `v2.0.0-alpha.1` con ADR-011. **Estado: Architecture Stable (enmenda
 - Heurística de longitud en `ScoringEngine` por reemplazar antes de KIN 2.5.
 - Cobertura baja en paquetes de infraestructura (auth, pricing, project, ai.provider) — fuera del requisito del dominio.
 
-## [Unreleased] - Fase 5.3 (OpportunityEngine)
+### Fase 5.3 (OpportunityEngine)
 
 ### Added
 
@@ -147,7 +174,7 @@ Enmienda de `v2.0.0-alpha.1` con ADR-011. **Estado: Architecture Stable (enmenda
 - Heurística de longitud en `ScoringEngine` por reemplazar antes de KIN 2.5.
 - Cobertura baja en paquetes de infraestructura (auth, pricing, project, ai.provider) — fuera del requisito del dominio.
 
-## [Unreleased] - Fase 5.2.1 (consolidación del runtime)
+### Fase 5.2.1 (consolidación del runtime)
 
 Enmienda de `v2.0.0-alpha.1` con ADR-006…ADR-009. **Estado: Architecture Stable (enmendado).**
 

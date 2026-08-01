@@ -4,6 +4,7 @@
 > Aprobada el 30 de julio de 2026 — Vinculante para todo desarrollo futuro.
 > Toda desviación requiere una ADR aprobada antes de implementar.
 > Enmendada por ADR-013 (Fase 5.6, 2026-07-31): el ciclo de conversación pasa a estar dirigido por `kin.conversation` (Conversation Orchestrator).
+> **Release oficial**: KIN 2.0 Alpha 1 (`v2.0.0-alpha1`, 2026-07-31) — núcleo inteligente estable (fases 4.0–5.6, ADR-001…013). Ver `kin-docs/releases/KIN_2_0_ALPHA_1.md`.
 
 ---
 

@@ -34,7 +34,7 @@
 
 El proyecto fue construido desde cero como ejercicio de portafolio para consolidar un stack backend enterprise (**Java + Spring Boot**) combinado con un frontend moderno (**Next.js + TypeScript**), aplicando arquitectura en capas, autenticación stateless con JWT, y buenas prácticas de seguridad y despliegue con Docker.
 
-> 🧪 **Estado actual:** cobertura completa de tests unitarios (36 tests, 0 fallos). Seguridad reforzada con rate limiting y headers HTTP. Diseño responsive mobile-first verificado en rango amplio de dispositivos. El despliegue en producción sigue pendiente como siguiente fase (ver [Roadmap](#-roadmap)).
+> 🧪 **Estado actual:** KIN 2.0 Alpha 1 — **primera release estable del núcleo inteligente** (`v2.0.0-alpha1`, 2026-07-31). Pipeline de dominio de 10 etapas con reporte de viabilidad (`ConsultingReport`) y conversación dirigida por decisiones en Java (**"Java decide, el LLM únicamente comunica"**). 468 tests, 0 fallos, cobertura de dominio ≥ 90 % y 13 ADRs aprobadas. Ver [`kin-docs/releases/KIN_2_0_ALPHA_1.md`](kin-docs/releases/KIN_2_0_ALPHA_1.md).
 
 ---
 
@@ -240,7 +240,10 @@ cd kin-backend
 
 ### Resumen
 
-**36 tests unitarios, 0 fallos**, cubriendo las siguientes áreas del backend:
+**468 tests unitarios, 0 fallos** (`./mvnw clean verify`). La tabla siguiente cubre los módulos
+de infraestructura/aplicación; el **núcleo inteligente** (`com.kinplatform.kin.*`, 21 paquetes)
+aporta la mayor parte de los tests y mantiene cobertura de dominio ≥ 90 % (JaCoCo: `kin.conversation`
+100 %, `kin.reporting*` 99.2 %, `kin.ai` 99.7 %, `kin.engine` 99.1 %).
 
 | Módulo | Tests | Cobertura principal |
 |---|---|---|
@@ -270,6 +273,8 @@ cd kin-backend
 - [x] Cobertura de tests unitarios e integración (JUnit + Mockito + Reactor Test)
 - [x] Generación de reportes PDF de viabilidad
 - [x] Panel de administración para rol `ADMIN`
+- [x] **Núcleo inteligente KIN 2.0 Alpha 1** — pipeline de 10 etapas, reporte de viabilidad, orquestación conversacional (fases 4.0–5.6)
+- [ ] **Fase 6** — KnowledgeEngine + RAG (siguiente hito)
 
 ---
 

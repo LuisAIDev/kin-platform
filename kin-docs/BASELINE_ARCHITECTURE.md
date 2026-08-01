@@ -1,8 +1,9 @@
-# BASELINE ARCHITECTURE — KIN 2.0 Alpha 1 (+ Fases 5.2.1 … 5.6)
+# BASELINE ARCHITECTURE — KIN 2.0 Alpha 1 (núcleo inteligente estable)
 
-> **Milestone**: `v2.0.0-alpha.1` — 30 de julio de 2026
-> **Estado**: `ARCHITECTURE STABLE` (enmendado por ADR-006 … ADR-010 — Fases 5.2.1 y 5.3, ADR-011 — Fase 5.4, ADR-012 — Fase 5.5, y ADR-013 — Fase 5.6)
-> **Commit**: `577bb94` — Branch: `main`
+> **Milestone**: `v2.0.0-alpha1` — 31 de julio de 2026 (release oficial del núcleo inteligente; sobre el milestone original `v2.0.0-alpha.1`)
+> **Estado**: `ALPHA STABLE` (enmendado por ADR-006 … ADR-010 — Fases 5.2.1 y 5.3, ADR-011 — Fase 5.4, ADR-012 — Fase 5.5, y ADR-013 — Fase 5.6)
+> **Commit**: `89b39b9` — Branch: `main`
+> **Release notes**: `kin-docs/releases/KIN_2_0_ALPHA_1.md`
 >
 > Este documento es el **baseline contractual** del milestone: define qué existe hoy, qué está
 > completo, qué contratos NO deben romperse, qué componente es estable/evolutivo/experimental
@@ -333,7 +334,7 @@ el turno tipado/directiva como punto de extensión, **sin tocar los contratos es
 
 ### 7.3 Bloqueantes
 
-- **Ningún bloqueante** para iniciar la Fase 5.4.
+- **Ningún bloqueante** para iniciar la Fase 6 (KnowledgeEngine + RAG).
 
 ### 7.4 Dependencias
 

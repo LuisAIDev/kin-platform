@@ -1,160 +1,168 @@
-# KIN 2.0 Alpha 1 — Notas de la Versión
+# KIN 2.0 Alpha 1
 
-> **Milestone**: Primer hito oficial de la arquitectura KIN 2.0
-> **Estado**: `ARCHITECTURE STABLE` (baseline congelado)
-> **Fecha**: 30 de julio de 2026
-> **Commit**: `91426e5` (`feat: implement KIN 2.0 architecture phases 4-5.2` + `fix: update pricing plans database schema`)
+> **Release**: Primera release estable del núcleo inteligente de KIN
+> **Fecha**: 31 de julio de 2026
+> **Commit**: `89b39b9` (`feat(kin): implement Conversation Orchestrator (phase 5.6)`)
 > **Branch**: `main`
-> **Tag**: `v2.0.0-alpha.1`
->
-> ⚠️ **Nota histórica**: estas notas corresponden al milestone original. La **Fase 5.2.1** (ADR-006…009) enmienda el baseline: streaming consolidado en `KinMethod`, contexto durable (`ContextRepository`), puerto `AIResponder` + `PromptAssembler` y scoring canonizado. La **Fase 5.3** (ADR-010) agrega `OpportunityEngine` al pipeline (9 etapas). Ver `kin-docs/FASE5_2_1_RUNTIME_CONSOLIDATION.md`, `kin-docs/releases/KIN_2_0_FASE_5_3_OPPORTUNITY_ENGINE.md` y `BASELINE_ARCHITECTURE.md`.
+> **Tag**: `v2.0.0-alpha1`
+> **Estado**: `ALPHA STABLE` — Build reproducible, contratos congelados, arquitectura validada
 
 ---
 
-## 1. Resumen ejecutivo
+## Resumen ejecutivo
 
-KIN 2.0 Alpha 1 cierra el ciclo de consolidación arquitectónica iniciado en KIN 2.0 (phases 4.0, 5.0, 5.1 y 5.2) y lo declara **primer hito estable del proyecto**. A partir de este punto:
+KIN 2.0 Alpha 1 es la **primera release estable del núcleo inteligente** de la plataforma: un
+pipeline de dominio de 10 etapas que recibe el contexto de un proyecto y produce un
+`ConsultingReport` (10 secciones) con recomendaciones, riesgos, oportunidades y un score de
+viabilidad, además de una conversación dirigida por **decisiones tomadas en Java** en las que
+el LLM únicamente comunica.
 
-- La **infraestructura de motores de dominio** (`kin/engine`) es un contrato congelado: `DomainEngine`, `EngineInput`, `EngineResult`, `EngineMetadata`, `EnginePhase`, `EngineType`, `EngineRegistry`, `EngineExecutor`, `DeterministicId` y `EngineStage` no deben romperse.
-- **Tres motores operativos**: `ScoringEngine` (viabilidad), `RecommendationEngine` (recomendaciones) y `RiskEngine` (riesgos), expuestos en el pipeline a través de stages genéricos (`EngineStage`).
-- **102 tests** en verde (0 fallos) y cobertura de dominio ≥ 90 % de instrucciones en `kin.engine` (99,1 %) y `kin.reporting` (96,2 %).
-- El **AI engine** mantiene el fallback en español: se puede desarrollar y probar sin Ollama.
+Esta release cierra las fases **5.4 (ReportEngine)**, **5.5 (PromptAssembler)** y
+**5.6 (Conversation Orchestrator)**, que completan el núcleo iniciado en el milestone
+arquitectónico original (fases 4.0–5.3, tag `v2.0.0-alpha.1`). A partir de este punto el
+núcleo es una **línea base estable** desde la cual se iniciará la siguiente etapa (Fase 6 —
+KnowledgeEngine + RAG).
 
-Este milestone NO añade funcionalidad nueva: es el cierre oficial de la base arquitectónica sobre la que se construirá la plataforma.
+## Arquitectura implementada
 
----
+- **Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven**.
+- Dominio puro `com.kinplatform.kin.*` (21 paquetes, 0 dependencias Spring/JPA).
+- **Infraestructura de motores** (`kin.engine`): `DomainEngine`, `EngineRegistry`,
+  `EngineExecutor`, `EngineStage` — contrato congelado.
+- **Motores de dominio** canonizados bajo `DomainEngine`: `ScoringEngine`,
+  `RecommendationEngine`, `RiskEngine`, `OpportunityEngine` y `ReportEngine`.
+- **Runtime único**: `KinMethod.execute` (bloqueante) y `executeStream` (Flux) como punto de
+  entrada único; `ChatOrchestratorServiceImpl` es I/O puro.
+- **Contexto durable**: `ProjectContext` persistido vía `ContextRepository` (adaptador JPA,
+  tabla `project_context`).
+- **IA por puertos**: dominio depende de `AIResponder`/`PromptAssembler`, no de adaptadores;
+  `AiEngineService` enruta a proveedores (DeepSeek/OpenAI/Ollama) con fallback en español.
+- **Ciclo de conversación dirigido**: `ConversationOrchestrator` (dominio POJO) compone
+  `HistoryWindow` + `TurnPolicy` + `KinMethod` + `ResponseGuard` + `ContextRepository`.
 
-## 2. Contexto y alcance
+## Listado de ADR implementados
 
-KIN pasó de un `ChatOrchestratorServiceImpl` monolítico (flujo streaming sin método de dominio) a una arquitectura de **Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven**, con un método de dominio único y un pipeline de análisis reutilizable.
+| # | ADR | Contenido |
+|---|-----|-----------|
+| **ADR-001** | Reporting BC | Bounded context de reporting |
+| **ADR-002** | Pipeline context | `PipelineContext` como flujo de datos del pipeline |
+| **ADR-003** | Recommendation engine | `RecommendationEngine` + `RecommendationResult`/`Stage` |
+| **ADR-004** | Risk engine | `RiskEngine` + analizadores de riesgo (proceso, pricing, modelo de negocio) |
+| **ADR-005** | Engine infrastructure | `kin/engine`: `DomainEngine`, `EngineRegistry`, `EngineExecutor`, `EngineStage` |
+| **ADR-006** | Runtime consolidation | Pipeline único para `/chat` y `/chat/stream` (`KinMethod`) |
+| **ADR-007** | Context repository | `ContextRepository` + `ProjectContext` durable (JPA) |
+| **ADR-008** | AI responder / prompt assembler | Puerto `AIResponder` + `PromptAssembler` en `kin.ai` |
+| **ADR-009** | Engine canonization | `ScoringEngine` canonizado bajo `DomainEngine` |
+| **ADR-010** | Opportunity engine | `OpportunityEngine` + 8 analizadores auto-descubiertos |
+| **ADR-011** | Report engine | `ReportEngine` — orquestador puro del `ConsultingReport` (10 secciones) |
+| **ADR-012** | Prompt assembler | `PromptAssembler` fachada pura; frontera REPORT solo consume `ConsultingReport` |
+| **ADR-013** | Conversation orchestrator | `kin.conversation`: orquestador, `TurnPolicy`, `ResponseGuard`, `HistoryWindow` |
 
-Las fases de este milestone:
+## Fases completadas
 
 | Fase | Contenido | Estado |
 |------|-----------|--------|
-| **4.0** | Provider IA (`AIProvider`, `ProviderRouter`, `DeepSeekProvider`, fallback) y capa de contexto (`ProjectContext`, `CompletenessEvaluator`, `ConversationStrategist`) | Completada |
-| **5.0** | `RecommendationEngine` + `RecommendationResult`/`Stage` + ADR-003 | Completada |
-| **5.1** | `RiskEngine` + `RiskResult`/`Stage` + analizadores (`RiskAssembler`, riesgos de pricing, proceso, modelo de negocio) + ADR-004 | Completada |
-| **5.2** | Infraestructura común de motores: `DomainEngine`, `EngineRegistry`, `EngineExecutor`, `DeterministicId`, `EngineStage` + refactor de motores/inputs/results/stages + `KinConfig` + ADR-005 | Completada |
+| **5.4 — ReportEngine** | `ReportEngine` (ADR-011): orquestador puro del `ConsultingReport` (10 secciones), `ReportBuilder` (contrato estricto), `ReportMetadata`, 10 `SectionAssembler`, `ReportStage` (10.ª etapa) | Completada |
+| **5.5 — PromptAssembler** | `PromptAssembler` fachada pura (ADR-012): `ConversationPromptBuilder` + `ReportPromptBuilder` + 10 `SectionFormatter`; `ConsultorStage` reposicionado tras `ReportStage`; frontera REPORT (solo `ConsultingReport`) | Completada |
+| **5.6 — Conversation Orchestrator** | `ConversationOrchestrator` (ADR-013): directiva en Java pre-pipeline (`TurnPolicy`), `ResponseGuard` (guardrail), `HistoryWindow` (presupuesto de contexto), 7 tipos de turno; `/chat` y `/chat/stream` delegan en el orquestador | Completada (cerrada oficialmente) |
 
----
+## Estado del Pipeline
 
-## 3. Lo nuevo en esta versión
+Pipeline de 10 etapas (`KinMethod` → orden oficial):
 
-### 3.1 Infraestructura de motores (`kin/engine`) — contrato estable
+| Etapa | Componente | Estado |
+|-------|------------|--------|
+| **Analyzer** | `AnalyzerStage` — extrae dimensiones del mensaje → `ProjectContext.update(...)` | Operativa |
+| **Evaluator** | `EvaluatorStage` — `CompletenessEvaluator` → `CompletenessEvaluation` | Operativa |
+| **Strategist** | `StrategistStage` — `ConversationStrategist` → `ConversationDecision` | Operativa |
+| **Scoring** | `ScoringStage` → `ScoringEngine` → `ScoreResult` | Operativa |
+| **Recommendation** | `RecommendationStage` → `RecommendationEngine` → `RecommendationResult` | Operativa |
+| **Risk** | `RiskStage` → `RiskEngine` → `RiskResult` | Operativa |
+| **Opportunity** | `OpportunityStage` → `OpportunityEngine` → `OpportunityResult` | Operativa |
+| **ReportEngine** | `ReportStage` → `ReportEngine` → `ConsultingReport` (10 secciones) | Operativa |
+| **Consultor** | `ConsultorStage` → `PromptAssembler` + `AIResponder` (bloqueante/streaming; `ResponseGuard` en streaming) | Operativa |
+| **Events** | `EventStage` — publica eventos según decisión (ASK→Question, REPORT→Report+Score, siempre ConversationCompleted) | Operativa |
 
-- `DomainEngine<E extends EngineInput, R extends EngineResult>`: contrato funcional `execute(E) → R` con `metadata()`.
-- `EngineInput` / `EngineResult`: records inmutables, base de todos los motores.
-- `EngineMetadata`: `id`, `name`, `version`, `phase`, `description`, `engineType`, `deterministic` y requisitos de entrada/salida.
-- `EnginePhase`: ciclo `EXTRACT → ANALYZE → EVALUATE → RECOMMEND → DECIDE`.
-- `EngineType`: `SCORING`, `RECOMMENDATION`, `RISK`, `EVALUATION`.
-- `EngineRegistry`: auto-descubrimiento de motores vía `List<DomainEngine>` + `get(id)` + `all()`.
-- `EngineExecutor`: ejecución secuencial, condicional y opcional (paralela diseñada, no activa).
-- `DeterministicId`: generación de IDs deterministas (diseñada para trazabilidad y pruebas reproducibles).
-- `EngineStage`: stage genérico de pipeline que delega en cualquier motor y escribe el resultado en `PipelineContext.engineResults`.
+## Principio arquitectónico
 
-### 3.2 Motores de dominio (`kin/reporting`)
+> **Java decide. El LLM únicamente comunica.**
 
-- **`RecommendationEngine`**: evalúa dimensión por dimensión, genera recomendaciones accionables, validaviaciones y resumen. Incluye deduplicación y ordenamiento por prioridad.
-- **`RiskEngine`**: detecta riesgos por categoría (proceso, pricing, modelo de negocio) con severidad (`LOW/MEDIUM/HIGH/CRITICAL`) y probabilidad, calcula score de riesgo y expone `riskLevel`.
-- **`RiskAssembler`**: consolida los resultados de los analizadores de riesgo en un único `RiskResult` determinista.
+Toda decisión de negocio — fase, modo, restricciones, presupuesto de contexto, validación de la
+comunicación, canonización de resultados — se toma en Java de forma determinista. El LLM recibe
+un prompt ensamblado (nunca el contexto crudo) y produce únicamente texto de comunicación. Nunca
+se parsean decisiones del texto del LLM.
 
-### 3.3 Pipeline
-
-- `RecommendationStage` y `RiskStage` ahora delegan en `EngineStage` (composición) con trazabilidad por motor.
-- `PipelineContext` incorpora `engineResults` (mapa `engineId → EngineResult`) para resultados no canonizados.
-- Los resultados de motores (`RecommendationResult`, `RiskResult`, `ScoreResult`) implementan `EngineResult` y quedan disponibles en el contexto del pipeline.
-
-### 3.4 Configuración
-
-- `KinConfig`: beans de `EngineRegistry` y `EngineExecutor` con auto-descubrimiento de motores.
-
----
-
-## 4. Calidad y verificación
+## Métricas
 
 | Métrica | Valor |
 |---------|-------|
-| Tests | **102** (`./mvnw clean test`) |
-| Fallos | **0** |
-| Errores | **0** |
-| Skip | **0** |
-| Build | **BUILD SUCCESS** |
+| **Número total de tests** | **468** (`./mvnw clean verify`, 0 fallos, 0 errores, 0 skipped) |
+| **Cobertura JaCoCo** | `kin.conversation*` **100 %** (738/738); `kin.ai*` 99.7 %; `kin.ai.prompt` 99.7 %; `kin.ai.prompt.formatter` 99.9 %; `kin.reporting*` 99.2 %; `kin.engine` 99.1 %; `kin.scoring` 95.1 % — requisito de dominio ≥ 90 % cumplido |
+| **Número de paquetes** | **21** paquetes de dominio (`com.kinplatform.kin.*`) |
+| **Número de ADR** | **13** (ADR-001 … ADR-013) |
+| **Número de fases cerradas** | **3** (Fases 5.4, 5.5 y 5.6) — el núcleo acumula las fases 4.0–5.6 |
 
-Cobertura JaCoCo (instrucciones) de los paquetes de dominio del milestone:
+## Resumen del núcleo inteligente
 
-| Paquete | Instrucciones | Ramas |
-|---------|---------------|-------|
-| `kin.engine` | **99,1 %** | **100 %** |
-| `kin.reporting` | **96,2 %** | 90,4 % |
-| `kin.reporting.risk` | **99,6 %** | **98,6 %** |
-| `kin.decision` | 69 % | 25 % |
+### Qué hace Java
 
-Requisito de dominio (≥ 90 % en `kin.reporting` y `kin.engine`): **CUMPLIDO**.
+- Decide la **directiva del turno** (fase/modo/restricciones) desde la decisión previa
+  persistida (`TurnPolicy`, ADR-013), antes del pipeline.
+- Aplica el **presupuesto de contexto** (`HistoryWindow`) y valida la comunicación
+  (`ResponseGuard`).
+- Ejecuta los **motores de dominio** deterministas (scoring, recomendaciones, riesgos,
+  oportunidades, reporte) y canoniza los resultados.
+- Orquesta el **runtime único** (`KinMethod`), el pipeline y la persistencia del contexto.
 
----
+### Qué hace el LLM
 
-## 5. Documentación y ADRs
+- Recibe únicamente el prompt ensamblado por `PromptAssembler`.
+- Produce **texto de comunicación** (preguntas de exploración o explicación del reporte).
+- Su respuesta se valida con `ResponseGuard` (vacío, longitud, pregunta única, marcadores
+  prohibidos); con fallback en español si los proveedores fallan.
 
-| Artefacto | Descripción |
-|-----------|-------------|
-| `ADR-001` | Bounded context de reporting |
-| `ADR-002` | Pipeline context |
-| `ADR-003` | Recommendation engine |
-| `ADR-004` | Risk engine |
-| `ADR-005` | Infraestructura común de motores |
-| `ARQUITECTURA_BASE_KIN_2.0.md` | Arquitectura contractual (Fase 2.0, ahora con estado de milestone) |
-| `FASE5_0` / `FASE5_1` / `FASE5_2` | Documentación por fase (diseño, consolidación, motores) |
-| `BASELINE_ARCHITECTURE.md` | Baseline oficial del milestone (qué existe, qué está estable, qué está congelado) |
-| `AGENTS.md` | Guía de agentes actualizada (paquetes, comandos, tests, quirks) |
-| `CHANGELOG.md` | Registro de cambios |
+### Qué hace PromptAssembler
 
----
+- Fachada pura (ADR-012): `assemble(PromptRequest) → String`, sin lógica, reglas ni fallback.
+- Delegación por tipo: `ConversationPromptBuilder` (modo conversación, con sección
+  `## DIRECTIVA DE COMUNICACIÓN` cuando hay directiva) o `ReportPromptBuilder` (las 10
+  secciones del `ConsultingReport` formateadas por 10 `SectionFormatter` deterministas).
+- Frontera ADR-012: en modo REPORT solo consume `ConsultingReport`; las fuentes crudas están
+  prohibidas.
 
-## 6. Problemas conocidos
+### Qué hace Conversation Orchestrator
 
-> Nada en esta lista bloquea el milestone; ninguno corresponde al alcance de este hito.
-> Los ítems marcados ✅ fueron resueltos por la **Fase 5.2.1**.
+- Fachada del ciclo de turno (ADR-013): `orchestrate(ConversationTurn) → TurnResult` y
+  `orchestrateStream(ConversationTurn) → Flux<String>`.
+- Compone `HistoryWindow` + `TurnPolicy` + `KinMethod` + `ResponseGuard` + `ContextRepository`;
+  decide la directiva en Java y la propaga aditivamente al pipeline.
+- `ChatOrchestratorServiceImpl` delega ambos endpoints (`/chat` y `/chat/stream`).
 
-1. **Boot con Flyway + H2**: el script `V2__add_viability_scoring_column.sql` falla en H2 (tipo/DDL no portable). El arranque funciona con Flyway deshabilitado (`spring.flyway.enabled=false`). Es un problema de configuración de dev, no de dominio. ✅ **resuelto** en 5.2.1 (dev usa `ddl-auto: update`; Flyway solo en prod).
-2. ✅ **`ChatOrchestratorServiceImpl` streaming**: usa `KinMethod.executeStream` desde la Fase 5.2.1 (ADR-006). Ya no es el componente más inestable.
-3. ✅ **`EventStage`**: en 5.2.1 distingue la decisión real (ASK → `QuestionGeneratedEvent`; REPORT → `ReportGeneratedEvent` + `ScoreCalculatedEvent`; siempre `ConversationCompletedEvent`). La semántica completa queda para KIN 2.1.
-4. **`InMemoryDomainEventBus`**: implementación en memoria, sin async ni persistencia (KIN 2.4).
-5. **Heurística de longitud en `ScoringEngine`**: debe reemplazarse antes de KIN 2.5 (regla absoluta #18).
-6. **Cobertura general del proyecto**: los paquetes de infraestructura (auth, pricing, project, ai.provider) tienen cobertura baja. El requisito de ≥ 90 % aplica solo a `kin.reporting` y `kin.engine`.
+### Qué hace ReportEngine
 
----
+- Orquestador puro del `ConsultingReport` (ADR-011): compone los 4 resultados del pipeline
+  (scoring, recomendaciones, riesgos, oportunidades) en un VO inmutable de 10 secciones con ID
+  determinista y `ReportMetadata`.
+- Prioridad 70, fase REPORTING; `ReportStage` es la 10.ª etapa del pipeline.
 
-## 7. Pendientes fuera de alcance
+## Estado del proyecto
 
-- Fase 5.3 y siguientes (ver `BASELINE_ARCHITECTURE.md` → Preparación para la siguiente fase).
-- ✅ ~~Refactor del streaming a `KinMethod`.~~ — resuelto en la Fase 5.2.1 (ADR-006).
-- Pipeline error handling, timeout y métricas.
-- Event bus async con persistencia (outbox).
-- Report Engine y Knowledge Engine (KIN 3.0).
+| Criterio | Estado |
+|----------|--------|
+| **Alpha estable** | ✅ Núcleo inteligente completo y cerrado (fases 4.0–5.6) |
+| **Build reproducible** | ✅ `./mvnw clean verify` → BUILD SUCCESS, 468 tests, 0 fallos |
+| **Contratos congelados** | ✅ `kin/engine` + APIs estables de `BASELINE_ARCHITECTURE.md` (§4); cualquier cambio requiere ADR aprobada |
+| **Arquitectura validada** | ✅ 13 ADRs aprobadas; dominio con cobertura ≥ 90 %; auditoría de cierre sin hallazgos críticos |
 
----
+## Roadmap siguiente
 
-## 8. Verificación de este milestone
-
-```bash
-# Tests
-cd kin-backend && ./mvnw clean test        # 102 tests, 0 fallos, BUILD SUCCESS
-
-# Cobertura
-open target/site/jacoco/index.html          # kin.engine 99,1 %, kin.reporting 96,2 %
-
-# Backend (H2, sin Docker)
-cd kin-backend && ./mvnw spring-boot:run    # http://localhost:8080/api/v1
-
-# Frontend
-cd kin-frontend && npm install && npm run dev  # http://localhost:3000
-
-# E2E (con backend en perfil test)
-cd kin-backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=test
-cd kin-frontend && npx playwright test
-```
+- ✅ **Preparado para iniciar la Fase 6** — `KnowledgeEngine` + RAG consumiendo el
+  `ProjectContext` durable y el turno tipado/directiva (`TurnResult`, `TurnDirective`) como
+  punto de extensión, sin tocar los contratos estables.
+- KIN 2.1: consumir `ResponseValidation` (fallback/reintento ante `accepted=false`) y la
+  semántica completa de eventos.
 
 ---
 
-*KIN 2.0 Alpha 1 — primer hito estable. Las APIs marcadas como estables en `BASELINE_ARCHITECTURE.md` no deben modificarse sin una ADR aprobada.*
+*KIN 2.0 Alpha 1 — primera release estable del núcleo inteligente. Las APIs marcadas como
+estables en `BASELINE_ARCHITECTURE.md` no deben modificarse sin una ADR aprobada.*
