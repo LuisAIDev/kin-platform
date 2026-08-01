@@ -2,6 +2,7 @@ package com.kinplatform.kin.reporting.report.model;
 
 import com.kinplatform.kin.engine.EngineResult;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -70,6 +71,26 @@ public record ConsultingReport(
         return executiveSummary.isEmpty() && scores.isEmpty() && recommendations.isEmpty()
             && risks.isEmpty() && opportunities.isEmpty() && financial.isEmpty()
             && market.isEmpty() && innovation.isEmpty() && nextSteps.isEmpty();
+    }
+
+    /**
+     * Retorna las 10 secciones del reporte en el orden fijo de presentación:
+     * EXECUTIVE, SCORING, ANALYTIC (recommendations, risks, opportunities),
+     * PROJECTION (financial, market, innovation), AGGREGATE (nextSteps), METADATA.
+     */
+    public List<ReportSection> sectionsInOrder() {
+        return List.of(
+            executiveSummary,
+            scores,
+            recommendations,
+            risks,
+            opportunities,
+            financial,
+            market,
+            innovation,
+            nextSteps,
+            metadata
+        );
     }
 
     public static ConsultingReport empty() {

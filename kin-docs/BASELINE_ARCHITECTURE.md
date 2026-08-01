@@ -1,7 +1,7 @@
-# BASELINE ARCHITECTURE — KIN 2.0 Alpha 1 (+ Fase 5.2.1)
+# BASELINE ARCHITECTURE — KIN 2.0 Alpha 1 (+ Fase 5.2.1, 5.3, 5.4, 5.5)
 
 > **Milestone**: `v2.0.0-alpha.1` — 30 de julio de 2026
-> **Estado**: `ARCHITECTURE STABLE` (enmendado por ADR-006 … ADR-010 — Fases 5.2.1 y 5.3, y ADR-011 — Fase 5.4)
+> **Estado**: `ARCHITECTURE STABLE` (enmendado por ADR-006 … ADR-010 — Fases 5.2.1 y 5.3, ADR-011 — Fase 5.4, y ADR-012 — Fase 5.5)
 > **Commit**: `577bb94` — Branch: `main`
 >
 > Este documento es el **baseline contractual** del milestone: define qué existe hoy, qué está
@@ -49,7 +49,8 @@ Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven
 | `engine` | `com.kinplatform.kin.engine` | Infraestructura común de motores (contrato estable) |
 | `pipeline` | `com.kinplatform.kin.pipeline` | Pipeline de análisis + stages genéricos |
 | `context` | `com.kinplatform.kin.context` | Tipos de dominio de contexto (ProjectContext, evaluación, decisión, `ContextRepository`) |
-| `ai` (dominio) | `com.kinplatform.kin.ai` | Puertos/servicios de IA de dominio (`AIResponder`, `AIRequest`, `PromptAssembler`) |
+| `ai` (dominio) | `com.kinplatform.kin.ai` | Puertos/servicios de IA de dominio (`AIResponder`, `AIRequest`, `PromptRequest`/`PromptType`, `PromptAssembler`) |
+| `ai.prompt` (dominio) | `com.kinplatform.kin.ai.prompt` | Ensamblado del prompt: `ConversationPromptBuilder`, `ReportPromptBuilder`, 10 `SectionFormatter` (frontera ADR-012: REPORT solo consume `ConsultingReport`) |
 
 ### 2.2 Infraestructura de motores — `kin/engine` (CONTRATO CONGELADO)
 
@@ -87,7 +88,7 @@ Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven
 | `AnalyzerStage` | Extrae dimensiones del mensaje → `ProjectContext.update(...)` |
 | `EvaluatorStage` | `CompletenessEvaluator` → `CompletenessEvaluation` |
 | `StrategistStage` | `ConversationStrategist` → `ConversationDecision` |
-| `ConsultorStage` | Pide la respuesta al puerto `AIResponder` (bloqueante o streaming) con prompt de `PromptAssembler` |
+| `ConsultorStage` | Pide la respuesta al puerto `AIResponder` (bloqueante o streaming); selecciona `PromptRequest.forReport(...)` cuando `decision.shouldGenerateReport()` (lanza si falta el `ConsultingReport`) y `forConversation(...)` en caso contrario |
 | `ScoringStage` | Compone `EngineStage` → `ScoringEngine` (predicado REPORT) |
 | `RecommendationStage` | Compone `EngineStage` → `RecommendationEngine` (predicado REPORT) |
 | `RiskStage` | Compone `EngineStage` → `RiskEngine` (predicado REPORT) |
@@ -96,7 +97,7 @@ Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven
 | `EventStage` | Publica eventos según decisión (ASK→Question, REPORT→Report+Score, siempre ConversationCompleted) |
 | `PipelineContext` | Flujo de datos mutable entre stages + `engineResults` + flag `streaming` + `aiResponseFlux` |
 
-El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega → Consultor → Scoring → Recomendaciones → Riesgos → Oportunidades → **Reporte** → Eventos.
+El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega → Scoring → Recomendaciones → Riesgos → Oportunidades → **Reporte** → **Consultor** → Eventos. `ConsultorStage` se reposicionó tras `ReportStage` (ADR-012) para que el LLM reciba el `ConsultingReport` en modo REPORT; en modo CONVERSATION `ReportStage` se omite.
 
 ### 2.5 AI — `ai/` y `kin/ai`
 
@@ -104,7 +105,8 @@ El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega �
 |------------|-----|
 | `AIResponder` (puerto, dominio) | `respond(AIRequest) → String` + `respondStream(AIRequest) → Flux<String>` |
 | `AIRequest` (dominio) | Record inmutable (historial, mensaje, system prompt) |
-| `PromptAssembler` (dominio) | Construcción centralizada del system prompt (personalidad + contexto + instrucción estratégica) |
+| `PromptAssembler` (dominio) | Fachada pura (ADR-012): `assemble(PromptRequest) → String` delega en `ConversationPromptBuilder` o `ReportPromptBuilder` según `PromptType` |
+| `ConversationPromptBuilder` / `ReportPromptBuilder` (dominio) | `kin.ai.prompt`: prompt conversacional (contexto mínimo + instrucción estratégica) / prompt de reporte (10 secciones formateadas por `SectionFormatter` + instrucción fija "Explica, no decidas") |
 | `AiEngineService` (adaptador) | Implementa `AIResponder`; enruta a `ProviderRouter` con fallback en español |
 | `AIProvider` | Puerto `generateBlocking() + generateStream()` |
 | `ProviderRouter` | Enrutamiento OCP-compliant entre proveedores |
@@ -147,11 +149,12 @@ El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega �
 - [x] **Fase 5.2.1** — Consolidación del runtime (ADR-006 … ADR-009): pipeline único para `/chat` y `/chat/stream`, `ContextRepository` JPA durable, `AIResponder`/`PromptAssembler`, scoring canonizado.
 - [x] **Fase 5.3** — `OpportunityEngine` (ADR-010): 8 analizadores auto-descubiertos, `OpportunityStage` (9ª etapa).
 - [x] **Fase 5.4** — `ReportEngine` (ADR-011): orquestador puro del `ConsultingReport` (10 secciones), `ReportStage` (10ª etapa), ID determinista, cobertura ≥90%.
+- [x] **Fase 5.5** — `PromptAssembler` (ADR-012): fachada pura + `ConversationPromptBuilder` + `ReportPromptBuilder` + 10 `SectionFormatter`; `ConsultorStage` reposicionado tras `ReportStage`.
 - [x] Motores, inputs y results canonizados bajo el contrato `DomainEngine`.
-- [x] **274 tests verdes** (`./mvnw clean verify`), BUILD SUCCESS.
-- [x] **Cobertura de dominio ≥ 90 %**: `kin.engine` 100 %, `kin.reporting.report` 99–100 %, `kin.reporting.opportunity` 100 %, `kin.reporting.risk` 99.5 %, `kin.scoring` 98.9 %.
-- [x] **11 ADRs** aprobadas (ADR-001 … ADR-011).
-- [x] Documentación por fase (FASE5_0/5_1/5_2/5_2_1/5_3/5_4) + Gobernanza + AGENTS.md + CHANGELOG + Release Notes.
+- [x] **338 tests verdes** (`./mvnw clean verify`), BUILD SUCCESS.
+- [x] **Cobertura de dominio ≥ 90 %**: `kin.engine` 100 %, `kin.ai` 100 %, `kin.ai.prompt` 98.8 %, `kin.ai.prompt.formatter` 99.9 %, `kin.reporting.report` 99–100 %, `kin.reporting.opportunity` 100 %, `kin.reporting.risk` 99.5 %, `kin.scoring` 98.9 %.
+- [x] **12 ADRs** aprobadas (ADR-001 … ADR-012).
+- [x] Documentación por fase (FASE5_0/5_1/5_2/5_2_1/5_3/5_4/5_5) + Gobernanza + AGENTS.md + CHANGELOG + Release Notes.
 
 ---
 
@@ -231,6 +234,7 @@ El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega �
 | `kin.scoring.ScoringEngine` | Canonizado por ADR-009; implementa `DomainEngine` (SCORING/DOMAIN/30) |
 | `KinMethod` / `KinMethodCommand` / `KinMethodResult` | Fachada única del runtime (contrato KIN 2.0 / ADR-006) |
 | `ContextRepository` / `AIResponder` / `PromptAssembler` | Puertos/servicios de dominio (ADR-007/ADR-008) |
+| `PromptRequest` / `PromptType` / `kin.ai.prompt` builders | Contrato de ensamblado de prompt (ADR-012): REPORT consume solo `ConsultingReport` |
 | `ConversationDecision` (+`Action`) | Decisión de conversación, enum completo |
 | `AnalyzedDimension` | 14 dimensiones (aditivo) |
 | `DomainEvent` / `DomainEventBus` | Interfaces base del event-driven |
@@ -275,6 +279,7 @@ El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega �
 10. **Dev sin Docker**: H2 file-based + Flyway deshabilitado (`spring.flyway.enabled=false`); PostgreSQL solo en Docker.
 11. **El `ProjectContext` es durable vía `ContextRepository`** (puerto de dominio, adaptador JPA) — ADR-007.
 12. **El dominio depende de `AIResponder`/`PromptAssembler`, no de `AiEngineService`** — ADR-008.
+13. **El prompt REPORT consume solo `ConsultingReport`** (vía `PromptRequest.forReport`); las fuentes crudas (`ProjectContext`, `ScoreResult`, …) están prohibidas en modo REPORT — ADR-012.
 
 ---
 
@@ -316,7 +321,7 @@ puede añadir un nuevo motor (p. ej. `ReportEngine` o `MarketEngine`) o una nuev
 
 ### 7.5 Recomendaciones para la siguiente fase
 
-1. **Prioridad 1**: Fase 5.5 — `PromptAssembler` + explicación LLM sobre `ConsultingReport` ya calculado (ADR-011 §11).
+1. **Prioridad 1 (cumplida)**: Fase 5.5 — `PromptAssembler` + explicación LLM sobre `ConsultingReport` ya calculado (ADR-011 §11 / ADR-012).
 2. **Prioridad 2**: `KnowledgeEngine` + RAG consumiendo `ContextRepository` durable (KIN 3.0 / Fase 6).
 3. Mantener el requisito de ≥ 90 % de cobertura en `kin.reporting` y `kin.engine` al añadir código nuevo.
 4. No romper ninguno de los contratos de §4 sin ADR.
@@ -326,12 +331,12 @@ puede añadir un nuevo motor (p. ej. `ReportEngine` o `MarketEngine`) o una nuev
 ## 8. Verificación
 
 ```bash
-cd kin-backend && ./mvnw clean verify       # 274 tests, 0 fallos, BUILD SUCCESS
-# Cobertura: kin.engine 100 %, kin.reporting.report 99–100 %, kin.reporting.opportunity 100 %, kin.reporting.risk 99.5 %, kin.scoring 98.9 %
+cd kin-backend && ./mvnw clean verify       # 338 tests, 0 fallos, BUILD SUCCESS
+# Cobertura: kin.engine 100 %, kin.ai 100 %, kin.ai.prompt 98.8 %, kin.ai.prompt.formatter 99.9 %, kin.reporting.report 99–100 %, kin.reporting.opportunity 100 %, kin.reporting.risk 99.5 %, kin.scoring 98.9 %
 cd kin-backend && ./mvnw spring-boot:run     # arranque dev H2 (project_context auto-creado)
 git status                                   # working tree clean (tras commit de la fase)
 ```
 
 ---
 
-*Baseline KIN 2.0 Alpha 1 (enmendado por ADR-006 … ADR-011). Cualquier desviación requiere ADR aprobada.*
+*Baseline KIN 2.0 Alpha 1 (enmendado por ADR-006 … ADR-012). Cualquier desviación requiere ADR aprobada.*

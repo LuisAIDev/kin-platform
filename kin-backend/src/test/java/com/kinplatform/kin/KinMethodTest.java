@@ -55,6 +55,7 @@ import com.kinplatform.kin.scoring.ScoringModel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -89,12 +90,25 @@ class KinMethodTest {
     @BeforeEach
     void setUp() {
         eventBus = new InMemoryDomainEventBus();
+        var conversationBuilder = new com.kinplatform.kin.ai.prompt.ConversationPromptBuilder();
+        var reportBuilder = new com.kinplatform.kin.ai.prompt.ReportPromptBuilder(List.of(
+            new com.kinplatform.kin.ai.prompt.formatter.ExecutiveSummaryFormatter(),
+            new com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter(),
+            new com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter(),
+            new com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter(),
+            new com.kinplatform.kin.ai.prompt.formatter.OpportunitiesSectionFormatter(),
+            new com.kinplatform.kin.ai.prompt.formatter.FinancialSectionFormatter(),
+            new com.kinplatform.kin.ai.prompt.formatter.MarketSectionFormatter(),
+            new com.kinplatform.kin.ai.prompt.formatter.InnovationSectionFormatter(),
+            new com.kinplatform.kin.ai.prompt.formatter.NextStepsSectionFormatter(),
+            new com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter()
+        ));
+        var promptAssembler = new PromptAssembler(conversationBuilder, reportBuilder);
         var pipeline = new Pipeline(List.of(
             new AnalyzerStage((message, ctx) -> com.kinplatform.kin.context.AnalysisResult.empty()),
             new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())),
             new StrategistStage(new ConversationStrategist(
                 new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))),
-            new ConsultorStage(aiResponder, new PromptAssembler()),
             new ScoringStage(new ScoringEngine(ScoringModel.defaultModel())),
             new RecommendationStage(new RecommendationEngine(RecommendationModel.defaultModel())),
             new RiskStage(new RiskEngine(
@@ -104,6 +118,7 @@ class KinMethodTest {
                 List.of(new MarketOpportunityAnalyzer(), new MonetizationOpportunityAnalyzer()),
                 OpportunityModel.defaultModel())),
             new ReportStage(reportEngine()),
+            new ConsultorStage(aiResponder, promptAssembler),
             new EventStage()
         ));
         kinMethod = new KinMethod(pipeline, eventBus, contextRepository);
@@ -181,6 +196,12 @@ class KinMethodTest {
         assertNotNull(result.consultingReport());
         assertEquals("ReportEngine", result.consultingReport().generatedBy());
         assertEquals(10, result.consultingReport().metadata().sectionsIncluded().size());
+
+        var captor = ArgumentCaptor.forClass(AIRequest.class);
+        verify(aiResponder).respond(captor.capture());
+        assertTrue(captor.getValue().systemPrompt().contains("=== CONSULTING REPORT ==="));
+        assertTrue(captor.getValue().systemPrompt().contains("--- INSTRUCCIÓN PARA EL LLM ---"));
+        assertFalse(captor.getValue().systemPrompt().contains("## INSTRUCCIÓN ESTRATÉGICA"));
     }
 
     @Test

@@ -483,10 +483,10 @@ Donde:
 │                                                │
 │  Fuera de AI Layer:                            │
 │  ┌─────────────────────────────────┐         │
-│  │  PromptAssembler (App/Infra)    │         │
-│  │  • recibe variables estructuradas│         │
+│  │  PromptAssembler (dominio)      │         │
+│  │  • fachada pura (ADR-012)       │         │
+│  │  • transforma PromptRequest     │         │
 │  │  • produce system prompt string │         │
-│  │  • cada prompt tiene versión    │         │
 │  └─────────────────────────────────┘         │
 └─────────────────────────────────────────────┘
 ```
@@ -494,10 +494,10 @@ Donde:
 ### 7.2 Reglas
 
 1. **AIProvider es un puerto** — definido en `kin/` (o en un paquete de dominio si se mueve). El dominio puede depender de `AIProvider` pero NO de implementaciones concretas.
-2. **PromptAssembler NO está en el dominio** — es un Application Service (o Infrastructure) que construye el system prompt a partir de parámetros estructurados.
-3. **El dominio nunca contiene prompts** — ni system prompts, ni user prompts, ni templates. `AiEngineService.buildSystemPrompt()` debe migrarse a `PromptAssembler`.
+2. **PromptAssembler SÍ está en el dominio** (`kin.ai`) — es una **fachada pura** (ADR-012): `assemble(PromptRequest) → String` delega en `ConversationPromptBuilder` (CONVERSATION) o `ReportPromptBuilder` (REPORT, vía 10 `SectionFormatter`). El adaptador de aplicación (`AiEngineService`) solo implementa el puerto `AIResponder` y no contiene prompts. *(Actualizado en Fase 5.5 — corrige el texto previo "App/Infra" y la regla 2 antigua.)*
+3. **El prompt se construye en el dominio, no en el adaptador** — el system prompt (conversacional o de reporte) sale de `kin.ai.prompt`; `AiEngineService` nunca embebe contenido de prompt ni reglas de estilo.
 4. **PromptTemplate** — archivo de texto o recurso externo (no código Java). Si el prompt cambia, no debe requerir recompilación.
-5. **PromptVariables** — record tipado con los valores que el PromptAssembler inyecta en el template. Ejemplo:
+5. **PromptVariables** — record tipado con los valores que el PromptAssembler inyecta en el template. Ejemplo (CONVERSATION):
    ```java
    public record PromptVariables(
        String projectTitle,

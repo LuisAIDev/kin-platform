@@ -1,6 +1,7 @@
 package com.kinplatform.ai;
 
 import com.kinplatform.ai.provider.ProviderRouter;
+import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.context.Message;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,8 +14,10 @@ import reactor.test.StepVerifier;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AiEngineServiceTest {
@@ -24,95 +27,80 @@ class AiEngineServiceTest {
 
     private AiEngineService aiEngineService;
 
-    private static final String USER_MSG = "\u00BFQu\u00E9 opinas de mi proyecto?";
-    private static final String TITLE = "Mi App";
-    private static final String DESC = "App para gestionar tareas";
-    private static final String CAT = "EMPRENDIMIENTO";
-    private static final String AI_RESP = "\u00A1Excelente idea! Recomiendo enfocarte en la validaci\u00F3n temprana con clientes potenciales.";
+    private static final String USER_MSG = "¿Qué opinas de mi proyecto?";
+    private static final String SYSTEM_PROMPT = "system prompt resuelto";
+    private static final String AI_RESP = "¡Excelente idea! Recomiendo enfocarte en la validación temprana con clientes potenciales.";
 
     @BeforeEach
     void setUp() {
         aiEngineService = new AiEngineService(providerRouter);
     }
 
+    private AIRequest request(List<Message> history) {
+        return new AIRequest(history, USER_MSG, SYSTEM_PROMPT);
+    }
+
     @Test
-    void generateAiResponse_deberiaRetornarRespuestaDelRouter_cuandoRouterResponde() {
-        when(providerRouter.routeBlocking(anyList(), eq(USER_MSG), anyString())).thenReturn(AI_RESP);
+    void respond_deberiaRetornarRespuestaDelRouter_cuandoRouterResponde() {
+        var history = List.of(new Message("USER", "Hola"));
+        when(providerRouter.routeBlocking(anyList(), eq(USER_MSG), eq(SYSTEM_PROMPT))).thenReturn(AI_RESP);
 
-        var history = List.of(
-                new Message("USER", "Hola")
-        );
-
-        String result = aiEngineService.generateAiResponse(history, USER_MSG, TITLE, DESC, CAT);
+        String result = aiEngineService.respond(request(history));
 
         assertEquals(AI_RESP, result);
-        verify(providerRouter).routeBlocking(anyList(), eq(USER_MSG), anyString());
+        verify(providerRouter).routeBlocking(history, USER_MSG, SYSTEM_PROMPT);
     }
 
     @Test
-    void generateAiResponse_deberiaRetornarUnavailable_cuandoRouterDevuelveNull() {
-        when(providerRouter.routeBlocking(anyList(), eq(USER_MSG), anyString())).thenReturn(null);
+    void respond_deberiaRetornarUnavailable_cuandoRouterDevuelveNull() {
+        var history = List.of(new Message("USER", "Hola"));
+        when(providerRouter.routeBlocking(anyList(), eq(USER_MSG), eq(SYSTEM_PROMPT))).thenReturn(null);
 
-        var history = List.of(
-                new Message("USER", "Hola")
-        );
-
-        String result = aiEngineService.generateAiResponse(history, USER_MSG, TITLE, DESC, CAT);
+        String result = aiEngineService.respond(request(history));
 
         assertNotNull(result);
         assertTrue(result.contains("dificultades temporales"));
-        verify(providerRouter).routeBlocking(anyList(), eq(USER_MSG), anyString());
+        verify(providerRouter).routeBlocking(history, USER_MSG, SYSTEM_PROMPT);
     }
 
     @Test
-    void generateAiResponse_deberiaRetornarUnavailable_cuandoRouterDevuelveVacio() {
-        when(providerRouter.routeBlocking(anyList(), eq(USER_MSG), anyString())).thenReturn("");
+    void respond_deberiaRetornarUnavailable_cuandoRouterDevuelveVacio() {
+        var history = List.of(new Message("USER", "Hola"));
+        when(providerRouter.routeBlocking(anyList(), eq(USER_MSG), eq(SYSTEM_PROMPT))).thenReturn("");
 
-        var history = List.of(
-                new Message("USER", "Hola")
-        );
-
-        String result = aiEngineService.generateAiResponse(history, USER_MSG, TITLE, DESC, CAT);
+        String result = aiEngineService.respond(request(history));
 
         assertNotNull(result);
         assertTrue(result.contains("dificultades temporales"));
-        verify(providerRouter).routeBlocking(anyList(), eq(USER_MSG), anyString());
+        verify(providerRouter).routeBlocking(history, USER_MSG, SYSTEM_PROMPT);
     }
 
     @Test
-    void generateAiResponseStream_deberiaEmitirTokensDelRouter_cuandoRouterResponde() {
-        when(providerRouter.routeStream(anyList(), eq(USER_MSG), anyString()))
-                .thenReturn(Flux.just("Token 1", "Token 2"));
+    void respondStream_deberiaEmitirTokensDelRouter_cuandoRouterResponde() {
+        var history = List.of(new Message("USER", "Hola"));
+        when(providerRouter.routeStream(anyList(), eq(USER_MSG), eq(SYSTEM_PROMPT)))
+            .thenReturn(Flux.just("Token 1", "Token 2"));
 
-        var history = List.of(
-                new Message("USER", "Hola")
-        );
-
-        Flux<String> result = aiEngineService.generateAiResponseStream(
-                history, USER_MSG, TITLE, DESC, CAT);
+        Flux<String> result = aiEngineService.respondStream(request(history));
 
         StepVerifier.create(result)
-                .expectNext("Token 1")
-                .expectNext("Token 2")
-                .verifyComplete();
-
-        verify(providerRouter).routeStream(anyList(), eq(USER_MSG), anyString());
+            .expectNext("Token 1")
+            .expectNext("Token 2")
+            .verifyComplete();
+        verify(providerRouter).routeStream(history, USER_MSG, SYSTEM_PROMPT);
     }
 
     @Test
-    void generateAiResponseStream_deberiaEmitirUnavailable_cuandoRouterDevuelveVacio() {
-        when(providerRouter.routeStream(anyList(), eq(USER_MSG), anyString()))
-                .thenReturn(Flux.empty());
-
+    void respondStream_deberiaEmitirUnavailable_cuandoRouterDevuelveVacio() {
         var history = List.<Message>of();
+        when(providerRouter.routeStream(anyList(), eq(USER_MSG), eq(SYSTEM_PROMPT)))
+            .thenReturn(Flux.empty());
 
-        Flux<String> result = aiEngineService.generateAiResponseStream(
-                history, USER_MSG, TITLE, DESC, CAT);
+        Flux<String> result = aiEngineService.respondStream(request(history));
 
         StepVerifier.create(result)
-                .expectNextMatches(s -> s.contains("dificultades temporales"))
-                .verifyComplete();
-
-        verify(providerRouter).routeStream(anyList(), eq(USER_MSG), anyString());
+            .expectNextMatches(s -> s.contains("dificultades temporales"))
+            .verifyComplete();
+        verify(providerRouter).routeStream(history, USER_MSG, SYSTEM_PROMPT);
     }
 }

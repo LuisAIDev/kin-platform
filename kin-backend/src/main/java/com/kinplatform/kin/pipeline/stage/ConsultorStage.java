@@ -3,8 +3,11 @@ package com.kinplatform.kin.pipeline.stage;
 import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.kin.ai.PromptAssembler;
+import com.kinplatform.kin.ai.PromptRequest;
+import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
+import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 
 /**
  * Etapa de consultoría: pide la respuesta de IA al puerto {@link AIResponder}.
@@ -38,12 +41,20 @@ public class ConsultorStage implements PipelineStage {
 
     @Override
     public PipelineContext execute(PipelineContext context) {
-        var systemPrompt = promptAssembler.assemble(
-            context.projectTitle(),
-            context.projectDescription(),
-            context.projectCategory(),
-            context.projectContext()
-        );
+        PromptRequest promptRequest;
+        ConversationDecision decision = context.decision();
+        
+        if (decision != null && decision.shouldGenerateReport()) {
+            ConsultingReport report = context.consultingReport();
+            if (report == null) {
+                throw new IllegalStateException("consultingReport es obligatorio para responder en modo REPORT");
+            }
+            promptRequest = PromptRequest.forReport(report);
+        } else {
+            promptRequest = PromptRequest.forConversation(context.projectContext(), decision);
+        }
+
+        var systemPrompt = promptAssembler.assemble(promptRequest);
         var request = new AIRequest(context.history(), context.userMessage(), systemPrompt);
         if (context.streaming()) {
             context.aiResponseFlux(aiResponder.respondStream(request));

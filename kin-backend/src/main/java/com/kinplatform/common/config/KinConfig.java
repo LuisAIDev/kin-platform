@@ -6,6 +6,19 @@ import com.kinplatform.ai.provider.OpenAIProvider;
 import com.kinplatform.ai.provider.ProviderRouter;
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.kin.ai.PromptAssembler;
+import com.kinplatform.kin.ai.prompt.ConversationPromptBuilder;
+import com.kinplatform.kin.ai.prompt.ReportPromptBuilder;
+import com.kinplatform.kin.ai.prompt.SectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.ExecutiveSummaryFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.FinancialSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.InnovationSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.MarketSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.NextStepsSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.OpportunitiesSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
 import com.kinplatform.kin.context.CompletenessEvaluator;
 import com.kinplatform.kin.context.ContextAnalyzerPort;
 import com.kinplatform.kin.context.ContextRepository;
@@ -120,8 +133,69 @@ public class KinConfig {
     }
 
     @Bean
-    public PromptAssembler promptAssembler() {
-        return new PromptAssembler();
+    public ConversationPromptBuilder conversationPromptBuilder() {
+        return new ConversationPromptBuilder();
+    }
+
+    @Bean
+    public ReportPromptBuilder reportPromptBuilder(List<SectionFormatter<?>> sectionFormatters) {
+        return new ReportPromptBuilder(sectionFormatters);
+    }
+
+    @Bean
+    public PromptAssembler promptAssembler(ConversationPromptBuilder conversationBuilder,
+                                           ReportPromptBuilder reportBuilder) {
+        return new PromptAssembler(conversationBuilder, reportBuilder);
+    }
+
+    @Bean
+    public ExecutiveSummaryFormatter executiveSummaryFormatter() {
+        return new ExecutiveSummaryFormatter();
+    }
+
+    @Bean
+    public ScoresSectionFormatter scoresSectionFormatter() {
+        return new ScoresSectionFormatter();
+    }
+
+    @Bean
+    public RecommendationsSectionFormatter recommendationsSectionFormatter() {
+        return new RecommendationsSectionFormatter();
+    }
+
+    @Bean
+    public RisksSectionFormatter risksSectionFormatter() {
+        return new RisksSectionFormatter();
+    }
+
+    @Bean
+    public OpportunitiesSectionFormatter opportunitiesSectionFormatter() {
+        return new OpportunitiesSectionFormatter();
+    }
+
+    @Bean
+    public FinancialSectionFormatter financialSectionFormatter() {
+        return new FinancialSectionFormatter();
+    }
+
+    @Bean
+    public MarketSectionFormatter marketSectionFormatter() {
+        return new MarketSectionFormatter();
+    }
+
+    @Bean
+    public InnovationSectionFormatter innovationSectionFormatter() {
+        return new InnovationSectionFormatter();
+    }
+
+    @Bean
+    public NextStepsSectionFormatter nextStepsSectionFormatter() {
+        return new NextStepsSectionFormatter();
+    }
+
+    @Bean
+    public ReportMetadataFormatter reportMetadataFormatter() {
+        return new ReportMetadataFormatter();
     }
 
     @Bean
@@ -362,8 +436,8 @@ public class KinConfig {
             OpportunityStage opportunity,
             ReportStage report,
             EventStage eventStage) {
-        return new Pipeline(List.of(analyzer, evaluator, strategist, consultor,
-            scoring, recommendation, risk, opportunity, report, eventStage));
+        return new Pipeline(List.of(analyzer, evaluator, strategist,
+            scoring, recommendation, risk, opportunity, report, consultor, eventStage));
     }
 
     @Bean

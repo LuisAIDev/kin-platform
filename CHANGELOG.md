@@ -5,6 +5,40 @@ Todos los cambios notables de este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/),
 y el versionado del proyecto en [SemVer](https://semver.org/lang/es/).
 
+## [Unreleased] - Fase 5.5 (PromptAssembler)
+
+Enmienda de `v2.0.0-alpha.1` con ADR-012. **Estado: Architecture Stable (enmendado).**
+
+### Added
+
+- `PromptRequest` (record con validación por tipo + factories `forConversation`/`forReport`) y `PromptType` (`CONVERSATION`, `REPORT`) en `kin.ai` (ADR-012).
+- `PromptAssembler` refactorizado como **fachada pura**: `assemble(PromptRequest) → String` delega en `ConversationPromptBuilder` o `ReportPromptBuilder` según `PromptType`. Sin lógica, reglas, fallback ni formateo.
+- `kin.ai.prompt.ConversationPromptBuilder`: prompt conversacional (personalidad + contexto mínimo Título/Categoría/Cobertura + `INSTRUCCIÓN ESTRATÉGICA`), sin ninguna sección de reporte.
+- `kin.ai.prompt.ReportPromptBuilder`: prompt de reporte con las 10 secciones del `ConsultingReport` formateadas + instrucción fija "Explica, no decidas" ("No añadas secciones nuevas. No recalcules scores."). Dispatch por clase concreta de `SectionFormatter`, no por `ReportSectionKind`.
+- 10 `SectionFormatter` en `kin.ai.prompt.formatter`: `ExecutiveSummary`, `ScoresSection`, `RecommendationsSection`, `RisksSection`, `OpportunitiesSection`, `FinancialSection`, `MarketSection`, `InnovationSection`, `NextStepsSection`, `ReportMetadata` — salida determinista con `Locale.ROOT` (fijo cultural `es-CO`).
+- Frontera ADR-012: `PromptRequest.forReport` acepta solo `ConsultingReport`; fuentes crudas prohibidas en modo REPORT.
+- Documentación: ADR-012 (aprobada), `FASE5_5_PROMPT_ASSEMBLER.md` (bitácora E1…E7), `AGENTS.md`, `BASELINE_ARCHITECTURE.md` actualizados.
+
+### Changed
+
+- `ConsultorStage` se reposiciona de la 4.ª a la 9.ª etapa (tras `ReportStage`, antes de `EventStage`): el LLM recibe el `ConsultingReport` en modo REPORT. Selecciona `PromptRequest.forReport(...)` cuando `decision.shouldGenerateReport()` (lanza `IllegalStateException` si el reporte falta) y `forConversation(...)` en caso contrario.
+- Pipeline de 10 etapas: `Analizador → Evaluador → Estratega → Scoring → Recomendaciones → Riesgos → Oportunidades → Reporte → Consultor → Eventos`.
+- `RisksSectionFormatter`: severidad sin `/10` (severityScore puede superar 10); `Locale.ROOT` en todos los formatos numéricos.
+- `KinConfig` inyecta builders + 10 formatters; `AiEngineService` queda como adaptador puro del port `AIResponder`.
+
+### Testing
+
+- 64 tests nuevos (de 274 a 338): `ReportPromptBuilderTest` (10), `ConversationPromptBuilderTest` (11), 10 `SectionFormatterTest` (38), `PromptAssemblerTest` +3 (8), `ConsultorStageTest` +2 modo REPORT (7).
+- `./mvnw clean verify`: **338 tests, 0 fallos, BUILD SUCCESS**.
+- Cobertura (JaCoCo): `kin.ai` 100 %; `kin.ai.prompt` 98.8 %; `kin.ai.prompt.formatter` 99.9 %. Requisito de ≥ 90 % en `kin.ai` cumplido.
+
+### Known Issues
+
+- Incidencia heredada: `pricing_plans` sin columnas NOT NULL aplicadas en dev (H2, `ddl-auto: update`). No bloquea el arranque (warnings). Fuera del alcance de esta fase.
+- `InMemoryDomainEventBus` sin async ni persistencia (KIN 2.4).
+- Heurística de longitud en `ScoringEngine` por reemplazar antes de KIN 2.5.
+- Cobertura baja en paquetes de infraestructura (auth, pricing, project, ai.provider) — fuera del requisito del dominio.
+
 ## [Unreleased] - Fase 5.4 (ReportEngine)
 
 Enmienda de `v2.0.0-alpha.1` con ADR-011. **Estado: Architecture Stable (enmendado).**
