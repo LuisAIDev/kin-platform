@@ -1,9 +1,9 @@
 package com.kinplatform.chat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.KinMethod;
-import com.kinplatform.kin.KinMethodCommand;
 import com.kinplatform.kin.context.Message;
+import com.kinplatform.kin.conversation.ConversationOrchestrator;
+import com.kinplatform.kin.conversation.ConversationTurn;
 import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.ChatRequest;
 import com.kinplatform.chat.dto.ChatResponse;
@@ -23,11 +23,12 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Orquestador de chat. Tras la consolidación del runtime (Fase 5.2.1) NO
- * contiene lógica de negocio ni flujos ad-hoc: ambos endpoints ({@code /chat}
- * y {@code /chat/stream}) delegan en {@link KinMethod}, el único punto de
- * entrada del pipeline. Este servicio solo se ocupa de la I/O HTTP: persistir
- * los mensajes y emitir el SSE.
+ * Orquestador de chat. Tras la consolidación del runtime (Fase 5.2.1) y del
+ * Conversation Orchestrator (Fase 5.6, ADR-013) NO contiene lógica de negocio
+ * ni flujos ad-hoc: ambos endpoints ({@code /chat} y {@code /chat/stream})
+ * delegan en {@link ConversationOrchestrator}, que resuelve la directiva en
+ * Java y delega la ejecución en el pipeline. Este servicio solo se ocupa de la
+ * I/O HTTP: persistir los mensajes y emitir el SSE.
  */
 @Service
 @RequiredArgsConstructor
@@ -39,7 +40,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
     private final ChatService chatService;
     private final ProjectRepository projectRepository;
     private final ObjectMapper objectMapper;
-    private final KinMethod kinMethod;
+    private final ConversationOrchestrator conversationOrchestrator;
 
     @Override
     @Transactional
@@ -47,13 +48,14 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         var project = findProject(userId, projectId);
         var userMessage = saveUserMessage(userId, projectId, request.getContent());
         var history = loadHistoryForContext(userId, projectId);
-        var command = new KinMethodCommand(
+        var turn = new ConversationTurn(
             projectId, userId, request.getContent(), history,
             project.getTitle(), project.getDescription(), project.getCategory() != null ? project.getCategory().name() : null
         );
-        var result = kinMethod.execute(command);
-        log.info("=== KIN METHOD RESULT === action={}, chars={}, events={}",
+        var result = conversationOrchestrator.orchestrate(turn);
+        log.info("=== KIN METHOD RESULT === action={}, phase={}, chars={}, events={}",
                 result.decision() != null ? result.decision().action() : null,
+                result.directive() != null ? result.directive().phase() : null,
                 result.aiResponse() != null ? result.aiResponse().length() : 0,
                 result.events().size());
         var assistantMessage = saveAssistantMessage(userId, projectId, result.aiResponse());
@@ -70,7 +72,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         var project = findProject(userId, projectId);
         var userMessage = saveUserMessage(userId, projectId, request.getContent());
         var history = loadHistoryForContext(userId, projectId);
-        var command = new KinMethodCommand(
+        var turn = new ConversationTurn(
             projectId, userId, request.getContent(), history,
             project.getTitle(), project.getDescription(), project.getCategory() != null ? project.getCategory().name() : null
         );
@@ -78,7 +80,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         log.info("=== STREAMING AI RESPONSE === project={}, userId={}, historySize={}",
                 projectId, userId, history.size());
 
-        var flux = kinMethod.executeStream(command);
+        var flux = conversationOrchestrator.orchestrateStream(turn);
         var emitter = new SseEmitter(SSE_TIMEOUT);
         var fullContent = new StringBuilder();
 

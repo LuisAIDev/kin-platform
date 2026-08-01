@@ -2,6 +2,8 @@ package com.kinplatform.kin.pipeline;
 
 import com.kinplatform.kin.context.CompletenessEvaluation;
 import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.kin.conversation.ResponseValidation;
+import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.engine.EngineResult;
 import com.kinplatform.kin.event.DomainEvent;
@@ -44,6 +46,8 @@ public class PipelineContext {
     private String currentStage;
     private boolean streaming;
     private Flux<String> aiResponseFlux;
+    private TurnDirective turnDirective;
+    private ResponseValidation responseValidation;
 
     public PipelineContext(UUID projectId, UUID userId, String userMessage,
                            List<com.kinplatform.kin.context.Message> history,
@@ -115,4 +119,10 @@ public class PipelineContext {
 
     public Flux<String> aiResponseFlux() { return aiResponseFlux; }
     public void aiResponseFlux(Flux<String> flux) { this.aiResponseFlux = flux; }
+
+    public TurnDirective turnDirective() { return turnDirective; }
+    public void turnDirective(TurnDirective directive) { this.turnDirective = directive; }
+
+    public ResponseValidation responseValidation() { return responseValidation; }
+    public void responseValidation(ResponseValidation validation) { this.responseValidation = validation; }
 }

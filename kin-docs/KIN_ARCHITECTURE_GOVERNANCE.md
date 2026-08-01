@@ -3,6 +3,7 @@
 > Constitución Arquitectónica del proyecto KIN.
 > Aprobada el 30 de julio de 2026 — Vinculante para todo desarrollo futuro.
 > Toda desviación requiere una ADR aprobada antes de implementar.
+> Enmendada por ADR-013 (Fase 5.6, 2026-07-31): el ciclo de conversación pasa a estar dirigido por `kin.conversation` (Conversation Orchestrator).
 
 ---
 
@@ -129,6 +130,10 @@ Ningún paquete puede depender de otro que esté en una capa superior. Verificar
 - `ConversationStrategist` (Java) decide: ¿qué dimensión explorar?
 - `ScoringEngine` (Java) decide: ¿qué score de viabilidad tiene el proyecto?
 - `EventStage` (Java) decide: ¿qué eventos disparar?
+- `TurnPolicy`/`DefaultTurnPolicy` (Java) decide: ¿qué fase, modo de comunicación y restricciones aplican al turno? (ADR-013)
+- `HistoryWindow` (Java) decide: ¿qué fragmento del historial ve el LLM? (presupuesto por número de mensajes, ADR-013)
+- `ResponseGuard` (Java) valida: ¿la comunicación del LLM cumple la directiva? (longitud, pregunta única, marcadores prohibidos) — nunca infiere intención ni decisión del texto (ADR-013)
+- `ConversationOrchestrator` (Java) dirige el ciclo de turno (directiva pre-pipeline + validación post-pipeline) y delega la ejecución al pipeline (ADR-013)
 - El LLM solo recibe una instrucción estratégica y genera texto conversacional o un reporte.
 - El LLM NUNCA decide el flujo. NUNCA decide qué preguntar. NUNCA evalúa viabilidad.
 
@@ -507,7 +512,7 @@ Donde:
        ConversationDecision decision
    ) {}
    ```
-6. **El LLM solo comunica** — la decisión estratégica (`ConversationDecision`) es generada por `ConversationStrategist` en Java. El LLM recibe la decisión como instrucción y genera texto. No decide.
+6. **El LLM solo comunica** — la decisión estratégica (`ConversationDecision`) es generada por `ConversationStrategist` en Java, y la directiva de turno (`TurnDirective`, fase/modo/restricciones) por `TurnPolicy` en Java (ADR-013). `ResponseGuard` valida la conformidad de la comunicación contra la directiva. El LLM recibe la decisión y la directiva como instrucción, genera texto y no participa en ninguna decisión.
 7. **Nunca se pasa el `PipelineContext` completo al LLM** — solo la información necesaria para generar la respuesta.
 8. **Versionado de prompts** — cada cambio en un prompt template debe incrementar su versión. El PromptAssembler debe registrar qué versión se usó en cada llamada (observabilidad).
 
@@ -681,6 +686,7 @@ Cualquier regla de este documento puede ser eximida temporalmente mediante:
 ---
 
 *Documento generado el 30 de julio de 2026.*
-*Versión: KIN-GOV-001*
+*Enmendado por ADR-013 el 31 de julio de 2026 (Fase 5.6 — Conversation Orchestrator).*
+*Versión: KIN-GOV-002*
 *Próxima revisión: al completar KIN 2.3*
 *Próxima revisión mayor: al alcanzar KIN 3.0*

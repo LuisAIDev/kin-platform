@@ -17,6 +17,11 @@ import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
 import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.kin.conversation.CommunicationMode;
+import com.kinplatform.kin.conversation.ConversationPhase;
+import com.kinplatform.kin.conversation.ResponseValidation;
+import com.kinplatform.kin.conversation.TurnConstraints;
+import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -156,5 +161,101 @@ class ConsultorStageTest {
 
         var exception = assertThrows(IllegalStateException.class, () -> stage.execute(ctx));
         assertEquals("consultingReport es obligatorio para responder en modo REPORT", exception.getMessage());
+    }
+
+    @Test
+    void execute_conDirectiva_deberiaEnmarcarElPromptConLaDirectiva() {
+        when(aiResponder.respond(any(AIRequest.class))).thenReturn("ok");
+
+        var ctx = context(false);
+        ctx.turnDirective(directivaExploracion());
+        stage.execute(ctx);
+
+        var captor = ArgumentCaptor.forClass(AIRequest.class);
+        verify(aiResponder).respond(captor.capture());
+        var prompt = captor.getValue().systemPrompt();
+        assertTrue(prompt.contains("## DIRECTIVA DE COMUNICACIÓN"));
+        assertTrue(prompt.contains(ConversationPhase.EXPLORATION.name()));
+        assertTrue(prompt.contains(CommunicationMode.QUESTION.name()));
+        assertTrue(prompt.contains(String.valueOf(TurnConstraints.QUESTION_MAX_LENGTH)));
+        assertTrue(prompt.contains("=== CONSULTING REPORT ==="));
+    }
+
+    @Test
+    void execute_sinDirectiva_noDeberiaIncluirLaSeccionDeDirectiva() {
+        when(aiResponder.respond(any(AIRequest.class))).thenReturn("ok");
+
+        var ctx = context(false);
+        stage.execute(ctx);
+
+        var captor = ArgumentCaptor.forClass(AIRequest.class);
+        verify(aiResponder).respond(captor.capture());
+        assertFalse(captor.getValue().systemPrompt().contains("## DIRECTIVA DE COMUNICACIÓN"));
+    }
+
+    @Test
+    void execute_streaming_conDirectiva_deberiaMarcarResponseValidationAceptado() {
+        when(aiResponder.respondStream(any(AIRequest.class))).thenReturn(Flux.just("¿Apuntás a empresas?"));
+
+        var ctx = context(true);
+        ctx.turnDirective(directivaExploracion());
+        stage.execute(ctx);
+
+        assertNotNull(ctx.aiResponseFlux());
+        ctx.aiResponseFlux().blockLast();
+
+        var validation = ctx.responseValidation();
+        assertNotNull(validation);
+        assertTrue(validation.accepted());
+    }
+
+    @Test
+    void execute_streaming_conDirectiva_deberiaMarcarResponseValidationRechazado() {
+        when(aiResponder.respondStream(any(AIRequest.class))).thenReturn(Flux.just("a".repeat(300) + "?"));
+
+        var ctx = context(true);
+        ctx.turnDirective(directivaExploracion());
+        stage.execute(ctx);
+
+        ctx.aiResponseFlux().blockLast();
+
+        var validation = ctx.responseValidation();
+        assertNotNull(validation);
+        assertFalse(validation.accepted());
+        assertTrue(validation.issues().contains("response.too_long"));
+    }
+
+    @Test
+    void execute_streaming_sinDirectiva_noDeberiaMarcarResponseValidation() {
+        when(aiResponder.respondStream(any(AIRequest.class))).thenReturn(Flux.just("hola"));
+
+        var ctx = context(true);
+        stage.execute(ctx);
+
+        ctx.aiResponseFlux().blockLast();
+        assertNull(ctx.responseValidation());
+    }
+
+    @Test
+    void execute_streaming_modoReporte_sinDirectiva_deberiaUsarRestriccionesDeReporte() {
+        when(aiResponder.respondStream(any(AIRequest.class)))
+            .thenReturn(Flux.just("=== CONSULTING REPORT === resumen ejecutivo"));
+
+        var ctx = context(true);
+        ctx.decision(ConversationDecision.generateReport("contexto completo"));
+        ctx.consultingReport(com.kinplatform.kin.reporting.report.model.ConsultingReport.empty());
+        stage.execute(ctx);
+
+        ctx.aiResponseFlux().blockLast();
+
+        var validation = ctx.responseValidation();
+        assertNotNull(validation);
+        assertTrue(validation.accepted());
+    }
+
+    private TurnDirective directivaExploracion() {
+        return new TurnDirective(
+            ConversationPhase.EXPLORATION, ConversationDecision.Action.ASK,
+            AnalyzedDimension.PROBLEM, CommunicationMode.QUESTION, TurnConstraints.question());
     }
 }

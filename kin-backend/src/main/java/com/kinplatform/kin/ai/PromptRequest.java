@@ -1,6 +1,7 @@
 package com.kinplatform.kin.ai;
 
 import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 
@@ -9,16 +10,22 @@ import com.kinplatform.kin.reporting.report.model.ConsultingReport;
  *
  * <p>Según {@link PromptType}:
  * <ul>
- *   <li>{@code CONVERSATION}: requiere {@code context} y {@code decision}; {@code consultingReport} debe ser {@code null}</li>
- *   <li>{@code REPORT}: requiere {@code consultingReport}; {@code context} y {@code decision} deben ser {@code null}</li>
+ *   <li>{@code CONVERSATION}: requiere {@code context} y {@code decision}; {@code consultingReport} debe ser {@code null} y {@code directive} es opcional (ADR-013)</li>
+ *   <li>{@code REPORT}: requiere {@code consultingReport}; {@code context}, {@code decision} y {@code directive} deben ser {@code null}</li>
  * </ul>
  */
 public record PromptRequest(
     ConsultingReport consultingReport,
     PromptType type,
     ProjectContext context,
-    ConversationDecision decision
+    ConversationDecision decision,
+    TurnDirective directive
 ) {
+
+    public PromptRequest(ConsultingReport consultingReport, PromptType type,
+                         ProjectContext context, ConversationDecision decision) {
+        this(consultingReport, type, context, decision, null);
+    }
 
     public PromptRequest {
         if (type == null) {
@@ -29,6 +36,9 @@ public record PromptRequest(
         }
         if (type == PromptType.REPORT && (context != null || decision != null)) {
             throw new IllegalArgumentException("context y decision deben ser null para REPORT");
+        }
+        if (type == PromptType.REPORT && directive != null) {
+            throw new IllegalArgumentException("directive debe ser null para REPORT");
         }
         if (type == PromptType.CONVERSATION) {
             if (consultingReport != null) {
@@ -44,10 +54,15 @@ public record PromptRequest(
     }
 
     public static PromptRequest forConversation(ProjectContext context, ConversationDecision decision) {
-        return new PromptRequest(null, PromptType.CONVERSATION, context, decision);
+        return new PromptRequest(null, PromptType.CONVERSATION, context, decision, null);
+    }
+
+    public static PromptRequest forConversation(ProjectContext context, ConversationDecision decision,
+                                                TurnDirective directive) {
+        return new PromptRequest(null, PromptType.CONVERSATION, context, decision, directive);
     }
 
     public static PromptRequest forReport(ConsultingReport consultingReport) {
-        return new PromptRequest(consultingReport, PromptType.REPORT, null, null);
+        return new PromptRequest(consultingReport, PromptType.REPORT, null, null, null);
     }
 }

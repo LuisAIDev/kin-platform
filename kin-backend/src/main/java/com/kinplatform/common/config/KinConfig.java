@@ -26,6 +26,10 @@ import com.kinplatform.kin.context.EvaluationPolicies;
 import com.kinplatform.kin.context.ExplorationPriority;
 import com.kinplatform.kin.context.strategy.ConversationStrategist;
 import com.kinplatform.kin.context.strategy.DefaultExplorationStrategy;
+import com.kinplatform.kin.conversation.ConversationOrchestrator;
+import com.kinplatform.kin.conversation.history.HistoryWindow;
+import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
+import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.event.InMemoryDomainEventBus;
 import com.kinplatform.kin.engine.DomainEngine;
@@ -214,8 +218,9 @@ public class KinConfig {
     }
 
     @Bean
-    public ConsultorStage consultorStage(AIResponder aiResponder, PromptAssembler promptAssembler) {
-        return new ConsultorStage(aiResponder, promptAssembler);
+    public ConsultorStage consultorStage(AIResponder aiResponder, PromptAssembler promptAssembler,
+                                         ResponseGuard responseGuard) {
+        return new ConsultorStage(aiResponder, promptAssembler, responseGuard);
     }
 
     @Bean
@@ -443,5 +448,30 @@ public class KinConfig {
     @Bean
     public KinMethod kinMethod(Pipeline chatPipeline, DomainEventBus eventBus, ContextRepository contextRepository) {
         return new KinMethod(chatPipeline, eventBus, contextRepository);
+    }
+
+    @Bean
+    public DefaultTurnPolicy defaultTurnPolicy() {
+        return new DefaultTurnPolicy();
+    }
+
+    @Bean
+    public ResponseGuard responseGuard() {
+        return new ResponseGuard();
+    }
+
+    @Bean
+    public HistoryWindow historyWindow() {
+        return new HistoryWindow();
+    }
+
+    @Bean
+    public ConversationOrchestrator conversationOrchestrator(HistoryWindow historyWindow,
+                                                             DefaultTurnPolicy turnPolicy,
+                                                             KinMethod kinMethod,
+                                                             ResponseGuard responseGuard,
+                                                             ContextRepository contextRepository) {
+        return new ConversationOrchestrator(historyWindow, turnPolicy, kinMethod,
+            responseGuard, contextRepository);
     }
 }

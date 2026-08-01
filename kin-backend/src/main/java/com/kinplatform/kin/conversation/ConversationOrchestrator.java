@@ -1,0 +1,190 @@
+package com.kinplatform.kin.conversation;
+
+import com.kinplatform.kin.KinMethod;
+import com.kinplatform.kin.KinMethodCommand;
+import com.kinplatform.kin.KinMethodResult;
+import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.kin.context.Message;
+import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.kin.conversation.history.HistoryWindow;
+import com.kinplatform.kin.conversation.policy.TurnPolicy;
+import com.kinplatform.kin.conversation.validation.ResponseGuard;
+import com.kinplatform.kin.decision.ConversationDecision;
+import reactor.core.publisher.Flux;
+
+import java.util.List;
+
+/**
+ * Fachada de dominio del ciclo de conversación (ADR-013, Etapas 5 y 6).
+ *
+ * <p>Coordina el ciclo completo de un turno componiendo los componentes del
+ * dominio: {@link HistoryWindow} acota el historial que verá el LLM (presupuesto
+ * por número de mensajes), {@link ContextRepository} carga/crea el contexto
+ * durable del proyecto, {@link TurnPolicy} decide en Java la directiva de
+ * comunicación ANTES de ejecutar el pipeline (para que la directiva viaje en el
+ * {@link KinMethodCommand} y enmarque el prompt en la etapa Consultor),
+ * {@link KinMethod} delega la ejecución del pipeline (contrato congelado) y
+ * {@link ResponseGuard} valida la respuesta del LLM contra la directiva. El
+ * resultado es un turno tipado {@link TurnResult}.</p>
+ *
+ * <p>Es una fachada pura de dominio, sin Spring y sin infraestructura: no
+ * contiene lógica de negocio, no analiza proyectos, no calcula scoring, no
+ * genera prompts ni interpreta respuestas del LLM. La integración aditiva con
+ * el pipeline (directiva en {@code KinMethodCommand}, {@code PipelineContext},
+ * {@code PromptRequest}) y el modo streaming pertenecen a la Etapa 6
+ * (ADR-013 §Cambios aditivos).</p>
+ */
+public class ConversationOrchestrator {
+
+    private final HistoryWindow historyWindow;
+    private final TurnPolicy turnPolicy;
+    private final KinMethod kinMethod;
+    private final ResponseGuard responseGuard;
+    private final ContextRepository contextRepository;
+
+    public ConversationOrchestrator(HistoryWindow historyWindow,
+                                    TurnPolicy turnPolicy,
+                                    KinMethod kinMethod,
+                                    ResponseGuard responseGuard,
+                                    ContextRepository contextRepository) {
+        if (historyWindow == null) {
+            throw new IllegalArgumentException("historyWindow no puede ser null");
+        }
+        if (turnPolicy == null) {
+            throw new IllegalArgumentException("turnPolicy no puede ser null");
+        }
+        if (kinMethod == null) {
+            throw new IllegalArgumentException("kinMethod no puede ser null");
+        }
+        if (responseGuard == null) {
+            throw new IllegalArgumentException("responseGuard no puede ser null");
+        }
+        if (contextRepository == null) {
+            throw new IllegalArgumentException("contextRepository no puede ser null");
+        }
+        this.historyWindow = historyWindow;
+        this.turnPolicy = turnPolicy;
+        this.kinMethod = kinMethod;
+        this.responseGuard = responseGuard;
+        this.contextRepository = contextRepository;
+    }
+
+    /**
+     * Ejecuta un turno de conversación de forma bloqueante.
+     *
+     * <p>Flujo: acota el historial con {@link HistoryWindow}, carga/crea el
+     * contexto durable con {@link ContextRepository}, resuelve la directiva con
+     * {@link TurnPolicy#decide} a partir del contexto persistido y de la
+     * decisión previa, construye el {@link KinMethodCommand} (con la directiva)
+     * a partir del {@link ConversationTurn}, delega la ejecución en
+     * {@link KinMethod#execute}, valida la respuesta del LLM con
+     * {@link ResponseGuard} y devuelve el {@link TurnResult} tipado.</p>
+     *
+     * @param turn input tipado del turno (obligatorio)
+     * @return turno tipado con directiva, respuesta, validación, reporte y eventos
+     * @throws IllegalArgumentException si {@code turn} es {@code null} o si el
+     *                                  pipeline no produce contexto/decisión
+     * @throws IllegalStateException    si {@link KinMethod#execute} devuelve
+     *                                  {@code null}
+     */
+    public TurnResult orchestrate(ConversationTurn turn) {
+        if (turn == null) {
+            throw new IllegalArgumentException("turn no puede ser null");
+        }
+
+        List<Message> windowedHistory = historyWindow.window(
+                turn.history(), HistoryWindow.DEFAULT_MAX_MESSAGES);
+
+        ProjectContext projectContext = contextRepository.findOrCreate(
+                turn.projectId(),
+                turn.projectTitle(),
+                turn.projectDescription(),
+                turn.projectCategory());
+
+        TurnDirective directive = turnPolicy.decide(
+                projectContext, previousDecision(projectContext));
+
+        KinMethodCommand command = new KinMethodCommand(
+                turn.projectId(),
+                turn.userId(),
+                turn.userMessage(),
+                windowedHistory,
+                turn.projectTitle(),
+                turn.projectDescription(),
+                turn.projectCategory(),
+                directive);
+
+        KinMethodResult result = kinMethod.execute(command);
+        if (result == null) {
+            throw new IllegalStateException("KinMethod.execute devolvió null");
+        }
+
+        ResponseValidation validation = responseGuard.validate(
+                result.aiResponse(), directive);
+
+        return new TurnResult(
+                result.projectContext(),
+                result.decision(),
+                directive,
+                result.aiResponse(),
+                validation,
+                result.consultingReport(),
+                result.events());
+    }
+
+    /**
+     * Ejecuta un turno de conversación en modo streaming (SSE).
+     *
+     * <p>Igual que {@link #orchestrate} pero delega en
+     * {@link KinMethod#executeStream}: la etapa Consultor deja el {@code Flux}
+     * de tokens en el contexto y el orquestador lo devuelve para que el
+     * consumidor SSE lo suscriba. La directiva viaja igualmente en el
+     * {@link KinMethodCommand} y enmarca el prompt; la validación de la
+     * respuesta streamed la aplica la etapa Consultor dejando el
+     * {@code ResponseValidation} en el {@code PipelineContext} (ADR-013 §7.2).</p>
+     *
+     * @param turn input tipado del turno (obligatorio)
+     * @return flujo reactivo de tokens de la respuesta del LLM
+     * @throws IllegalArgumentException si {@code turn} es {@code null}
+     * @throws IllegalStateException    si {@link KinMethod#executeStream}
+     *                                  devuelve {@code null}
+     */
+    public Flux<String> orchestrateStream(ConversationTurn turn) {
+        if (turn == null) {
+            throw new IllegalArgumentException("turn no puede ser null");
+        }
+
+        List<Message> windowedHistory = historyWindow.window(
+                turn.history(), HistoryWindow.DEFAULT_MAX_MESSAGES);
+
+        ProjectContext projectContext = contextRepository.findOrCreate(
+                turn.projectId(),
+                turn.projectTitle(),
+                turn.projectDescription(),
+                turn.projectCategory());
+
+        TurnDirective directive = turnPolicy.decide(
+                projectContext, previousDecision(projectContext));
+
+        KinMethodCommand command = new KinMethodCommand(
+                turn.projectId(),
+                turn.userId(),
+                turn.userMessage(),
+                windowedHistory,
+                turn.projectTitle(),
+                turn.projectDescription(),
+                turn.projectCategory(),
+                directive);
+
+        Flux<String> flux = kinMethod.executeStream(command);
+        if (flux == null) {
+            throw new IllegalStateException("KinMethod.executeStream devolvió null");
+        }
+
+        return flux;
+    }
+
+    private ConversationDecision previousDecision(ProjectContext projectContext) {
+        return projectContext != null ? projectContext.currentDecision() : null;
+    }
+}

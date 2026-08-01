@@ -92,6 +92,7 @@ public class KinMethod {
             command.projectCategory()
         );
         ctx.projectContext(projectContext);
+        ctx.turnDirective(command.directive());
         return ctx;
     }
 

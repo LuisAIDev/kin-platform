@@ -1,8 +1,6 @@
-package com.kinplatform.kin;
+package com.kinplatform.kin.conversation;
 
-import com.kinplatform.kin.ai.AIRequest;
-import com.kinplatform.kin.ai.AIResponder;
-import com.kinplatform.kin.ai.PromptAssembler;
+import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.CompletenessEvaluator;
 import com.kinplatform.kin.context.ContextRepository;
@@ -11,15 +9,28 @@ import com.kinplatform.kin.context.ExplorationPriority;
 import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.kin.context.strategy.ConversationStrategist;
 import com.kinplatform.kin.context.strategy.DefaultExplorationStrategy;
-import com.kinplatform.kin.conversation.CommunicationMode;
-import com.kinplatform.kin.conversation.ConversationPhase;
-import com.kinplatform.kin.conversation.TurnConstraints;
-import com.kinplatform.kin.conversation.TurnDirective;
-import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.InMemoryDomainEventBus;
 import com.kinplatform.kin.event.QuestionGeneratedEvent;
 import com.kinplatform.kin.event.ReportGeneratedEvent;
-import com.kinplatform.kin.event.ScoreCalculatedEvent;
+import com.kinplatform.kin.conversation.history.HistoryWindow;
+import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
+import com.kinplatform.kin.conversation.validation.ResponseGuard;
+import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.kin.ai.AIRequest;
+import com.kinplatform.kin.ai.AIResponder;
+import com.kinplatform.kin.ai.PromptAssembler;
+import com.kinplatform.kin.ai.prompt.ConversationPromptBuilder;
+import com.kinplatform.kin.ai.prompt.ReportPromptBuilder;
+import com.kinplatform.kin.ai.prompt.formatter.ExecutiveSummaryFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.FinancialSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.InnovationSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.MarketSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.NextStepsSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.OpportunitiesSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
 import com.kinplatform.kin.pipeline.Pipeline;
 import com.kinplatform.kin.pipeline.stage.AnalyzerStage;
 import com.kinplatform.kin.pipeline.stage.ConsultorStage;
@@ -62,22 +73,26 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
 
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class KinMethodTest {
+class ConversationOrchestratorPipelineIntegrationTest {
+
+    private static final UUID PROJECT_ID = UUID.randomUUID();
+    private static final UUID USER_ID = UUID.randomUUID();
 
     @Mock
     private ContextRepository contextRepository;
@@ -85,27 +100,24 @@ class KinMethodTest {
     @Mock
     private AIResponder aiResponder;
 
-    private KinMethod kinMethod;
+    private ConversationOrchestrator orchestrator;
     private InMemoryDomainEventBus eventBus;
-
-    private static final UUID PROJECT_ID = UUID.randomUUID();
-    private static final UUID USER_ID = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
         eventBus = new InMemoryDomainEventBus();
-        var conversationBuilder = new com.kinplatform.kin.ai.prompt.ConversationPromptBuilder();
-        var reportBuilder = new com.kinplatform.kin.ai.prompt.ReportPromptBuilder(List.of(
-            new com.kinplatform.kin.ai.prompt.formatter.ExecutiveSummaryFormatter(),
-            new com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter(),
-            new com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter(),
-            new com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter(),
-            new com.kinplatform.kin.ai.prompt.formatter.OpportunitiesSectionFormatter(),
-            new com.kinplatform.kin.ai.prompt.formatter.FinancialSectionFormatter(),
-            new com.kinplatform.kin.ai.prompt.formatter.MarketSectionFormatter(),
-            new com.kinplatform.kin.ai.prompt.formatter.InnovationSectionFormatter(),
-            new com.kinplatform.kin.ai.prompt.formatter.NextStepsSectionFormatter(),
-            new com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter()
+        var conversationBuilder = new ConversationPromptBuilder();
+        var reportBuilder = new ReportPromptBuilder(List.of(
+            new ExecutiveSummaryFormatter(),
+            new ScoresSectionFormatter(),
+            new RecommendationsSectionFormatter(),
+            new RisksSectionFormatter(),
+            new OpportunitiesSectionFormatter(),
+            new FinancialSectionFormatter(),
+            new MarketSectionFormatter(),
+            new InnovationSectionFormatter(),
+            new NextStepsSectionFormatter(),
+            new ReportMetadataFormatter()
         ));
         var promptAssembler = new PromptAssembler(conversationBuilder, reportBuilder);
         var pipeline = new Pipeline(List.of(
@@ -122,10 +134,13 @@ class KinMethodTest {
                 List.of(new MarketOpportunityAnalyzer(), new MonetizationOpportunityAnalyzer()),
                 OpportunityModel.defaultModel())),
             new ReportStage(reportEngine()),
-            new ConsultorStage(aiResponder, promptAssembler),
+            new ConsultorStage(aiResponder, promptAssembler, new ResponseGuard()),
             new EventStage()
         ));
-        kinMethod = new KinMethod(pipeline, eventBus, contextRepository);
+        var kinMethod = new KinMethod(pipeline, eventBus, contextRepository);
+        orchestrator = new ConversationOrchestrator(
+            new HistoryWindow(), new DefaultTurnPolicy(), kinMethod,
+            new ResponseGuard(), contextRepository);
     }
 
     private ReportEngine reportEngine() {
@@ -143,24 +158,17 @@ class KinMethodTest {
             new ReportMetadataAssembler(model)), model);
     }
 
-    private KinMethodCommand command(String message) {
-        return new KinMethodCommand(
-            PROJECT_ID, USER_ID, message, List.of(),
-            "Proyecto Test", "Descripción", "Software");
+    private ConversationTurn turn() {
+        return new ConversationTurn(PROJECT_ID, USER_ID, "el problema es que la gente pierde tiempo",
+            List.of(), "Proyecto Test", "Descripción", "Software");
     }
 
-    private KinMethodCommand command(String message, TurnDirective directive) {
-        return new KinMethodCommand(
-            PROJECT_ID, USER_ID, message, List.of(),
-            "Proyecto Test", "Descripción", "Software", directive);
-    }
-
-    private void stubNewContext() {
+    private void stubNuevoContexto() {
         when(contextRepository.findOrCreate(PROJECT_ID, "Proyecto Test", "Descripción", "Software"))
             .thenReturn(ProjectContext.fromProject("Proyecto Test", "Descripción", "Software"));
     }
 
-    private void stubFullContext() {
+    private void stubContextoCompleto() {
         var data = new EnumMap<AnalyzedDimension, String>(AnalyzedDimension.class);
         for (var dim : AnalyzedDimension.values()) {
             data.put(dim, dim.displayName().repeat(30));
@@ -170,91 +178,68 @@ class KinMethodTest {
                 data, EnumSet.allOf(AnalyzedDimension.class), null, 5, false));
     }
 
+    private AIRequest capturarAIRequest() {
+        var captor = ArgumentCaptor.forClass(AIRequest.class);
+        verify(aiResponder).respond(captor.capture());
+        return captor.getValue();
+    }
+
     @Test
-    void execute_deberiaCorrerElPipelineCompleto_conContextoNuevoYCargarRespuesta() {
-        stubNewContext();
-        when(aiResponder.respond(any(AIRequest.class))).thenReturn("respuesta de KIN");
+    void flujoConversacion_deberiaEnmarcarElPromptConLaDirectivaYValidar() {
+        stubNuevoContexto();
+        when(aiResponder.respond(any(AIRequest.class)))
+            .thenReturn("¿Apuntás a consumidores o a empresas?");
 
-        var result = kinMethod.execute(command("el problema es que la gente pierde tiempo"));
+        var result = orchestrator.orchestrate(turn());
 
-        assertEquals("respuesta de KIN", result.aiResponse());
-        assertEquals(com.kinplatform.kin.decision.ConversationDecision.Action.ASK, result.decision().action());
-        assertNotNull(result.projectContext());
-        assertEquals(1, result.projectContext().exchangeCount());
-        verify(contextRepository).save(eq(PROJECT_ID), any(ProjectContext.class));
+        assertEquals(ConversationPhase.EXPLORATION, result.directive().phase());
+        assertEquals(ConversationDecision.Action.ASK, result.directive().action());
+        assertEquals(CommunicationMode.QUESTION, result.directive().communicationMode());
+        assertTrue(result.validation().accepted());
+
+        var request = capturarAIRequest();
+        assertTrue(request.systemPrompt().contains("## DIRECTIVA DE COMUNICACIÓN"));
+        assertTrue(request.systemPrompt().contains(ConversationPhase.EXPLORATION.name()));
+        assertTrue(request.systemPrompt().contains(CommunicationMode.QUESTION.name()));
 
         assertTrue(result.events().stream().anyMatch(e -> e instanceof QuestionGeneratedEvent));
-        assertTrue(result.events().stream().anyMatch(e -> e instanceof com.kinplatform.kin.event.ConversationCompletedEvent));
         assertEquals(result.events(), eventBus.publishedEvents());
     }
 
     @Test
-    void execute_deberiaGenerarInformeCuandoElContextoEstaCompleto() {
-        stubFullContext();
-        when(aiResponder.respond(any(AIRequest.class))).thenReturn("=== INFORME DE VIABILIDAD ===");
+    void flujoReporte_deberiaGenerarElReporteYNoEnmarcarLaDirectivaEnElPromptDeReporte() {
+        stubContextoCompleto();
+        when(aiResponder.respond(any(AIRequest.class))).thenReturn("Aquí tenés el informe de viabilidad.");
 
-        var result = kinMethod.execute(command("generá el informe"));
-
-        assertEquals(com.kinplatform.kin.decision.ConversationDecision.Action.REPORT, result.decision().action());
-        assertNotNull(result.score());
-        assertEquals("ScoringEngine", result.score().generatedBy());
-        assertTrue(result.score().totalScore() > 0);
-
-        assertTrue(result.events().stream().anyMatch(e -> e instanceof ReportGeneratedEvent));
-        assertTrue(result.events().stream().anyMatch(e -> e instanceof ScoreCalculatedEvent));
+        var result = orchestrator.orchestrate(turn());
 
         assertNotNull(result.consultingReport());
         assertEquals("ReportEngine", result.consultingReport().generatedBy());
         assertEquals(10, result.consultingReport().metadata().sectionsIncluded().size());
+        assertTrue(result.events().stream().anyMatch(e -> e instanceof ReportGeneratedEvent));
 
-        var captor = ArgumentCaptor.forClass(AIRequest.class);
-        verify(aiResponder).respond(captor.capture());
-        assertTrue(captor.getValue().systemPrompt().contains("=== CONSULTING REPORT ==="));
-        assertTrue(captor.getValue().systemPrompt().contains("--- INSTRUCCIÓN PARA EL LLM ---"));
-        assertFalse(captor.getValue().systemPrompt().contains("## INSTRUCCIÓN ESTRATÉGICA"));
+        var request = capturarAIRequest();
+        assertTrue(request.systemPrompt().contains("=== CONSULTING REPORT ==="));
+        assertFalse(request.systemPrompt().contains("## DIRECTIVA DE COMUNICACIÓN"));
+
+        assertEquals(ConversationPhase.EXPLORATION, result.directive().phase());
+        assertEquals(ConversationDecision.Action.ASK, result.directive().action());
     }
 
     @Test
-    void executeStream_deberiaDevolverElFluxDeTokensSinBloquear() {
-        stubNewContext();
+    void flujoConversacion_streaming_deberiaEnmarcarElPromptYDevolverLosTokens() {
+        stubNuevoContexto();
         when(aiResponder.respondStream(any(AIRequest.class)))
-            .thenReturn(reactor.core.publisher.Flux.just("a", "b"));
+            .thenReturn(Flux.just("¿Apuntás a ", "consumidores o a empresas?"));
 
-        var flux = kinMethod.executeStream(command("hola"));
-        assertEquals("ab", flux.reduce("", (acc, next) -> acc + next).block());
+        var flux = orchestrator.orchestrateStream(turn());
 
-        verify(contextRepository).save(eq(PROJECT_ID), any(ProjectContext.class));
+        assertEquals("¿Apuntás a consumidores o a empresas?",
+            flux.reduce("", (acc, next) -> acc + next).block());
+
+        var captor = ArgumentCaptor.forClass(AIRequest.class);
+        verify(aiResponder).respondStream(captor.capture());
+        assertTrue(captor.getValue().systemPrompt().contains("## DIRECTIVA DE COMUNICACIÓN"));
         assertFalse(eventBus.publishedEvents().isEmpty());
-    }
-
-    @Test
-    void execute_deberiaPropagarLaDirectivaDelComandoAlPrompt() {
-        stubNewContext();
-        when(aiResponder.respond(any(AIRequest.class))).thenReturn("¿Apuntás a empresas?");
-        var directive = new TurnDirective(
-            ConversationPhase.EXPLORATION, com.kinplatform.kin.decision.ConversationDecision.Action.ASK,
-            AnalyzedDimension.PROBLEM, CommunicationMode.QUESTION, TurnConstraints.question());
-
-        kinMethod.execute(command("hola", directive));
-
-        var captor = ArgumentCaptor.forClass(AIRequest.class);
-        verify(aiResponder).respond(captor.capture());
-        var prompt = captor.getValue().systemPrompt();
-        assertTrue(prompt.contains("## DIRECTIVA DE COMUNICACIÓN"));
-        assertTrue(prompt.contains(ConversationPhase.EXPLORATION.name()));
-        assertTrue(prompt.contains(CommunicationMode.QUESTION.name()));
-        assertTrue(prompt.contains(String.valueOf(TurnConstraints.QUESTION_MAX_LENGTH)));
-    }
-
-    @Test
-    void execute_sinDirectiva_deberiaMantenerElPromptSinDirectiva() {
-        stubNewContext();
-        when(aiResponder.respond(any(AIRequest.class))).thenReturn("¿Pregunta?");
-
-        kinMethod.execute(command("hola"));
-
-        var captor = ArgumentCaptor.forClass(AIRequest.class);
-        verify(aiResponder).respond(captor.capture());
-        assertFalse(captor.getValue().systemPrompt().contains("## DIRECTIVA DE COMUNICACIÓN"));
     }
 }

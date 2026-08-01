@@ -1,8 +1,8 @@
 package com.kinplatform.chat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.KinMethod;
-import com.kinplatform.kin.KinMethodCommand;
+import com.kinplatform.kin.conversation.ConversationOrchestrator;
+import com.kinplatform.kin.conversation.ConversationTurn;
 import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.ChatRequest;
 import com.kinplatform.chat.dto.SaveMessageRequest;
@@ -40,7 +40,7 @@ class ChatOrchestratorServiceImplTest {
     private ProjectRepository projectRepository;
 
     @Mock
-    private KinMethod kinMethod;
+    private ConversationOrchestrator conversationOrchestrator;
 
     private ObjectMapper objectMapper;
     private ChatOrchestratorServiceImpl orchestrator;
@@ -59,7 +59,7 @@ class ChatOrchestratorServiceImplTest {
         objectMapper = spy(new ObjectMapper());
 
         orchestrator = new ChatOrchestratorServiceImpl(
-                chatService, projectRepository, objectMapper, kinMethod);
+                chatService, projectRepository, objectMapper, conversationOrchestrator);
 
         request = new ChatRequest();
         request.setContent(CONTENT);
@@ -110,7 +110,7 @@ class ChatOrchestratorServiceImplTest {
     }
 
     private void stubStream(Flux<String> flux) {
-        when(kinMethod.executeStream(any(KinMethodCommand.class)))
+        when(conversationOrchestrator.orchestrateStream(any(ConversationTurn.class)))
                 .thenReturn(flux);
     }
 

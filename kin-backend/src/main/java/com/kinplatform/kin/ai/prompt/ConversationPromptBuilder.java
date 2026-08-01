@@ -2,6 +2,8 @@ package com.kinplatform.kin.ai.prompt;
 
 import com.kinplatform.kin.ai.PromptRequest;
 import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.kin.conversation.TurnConstraints;
+import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.decision.ConversationDecision;
 
 import java.util.Locale;
@@ -131,7 +133,29 @@ public class ConversationPromptBuilder {
             sb.append(strategySnippet);
         }
 
+        if (request.directive() != null) {
+            sb.append(appendDirectiva(request.directive()));
+        }
+
         sb.append(CONVERSACION);
+
+        return sb.toString();
+    }
+
+    private String appendDirectiva(TurnDirective directive) {
+        var sb = new StringBuilder("\n\n## DIRECTIVA DE COMUNICACIÓN\n");
+        sb.append("Enmarcá tu respuesta según la fase ").append(directive.phase().name());
+        sb.append(" en modo ").append(directive.communicationMode().name()).append(".\n");
+
+        TurnConstraints constraints = directive.constraints();
+        if (constraints != null) {
+            sb.append("Restricciones de comunicación:\n");
+            sb.append("- Longitud máxima: ").append(constraints.maxLength()).append(" caracteres.\n");
+            sb.append("- Una sola pregunta por turno: ").append(constraints.singleQuestion() ? "sí" : "no").append(".\n");
+            if (constraints.forbiddenMarkers() != null && !constraints.forbiddenMarkers().isEmpty()) {
+                sb.append("- Marcadores prohibidos: ").append(String.join(", ", constraints.forbiddenMarkers())).append(".\n");
+            }
+        }
 
         return sb.toString();
     }

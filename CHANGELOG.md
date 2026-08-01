@@ -5,6 +5,51 @@ Todos los cambios notables de este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/),
 y el versionado del proyecto en [SemVer](https://semver.org/lang/es/).
 
+## [Unreleased] - Fase 5.6 (Conversation Orchestrator)
+
+Enmienda de `v2.0.0-alpha.1` con ADR-013. **Estado: Architecture Stable (enmendado). FASE 5.6 CERRADA OFICIALMENTE (2026-07-31).**
+
+### Added
+
+- Nuevo paquete de dominio `com.kinplatform.kin.conversation` (ADR-013, sin Spring):
+  - `ConversationOrchestrator` — fachada del ciclo de turno: `orchestrate(ConversationTurn) → TurnResult` y `orchestrateStream(ConversationTurn) → Flux<String>`; compone `HistoryWindow` + `TurnPolicy` + `KinMethod` (contrato congelado) + `ResponseGuard` + `ContextRepository`.
+  - `TurnPolicy` / `DefaultTurnPolicy` — política de turno determinista: decide en Java fase/modo/restricciones desde la decisión previa persistida (pre-pipeline); mapeo exhaustivo de las 7 acciones de `ConversationDecision`.
+  - `ResponseGuard` — guardrail de comunicación (vacío, longitud, pregunta única, marcadores prohibidos; `accepted = issues.isEmpty()`). Responsabilidad: bloqueante → orquestador; streaming → `ConsultorStage` (enmienda M3).
+  - `HistoryWindow` — presupuesto de contexto por número de mensajes (default 20; el mensaje del usuario del turno siempre se incluye).
+  - Tipos de turno puros: `ConversationPhase` (`EXPLORATION`, `REPORTING`, `CLOSED`), `CommunicationMode` (`QUESTION`, `EXPLAIN_REPORT`, `SUMMARY`, `FAREWELL`), `TurnConstraints`, `ConversationTurn`, `TurnDirective`, `ResponseValidation`, `TurnResult`.
+- Integración aditiva (E6, enmiendas M1/M2/M3):
+  - `KinMethodCommand` + campo `TurnDirective directive` (overload; constructor histórico intacto).
+  - `PipelineContext` + campos `turnDirective` y `responseValidation` (patrón ADR-011).
+  - `PromptRequest.forConversation(context, decision, directive)` (overload; factory ADR-012 intacto; REPORT refuerza `directive=null`).
+  - `ConversationPromptBuilder` + sección `## DIRECTIVA DE COMUNICACIÓN` cuando `request.directive() != null` (sancionada por enmienda M2).
+  - `ConsultorStage` consume la directiva para enmarcar el prompt; en streaming aplica `ResponseGuard` (`attachStreamGuard`) y deja `responseValidation` en contexto.
+  - Beans en `KinConfig`: `DefaultTurnPolicy`, `ResponseGuard`, `HistoryWindow`, `ConversationOrchestrator`.
+- `ChatOrchestratorServiceImpl` delega `/chat` y `/chat/stream` en `ConversationOrchestrator` (cambio de aplicación, no de contrato).
+- Documentación: ADR-013 (aprobada con enmiendas M1/M2/M3), `FASE5_6_CONVERSATION_ORCHESTRATOR.md` (diseño + cierre E7), `AGENTS.md`, `BASELINE_ARCHITECTURE.md`, `KIN_ARCHITECTURE_GOVERNANCE.md` actualizados.
+
+### Changed
+
+- **M1 (comportamiento aprobado)**: en el primer turno que genera el `ConsultingReport`, la directiva pre-pipeline deriva de la decisión previa (típicamente `(EXPLORATION, ASK, QUESTION)`); los turnos posteriores reciben `(REPORTING, REPORT, EXPLAIN_REPORT)`. `ConsultorStage` usa `PromptRequest.forReport` (frontera ADR-012 intacta).
+- **M3 (guard unificado)**: modo bloqueante → `ConversationOrchestrator` emite `TurnResult.validation`; modo streaming → `ConsultorStage.attachStreamGuard` deja `PipelineContext.responseValidation`.
+- `KinMethod.prepare` propaga `command.directive()` → `ctx.turnDirective(...)`.
+- `KIN_ARCHITECTURE_GOVERNANCE.md` §1.11 y §7 regla 6: `TurnPolicy`, `HistoryWindow`, `ResponseGuard` y `ConversationOrchestrator` como decisiones Java del ciclo conversacional.
+- `BASELINE_ARCHITECTURE.md`: inventario +`kin.conversation`, contratos congelados +7 tipos y 4 componentes, decisiones congeladas #14, cobertura actualizada.
+
+### Testing
+
+- 130 tests nuevos (de 338 a 468): 113 en `kin/conversation/` (enums/records 26, `HistoryWindowTest` 17, `ResponseGuardTest` 21, `DefaultTurnPolicyTest` 22, `ConversationOrchestratorTest` 24, integración pipeline 3), `PromptRequestDirectiveTest` (6), `ConversationPromptBuilderDirectiveTest` (3), `KinMethodTest` +2 (propagación directiva), `ConsultorStageTest` +6 (modo REPORT, guard streaming, framing).
+- Los 338 tests previos permanecen verdes sin modificación de aserciones.
+- `./mvnw clean verify`: **468 tests, 0 fallos, 0 errores, 0 skipped, BUILD SUCCESS**.
+- Cobertura (JaCoCo): **`kin.conversation` 100 % (738/738 instrucciones)**; `kin.ai` 99.7 %; `kin.ai.prompt` 99.7 %; `kin.ai.prompt.formatter` 99.9 %; `kin.reporting*` 99.2 %; `kin.engine` 99.1 %; `kin.scoring` 95.1 %. Requisito de ≥ 90 % en `kin.conversation` cumplido.
+
+### Known Issues
+
+- Incidencia heredada: `pricing_plans` sin columnas NOT NULL aplicadas en dev (H2, `ddl-auto: update`). No bloquea el arranque (warnings). Fuera del alcance de esta fase.
+- `InMemoryDomainEventBus` sin async ni persistencia (KIN 2.4).
+- Heurística de longitud en `ScoringEngine` por reemplazar antes de KIN 2.5.
+- Cobertura baja en paquetes de infraestructura (auth, pricing, project, ai.provider) — fuera del requisito del dominio.
+- `ResponseValidation` (bloqueante y streaming) es hoy un artefacto de auditoría sin consumidor en producción; el fallback (respuesta enlatada) se define en KIN 2.1.
+
 ## [Unreleased] - Fase 5.5 (PromptAssembler)
 
 Enmienda de `v2.0.0-alpha.1` con ADR-012. **Estado: Architecture Stable (enmendado).**

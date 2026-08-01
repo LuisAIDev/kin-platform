@@ -1,7 +1,7 @@
-# BASELINE ARCHITECTURE — KIN 2.0 Alpha 1 (+ Fase 5.2.1, 5.3, 5.4, 5.5)
+# BASELINE ARCHITECTURE — KIN 2.0 Alpha 1 (+ Fases 5.2.1 … 5.6)
 
 > **Milestone**: `v2.0.0-alpha.1` — 30 de julio de 2026
-> **Estado**: `ARCHITECTURE STABLE` (enmendado por ADR-006 … ADR-010 — Fases 5.2.1 y 5.3, ADR-011 — Fase 5.4, y ADR-012 — Fase 5.5)
+> **Estado**: `ARCHITECTURE STABLE` (enmendado por ADR-006 … ADR-010 — Fases 5.2.1 y 5.3, ADR-011 — Fase 5.4, ADR-012 — Fase 5.5, y ADR-013 — Fase 5.6)
 > **Commit**: `577bb94` — Branch: `main`
 >
 > Este documento es el **baseline contractual** del milestone: define qué existe hoy, qué está
@@ -51,6 +51,7 @@ Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven
 | `context` | `com.kinplatform.kin.context` | Tipos de dominio de contexto (ProjectContext, evaluación, decisión, `ContextRepository`) |
 | `ai` (dominio) | `com.kinplatform.kin.ai` | Puertos/servicios de IA de dominio (`AIResponder`, `AIRequest`, `PromptRequest`/`PromptType`, `PromptAssembler`) |
 | `ai.prompt` (dominio) | `com.kinplatform.kin.ai.prompt` | Ensamblado del prompt: `ConversationPromptBuilder`, `ReportPromptBuilder`, 10 `SectionFormatter` (frontera ADR-012: REPORT solo consume `ConsultingReport`) |
+| `conversation` (dominio) | `com.kinplatform.kin.conversation` | Ciclo de conversación dirigido (ADR-013): `ConversationOrchestrator` (fachada), `TurnPolicy`/`DefaultTurnPolicy` (directiva en Java), `ResponseGuard` (guardrail), `HistoryWindow` (presupuesto de contexto) + tipos de turno (`ConversationTurn`, `TurnDirective`, `TurnResult`, `ResponseValidation`, `TurnConstraints`, `ConversationPhase`, `CommunicationMode`) |
 
 ### 2.2 Infraestructura de motores — `kin/engine` (CONTRATO CONGELADO)
 
@@ -88,14 +89,14 @@ Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven
 | `AnalyzerStage` | Extrae dimensiones del mensaje → `ProjectContext.update(...)` |
 | `EvaluatorStage` | `CompletenessEvaluator` → `CompletenessEvaluation` |
 | `StrategistStage` | `ConversationStrategist` → `ConversationDecision` |
-| `ConsultorStage` | Pide la respuesta al puerto `AIResponder` (bloqueante o streaming); selecciona `PromptRequest.forReport(...)` cuando `decision.shouldGenerateReport()` (lanza si falta el `ConsultingReport`) y `forConversation(...)` en caso contrario |
+| `ConsultorStage` | Pide la respuesta al puerto `AIResponder` (bloqueante o streaming); selecciona `PromptRequest.forReport(...)` cuando `decision.shouldGenerateReport()` (lanza si falta el `ConsultingReport`), `forConversation(context, decision, turnDirective)` en caso contrario; en streaming aplica `ResponseGuard` (`attachStreamGuard`) y deja `responseValidation` en contexto (ADR-013) |
 | `ScoringStage` | Compone `EngineStage` → `ScoringEngine` (predicado REPORT) |
 | `RecommendationStage` | Compone `EngineStage` → `RecommendationEngine` (predicado REPORT) |
 | `RiskStage` | Compone `EngineStage` → `RiskEngine` (predicado REPORT) |
 | `OpportunityStage` | Compone `EngineStage` → `OpportunityEngine` (predicado REPORT) |
 | `ReportStage` | Compone `EngineStage` → `ReportEngine` (predicado: 4 resultados presentes) |
 | `EventStage` | Publica eventos según decisión (ASK→Question, REPORT→Report+Score, siempre ConversationCompleted) |
-| `PipelineContext` | Flujo de datos mutable entre stages + `engineResults` + flag `streaming` + `aiResponseFlux` |
+| `PipelineContext` | Flujo de datos mutable entre stages + `engineResults` + flag `streaming` + `aiResponseFlux` + `turnDirective` + `responseValidation` (ADR-013) |
 
 El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega → Scoring → Recomendaciones → Riesgos → Oportunidades → **Reporte** → **Consultor** → Eventos. `ConsultorStage` se reposicionó tras `ReportStage` (ADR-012) para que el LLM reciba el `ConsultingReport` en modo REPORT; en modo CONVERSATION `ReportStage` se omite.
 
@@ -106,7 +107,7 @@ El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega �
 | `AIResponder` (puerto, dominio) | `respond(AIRequest) → String` + `respondStream(AIRequest) → Flux<String>` |
 | `AIRequest` (dominio) | Record inmutable (historial, mensaje, system prompt) |
 | `PromptAssembler` (dominio) | Fachada pura (ADR-012): `assemble(PromptRequest) → String` delega en `ConversationPromptBuilder` o `ReportPromptBuilder` según `PromptType` |
-| `ConversationPromptBuilder` / `ReportPromptBuilder` (dominio) | `kin.ai.prompt`: prompt conversacional (contexto mínimo + instrucción estratégica) / prompt de reporte (10 secciones formateadas por `SectionFormatter` + instrucción fija "Explica, no decidas") |
+| `ConversationPromptBuilder` / `ReportPromptBuilder` (dominio) | `kin.ai.prompt`: prompt conversacional (contexto mínimo + instrucción estratégica + sección `## DIRECTIVA DE COMUNICACIÓN` cuando hay directiva, ADR-013) / prompt de reporte (10 secciones formateadas por `SectionFormatter` + instrucción fija "Explica, no decidas") |
 | `AiEngineService` (adaptador) | Implementa `AIResponder`; enruta a `ProviderRouter` con fallback en español |
 | `AIProvider` | Puerto `generateBlocking() + generateStream()` |
 | `ProviderRouter` | Enrutamiento OCP-compliant entre proveedores |
@@ -138,6 +139,16 @@ El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega �
 | `KinMethodCommand` / `KinMethodResult` | Records de entrada/salida del runtime | ✅ |
 | `ScoringStage` | Etapa de scoring (paquete `pipeline.stage`) | ✅ |
 
+### 2.9 Conversation Orchestrator — `kin/conversation`
+
+| Componente | Rol | Estable |
+|------------|-----|---------|
+| `ConversationOrchestrator` | Fachada de dominio del ciclo de turno (ADR-013): `orchestrate(ConversationTurn) → TurnResult` + `orchestrateStream(ConversationTurn) → Flux<String>`; compone HistoryWindow + TurnPolicy + KinMethod + ResponseGuard + ContextRepository. Sin Spring (POJO). `ChatOrchestratorServiceImpl` delega ambos endpoints | ✅ nuevo |
+| `TurnPolicy` / `DefaultTurnPolicy` | Política de turno determinista: decide en Java fase/modo/restricciones desde la decisión previa persistida (pre-pipeline). Mapeo exhaustivo de las 7 acciones | ✅ nuevo |
+| `ResponseGuard` | Guardrail de comunicación (ADR-013): vacío, longitud, pregunta única, marcadores prohibidos; `accepted = issues.isEmpty()`. Nunca infiere intención del texto. Responsabilidad: bloqueante → orquestador; streaming → `ConsultorStage` (enmienda M3) | ✅ nuevo |
+| `HistoryWindow` | Ventana de contexto por número de mensajes (default 20); el mensaje del usuario del turno siempre se incluye; presupuesto determinista | ✅ nuevo |
+| `ConversationPhase` / `CommunicationMode` / `TurnConstraints` / `ConversationTurn` / `TurnDirective` / `ResponseValidation` / `TurnResult` | Tipos puros (records/enums inmutables) del ciclo de conversación | ✅ nuevo |
+
 ---
 
 ## 3. Qué está completo (criterio de aceptación del milestone)
@@ -150,11 +161,12 @@ El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega �
 - [x] **Fase 5.3** — `OpportunityEngine` (ADR-010): 8 analizadores auto-descubiertos, `OpportunityStage` (9ª etapa).
 - [x] **Fase 5.4** — `ReportEngine` (ADR-011): orquestador puro del `ConsultingReport` (10 secciones), `ReportStage` (10ª etapa), ID determinista, cobertura ≥90%.
 - [x] **Fase 5.5** — `PromptAssembler` (ADR-012): fachada pura + `ConversationPromptBuilder` + `ReportPromptBuilder` + 10 `SectionFormatter`; `ConsultorStage` reposicionado tras `ReportStage`.
+- [x] **Fase 5.6** — `ConversationOrchestrator` (ADR-013): `kin.conversation` (orquestador, `TurnPolicy`/`DefaultTurnPolicy`, `ResponseGuard`, `HistoryWindow`, 7 tipos de turno); directiva en Java pre-pipeline; integración aditiva (`KinMethodCommand.directive`, `PipelineContext.turnDirective`/`responseValidation`, overload `PromptRequest.forConversation`, `ConversationPromptBuilder` DIRECTIVA, `ConsultorStage` guard streaming); `/chat` y `/chat/stream` delegan en el orquestador.
 - [x] Motores, inputs y results canonizados bajo el contrato `DomainEngine`.
-- [x] **338 tests verdes** (`./mvnw clean verify`), BUILD SUCCESS.
-- [x] **Cobertura de dominio ≥ 90 %**: `kin.engine` 100 %, `kin.ai` 100 %, `kin.ai.prompt` 98.8 %, `kin.ai.prompt.formatter` 99.9 %, `kin.reporting.report` 99–100 %, `kin.reporting.opportunity` 100 %, `kin.reporting.risk` 99.5 %, `kin.scoring` 98.9 %.
-- [x] **12 ADRs** aprobadas (ADR-001 … ADR-012).
-- [x] Documentación por fase (FASE5_0/5_1/5_2/5_2_1/5_3/5_4/5_5) + Gobernanza + AGENTS.md + CHANGELOG + Release Notes.
+- [x] **468 tests verdes** (`./mvnw clean verify`), BUILD SUCCESS.
+- [x] **Cobertura de dominio ≥ 90 %**: `kin.engine` 99.1 %, `kin.ai` 99.7 %, `kin.ai.prompt` 99.7 %, `kin.ai.prompt.formatter` 99.9 %, `kin.reporting*` 99.2 %, `kin.reporting.report` 99–100 %, `kin.reporting.opportunity` 100 %, `kin.reporting.risk` 99.5 %, `kin.scoring` 95.1 %, **`kin.conversation` 100 %**.
+- [x] **13 ADRs** aprobadas (ADR-001 … ADR-013).
+- [x] Documentación por fase (FASE5_0/5_1/5_2/5_2_1/5_3/5_4/5_5/5_6) + Gobernanza + AGENTS.md + CHANGELOG + Release Notes.
 
 ---
 
@@ -189,7 +201,12 @@ El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega �
 | `AIProvider` | `generateBlocking()`, `generateStream()` |
 | `PipelineStage` / `Pipeline` | `name()`, `supports()`, `execute()` + algoritmo de ejecución |
 | `ScoringModel` / `ScoreResult` | Records inmutables |
-| `PipelineContext` | Acceso a campos + `engineResults` + `streaming` + `aiResponseFlux` |
+| `PipelineContext` | Acceso a campos + `engineResults` + `streaming` + `aiResponseFlux` + `turnDirective` + `responseValidation` (ADR-013) |
+| `ConversationOrchestrator` | `orchestrate(ConversationTurn) → TurnResult` + `orchestrateStream(ConversationTurn) → Flux<String>` (ADR-013) |
+| `TurnPolicy` / `DefaultTurnPolicy` | `decide(ProjectContext, ConversationDecision) → TurnDirective` (ADR-013) |
+| `ResponseGuard` | `validate(String, TurnDirective) → ResponseValidation` (ADR-013) |
+| `HistoryWindow` | `window(List<Message>, int) → List<Message>` (ADR-013) |
+| `ConversationTurn` / `TurnDirective` / `TurnResult` / `ResponseValidation` / `TurnConstraints` / `ConversationPhase` / `CommunicationMode` | Tipos del ciclo de conversación (ADR-013) |
 
 ### 4.2 Contratos de aplicación/API
 
@@ -240,7 +257,12 @@ El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega �
 | `DomainEvent` / `DomainEventBus` | Interfaces base del event-driven |
 | `AIProvider` | Puertos `generateBlocking`/`generateStream` |
 | `PipelineStage` / `Pipeline` | Interfaces y algoritmo de ejecución |
-| `PipelineContext` | Flujo de datos entre stages + `engineResults` + `consultingReport` + streaming |
+| `PipelineContext` | Flujo de datos entre stages + `engineResults` + `consultingReport` + streaming + `turnDirective` + `responseValidation` (ADR-013) |
+| `ConversationOrchestrator` | Fachada del ciclo de conversación (ADR-013); compone el contrato congelado `KinMethod` |
+| `TurnPolicy` / `DefaultTurnPolicy` | Política de turno determinista (ADR-013); decisión 100 % Java |
+| `ResponseGuard` | Guardrail de comunicación (ADR-013); nunca infiere intención |
+| `HistoryWindow` | Presupuesto de contexto por número de mensajes (ADR-013) |
+| `ConversationTurn` / `TurnDirective` / `TurnResult` / `ResponseValidation` / `TurnConstraints` / `ConversationPhase` / `CommunicationMode` | Tipos de dominio del ciclo de conversación (ADR-013) |
 
 ### 5.2 EN EVOLUCIÓN — cambiarán pero manteniendo la API pública
 
@@ -271,29 +293,32 @@ El pipeline actual tiene **10 stages**: Analizador → Evaluador → Estratega �
 2. **Toda comunicación entre bounded contexts** es por eventos o por puertos.
 3. **Value Objects inmutables** (records de Java o copia defensiva). `PipelineContext` es la única excepción (mutable por diseño).
 4. **Los Application Services orquestan, no implementan reglas de negocio**.
-5. **`ChatOrchestratorServiceImpl` DEBE usar `KinMethod` en ambos flujos** (bloqueante y streaming) — cumplido por ADR-006.
+5. **`ChatOrchestratorServiceImpl` DELEGA en `ConversationOrchestrator`** (que compone `KinMethod`) en ambos flujos (bloqueante y streaming) — cumplido por ADR-006 y ADR-013.
 6. **La infraestructura de motores (`kin/engine`) es un contrato congelado** — ADR-005/ADR-009.
 7. **`RecommendationEngine`, `RiskEngine` y `OpportunityEngine` son estables** — ADR-003, ADR-004 y ADR-010.
 8. **La heurística de longitud en `ScoringEngine` debe reemplazarse antes de KIN 2.5** — regla absoluta #18.
-9. **Cobertura de dominio ≥ 90 %** de instrucciones en `kin.reporting` y `kin.engine` (JaCoCo).
+9. **Cobertura de dominio ≥ 90 %** de instrucciones en `kin.reporting`, `kin.engine`, `kin.ai` y `kin.conversation` (JaCoCo).
 10. **Dev sin Docker**: H2 file-based + Flyway deshabilitado (`spring.flyway.enabled=false`); PostgreSQL solo en Docker.
 11. **El `ProjectContext` es durable vía `ContextRepository`** (puerto de dominio, adaptador JPA) — ADR-007.
 12. **El dominio depende de `AIResponder`/`PromptAssembler`, no de `AiEngineService`** — ADR-008.
 13. **El prompt REPORT consume solo `ConsultingReport`** (vía `PromptRequest.forReport`); las fuentes crudas (`ProjectContext`, `ScoreResult`, …) están prohibidas en modo REPORT — ADR-012.
+14. **Java decide en la conversación** (ADR-013): `TurnPolicy` decide fase/modo/restricciones, `HistoryWindow` decide el presupuesto de contexto y `ResponseGuard` valida la comunicación — nunca se parsean decisiones del texto del LLM. La directiva viaja aditivamente al pipeline (`KinMethodCommand.directive`) y enmarca el prompt (`PromptRequest.forConversation(context, decision, directive)` + sección DIRECTIVA).
 
 ---
 
-## 7. Preparación para la siguiente fase (Fase 5.4)
+## 7. Preparación para la siguiente fase (Fase 6 — KnowledgeEngine + RAG)
 
 > Análisis de preparación. NO implementación.
 
 ### 7.1 Estado de partida
 
-El runtime está consolidado: `KinMethod` es el único punto de entrada (bloqueante y streaming),
-el contexto es durable, la infraestructura de motores (`DomainEngine`, `EngineExecutor`,
-`EngineStage`) es reutilizable y la Fase 5.3 añadió `OpportunityEngine` (ADR-010). Una Fase 5.4
-puede añadir un nuevo motor (p. ej. `ReportEngine` o `MarketEngine`) o una nueva etapa de pipeline
-**sin tocar los contratos estables**.
+El runtime está consolidado (`KinMethod` único punto de entrada, bloqueante y streaming), el
+contexto es durable (`ContextRepository`), la infraestructura de motores (`DomainEngine`,
+`EngineExecutor`, `EngineStage`) es reutilizable y el ciclo de conversación ya está dirigido:
+`ConversationOrchestrator` (ADR-013) decide la directiva en Java, acota el historial con
+`HistoryWindow`, valida la comunicación con `ResponseGuard` y devuelve un turno tipado
+(`TurnResult`). Una Fase 6 (KnowledgeEngine + RAG) puede consumir el `ProjectContext` durable y
+el turno tipado/directiva como punto de extensión, **sin tocar los contratos estables**.
 
 ### 7.2 Riesgos
 
@@ -321,9 +346,9 @@ puede añadir un nuevo motor (p. ej. `ReportEngine` o `MarketEngine`) o una nuev
 
 ### 7.5 Recomendaciones para la siguiente fase
 
-1. **Prioridad 1 (cumplida)**: Fase 5.5 — `PromptAssembler` + explicación LLM sobre `ConsultingReport` ya calculado (ADR-011 §11 / ADR-012).
-2. **Prioridad 2**: `KnowledgeEngine` + RAG consumiendo `ContextRepository` durable (KIN 3.0 / Fase 6).
-3. Mantener el requisito de ≥ 90 % de cobertura en `kin.reporting` y `kin.engine` al añadir código nuevo.
+1. **Prioridad 1**: Fase 6 — `KnowledgeEngine` + RAG consumiendo `ContextRepository` durable y el turno tipado/directiva (`TurnResult`, `TurnDirective`) como punto de extensión (ADR-013 §Consecuencias positivas).
+2. **Prioridad 2**: consumir `ResponseValidation` (KIN 2.1): definir el fallback (respuesta enlatada / reintento) ante `accepted=false`, hoy artefacto de auditoría.
+3. Mantener el requisito de ≥ 90 % de cobertura en `kin.reporting`, `kin.engine`, `kin.ai` y `kin.conversation` al añadir código nuevo.
 4. No romper ninguno de los contratos de §4 sin ADR.
 
 ---
@@ -331,12 +356,12 @@ puede añadir un nuevo motor (p. ej. `ReportEngine` o `MarketEngine`) o una nuev
 ## 8. Verificación
 
 ```bash
-cd kin-backend && ./mvnw clean verify       # 338 tests, 0 fallos, BUILD SUCCESS
-# Cobertura: kin.engine 100 %, kin.ai 100 %, kin.ai.prompt 98.8 %, kin.ai.prompt.formatter 99.9 %, kin.reporting.report 99–100 %, kin.reporting.opportunity 100 %, kin.reporting.risk 99.5 %, kin.scoring 98.9 %
+cd kin-backend && ./mvnw clean verify       # 468 tests, 0 fallos, BUILD SUCCESS
+# Cobertura: kin.conversation 100 %, kin.ai 99.7 %, kin.ai.prompt 99.7 %, kin.ai.prompt.formatter 99.9 %, kin.reporting* 99.2 %, kin.engine 99.1 %, kin.scoring 95.1 %
 cd kin-backend && ./mvnw spring-boot:run     # arranque dev H2 (project_context auto-creado)
 git status                                   # working tree clean (tras commit de la fase)
 ```
 
 ---
 
-*Baseline KIN 2.0 Alpha 1 (enmendado por ADR-006 … ADR-012). Cualquier desviación requiere ADR aprobada.*
+*Baseline KIN 2.0 Alpha 1 (enmendado por ADR-006 … ADR-013). Cualquier desviación requiere ADR aprobada.*
