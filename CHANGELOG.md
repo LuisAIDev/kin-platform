@@ -5,6 +5,82 @@ Todos los cambios notables de este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/),
 y el versionado del proyecto en [SemVer](https://semver.org/lang/es/).
 
+## [v1.0.0-phase8] - 2026-08-02
+
+**Primera release estable del proyecto.** Cierra oficialmente las Fases 6, 7 y 8
+(Knowledge Engine, Strategic Interview Engine y Knowledge-Enhanced Analysis). Estado:
+**FASE 8 COMPLETADA** — ADR-016 **Aprobado**, pipeline de 13 etapas, BUILD SUCCESS con
+**1049 tests** (0 failures, 0 errors, 0 skipped), cobertura de dominio ≥ 90 % (JaCoCo) y 16 ADRs
+aprobadas (ADR-001 … ADR-016).
+
+### Added
+
+- Nuevo paquete de dominio `com.kinplatform.kin.enrichment` (ADR-016, POJO puro, sin Spring):
+  - `EnrichmentEngine` — motor canonizado que implementa `DomainEngine<EnrichmentInput, EnrichmentResult>` (fase `ANALYSIS`, tipo `DOMAIN`, prioridad 55); delega en `FactRanker` y degrada a `EnrichmentResult.empty()` (offline-first).
+  - `FactRanker` — selección y ponderación determinista de hechos por categoría (mercado, innovación, financiero, competitivo) con score por `SourceTrust`/frescura/cobertura y dedup; nunca consulta al LLM.
+  - Tipos puros: `EvidenceCategory`, `EvidenceScore`, `KnowledgeEvidence`, `EvidenceRank`, `EnrichmentInput`, `EnrichmentResult`, puerto `EnrichmentRepository`.
+- `com.kinplatform.kin.enrichment.stage.EnrichmentStage` — etapa aditiva de pipeline (composición pura sobre `EngineStage`, patrón ADR-011/014/015): corre entre `KnowledgeStage` y `ScoringStage`, construye `EnrichmentInput` (contexto + `PipelineContext.knowledgeResult`), invoca el motor y escribe `PipelineContext.enrichmentResult`.
+- Inputs aditivos a los motores de análisis: `RecommendationInput.withEnrichment(...)`, `RiskInput.withEnrichment(...)`, `OpportunityInput.withEnrichment(...)` y `ReportInput.withEnrichment(...)` — constructores originales intactos.
+- Los analizadores de mercado, innovación, financiero y competitivo (Recommendation/Risk/Opportunity) leen los hechos relevantes como evidencia.
+- Sección aditiva de fuentes en el reporte (frontera ADR-012 sancionada aditivamente):
+  - `SourcesSection` (11.ª sección, `ReportSectionKind.SOURCES`) + `CitedSource` en `ConsultingReport`.
+  - `SourcesSectionAssembler` — ensambla las fuentes citadas desde el `EnrichmentResult` (dedupe por `sourceId`, mejor score).
+  - `SourcesSectionFormatter` — formatea la sección de fuentes como Markdown ligero.
+  - `ReportEngine` orquesta ahora **11** `SectionAssembler` vía `ReportAssemblers`.
+- Integración aditiva al pipeline (E6):
+  - `PipelineContext` + campo tipado `EnrichmentResult enrichmentResult` (+ getter `enrichmentResult()` + `withEnrichmentResult(...)` + constructor aditivo; constructor de compatibilidad intacto).
+  - `RecommendationStage`, `RiskStage`, `OpportunityStage` y `ReportStage` aplican `input.withEnrichment(context.enrichmentResult())` cuando existe.
+  - `ReportPromptBuilder` reconoce `SourcesSection` y la formatea con `SourcesSectionFormatter` (búsqueda opcional con fallback; las 10 secciones históricas intactas).
+  - Beans en `KinConfig`: `FactRanker`, `EnrichmentEngine`, `EnrichmentStage`, `SourcesSectionFormatter`; `chatPipeline(...)` inserta `EnrichmentStage` entre `KnowledgeStage` y `ScoringStage` (pipeline de 13 etapas).
+
+### Changed
+
+- Pipeline de 12 → **13 etapas**: `Analizador → Evaluador → Estratega → Entrevista → Conocimiento → Enriquecimiento → Scoring → Recomendaciones → Riesgos → Oportunidades → Reporte → Consultor → Eventos`.
+- `ConsultingReport` de 10 → **11 secciones** (aditivo: la sección de fuentes se omite cuando está vacía, comportamiento idéntico al previo).
+- `ReportEngine` coordina 11 `SectionAssembler` sin cambiar su lógica (orquestador puro, ADR-011 intacto).
+- ADR-016 pasa de **Propuesto** a **Aprobado**; `FASE8_0.md` queda **FINALIZADA**.
+- `BASELINE_ARCHITECTURE.md`, `AGENTS.md`, `KIN_ARCHITECTURE_GOVERNANCE.md` y `README.md` actualizados a FASE 8 COMPLETADA.
+
+### Improved
+
+- El conocimiento externo de la Fase 6 ahora **se capitaliza**: recomendaciones, riesgos y oportunidades se sustentan en hechos verificados.
+- **Trazabilidad en la comunicación**: el consultor cita las fuentes ya seleccionadas por Java (`SourcesSection`), respetando la frontera ADR-012.
+- Offline-first preservado: sin hechos, `EnrichmentResult.empty()` y el pipeline se comporta exactamente como antes de la Fase 8.
+
+### Fixed
+
+- Defecto crítico de la auditoría E7: `ReportPromptBuilder` no conocía `SourcesSection` y lanzaba `IllegalArgumentException` al formatear un reporte enriquecido. Corregido con integración aditiva de `SourcesSectionFormatter` (+ test de integración de extremo a extremo).
+
+### Architecture
+
+- Bounded context `com.kinplatform.kin.enrichment` (dominio POJO, sin Spring/JPA/IA).
+- Clean Architecture + DDD + Ports & Adapters respetados; contratos congelados intactos (solo aditivos sancionados por ADR-016).
+- Sin dependencias circulares funcionales; el patrón `stage ↔ pipeline` es el sancionado por ADR-014/015/016.
+- Principio rector preservado: **Java decide. El LLM únicamente comunica.**
+
+### Testing
+
+- 147 tests nuevos (de 902 a **1049**): `kin/enrichment/` (tipos, `FactRankerTest`/`FactRankerCategoryTest`/`FactRankerFreshnessTest`, `EnrichmentEngineTest`, `EnrichmentInputTest`, `EnrichmentResultTest`, `EnrichmentRepositoryTest`), `kin/enrichment/stage/` (`EnrichmentStageTest` 11, `EnrichmentStagePipelineTest` 7), `PipelineContextTest` (8), `ReportPromptSourcesIntegrationTest` (1, cierre del defecto E7), `RecommendationInputEnrichmentTest`, `RiskInputEnrichmentTest`, `RiskAnalyzerEnrichmentTest`, `OpportunityInputEnrichmentTest`, `OpportunityAnalyzerEnrichmentTest`, `ReportInputEnrichmentTest`, `ReportEngineSourcesTest`, `SourcesSectionAssemblerTest`, `SourcesSectionTest`, `CitedSourceTest`, `SourcesSectionFormatterTest`.
+- `./mvnw clean verify`: **1049 tests, 0 fallos, 0 errores, 0 skipped, BUILD SUCCESS**.
+- Cobertura (JaCoCo): `kin.enrichment*` **97.65 %**; `kin.reporting*` 98.96 %; `kin.ai.prompt*` 98.64 %; `kin.pipeline*` 96.29 %; `kin.conversation` 100 %; `kin.knowledge` 100 %; `ai.knowledge.adapter` 100 %; `kin.interview` + adapter 98.39 %. Requisito de ≥ 90 % en `kin.enrichment` cumplido.
+
+### Documentation
+
+- ADR-016 (**Aprobada**), `FASE8_0.md` (**FINALIZADA**), `BASELINE_ARCHITECTURE.md`, `AGENTS.md` actualizados.
+- Release notes: `kin-docs/releases/v1.0.0-phase8.md`.
+- Guía de demostración: `docs/demo/DEMO.md`.
+- `README.md` y `CHANGELOG.md` actualizados para la release.
+
+### Known Issues
+
+- Incidencia heredada: `pricing_plans` sin columnas NOT NULL aplicadas en dev (H2, `ddl-auto: update`). No bloquea el arranque (warnings). Fuera del alcance de esta fase.
+- `InMemoryDomainEventBus` sin async ni persistencia (KIN 2.4).
+- Heurística de longitud en `ScoringEngine` por reemplazar antes de KIN 2.5.
+- Cobertura baja en paquetes de infraestructura (auth, pricing, project, ai.provider) — fuera del requisito del dominio.
+- `ResponseValidation` (bloqueante y streaming) es hoy un artefacto de auditoría sin consumidor en producción; el fallback (respuesta enlatada) se define en KIN 2.1.
+- Los adaptadores de conocimiento (`ai.knowledge.adapter`) están implementados con mocks (sin red real); el enriquecimiento efectivo requiere configurar la allowlist/fuentes en producción.
+- `EnrichmentRepository` (puerto de dominio) sin adaptador de infraestructura todavía (etapa posterior, por diseño ADR-016).
+
 ### Fase 7 (Strategic Interview Engine)
 
 Enmienda de `v2.0.0-alpha1` con ADR-015. **Estado: Architecture Stable (enmendado). FASE 7 CERRADA OFICIALMENTE (2026-08-01).**

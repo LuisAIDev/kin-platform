@@ -4,7 +4,7 @@
 
 ### Knowledge, Innovation & Networking
 
-**Plataforma de gestión y validación de proyectos con asistencia de IA integrada**
+**Plataforma full-stack de gestión y validación de proyectos con asistencia de IA integrada**
 
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?style=flat&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-6DB33F?style=flat&logo=spring&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -12,6 +12,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+[![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-4D6BFE?style=flat&logo=deepseek&logoColor=white)](https://www.deepseek.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [![GitHub](https://img.shields.io/badge/GitHub-LuisAIDev-181717?style=flat&logo=github&logoColor=white)](https://github.com/LuisAIDev)
@@ -19,6 +20,7 @@
 
 [Características](#-características) •
 [Arquitectura](#-arquitectura) •
+[Pipeline](#-pipeline-de-13-etapas) •
 [Stack Tecnológico](#-stack-tecnológico) •
 [Instalación](#-instalación-local) •
 [API](#-api-endpoints) •
@@ -30,73 +32,174 @@
 
 ## 📋 Sobre el proyecto
 
-**KIN** es una plataforma full-stack para la gestión y validación de proyectos, diseñada para acompañar al usuario desde la idea inicial hasta la estructuración de un proyecto viable, con un asistente de IA integrado que guía la conversación, evalúa la información y aporta contexto en tiempo real.
+**KIN** es una plataforma full-stack para la gestión y validación de proyectos, diseñada para
+acompañar al usuario desde la idea inicial hasta la estructuración de un proyecto viable, con un
+asistente de IA integrado que guía la conversación, evalúa la información, adquiere conocimiento
+externo verificado y produce un informe de viabilidad con trazabilidad.
 
-El proyecto fue construido desde cero como ejercicio de portafolio para consolidar un stack backend enterprise (**Java + Spring Boot**) combinado con un frontend moderno (**Next.js + TypeScript**), aplicando arquitectura en capas, autenticación stateless con JWT, y buenas prácticas de seguridad y despliegue con Docker.
+El proyecto fue construido desde cero como ejercicio de portafolio para consolidar un stack
+backend enterprise (**Java 17 + Spring Boot 3.2.5**) combinado con un frontend moderno
+(**Next.js 16 + TypeScript 5**), aplicando **Clean Architecture + DDD Táctico + Pipeline Pattern +
+Event-Driven**, autenticación stateless con JWT, y buenas prácticas de seguridad y despliegue con
+Docker.
 
-> 🧪 **Estado actual:** KIN 2.0 Alpha 1 — **primera release estable del núcleo inteligente** (`v2.0.0-alpha1`, 2026-07-31). Pipeline de dominio de 10 etapas con reporte de viabilidad (`ConsultingReport`) y conversación dirigida por decisiones en Java (**"Java decide, el LLM únicamente comunica"**). 468 tests, 0 fallos, cobertura de dominio ≥ 90 % y 13 ADRs aprobadas. Ver [`kin-docs/releases/KIN_2_0_ALPHA_1.md`](kin-docs/releases/KIN_2_0_ALPHA_1.md).
+> ✅ **Estado actual: FASE 8 COMPLETADA** — Release `v1.0.0-phase8` (2026-08-02).
+> Pipeline de dominio de **13 etapas**, **1049 tests, 0 fallos**, cobertura de dominio ≥ 90 %
+> (JaCoCo) y **16 ADRs aprobadas** (ADR-001 … ADR-016). Núcleo inteligente con Knowledge Engine,
+> Interview Engine, Enrichment Engine, Scoring, Recommendation, Risk, Opportunity, Report Engine,
+> Prompt Engine y sección de fuentes citadas (`SourcesSection`). Principio rector:
+> **"Java decide. El LLM únicamente comunica."**
+> Ver [`kin-docs/releases/v1.0.0-phase8.md`](kin-docs/releases/v1.0.0-phase8.md).
 
 ---
 
 ## ✨ Características
 
 - 🔐 **Autenticación segura** con JWT y contraseñas cifradas con BCrypt, sesión stateless
-- 📁 **Gestión de proyectos** — creación, edición, listado y eliminación (CRUD completo)
-- 🤖 **Chat con IA integrado** por proyecto, con historial persistente y metadata estructurada
-- 📊 **Score de viabilidad** generado por IA para cada proyecto
+- 📁 **Gestión de proyectos** — CRUD completo con paginación
+- 🤖 **Chat con IA integrado** por proyecto, con historial persistente, modo bloqueante y **streaming SSE**
+- 🧠 **Núcleo inteligente de 13 etapas** que produce un `ConsultingReport` (11 secciones) con score de viabilidad, recomendaciones, riesgos, oportunidades y fuentes citadas
+- 📚 **Knowledge Engine** (ADR-014) — adquisición y validación de conocimiento externo verificado (HTTP/JDBC/RAG/Documento), offline-first
+- 🎙️ **Interview Engine** (ADR-015) — entrevista estratégica dirigida por Java que garantiza un `ProjectContext` completo antes del análisis
+- 🔬 **Enrichment Engine** (ADR-016) — selección determinista de hechos relevantes (`FactRanker`) que enriquece recomendaciones, riesgos y oportunidades, y cita las fuentes en el reporte
+- 📊 **Scoring Engine** — score de viabilidad por categoría y dimensión
 - 🎭 **Roles de usuario** diferenciados: `FREE`, `PREMIUM`, `FACILITADOR`, `ADMIN`
-- 🐳 **Contenerizado con Docker** — backend, frontend y base de datos orquestados con Docker Compose
-- 🔄 **Doble entorno de base de datos** — H2 embebida para desarrollo ágil, PostgreSQL para producción
-- 🛡️ **Gestión de secretos** vía variables de entorno, sin credenciales expuestas en el código
-- 🚦 **Rate limiting** en endpoints de autenticación para protección contra fuerza bruta
-- 🛡️ **Headers de seguridad HTTP** (CSP, X-Frame-Options, HSTS, X-Content-Type-Options)
-- ❤️ **Health check endpoint** vía Spring Boot Actuator
-- 🔧 **Panel de administración** para gestionar planes de precios (rol `ADMIN`)
-- 📄 **Paginación de proyectos** con respuesta paginada estándar
-- 📱 **Diseño responsive mobile-first**, verificado en rango amplio de dispositivos reales
+- 🐳 **Contenerizado con Docker Compose** — PostgreSQL 16, backend y frontend
+- 🔄 **Doble entorno de base de datos** — H2 embebida (dev) y PostgreSQL 16 (producción, Flyway)
+- 🛡️ **Seguridad** — CORS dual, headers HTTP, rate limiting, gestión de secretos por entorno
+- ❤️ **Health check** vía Spring Boot Actuator
+- 📱 **Diseño responsive mobile-first**
 
 ---
 
 ## 🏗️ Arquitectura
 
-El backend sigue una arquitectura en capas clásica de aplicaciones enterprise Java:
+KIN aplica **Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven**: el dominio
+`com.kinplatform.kin.*` es **100 % POJO** (sin Spring, JPA ni IA), la infraestructura se
+concentra en adaptadores y la composición se resuelve en `KinConfig`.
+
+```mermaid
+flowchart TB
+    subgraph Usuario
+        U[Usuario]
+    end
+
+    subgraph Frontend["Frontend — Next.js 16 + TypeScript"]
+        F[UI / Dashboard / Chat]
+    end
+
+    subgraph Backend["Backend — Spring Boot 3.2.5"]
+        REST[REST API /api/v1 + SSE]
+        CO[ConversationOrchestrator]
+        KM[KinMethod]
+    end
+
+    subgraph Pipeline["Pipeline de 13 etapas"]
+        A[Analizador] --> B[Evaluador]
+        B --> C[Estratega]
+        C --> I[Entrevista<br/>Interview Engine]
+        I --> K[Conocimiento<br/>Knowledge Engine]
+        K --> E[Enriquecimiento<br/>Enrichment Engine]
+        E --> S[Scoring Engine]
+        S --> R[Recomendaciones<br/>Recommendation Engine]
+        R --> Ri[Riesgos<br/>Risk Engine]
+        Ri --> O[Oportunidades<br/>Opportunity Engine]
+        O --> Rep[Reporte<br/>Report Engine]
+        Rep --> Cons[Consultor]
+        Cons --> Ev[Eventos]
+    end
+
+    subgraph Prompting["Prompt Builder"]
+        PB[PromptAssembler + ReportPromptBuilder<br/>SourcesSectionFormatter]
+    end
+
+    subgraph IA["IA — DeepSeek"]
+        LLM[DeepSeek LLM]
+    end
+
+    U --> F
+    F -->|REST / SSE| REST
+    REST --> CO
+    CO --> KM
+    KM --> Pipeline
+    Rep -->|ConsultingReport<br/>con SourcesSection| PB
+    PB -->|Prompt final| LLM
+    LLM -->|Respuesta IA| F
+```
+
+**Módulos del backend:** `auth`, `user`, `project`, `chat`, `ai` (adaptadores) y el núcleo de
+dominio `kin.*` con sus bounded contexts:
+
+| Paquete | Bounded context |
+|---|---|
+| `kin.engine` | Infraestructura de motores (`DomainEngine`, `EngineRegistry`, `EngineExecutor`, `EngineStage`) |
+| `kin.pipeline` | `Pipeline` + `PipelineContext` + stages genéricos |
+| `kin.context` | `ProjectContext`, evaluación, decisión, `ContextRepository` |
+| `kin.scoring` | `ScoringEngine` |
+| `kin.reporting` | `RecommendationEngine`, `RiskEngine`, `OpportunityEngine`, `ReportEngine` |
+| `kin.ai` / `kin.ai.prompt` | `AIResponder`, `PromptAssembler`, `ConversationPromptBuilder`, `ReportPromptBuilder`, formatters |
+| `kin.conversation` | `ConversationOrchestrator`, `TurnPolicy`, `ResponseGuard`, `HistoryWindow` |
+| `kin.knowledge` | `KnowledgeEngine`, `KnowledgeGateway`, `SourceValidator` (Fase 6) |
+| `kin.interview` | `InterviewEngine`, `InterviewBlueprint`, `AnswerValidator` (Fase 7) |
+| `kin.enrichment` | `EnrichmentEngine`, `FactRanker`, `EvidenceCategory` (Fase 8) |
+
+---
+
+## 🚀 Pipeline de 13 etapas
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                     FRONTEND                         │
-│         Next.js 16 (App Router) + TypeScript          │
-│              Tailwind CSS · fetch nativo               │
-└───────────────────────┬─────────────────────────────┘
-                         │  REST API (JWT Bearer)
-┌───────────────────────▼─────────────────────────────┐
-│                     BACKEND                           │
-│  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐  │
-│  │  Controller  │→│   Service    │→│  Repository   │  │
-│  │  (REST API)  │  │  (Lógica de  │  │ (Spring Data │  │
-│  │              │  │   negocio)   │  │     JPA)      │  │
-│  └─────────────┘  └─────────────┘  └──────┬───────┘  │
-│         ↑                                    │        │
-│    JwtAuthenticationFilter              Hibernate      │
-│    (Spring Security)                                   │
-└──────────────────────────────────────────────┼────────┘
-                                                 │
-                          ┌──────────────────────▼──────────────────────┐
-                          │   H2 (dev, file-based)  /  PostgreSQL 16     │
-                          │              (producción, Docker)            │
-                          └───────────────────────────────────────────────┘
+Analizador → Evaluador → Estratega → Entrevista → Conocimiento → Enriquecimiento →
+Scoring → Recomendaciones → Riesgos → Oportunidades → Reporte → Consultor → Eventos
 ```
 
-**Módulos del backend:** `auth`, `user`, `project`, `chat`, `ai` — cada uno con su propio Controller, Service, DTOs y (donde aplica) Repository, siguiendo separación de responsabilidades.
+1. **Analizador** — extrae dimensiones del mensaje y actualiza el `ProjectContext`.
+2. **Evaluador** — `CompletenessEvaluation` de las dimensiones cubiertas.
+3. **Estratega** — decide la acción (`ConversationDecision`): `ASK`, `REPORT`, etc.
+4. **Entrevista** (Interview Engine, ADR-015) — garantiza un proyecto completo; mientras esté
+   incompleta la decisión efectiva es `ASK`.
+5. **Conocimiento** (Knowledge Engine, ADR-014) — adquiere hechos externos verificados
+   (offline-first: `KnowledgeResult.empty()` si no hay fuentes).
+6. **Enriquecimiento** (Enrichment Engine, ADR-016) — `FactRanker` selecciona y pondera en Java
+   los hechos relevantes por categoría (mercado, innovación, financiero, competitivo).
+7. **Scoring** — score de viabilidad.
+8. **Recomendaciones** — `RecommendationEngine`.
+9. **Riesgos** — `RiskEngine`.
+10. **Oportunidades** — `OpportunityEngine`.
+11. **Reporte** — `ReportEngine` orquesta 11 `SectionAssembler` y produce el `ConsultingReport`
+    (11 secciones, incluye `SourcesSection`).
+12. **Consultor** — selecciona el prompt (conversación o REPORT) y pide la respuesta al LLM.
+13. **Eventos** — publica eventos de dominio según la decisión.
 
-**Módulos del frontend (`services/`):**
+---
 
-```
-session.ts   → sin dependencias · maneja token, sesión y logout forzado
-    ↑
-  api.ts     → cliente HTTP con manejo automático de 401/403
-    ↑
- auth.ts / chat.ts / projects.ts  → servicios por dominio
-```
+## 🧠 Motores de dominio
+
+| Motor | Fase / ADR | Responsabilidad |
+|---|---|---|
+| **ScoringEngine** | ADR-009 (prioridad 30) | Score de viabilidad por categoría y dimensión |
+| **RecommendationEngine** | ADR-003 | Recomendaciones deduplicadas y priorizadas |
+| **RiskEngine** | ADR-004 | Riesgos con severidad, probabilidad y nivel |
+| **OpportunityEngine** | ADR-010 (prioridad 60) | 8 analizadores auto-descubiertos (mercado, innovación, tecnológico, financiero, competitivo, escalabilidad, automatización, monetización) |
+| **ReportEngine** | ADR-011 (prioridad 70) | Orquestador puro del `ConsultingReport` (11 assemblers) |
+| **KnowledgeEngine** | ADR-014 (prioridad 50) | Adquisición y validación de conocimiento externo (`KnowledgeGateway` + `SourceValidator`) |
+| **InterviewEngine** | ADR-015 | Entrevista estratégica dirigida por Java (`InterviewBlueprint` + `AnswerValidator`) |
+| **EnrichmentEngine** | ADR-016 (prioridad 55) | `FactRanker` selecciona hechos relevantes y pondera evidencia por categoría |
+| **Prompt Engine** | ADR-012 | `PromptAssembler` fachada pura; `ReportPromptBuilder` formatea el reporte con 11 `SectionFormatter` |
+
+### SourcesSection
+
+El `ConsultingReport` incorpora la **11.ª sección de fuentes citadas** (`SourcesSection`,
+`ReportSectionKind.SOURCES`, ADR-016): `SourcesSectionAssembler` transforma el
+`EnrichmentResult` en fuentes deduplicadas (`CitedSource`) y `SourcesSectionFormatter` las
+presenta como Markdown ligero en el prompt REPORT (frontera ADR-012 intacta: el prompt consume
+únicamente el `ConsultingReport` tipado).
+
+### Principio rector
+
+> **Java decide. El LLM únicamente comunica.**
+> Java decide qué preguntar (InterviewEngine), qué conocimiento adquirir (KnowledgeGateway), qué
+> hechos son relevantes y cómo ponderan (FactRanker) y qué fuentes se citan (EnrichmentEngine);
+> el LLM solo formula preguntas y explica el análisis ya decidido.
 
 ---
 
@@ -108,12 +211,15 @@ session.ts   → sin dependencias · maneja token, sesión y logout forzado
 |---|---|
 | Lenguaje / Runtime | Java 17 |
 | Framework | Spring Boot 3.2.5 |
-| Seguridad | Spring Security + JWT (autenticación stateless), BCrypt |
+| Arquitectura | Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven |
+| Seguridad | Spring Security + JWT (stateless), BCrypt, rate limiting |
 | Persistencia | Spring Data JPA / Hibernate |
-| Base de datos (dev) | H2 (file-based, embebida) |
-| Base de datos (prod) | PostgreSQL 16 |
-| IA | Integración con motor local (Ollama / Llama 3.2) |
+| Base de datos (dev) | H2 file-based (Flyway deshabilitado) |
+| Base de datos (prod) | PostgreSQL 16 (Docker) / Neon |
+| Migraciones | Flyway (V1…V5) + `kin-database/init.sql` |
+| IA | DeepSeek (default) + OpenAI + Ollama (fallback en español) |
 | Testing | JUnit 5, Mockito, Reactor Test |
+| Cobertura | JaCoCo (dominio ≥ 90 %) |
 | Monitoreo | Spring Boot Actuator |
 | Build | Maven (Maven Wrapper) |
 
@@ -123,16 +229,26 @@ session.ts   → sin dependencias · maneja token, sesión y logout forzado
 |---|---|
 | Framework | Next.js 16 (App Router) |
 | Librería UI | React 19 |
-| Lenguaje | TypeScript 5 (`strict` mode) |
+| Lenguaje | TypeScript 5 (`strict`) |
 | Estilos | Tailwind CSS 4 |
 | Cliente HTTP | `fetch` nativo con wrapper propio |
 
-### Infraestructura
+### IA utilizada — DeepSeek
+
+El chat y el consultor usan **DeepSeek** como proveedor LLM por defecto. El dominio depende del
+puerto `AIResponder` (no del proveedor concreto); `AiEngineService` enruta a través de
+`ProviderRouter` (DeepSeek/OpenAI/Ollama) y, si todos los proveedores fallan, garantiza un
+**fallback en español** (mock) que permite desarrollar y testear sin un LLM activo.
+
+### Infraestructura y despliegue
 
 | Categoría | Tecnología |
 |---|---|
-| Contenedores | Docker + Docker Compose |
-| Orquestación | 3 servicios: `postgres-db`, `kin-backend`, `kin-frontend` |
+| Contenedores | Docker + Docker Compose (`postgres-db`, `kin-backend`, `kin-frontend`) |
+| Base de datos en producción | PostgreSQL 16 (Docker) o **Neon** (PostgreSQL serverless) |
+| Backend en producción | **Render** (via `DATABASE_URL` / env vars) |
+| Frontend en producción | Vercel / Render |
+| Offline First | Sin hechos externos, el pipeline degrada a `EnrichmentResult.empty()` y se comporta como antes |
 
 ---
 
@@ -140,22 +256,20 @@ session.ts   → sin dependencias · maneja token, sesión y logout forzado
 
 ```
 proyecto-kin/
-├── kin-backend/            # API REST — Spring Boot
+├── kin-backend/            # API REST — Spring Boot (Java 17)
 │   └── src/main/java/com/kinplatform/
-│       ├── auth/            # Autenticación y JWT
-│       ├── user/            # Entidad y roles de usuario
-│       ├── project/         # CRUD de proyectos
-│       ├── chat/            # Chat IA y persistencia de mensajes
-│       ├── ai/               # Orquestación del motor de IA
-│       └── common/          # Configuración, seguridad, excepciones
-├── kin-frontend/           # Cliente — Next.js + TypeScript
-│   └── src/
-│       ├── app/              # Rutas (App Router): auth, dashboard
-│       ├── components/      # Componentes reutilizables
-│       └── services/         # Capa de comunicación con la API
-├── kin-database/            # Scripts de inicialización PostgreSQL
-├── docker-compose.yml       # Orquestación de los 3 servicios
-└── .env.example              # Variables de entorno documentadas
+│       ├── auth/ user/ project/ chat/    # Aplicación (REST, I/O)
+│       ├── ai/                           # Adaptadores de IA y conocimiento (JPA, providers)
+│       ├── common/                       # Configuración, seguridad, excepciones
+│       └── kin/                          # Dominio puro (POJO)
+│           ├── engine/ pipeline/ context/ decision/ scoring/ reporting/
+│           ├── ai/ ai/prompt/ conversation/ knowledge/ interview/ enrichment/ event/
+├── kin-frontend/           # Cliente — Next.js 16 + TypeScript + Tailwind 4
+├── kin-database/           # init.sql PostgreSQL (Docker)
+├── kin-docs/               # ADRs (001…016), fases, releases, BASELINE
+├── docs/                   # Demos y guías (docs/demo/DEMO.md)
+├── docker-compose.yml      # Orquestación de los 3 servicios
+└── .env.example            # Variables de entorno documentadas
 ```
 
 ---
@@ -182,7 +296,7 @@ cd kin-platform
 cp .env.example .env
 ```
 
-Completa `.env` con tus propios valores (JWT secret, credenciales de base de datos, API key del motor de IA si aplica).
+Completa `.env` con tus propios valores (JWT secret, credenciales de base de datos, `DEEPSEEK_API_KEY` si aplica).
 
 ### 3. Levantar el backend
 
@@ -191,11 +305,9 @@ cd kin-backend
 ./mvnw spring-boot:run
 ```
 
-El backend queda disponible en `http://localhost:8080/api/v1`, usando H2 como base de datos local (no requiere instalación adicional).
+Backend en `http://localhost:8080/api/v1` usando H2 como base de datos local (no requiere instalación adicional).
 
 ### 4. Levantar el frontend
-
-En otra terminal:
 
 ```bash
 cd kin-frontend
@@ -203,7 +315,7 @@ npm install
 npm run dev
 ```
 
-El frontend queda disponible en `http://localhost:3000`.
+Frontend en `http://localhost:3000`.
 
 ### 5. (Alternativa) Levantar todo con Docker
 
@@ -211,7 +323,7 @@ El frontend queda disponible en `http://localhost:3000`.
 docker compose up --build
 ```
 
-Esto orquesta PostgreSQL, backend y frontend en contenedores usando las variables definidas en `.env`.
+Orquesta PostgreSQL 16, backend y frontend en contenedores usando las variables de `.env`.
 
 ---
 
@@ -225,6 +337,7 @@ Esto orquesta PostgreSQL, backend y frontend en contenedores usando las variable
 | `/projects` | `GET` / `POST` | Bearer JWT | Listar / crear proyectos |
 | `/projects/{id}` | `GET` / `PUT` / `DELETE` | Bearer JWT | CRUD de un proyecto específico |
 | `/projects/{id}/chat` | `POST` | Bearer JWT | Enviar mensaje al asistente IA |
+| `/projects/{id}/chat/stream` | `POST` | Bearer JWT | Streaming SSE de la respuesta IA |
 | `/projects/{id}/messages` | `GET` / `DELETE` | Bearer JWT | Historial / limpieza de mensajes |
 
 ---
@@ -235,46 +348,50 @@ Esto orquesta PostgreSQL, backend y frontend en contenedores usando las variable
 
 ```bash
 cd kin-backend
-./mvnw test
+./mvnw clean verify
 ```
 
 ### Resumen
 
-**468 tests unitarios, 0 fallos** (`./mvnw clean verify`). La tabla siguiente cubre los módulos
-de infraestructura/aplicación; el **núcleo inteligente** (`com.kinplatform.kin.*`, 21 paquetes)
-aporta la mayor parte de los tests y mantiene cobertura de dominio ≥ 90 % (JaCoCo: `kin.conversation`
-100 %, `kin.reporting*` 99.2 %, `kin.ai` 99.7 %, `kin.engine` 99.1 %).
+**1049 tests, 0 fallos, 0 errores, 0 skipped** (`./mvnw clean verify`, **BUILD SUCCESS**).
+Cobertura de dominio ≥ 90 % (JaCoCo):
 
-| Módulo | Tests | Cobertura principal |
-|---|---|---|
-| `auth` | 5 | Registro, login, cambio de contraseña |
-| `common.security` | 10 | Filtro JWT (5) + Rate Limiting (5) |
-| `project` | 7 | CRUD completo, paginación, validación de propietario |
-| `pricing` | 4 | CRUD de planes de precios, control de acceso por rol |
-| `ai` | 5 | Motor de IA (Ollama), fallback mock, streaming reactivo |
-| `chat` | 5 | Orquestación del chat con streaming SSE (`SseEmitter`) |
+| Dominio | Cobertura |
+|---|---|
+| `kin.conversation` | 100 % |
+| `kin.knowledge` + `ai.knowledge.adapter` | 100 % |
+| `kin.reporting` | 98.96 % |
+| `kin.ai.prompt` | 98.64 % |
+| `kin.enrichment` | 97.65 % |
+| `kin.pipeline` | 96.29 % |
+| `kin.interview` + adapter | 98.39 % |
+| `kin.ai` | 99.7 % |
+| `kin.engine` | 99.06 % |
+| `kin.scoring` | 95.14 % |
 
 ---
 
 ## 📸 Capturas de pantalla
 
-> _Próximamente — capturas del login, dashboard de proyectos y chat con IA._
+> _Próximamente — capturas del login, dashboard de proyectos, chat con IA e informe de viabilidad._ Ver `docs/demo/DEMO.md`.
 
 ---
 
 ## 🗺️ Roadmap
 
 - [x] Autenticación JWT con roles de usuario
-- [x] CRUD completo de proyectos
-- [x] Chat con IA integrado y persistencia de historial
+- [x] CRUD completo de proyectos + paginación
+- [x] Chat con IA integrado (bloqueante + streaming SSE)
 - [x] Contenerización con Docker Compose
-- [ ] Despliegue en producción (backend en Render/Railway, frontend en Vercel)
-- [ ] Migraciones versionadas con Flyway
-- [x] Cobertura de tests unitarios e integración (JUnit + Mockito + Reactor Test)
-- [x] Generación de reportes PDF de viabilidad
-- [x] Panel de administración para rol `ADMIN`
-- [x] **Núcleo inteligente KIN 2.0 Alpha 1** — pipeline de 10 etapas, reporte de viabilidad, orquestación conversacional (fases 4.0–5.6)
-- [ ] **Fase 6** — KnowledgeEngine + RAG (siguiente hito)
+- [x] Migraciones versionadas con Flyway (V1…V5)
+- [x] **Fase 5.x — Núcleo inteligente**: pipeline, Scoring, Recommendation, Risk, Opportunity, Report, Prompt
+- [x] **Fase 6 — Knowledge Engine + RAG** (ADR-014)
+- [x] **Fase 7 — Strategic Interview Engine** (ADR-015)
+- [x] **Fase 8 — Knowledge-Enhanced Analysis** (ADR-016): EnrichmentEngine, SourcesSection, pipeline de 13 etapas
+- [x] **1049 tests, 0 fallos, cobertura de dominio ≥ 90 %**
+- [x] **Release `v1.0.0-phase8`**
+- [ ] Despliegue en producción (backend en Render, frontend en Vercel, PostgreSQL en Neon)
+- [ ] E2E de frontend con Playwright (flujo completo)
 
 ---
 
