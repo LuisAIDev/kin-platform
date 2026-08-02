@@ -53,12 +53,12 @@ public class HeuristicContextAnalyzerAdapter implements ContextAnalyzerPort {
 
         var extracted = new EnumMap<AnalyzedDimension, String>(AnalyzedDimension.class);
 
-        extractIfNew(extracted, currentContext, AnalyzedDimension.PROJECT_NAME, PATTERN_PROJECT_NAME, userMessage);
-        extractIfNew(extracted, currentContext, AnalyzedDimension.CITY, PATTERN_CITY, userMessage);
-        extractIfNew(extracted, currentContext, AnalyzedDimension.SECTOR, PATTERN_SECTOR, userMessage);
-        extractIfNew(extracted, currentContext, AnalyzedDimension.PROBLEM, PATTERN_PROBLEM, userMessage);
-        extractIfNew(extracted, currentContext, AnalyzedDimension.SOLUTION, PATTERN_SOLUTION, userMessage);
-        extractIfNew(extracted, currentContext, AnalyzedDimension.TARGET_CUSTOMER, PATTERN_CUSTOMER, userMessage);
+        extract(extracted, AnalyzedDimension.PROJECT_NAME, PATTERN_PROJECT_NAME, userMessage);
+        extract(extracted, AnalyzedDimension.CITY, PATTERN_CITY, userMessage);
+        extract(extracted, AnalyzedDimension.SECTOR, PATTERN_SECTOR, userMessage);
+        extract(extracted, AnalyzedDimension.PROBLEM, PATTERN_PROBLEM, userMessage);
+        extract(extracted, AnalyzedDimension.SOLUTION, PATTERN_SOLUTION, userMessage);
+        extract(extracted, AnalyzedDimension.TARGET_CUSTOMER, PATTERN_CUSTOMER, userMessage);
 
         var result = new AnalysisResult(extracted);
         if (!result.isEmpty()) {
@@ -67,9 +67,8 @@ public class HeuristicContextAnalyzerAdapter implements ContextAnalyzerPort {
         return result;
     }
 
-    private void extractIfNew(Map<AnalyzedDimension, String> target, ProjectContext current,
-                              AnalyzedDimension dim, Pattern pattern, String message) {
-        if (current.isDimensionCovered(dim)) return;
+    private void extract(Map<AnalyzedDimension, String> target, AnalyzedDimension dim,
+                         Pattern pattern, String message) {
         var matcher = pattern.matcher(message);
         if (matcher.find()) {
             var value = matcher.group(1).strip();
