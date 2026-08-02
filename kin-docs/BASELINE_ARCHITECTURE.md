@@ -425,9 +425,9 @@ git status                                   # working tree clean (tras commit d
 
 ## KIN 2.1 — Pipeline Estabilizado (FASE 9)
 
-> Sección informativa del siguiente hito documentado en `ARQUITECTURA_BASE_KIN_2.0.md` §9 y
-> `FASE9_0.md`, sancionado por **ADR-017 (Propuesto)**. NO constituye contrato congelado hasta la
-> aprobación del ADR. No modifica ninguna sección previa de este baseline.
+> Sección del hito **FASE 9 (KIN 2.1 — Pipeline Estabilizado)**, documentado en
+> `ARQUITECTURA_BASE_KIN_2.0.md` §9 y `FASE9_0.md` (FINALIZADA), sancionado por
+> **ADR-017 (Aprobado)**. No modifica ninguna sección previa de este baseline.
 
 **Objetivo** (textual, `ARQUITECTURA_BASE_KIN_2.0.md` §9): *"Pipeline completamente funcional y
 testeado en ambos flujos."*
