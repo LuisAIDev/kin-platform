@@ -10,6 +10,7 @@ import com.kinplatform.kin.conversation.TurnConstraints;
 import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.kin.interview.InterviewResult;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
@@ -28,6 +29,13 @@ import reactor.core.publisher.Flux;
  * directiva y valida la respuesta streamed con el {@link ResponseGuard},
  * dejando el {@code ResponseValidation} en el contexto (el orquestador es
  * autoritativo en el flujo bloqueante).</p>
+ *
+ * <p>Cambio aditivo sancionado por ADR-015 (Etapa E6): lee
+ * {@code PipelineContext.interviewResult} para enmarcar el prompt. Si la
+ * entrevista está incompleta (pregunta pendiente), el LLM formula la pregunta de
+ * la entrevista ({@code ## ENTREVISTA ESTRAT\u00C9GICA}) en lugar de un reporte,
+ * incluso si la decisión del turno fuese REPORT (gating de {@code InterviewStage}).
+ * Si la entrevista está completa, el flujo REPORT habitual queda intacto.</p>
  */
 public class ConsultorStage implements PipelineStage {
 
@@ -69,8 +77,13 @@ public class ConsultorStage implements PipelineStage {
     public PipelineContext execute(PipelineContext context) {
         PromptRequest promptRequest;
         ConversationDecision decision = context.decision();
+        InterviewResult interview = context.interviewResult();
 
-        if (decision != null && decision.shouldGenerateReport()) {
+        if (interview != null && !interview.isEmpty()
+                && interview.decision() != null && interview.decision().isAsk()) {
+            promptRequest = PromptRequest.forConversation(
+                    context.projectContext(), decision, context.turnDirective());
+        } else if (decision != null && decision.shouldGenerateReport()) {
             ConsultingReport report = context.consultingReport();
             if (report == null) {
                 throw new IllegalStateException("consultingReport es obligatorio para responder en modo REPORT");
@@ -81,7 +94,7 @@ public class ConsultorStage implements PipelineStage {
                     context.projectContext(), decision, context.turnDirective());
         }
 
-        var systemPrompt = promptAssembler.assemble(promptRequest);
+        var systemPrompt = promptAssembler.assemble(promptRequest, context.interviewResult());
         var request = new AIRequest(context.history(), context.userMessage(), systemPrompt);
         if (context.streaming()) {
             context.aiResponseFlux(attachStreamGuard(context, aiResponder.respondStream(request)));

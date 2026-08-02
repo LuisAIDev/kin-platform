@@ -1,10 +1,14 @@
 package com.kinplatform.kin.ai.prompt;
 
 import com.kinplatform.kin.ai.PromptRequest;
+import com.kinplatform.kin.ai.PromptType;
 import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.kin.conversation.TurnConstraints;
 import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.kin.interview.AnswerRules;
+import com.kinplatform.kin.interview.InterviewDirective;
+import com.kinplatform.kin.interview.InterviewResult;
 
 import java.util.Locale;
 
@@ -16,6 +20,13 @@ import java.util.Locale;
  *
  * <p><strong>NO incluye</strong> ninguna sección de reporte, scoring, recomendaciones,
  * riesgos u oportunidades.
+ *
+ * <p>Cambio aditivo sancionado por ADR-015 (Etapa E6): cuando el prompt se ensambla
+ * con un {@link InterviewResult} con directiva de entrevista pendiente, se emite la
+ * sección {@code ## ENTREVISTA ESTRAT\u00C9GICA} con el tópico y las reglas de la
+ * pregunta determinada por Java, de modo que el LLM únicamente la formula en lenguaje
+ * natural. La sección consume solo datos de dominio ({@link InterviewDirective}),
+ * nunca texto crudo (frontera ADR-012 intacta).
  */
 public class ConversationPromptBuilder {
 
@@ -91,7 +102,19 @@ public class ConversationPromptBuilder {
             """;
 
     public String build(PromptRequest request) {
-        if (request.type() != com.kinplatform.kin.ai.PromptType.CONVERSATION) {
+        return build(request, null);
+    }
+
+    /**
+     * Ensambla el prompt conversacional considerando el resultado de la entrevista
+     * estratégica (ADR-015): si la entrevista tiene una pregunta pendiente
+     * ({@code InterviewResult.directive() != null}), añade la sección
+     * {@code ## ENTREVISTA ESTRAT\u00C9GICA} para que el LLM formule únicamente la
+     * pregunta determinada por Java. Sin directiva el resultado es idéntico a
+     * {@link #build(PromptRequest)}.
+     */
+    public String build(PromptRequest request, InterviewResult interviewResult) {
+        if (request.type() != PromptType.CONVERSATION) {
             throw new IllegalArgumentException("ConversationPromptBuilder solo soporta CONVERSATION");
         }
 
@@ -133,6 +156,10 @@ public class ConversationPromptBuilder {
             sb.append(strategySnippet);
         }
 
+        if (interviewResult != null && interviewResult.directive() != null) {
+            sb.append(appendEntrevista(interviewResult.directive()));
+        }
+
         if (request.directive() != null) {
             sb.append(appendDirectiva(request.directive()));
         }
@@ -157,6 +184,33 @@ public class ConversationPromptBuilder {
             }
         }
 
+        return sb.toString();
+    }
+
+    private String appendEntrevista(InterviewDirective directive) {
+        var sb = new StringBuilder("\n\n## ENTREVISTA ESTRATÉGICA\n");
+        sb.append("El sistema determinó la siguiente pregunta para continuar la entrevista estratégica.\n");
+        sb.append("Formula SOLO esta pregunta en lenguaje natural, sin modificarla y sin agregar otras.\n");
+        sb.append("- Tema: ").append(directive.topic()).append("\n");
+        sb.append("- Dimensión: ").append(directive.dimension().displayName()).append("\n");
+
+        AnswerRules rules = directive.rules();
+        if (rules != null) {
+            sb.append("- Reglas de la respuesta esperada:\n");
+            sb.append("  - Longitud mínima: ").append(rules.minLength()).append(" caracteres.\n");
+            if (rules.hasKeywordRequirements()) {
+                sb.append("  - Palabras clave esperadas: ")
+                  .append(String.join(", ", rules.minKeywords())).append(".\n");
+            }
+            if (rules.hasFormatRequirement()) {
+                sb.append("  - Formato esperado: ").append(rules.requiredFormat()).append(".\n");
+            }
+            sb.append("  - Refinamiento permitido: ")
+              .append(rules.allowRefinement() ? "sí" : "no")
+              .append(" (máximo ").append(rules.maxRefinements()).append(").\n");
+        }
+
+        sb.append("No inventes preguntas nuevas. Si esta pregunta ya fue respondida, no la repitas.\n");
         return sb.toString();
     }
 }

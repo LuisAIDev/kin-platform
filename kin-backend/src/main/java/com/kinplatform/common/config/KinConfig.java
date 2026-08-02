@@ -1,5 +1,6 @@
 package com.kinplatform.common.config;
 
+import com.kinplatform.ai.interview.adapter.JpaInterviewRepository;
 import com.kinplatform.ai.provider.AIProvider;
 import com.kinplatform.ai.provider.DeepSeekProvider;
 import com.kinplatform.ai.provider.OpenAIProvider;
@@ -19,6 +20,7 @@ import com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
+import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.CompletenessEvaluator;
 import com.kinplatform.kin.context.ContextAnalyzerPort;
 import com.kinplatform.kin.context.ContextRepository;
@@ -42,6 +44,12 @@ import com.kinplatform.kin.knowledge.engine.KnowledgeGateway;
 import com.kinplatform.kin.knowledge.engine.SourceRegistry;
 import com.kinplatform.kin.knowledge.engine.SourceValidator;
 import com.kinplatform.kin.knowledge.stage.KnowledgeStage;
+import com.kinplatform.kin.interview.InterviewQuestion;
+import com.kinplatform.kin.interview.InterviewRepository;
+import com.kinplatform.kin.interview.engine.AnswerValidator;
+import com.kinplatform.kin.interview.engine.InterviewBlueprint;
+import com.kinplatform.kin.interview.engine.InterviewEngine;
+import com.kinplatform.kin.interview.stage.InterviewStage;
 import com.kinplatform.kin.pipeline.Pipeline;
 import com.kinplatform.kin.pipeline.stage.AnalyzerStage;
 import com.kinplatform.kin.pipeline.stage.ConsultorStage;
@@ -461,10 +469,46 @@ public class KinConfig {
     }
 
     @Bean
+    public AnswerValidator answerValidator() {
+        return new AnswerValidator();
+    }
+
+    @Bean
+    public InterviewBlueprint interviewBlueprint() {
+        return new InterviewBlueprint(List.of(
+            InterviewQuestion.required("q-proyecto", AnalyzedDimension.PROJECT_NAME,
+                "nombre del proyecto", 1),
+            InterviewQuestion.required("q-sector", AnalyzedDimension.SECTOR,
+                "sector y giro del negocio", 2),
+            InterviewQuestion.required("q-problema", AnalyzedDimension.PROBLEM,
+                "problema que resuelve", 3),
+            InterviewQuestion.required("q-solucion", AnalyzedDimension.SOLUTION,
+                "solución propuesta", 4),
+            InterviewQuestion.required("q-cliente", AnalyzedDimension.TARGET_CUSTOMER,
+                "cliente objetivo", 5)));
+    }
+
+    @Bean
+    public InterviewEngine interviewEngine(InterviewBlueprint blueprint, AnswerValidator validator) {
+        return new InterviewEngine(blueprint, validator);
+    }
+
+    @Bean
+    public InterviewRepository interviewRepository(JpaInterviewRepository jpaInterviewRepository) {
+        return jpaInterviewRepository;
+    }
+
+    @Bean
+    public InterviewStage interviewStage(InterviewEngine interviewEngine, InterviewRepository interviewRepository) {
+        return new InterviewStage(interviewEngine, interviewRepository);
+    }
+
+    @Bean
     public Pipeline chatPipeline(
             AnalyzerStage analyzer,
             EvaluatorStage evaluator,
             StrategistStage strategist,
+            InterviewStage interview,
             KnowledgeStage knowledge,
             ConsultorStage consultor,
             ScoringStage scoring,
@@ -473,7 +517,7 @@ public class KinConfig {
             OpportunityStage opportunity,
             ReportStage report,
             EventStage eventStage) {
-        return new Pipeline(List.of(analyzer, evaluator, strategist, knowledge,
+        return new Pipeline(List.of(analyzer, evaluator, strategist, interview, knowledge,
             scoring, recommendation, risk, opportunity, report, consultor, eventStage));
     }
 

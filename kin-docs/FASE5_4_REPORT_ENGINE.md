@@ -2,7 +2,7 @@
 
 > **Estado**: Diseño congelado — sin código de implementación
 > **Base**: Fase 5.3 (ADR-010) — `ARCHITECTURE STABLE` (enmendado por ADR-006…ADR-010)
-> **ADRs**: 011 (report engine) — **Estado: Propuesto** (pendiente de aprobación)
+> **ADRs**: 011 (report engine) — **Estado: Aprobado** (Fase 5.4 implementada y cerrada)
 >
 > Secuencia oficial del proyecto: Fase 5.3 → OpportunityEngine, **Fase 5.4 → ReportEngine**,
 > Fase 5.5 → PromptAssembler + explicación LLM, Fase 6 → KnowledgeEngine + RAG.
@@ -793,7 +793,7 @@ prioridades/severidades ya existentes. No hay fórmulas de negocio nuevas.
 ## 7. ADR-011 (resumen)
 
 La decisión arquitectónica completa está en `kin-docs/adr/ADR-011-report-engine.md` (**Estado:
-Propuesto**). Resumen:
+Aprobado**). Resumen:
 
 1. Nuevo subpaquete `kin.reporting.report` + `model/` + `assembler/` (POJO puro).
 2. `ReportEngine implements DomainEngine<ReportInput, ConsultingReport>` — fase REPORTING/DOMAIN/70,
@@ -905,7 +905,7 @@ modelo (VO), luego los ensambladores, luego el motor, luego la integración.
 - [ ] Cobertura JaCoCo `kin.reporting.report` ≥90 %; total de tests previos en verde.
 - [ ] Pipeline de 10 etapas operativo en bloqueante y streaming (`KinMethod`).
 - [ ] `KinMethodResult.consultingReport` disponible para el orquestador.
-- [ ] ADR-011 aprobada; `BASELINE`, Governance §6.2, `AGENTS.md` y `CHANGELOG` actualizados.
+- [x] ADR-011 aprobada; `BASELINE`, Governance §6.2, `AGENTS.md` y `CHANGELOG` actualizados.
 
 ---
 

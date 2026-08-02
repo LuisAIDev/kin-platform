@@ -5,7 +5,8 @@
 > Toda desviación requiere una ADR aprobada antes de implementar.
 > Enmendada por ADR-013 (Fase 5.6, 2026-07-31): el ciclo de conversación pasa a estar dirigido por `kin.conversation` (Conversation Orchestrator).
 > **Enmendada por ADR-014 (Fase 6, 2026-07-31): la adquisición de conocimiento externo pasa a estar dirigida por `kin.knowledge` (KnowledgeEngine + KnowledgeGateway + SourceValidator); "Java decide. Las fuentes únicamente aportan conocimiento."**
-> **Release oficial**: KIN 2.0 Alpha 1 (`v2.0.0-alpha1`, 2026-07-31) — núcleo inteligente estable (fases 4.0–5.6, ADR-001…013) + Fase 6 (ADR-014). Ver `kin-docs/releases/KIN_2_0_ALPHA_1.md`.
+> **Enmendada por ADR-015 (Fase 7, 2026-08-01): la recolección de información pasa a estar dirigida por `kin.interview` (Strategic Interview Engine); "Java decide la entrevista. El LLM únicamente formula preguntas."**
+> **Release oficial**: KIN 2.0 Alpha 1 (`v2.0.0-alpha1`, 2026-07-31) — núcleo inteligente estable (fases 4.0–5.6, ADR-001…013) + Fase 6 (ADR-014) + Fase 7 (ADR-015). Ver `kin-docs/releases/KIN_2_0_ALPHA_1.md`.
 
 ---
 
@@ -139,8 +140,11 @@ Ningún paquete puede depender de otro que esté en una capa superior. Verificar
 - `KnowledgeGateway` (Java) decide: ¿qué conocimiento externo se adquiere, valida y selecciona? (ADR-014)
 - `SourceValidator` (Java) decide: ¿una fuente es válida y con qué nivel de confianza? (HTTPS, allowlist, estado, frescura, dedup — ADR-014)
 - `KnowledgeEngine` (Java) decide: ¿qué hechos verificados enriquecen el análisis? (ADR-014)
+- `InterviewEngine` (Java) decide: ¿qué información falta, en qué orden, si una respuesta es válida y cuándo la entrevista está completa? (ADR-015)
+- `InterviewBlueprint` (Java) decide: ¿qué pregunta sigue (secuencia determinista por dimensión, obligatoriedad, follow-ups)? (ADR-015)
+- `AnswerValidator` (Java) decide: ¿una respuesta es aceptable, requiere refinamiento o se rechaza? (longitud, formato, keywords — ADR-015)
 - El LLM solo recibe una instrucción estratégica y genera texto conversacional o un reporte.
-- El LLM NUNCA decide el flujo. NUNCA decide qué preguntar. NUNCA evalúa viabilidad. **El LLM NUNCA recupera, valida ni decide conocimiento: las fuentes únicamente aportan conocimiento, Java decide (ADR-014).**
+- El LLM NUNCA decide el flujo. NUNCA decide qué preguntar. NUNCA evalúa viabilidad. **El LLM NUNCA recupera, valida ni decide conocimiento: las fuentes únicamente aportan conocimiento, Java decide (ADR-014). El LLM NUNCA decide la entrevista: Java decide qué preguntar, en qué orden, si una respuesta es válida y cuándo terminar; el LLM únicamente formula la pregunta dictada por `InterviewDirective` (ADR-015).**
 
 ---
 
@@ -252,7 +256,7 @@ Toda decisión en las siguientes categorías requiere un ADR **antes de implemen
 | **Cambios de dominio** | Nuevo Aggregate Root, nueva entidad con identidad, cambio en relaciones entre ARs. |
 | **Cambios de contratos** | Modificar interfaz de `PipelineStage`, `AIProvider`, `DomainEventBus`, `KinMethod` (input/output). |
 | **Cambios de persistencia** | Migrar de H2 a PostgreSQL, introducir Redis, cambiar ORM, agregar cache distribuida. |
-| **Nuevos motores** | `ReportEngine`, `RecommendationEngine`, `KnowledgeEngine` — cada nuevo Engine requiere ADR. |
+| **Nuevos motores** | `ReportEngine`, `RecommendationEngine`, `KnowledgeEngine`, `InterviewEngine` — cada nuevo Engine requiere ADR. |
 | **Nuevos proveedores IA** | Agregar Anthropic, Gemini, Mistral, o cualquier proveedor externo de LLM. |
 | **Nuevos Bounded Contexts** | Separar un contexto existente o introducir uno nuevo. |
 | **Violación de principio arquitectónico** | Cualquier decisión que viole las secciones 1.1-1.11 requiere ADR que justifique la violación. |
@@ -444,6 +448,7 @@ Donde:
 | `OpportunityEngine` | ✅ Existente (Fase 5.3, ADR-010) | `OpportunityInput` | `OpportunityResult` |
 | `ReportEngine` | ✅ Existente (Fase 5.4, ADR-011) | `ReportInput` | `ConsultingReport` |
 | `KnowledgeEngine` | ✅ Existente (Fase 6, ADR-014) | `KnowledgeInput` | `KnowledgeResult` |
+| `InterviewEngine` | ✅ Existente (Fase 7, ADR-015) | `InterviewInput` | `InterviewResult` |
 | `InnovationEngine` | 🔮 Futuro (KIN 3.0) | `InnovationInput` | `InnovationScore` |
 
 ### 6.3 Reglas Comunes
@@ -519,8 +524,9 @@ Donde:
    ```
 6. **El LLM solo comunica** — la decisión estratégica (`ConversationDecision`) es generada por `ConversationStrategist` en Java, y la directiva de turno (`TurnDirective`, fase/modo/restricciones) por `TurnPolicy` en Java (ADR-013). `ResponseGuard` valida la conformidad de la comunicación contra la directiva. El LLM recibe la decisión y la directiva como instrucción, genera texto y no participa en ninguna decisión.
 7. **Java decide sobre el conocimiento; las fuentes únicamente aportan conocimiento** (ADR-014) — la adquisición, validación, selección y caché del conocimiento externo son decisiones 100 % Java (`KnowledgeGateway` + `SourceValidator` en `kin.knowledge`). Los adaptadores (`ai.knowledge.adapter`) solo aportan candidatos crudos detrás del puerto `KnowledgeSource`; el LLM nunca recupera, valida ni decide conocimiento y no recibe fuentes crudas en el prompt (frontera ADR-012 intacta).
-8. **Nunca se pasa el `PipelineContext` completo al LLM** — solo la información necesaria para generar la respuesta.
-9. **Versionado de prompts** — cada cambio en un prompt template debe incrementar su versión. El PromptAssembler debe registrar qué versión se usó en cada llamada (observabilidad).
+8. **Java decide la entrevista; el LLM únicamente formula preguntas** (ADR-015) — la secuencia, la validación, la completitud y el presupuesto de la entrevista estratégica son decisiones 100 % Java (`InterviewEngine` + `InterviewBlueprint` + `AnswerValidator` en `kin.interview`). El LLM nunca decide qué preguntar, en qué orden, si una respuesta es válida ni cuándo terminar; solo formula la pregunta dictada por `InterviewDirective`. La sección `## ENTREVISTA ESTRATÉGICA` del `ConversationPromptBuilder` consume únicamente datos de dominio (`InterviewDirective`), nunca texto crudo (frontera ADR-012 intacta). Gating de REPORT por completitud; `InterviewStage` persiste el estado vía `InterviewRepository`.
+9. **Nunca se pasa el `PipelineContext` completo al LLM** — solo la información necesaria para generar la respuesta.
+10. **Versionado de prompts** — cada cambio en un prompt template debe incrementar su versión. El PromptAssembler debe registrar qué versión se usó en cada llamada (observabilidad).
 
 ---
 

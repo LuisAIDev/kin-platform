@@ -154,6 +154,25 @@ CREATE TABLE project_context (
 CREATE INDEX idx_project_context_updated_at ON project_context (updated_at);
 
 -- ============================================================
+-- TABLE: interview_state
+-- Estado durable de la entrevista estratégica de cada proyecto (1:1).
+-- Gestionado por el adaptador JPA de InterviewRepository (Fase 7, E5/ADR-015).
+-- ============================================================
+
+CREATE TABLE interview_state (
+    project_id      UUID PRIMARY KEY,
+    state_data      TEXT NOT NULL,
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_interview_state_project
+        FOREIGN KEY (project_id)
+        REFERENCES projects (id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX idx_interview_state_updated_at ON interview_state (updated_at);
+
+-- ============================================================
 -- FUNCTION: auto-update updated_at
 -- ============================================================
 

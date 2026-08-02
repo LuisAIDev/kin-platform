@@ -23,6 +23,11 @@ import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.conversation.TurnConstraints;
 import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.kin.interview.AnswerRules;
+import com.kinplatform.kin.interview.InterviewDecision;
+import com.kinplatform.kin.interview.InterviewDirective;
+import com.kinplatform.kin.interview.InterviewResult;
+import com.kinplatform.kin.interview.InterviewState;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -257,5 +262,89 @@ class ConsultorStageTest {
         return new TurnDirective(
             ConversationPhase.EXPLORATION, ConversationDecision.Action.ASK,
             AnalyzedDimension.PROBLEM, CommunicationMode.QUESTION, TurnConstraints.question());
+    }
+
+    private InterviewResult resultadoEntrevistaActiva() {
+        var directive = InterviewDirective.of("q-sector", AnalyzedDimension.SECTOR,
+            "sector y giro del negocio", AnswerRules.defaults());
+        var state = InterviewState.empty(UUID.randomUUID())
+            .withCurrent("q-sector").withPending(List.of("q-sector"));
+        return InterviewResult.of(InterviewDecision.ask("q-sector", "Falta información"),
+            directive, state, state.toProgress(5));
+    }
+
+    private InterviewResult resultadoEntrevistaCompleta() {
+        var state = InterviewState.empty(UUID.randomUUID()).withComplete(true);
+        return InterviewResult.of(InterviewDecision.report("completa"), null, state,
+            state.toProgress(5));
+    }
+
+    @Test
+    void execute_conEntrevistaActiva_deberiaUsarElPromptConversacionalConEntrevista() {
+        when(aiResponder.respond(any(AIRequest.class))).thenReturn("¿En qué rubro vas a operar?");
+
+        var ctx = context(false);
+        ctx.decision(ConversationDecision.ask(AnalyzedDimension.SECTOR, 9,
+            "Entrevista estratégica: sector del negocio"));
+        ctx.interviewResult(resultadoEntrevistaActiva());
+        stage.execute(ctx);
+
+        var captor = ArgumentCaptor.forClass(AIRequest.class);
+        verify(aiResponder).respond(captor.capture());
+        var prompt = captor.getValue().systemPrompt();
+        assertTrue(prompt.contains("## ENTREVISTA ESTRATÉGICA"));
+        assertTrue(prompt.contains("sector y giro del negocio"));
+        assertFalse(prompt.contains("=== CONSULTING REPORT ==="));
+    }
+
+    @Test
+    void execute_conEntrevistaActiva_sobreDecididoReporte_deberiaSeguirUsandoElPromptConversacional() {
+        when(aiResponder.respond(any(AIRequest.class))).thenReturn("¿En qué rubro vas a operar?");
+
+        var ctx = context(false);
+        ctx.decision(ConversationDecision.generateReport("contexto completo"));
+        ctx.consultingReport(com.kinplatform.kin.reporting.report.model.ConsultingReport.empty());
+        ctx.interviewResult(resultadoEntrevistaActiva());
+        stage.execute(ctx);
+
+        var captor = ArgumentCaptor.forClass(AIRequest.class);
+        verify(aiResponder).respond(captor.capture());
+        var prompt = captor.getValue().systemPrompt();
+        assertTrue(prompt.contains("## ENTREVISTA ESTRATÉGICA"));
+        assertFalse(prompt.contains("=== CONSULTING REPORT ==="));
+    }
+
+    @Test
+    void execute_conEntrevistaCompleta_deberiaUsarElPromptDeReporte() {
+        when(aiResponder.respond(any(AIRequest.class))).thenReturn("ok");
+
+        var ctx = context(false);
+        ctx.decision(ConversationDecision.generateReport("contexto completo"));
+        ctx.consultingReport(com.kinplatform.kin.reporting.report.model.ConsultingReport.empty());
+        ctx.interviewResult(resultadoEntrevistaCompleta());
+        stage.execute(ctx);
+
+        var captor = ArgumentCaptor.forClass(AIRequest.class);
+        verify(aiResponder).respond(captor.capture());
+        var prompt = captor.getValue().systemPrompt();
+        assertTrue(prompt.contains("=== CONSULTING REPORT ==="));
+        assertFalse(prompt.contains("## ENTREVISTA ESTRATÉGICA"));
+    }
+
+    @Test
+    void execute_conEntrevistaVacia_deberiaIgnorarElResultadoYUsarLaDecision() {
+        when(aiResponder.respond(any(AIRequest.class))).thenReturn("ok");
+
+        var ctx = context(false);
+        ctx.decision(ConversationDecision.generateReport("contexto completo"));
+        ctx.consultingReport(com.kinplatform.kin.reporting.report.model.ConsultingReport.empty());
+        ctx.interviewResult(InterviewResult.empty());
+        stage.execute(ctx);
+
+        var captor = ArgumentCaptor.forClass(AIRequest.class);
+        verify(aiResponder).respond(captor.capture());
+        var prompt = captor.getValue().systemPrompt();
+        assertTrue(prompt.contains("=== CONSULTING REPORT ==="));
+        assertFalse(prompt.contains("## ENTREVISTA ESTRATÉGICA"));
     }
 }

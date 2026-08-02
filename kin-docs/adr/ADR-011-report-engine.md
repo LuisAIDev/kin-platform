@@ -1,6 +1,6 @@
 # ADR-011: ReportEngine — orquestador puro del ConsultingReport
 
-**Estado**: Propuesto
+**Estado**: Aprobado (Fase 5.4 — ReportEngine implementado E1…E6 y cerrado E7; alineado con el estado oficial del milestone `v2.0.0-alpha1`)
 **Fecha**: 2026-07-31
 **Autor**: KIN Architecture Team
 

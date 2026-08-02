@@ -5,6 +5,53 @@ Todos los cambios notables de este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/),
 y el versionado del proyecto en [SemVer](https://semver.org/lang/es/).
 
+### Fase 7 (Strategic Interview Engine)
+
+Enmienda de `v2.0.0-alpha1` con ADR-015. **Estado: Architecture Stable (enmendado). FASE 7 CERRADA OFICIALMENTE (2026-08-01).**
+
+Principio: **Java decide. El LLM únicamente formula preguntas.** La entrevista estratégica se orquesta en Java (`InterviewEngine`/`InterviewBlueprint`/`AnswerValidator`); el LLM solo recibe el tema de la entrevista vía sección `## ENTREVISTA ESTRATÉGICA` y formula la pregunta sin decidir su contenido.
+
+### Added
+
+- Nuevo paquete de dominio `com.kinplatform.kin.interview` (ADR-015, POJO puro, sin Spring):
+  - `InterviewEngine` — motor canonizado que implementa `DomainEngine<InterviewInput, InterviewResult>` (fase `VALIDATION`, tipo `DOMAIN`); orquesta el ciclo pregunta → respuesta → validación → progreso.
+  - `InterviewBlueprint` — decide en Java la siguiente pregunta (secuencia por `AnalyzedDimension`, preguntas requeridas/opcionales, follow-ups).
+  - `AnswerValidator` — validador determinista (acepta/refina/rechaza la respuesta del usuario; evalúa concretud, número, dimensión, opciones).
+  - Tipos puros: `InterviewInput`, `InterviewResult`, `InterviewState`, `InterviewDecision` (`ASK`/`REPORT`), `InterviewDirective`, `InterviewAnswer`, `InterviewContext`, `InterviewProgress`, `InterviewRequest`, `AnswerRules`, `AnswerValidation`, puerto `InterviewRepository`.
+- `com.kinplatform.kin.pipeline.stage.InterviewStage` — etapa aditiva de pipeline (composición pura sobre `EngineStage`, patrón ADR-011): corre entre `StrategistStage` y `KnowledgeStage`, construye `InterviewInput`, persiste el estado vía `InterviewRepository` y aplica la decisión efectiva (ASK mientras incompleta / REPORT al completarse).
+- Infraestructura `com.kinplatform.ai.interview.adapter` (E5…E6, detrás del puerto `InterviewRepository`): `JpaInterviewRepository`, `InterviewStateEntity`, `InterviewStateJpaRepository`, `InterviewStateMapper` (tabla `interview_state`).
+- Migración Flyway `V4__create_interview_state.sql` + tabla en `kin-database/init.sql`.
+- Integración aditiva al pipeline (E6):
+  - `PipelineContext` + campo `InterviewResult interviewResult` (+ getter/setter) — patrón ADR-011.
+  - `PromptRequest.forConversation(context, decision, directive)` + overload aditivo ADR-015; `PromptAssembler.assemble(PromptRequest, InterviewResult)` propaga la entrevista en modo CONVERSATION (REPORT la ignora).
+  - `ConversationPromptBuilder.build(request, interviewResult)` + sección `## ENTREVISTA ESTRATÉGICA` (tema + `AnswerRules`) cuando hay un `InterviewDirective` pendiente.
+  - `ConsultorStage` selecciona el prompt de conversación con entrevista cuando la entrevista está activa con decisión `ASK`, `forReport(...)` cuando `decision.shouldGenerateReport()` y `forConversation(...)` en otro caso.
+  - Beans en `KinConfig`: `InterviewEngine`, `InterviewBlueprint`, `AnswerValidator`, `InterviewRepository` (adaptador JPA), `InterviewStage`; `chatPipeline(...)` inserta `InterviewStage` entre `StrategistStage` y `KnowledgeStage` (pipeline de 12 etapas).
+- Documentación: ADR-015 (**Aprobada**), `FASE7_STRATEGIC_INTERVIEW_ENGINE.md` (diseño + bitácora E1…E7 + criterios de aceptación + cierre), `AGENTS.md`, `BASELINE_ARCHITECTURE.md`, `KIN_ARCHITECTURE_GOVERNANCE.md` actualizados.
+
+### Changed
+
+- Pipeline de 11 → **12 etapas**: `Analizador → Evaluador → Estratega → Entrevista → Conocimiento → Scoring → Recomendaciones → Riesgos → Oportunidades → Reporte → Consultor → Eventos`.
+- Mientras la entrevista está incompleta la decisión efectiva es `ASK` (prioridad 9) y las etapas de análisis se omiten; al completarse la decisión es `REPORT` y el reporte se genera en el mismo turno.
+- `KIN_ARCHITECTURE_GOVERNANCE.md`: regla de IA §7.2 (nuevas reglas 8 y 9: *Java decide la entrevista; el LLM únicamente formula preguntas*), §1.11 +3 decisiones Java (`InterviewEngine`, `InterviewBlueprint`, `AnswerValidator`), §6 `InterviewEngine` → Existente.
+- `BASELINE_ARCHITECTURE.md`: inventario + bounded contexts `kin.interview`/`interview.stage`/`interview.adapter`, +1 motor (`InterviewEngine`), pipeline 12 etapas, contratos congelados + (`InterviewEngine`/`InterviewResult`, `InterviewRepository`, `InterviewStage`), decisión congelada #16, migraciones V1…V4, cobertura actualizada, §7 siguiente hito KIN 2.1.
+
+### Testing
+
+- 227 tests nuevos (de 675 a **902**): dominio `kin/interview/` (tipos/enums/records, `InterviewStateTest`, `InterviewDecisionTest`, `InterviewDirectiveTest`, `AnswerRulesTest`, `AnswerValidationTest`, `InterviewEngineTest`, `InterviewBlueprintTest`, `AnswerValidatorTest`, `InterviewStageTest`, `InterviewStagePipelineTest`), adapter `ai/interview/` (`JpaInterviewRepositoryTest`, `InterviewStateEntityTest`, `InterviewStateMapperTest`), `PromptAssemblerInterviewTest` (3), `ConversationPromptBuilderInterviewTest` (6), `ConversationOrchestratorInterviewIntegrationTest` (6), `ConsultorStageTest` +4 (gating ASK/REPORT de entrevista), `KinMethodTest` + pipeline de 12 etapas.
+- `./mvnw clean verify`: **902 tests, 0 fallos, 0 errores, 0 skipped, BUILD SUCCESS**.
+- Cobertura (JaCoCo): **`kin.interview` + `ai.interview.adapter` 98.72 %** (engine 95 %, stage 100 %, adapter 100 %); `kin.conversation` 100 %; `kin.knowledge` 100 %; `ai.knowledge.adapter` 100 %; `kin.ai` 99.7 %; `kin.ai.prompt` 99.7 %; `kin.ai.prompt.formatter` 99.9 %; `kin.reporting*` 99.2 %; `kin.engine` 99.1 %; `kin.scoring` 95.1 %. Requisito de ≥ 90 % en `kin.interview` cumplido.
+
+### Known Issues
+
+- Incidencia heredada: `pricing_plans` sin columnas NOT NULL aplicadas en dev (H2, `ddl-auto: update`). No bloquea el arranque (warnings). Fuera del alcance de esta fase.
+- `InMemoryDomainEventBus` sin async ni persistencia (KIN 2.4).
+- Heurística de longitud en `ScoringEngine` por reemplazar antes de KIN 2.5.
+- Cobertura baja en paquetes de infraestructura (auth, pricing, project, ai.provider) — fuera del requisito del dominio.
+- `ResponseValidation` (bloqueante y streaming) es hoy un artefacto de auditoría sin consumidor en producción; el fallback (respuesta enlatada) se define en KIN 2.1.
+- Los adaptadores de conocimiento (`ai.knowledge.adapter`) están implementados con mocks (sin red real); el enriquecimiento efectivo del análisis y la exposición de conocimiento citado en la comunicación (frontera ADR-012) son trabajo futuro.
+- El módulo `KnowledgeStage`/`InterviewStage` aún no contribuye al pipeline de scoring efectivo (KIN 2.1): la entrevista valida dimensiones pero las etapas de análisis se omiten mientras está activa.
+
 ### Fase 6 (External Knowledge Acquisition)
 
 Enmienda de `v2.0.0-alpha1` con ADR-014. **Estado: Architecture Stable (enmendado). FASE 6 CERRADA OFICIALMENTE (2026-07-31).**
