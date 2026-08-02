@@ -27,6 +27,7 @@ import com.kinplatform.kin.context.ContextAnalyzerPort;
 import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.context.EvaluationPolicies;
 import com.kinplatform.kin.context.ExplorationPriority;
+import com.kinplatform.kin.context.ProjectContextSyncPort;
 import com.kinplatform.kin.context.strategy.ConversationStrategist;
 import com.kinplatform.kin.context.strategy.DefaultExplorationStrategy;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
@@ -547,8 +548,9 @@ public class KinConfig {
     }
 
     @Bean
-    public KinMethod kinMethod(Pipeline chatPipeline, DomainEventBus eventBus, ContextRepository contextRepository) {
-        return new KinMethod(chatPipeline, eventBus, contextRepository);
+    public KinMethod kinMethod(Pipeline chatPipeline, DomainEventBus eventBus, ContextRepository contextRepository,
+                               ProjectContextSyncPort projectContextSyncPort) {
+        return new KinMethod(chatPipeline, eventBus, contextRepository, projectContextSyncPort);
     }
 
     @Bean

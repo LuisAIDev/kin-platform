@@ -1,6 +1,7 @@
 package com.kinplatform.kin;
 
 import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.kin.context.ProjectContextSyncPort;
 import com.kinplatform.kin.conversation.ResponseFallback;
 import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.event.DomainEvent;
@@ -34,10 +35,13 @@ public class KinMethod {
     private final DomainEventBus eventBus;
     private final ContextRepository contextRepository;
     private final ResponseFallback responseFallback;
+    private final ProjectContextSyncPort contextSync;
+
+    private static final ProjectContextSyncPort NO_OP_SYNC = (projectId, context) -> { };
 
     public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository) {
         this(pipeline, eventBus, contextRepository,
-            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0));
+            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0), NO_OP_SYNC);
     }
 
     /**
@@ -47,10 +51,27 @@ public class KinMethod {
      */
     public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository,
                      ResponseFallback responseFallback) {
+        this(pipeline, eventBus, contextRepository, responseFallback, NO_OP_SYNC);
+    }
+
+    /**
+     * Constructor aditivo: inyecta el {@link ProjectContextSyncPort} que
+     * mantiene sincronizado el agregado {@code Project} con el
+     * {@code ProjectContext} (única fuente coherente para el Dashboard).
+     */
+    public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository,
+                     ProjectContextSyncPort contextSync) {
+        this(pipeline, eventBus, contextRepository,
+            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0), contextSync);
+    }
+
+    public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository,
+                     ResponseFallback responseFallback, ProjectContextSyncPort contextSync) {
         this.pipeline = pipeline;
         this.eventBus = eventBus;
         this.contextRepository = contextRepository;
         this.responseFallback = responseFallback;
+        this.contextSync = contextSync == null ? NO_OP_SYNC : contextSync;
     }
 
     public KinMethodResult execute(KinMethodCommand command) {
@@ -59,6 +80,7 @@ public class KinMethod {
         var ctx = prepare(command);
         var result = pipeline.execute(ctx);
         contextRepository.save(command.projectId(), result.projectContext());
+        contextSync.sync(command.projectId(), result.projectContext());
         publish(result.events());
 
         return new KinMethodResult(
@@ -85,6 +107,7 @@ public class KinMethod {
         ctx.streaming(true);
         var result = pipeline.execute(ctx);
         contextRepository.save(command.projectId(), result.projectContext());
+        contextSync.sync(command.projectId(), result.projectContext());
         publish(result.events());
 
         Flux<String> flux = result.aiResponseFlux();
