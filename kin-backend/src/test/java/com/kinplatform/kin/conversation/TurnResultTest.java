@@ -44,11 +44,12 @@ class TurnResultTest {
 
     @Test
     void result_deberiaSoportarReporte() {
+        var reporte = ConsultingReport.empty();
         var result = new TurnResult(context,
             ConversationDecision.generateReport("reporte"), directive, "explicación",
-            ResponseValidation.ok(), ConsultingReport.empty(), List.of());
+            ResponseValidation.ok(), reporte, List.of());
 
-        assertEquals(ConsultingReport.empty(), result.consultingReport());
+        assertSame(reporte, result.consultingReport());
     }
 
     @Test
