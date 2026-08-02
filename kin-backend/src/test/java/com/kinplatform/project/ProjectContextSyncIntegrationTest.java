@@ -75,6 +75,9 @@ class ProjectContextSyncIntegrationTest {
     @Mock
     private ProjectContextJpaRepository contextJpa;
 
+    @Mock
+    private CategoryRepository categoryRepository;
+
     private final Map<UUID, ProjectContextEntity> contextStore = new HashMap<>();
     private Project project;
     private ContextRepository contextRepository;
@@ -96,7 +99,8 @@ class ProjectContextSyncIntegrationTest {
             .user(User.builder().id(USER_ID).build())
             .title("")
             .description("")
-            .category(ProjectCategory.EMPRENDIMIENTO)
+            .category(Category.builder().code("EMPRESARIAL").name("Empresarial")
+                .displayOrder(2).color("#0ea5e9").active(true).build())
             .build();
         when(projectRepository.findById(PROJECT_ID)).thenAnswer(i -> Optional.of(project));
         when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
@@ -123,7 +127,8 @@ class ProjectContextSyncIntegrationTest {
 
     private int progress(Project p) {
         var service = new ProjectServiceImpl(projectRepository, userRepository,
-            chatMessageRepository, subscriptionValidatorService);
+            chatMessageRepository, subscriptionValidatorService,
+            new CategoryService(categoryRepository));
         try {
             Method m = ProjectServiceImpl.class.getDeclaredMethod("calculateProgress", Project.class);
             m.setAccessible(true);

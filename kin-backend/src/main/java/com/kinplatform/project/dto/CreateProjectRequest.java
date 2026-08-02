@@ -1,6 +1,5 @@
 package com.kinplatform.project.dto;
 
-import com.kinplatform.project.ProjectCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -17,5 +16,6 @@ public class CreateProjectRequest {
     private String description;
 
     @NotNull(message = "Category is required")
-    private ProjectCategory category;
+    @Size(max = 60, message = "Category code must not exceed 60 characters")
+    private String category;
 }

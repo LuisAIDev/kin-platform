@@ -220,6 +220,30 @@ presenta como Markdown ligero en el prompt REPORT (frontera ADR-012 intacta: el 
 
 ---
 
+### 🌐 Catálogo de categorías (SaaS-ready)
+
+Las categorías de proyecto son **datos administrables, no código**. Reemplazan al antiguo enum
+`ProjectCategory` (eliminado): una nueva industria/categoría se agrega como fila en `categories`
+sin modificar Java ni React.
+
+- **Entidad**: `Category` (`com.kinplatform.project`) → tabla `categories`
+  (`id`, `code` único, `name`, `description`, `display_order`, `icon`, `color`, `active`,
+  `created_at`, `updated_at`).
+- **Relación**: `Project.category` es `@ManyToOne → Category` (columna `category_id`, nullable
+  para compatibilidad con proyectos legacy; `@ManyToOne` EAGER por defecto, sin `LazyInitializationException`).
+- **API**: `GET /categories` devuelve solo categorías activas ordenadas por `display_order`.
+  `POST/PUT /projects` recibe el `code` de la categoría (`category: "SALUD"`) y el backend lo
+  resuelve contra el catálogo (400 si no existe).
+- **Seed**: 17 categorías iniciales (Tecnología e Innovación, Empresarial, Agroindustria, Salud,
+  Educación, Impacto Social, Medio Ambiente, Industria, Gobierno, Fintech, Comercio, Turismo,
+  Gastronomía, Logística, Creatividad, Marketing Digital, Investigación). En producción lo siembra
+  la migración Flyway `V6__create_categories.sql` (que también migra el enum legacy y elimina la
+  columna `category`); en dev (H2, sin Flyway) lo siembra `CategoryDataInitializer` (idempotente).
+- **Frontend**: el formulario de proyectos carga `GET /categories` (sin listas hardcodeadas); el
+  color del badge viene de `category.color` (hex, aplicado por estilo inline).
+
+---
+
 ## 🛠️ Stack Tecnológico
 
 ### Backend
@@ -233,7 +257,7 @@ presenta como Markdown ligero en el prompt REPORT (frontera ADR-012 intacta: el 
 | Persistencia | Spring Data JPA / Hibernate |
 | Base de datos (dev) | H2 file-based (Flyway deshabilitado) |
 | Base de datos (prod) | PostgreSQL 16 (Docker) / Neon |
-| Migraciones | Flyway (V1…V5) + `kin-database/init.sql` |
+| Migraciones | Flyway (V1…V6) + `kin-database/init.sql` |
 | IA | DeepSeek (default) + OpenAI + Ollama (fallback en español) |
 | Testing | JUnit 5, Mockito, Reactor Test |
 | Cobertura | JaCoCo (dominio ≥ 90 %) |
@@ -402,7 +426,7 @@ Cobertura de dominio ≥ 90 % (JaCoCo):
 - [x] CRUD completo de proyectos + paginación
 - [x] Chat con IA integrado (bloqueante + streaming SSE)
 - [x] Contenerización con Docker Compose
-- [x] Migraciones versionadas con Flyway (V1…V5)
+- [x] Migraciones versionadas con Flyway (V1…V6)
 - [x] **Fase 5.x — Núcleo inteligente**: pipeline, Scoring, Recommendation, Risk, Opportunity, Report, Prompt
 - [x] **Fase 6 — Knowledge Engine + RAG** (ADR-014)
 - [x] **Fase 7 — Strategic Interview Engine** (ADR-015)
@@ -410,6 +434,7 @@ Cobertura de dominio ≥ 90 % (JaCoCo):
 - [x] **1049 tests, 0 fallos, cobertura de dominio ≥ 90 %**
 - [x] **Release `v1.0.0-phase8`**
 - [x] **Fase 9 (KIN 2.1)** — Pipeline Resilience (retry/timeout/metrics), EventStage semantics, Response Fallback (ver `kin-docs/FASE9_0.md` y `ADR-017`)
+- [x] **Catálogo de categorías SaaS-ready** — el enum `ProjectCategory` se reemplazó por la entidad/tabla `categories` administrable (ver sección [Catálogo de categorías](#-catálogo-de-categorías-saas-ready))
 - [ ] **Fase 10** — planeada (ScoringEngine heuristic replacement, EventBus async, provider dedup, despliegue en producción)
 - [ ] Despliegue en producción (backend en Render, frontend en Vercel, PostgreSQL en Neon)
 - [ ] E2E de frontend con Playwright (flujo completo)

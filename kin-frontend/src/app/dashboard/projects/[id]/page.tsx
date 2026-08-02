@@ -9,7 +9,7 @@ import { forceLogout } from "@/services/session";
 import ViabilityScore from "@/components/ViabilityScore";
 import PdfReportButton from "@/components/PdfReportButton";
 import ProgressCircle from "@/components/ProgressCircle";
-import { categoryBadge, statusBadge } from "@/utils/badgeColors";
+import { statusBadge } from "@/utils/badgeColors";
 
 const STREAMING_ID_PREFIX = "streaming-";
 
@@ -200,8 +200,16 @@ export default function ProjectDetailPage({ params }: Props) {
           )}
 
           <div className="flex flex-wrap gap-2 mb-6">
-            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${categoryBadge(project.category)}`}>
-              {project.category}
+            <span
+              className="text-xs px-2.5 py-1 rounded-full font-medium"
+              style={{
+                backgroundColor: project.categoryColor
+                  ? `${project.categoryColor}1A`
+                  : undefined,
+                color: project.categoryColor ?? undefined,
+              }}
+            >
+              {project.categoryName ?? project.category}
             </span>
             <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusBadge(project.status)}`}>
               {project.status}

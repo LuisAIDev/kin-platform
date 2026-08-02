@@ -1,6 +1,5 @@
 package com.kinplatform.project.dto;
 
-import com.kinplatform.project.ProjectCategory;
 import com.kinplatform.project.ProjectStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +18,9 @@ public class ProjectResponse {
     private UUID userId;
     private String title;
     private String description;
-    private ProjectCategory category;
+    private String category;
+    private String categoryName;
+    private String categoryColor;
     private ProjectStatus status;
     private BigDecimal viabilityScore;
     private String aiSummary;

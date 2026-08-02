@@ -77,7 +77,7 @@ export default function PdfReportButton({ project, messages }: Props) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(55, 65, 81);
-    const meta = `Categoría: ${project.category}  |  Estado: ${project.status}  |  Creado: ${formatDate(project.createdAt)}`;
+    const meta = `Categoría: ${project.categoryName ?? project.category}  |  Estado: ${project.status}  |  Creado: ${formatDate(project.createdAt)}`;
     doc.text(meta, ml, y);
     y += 8;
 

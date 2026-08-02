@@ -24,6 +24,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final UserRepository userRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final SubscriptionValidatorService subscriptionValidator;
+    private final CategoryService categoryService;
 
     @Override
     @Transactional
@@ -40,7 +41,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .user(user)
                 .title(request.getTitle().trim())
                 .description(request.getDescription() != null ? request.getDescription().trim() : null)
-                .category(request.getCategory())
+                .category(categoryService.requireByCode(request.getCategory()))
                 .status(ProjectStatus.DRAFT)
                 .build();
 
@@ -77,7 +78,7 @@ public class ProjectServiceImpl implements ProjectService {
             project.setDescription(request.getDescription().trim());
         }
         if (request.getCategory() != null) {
-            project.setCategory(request.getCategory());
+            project.setCategory(categoryService.requireByCode(request.getCategory()));
         }
         if (request.getStatus() != null) {
             project.setStatus(request.getStatus());
@@ -106,12 +107,15 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     private ProjectResponse toResponse(Project project) {
+        var category = project.getCategory();
         return ProjectResponse.builder()
                 .id(project.getId())
                 .userId(project.getUser().getId())
                 .title(project.getTitle())
                 .description(project.getDescription())
-                .category(project.getCategory())
+                .category(category != null ? category.getCode() : null)
+                .categoryName(category != null ? category.getName() : null)
+                .categoryColor(category != null ? category.getColor() : null)
                 .status(project.getStatus())
                 .viabilityScore(project.getViabilityScore())
                 .aiSummary(project.getAiSummary())

@@ -1,23 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { projectsService } from "@/services/projects";
-
-const CATEGORIES = [
-  { value: "PERSONAL", label: "Personal" },
-  { value: "EMPRENDIMIENTO", label: "Emprendimiento" },
-  { value: "EMPRESARIAL", label: "Empresarial" },
-  { value: "SOCIAL", label: "Social" },
-] as const;
+import { projectsService, type Category } from "@/services/projects";
 
 export default function NewProjectPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    projectsService
+      .getCategories()
+      .then((data) => {
+        if (!cancelled) setCategories(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError((err as Error).message);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,9 +113,9 @@ export default function NewProjectPage() {
             <option value="" disabled>
               Selecciona una categoría
             </option>
-            {CATEGORIES.map((cat) => (
-              <option key={cat.value} value={cat.value}>
-                {cat.label}
+            {categories.map((cat) => (
+              <option key={cat.code} value={cat.code}>
+                {cat.name}
               </option>
             ))}
           </select>

@@ -34,6 +34,8 @@ docker compose up --build                      # from repo root
 
 ## Key quirks
 
+- **Category catalog (SaaS-ready)**: the `ProjectCategory` enum was replaced by the `Category` entity / `categories` table. `Project.category` is `@ManyToOne → Category` (`category_id`). `GET /categories` returns only active categories ordered by `displayOrder`. `POST/PUT /projects` receive the category `code` string (backend resolves it; 400 if unknown). `ProjectResponse` exposes `category` (code), `categoryName` and `categoryColor`. Prod seeds via Flyway `V6__create_categories.sql`; dev (H2, no Flyway) seeds via `CategoryDataInitializer`. The frontend `new/page.tsx` loads `GET /categories` (no hardcoded lists); badge color comes from `category.color`. The AI pipeline still receives the category as a String (SECTOR dimension).
+
 - **PostgreSQL dependency is commented out** in `pom.xml`. Dev uses H2 file-based (`data/kindb`). Only Docker deployment uses PostgreSQL.
 - **Dual CORS config**: both `CorsConfig.java` and `SecurityConfig.java` configure CORS. `SecurityConfig` takes precedence (Spring Security filter chain). Add new origins to both.
 - **AI engine** (`AiEngineService.java`) implements the domain port `AIResponder` (`com.kinplatform.kin.ai`) and routes through `ProviderRouter` (DeepSeek/OpenAI/Ollama) with a Spanish mock fallback on failure — safe to develop without a LLM running. Prompt construction lives in `PromptAssembler` (domain, `kin.ai`), not in the service.
@@ -57,7 +59,7 @@ docker compose up --build                      # from repo root
 |---|---|
 | `auth` | Register, login, JWT issuance |
 | `user` | User entity, roles (FREE, PREMIUM, FACILITADOR, ADMIN) |
-| `project` | CRUD + categories, status, viability scoring |
+| `project` | CRUD, `Category` catalog (SaaS-ready), status, viability scoring |
 | `chat` | Message history, streaming SSE (`/chat/stream`), orchestration |
 | `ai` | Adapters: `AiEngineService` (implements `AIResponder`), provider router, `context.adapter` (JPA durable context) |
 | `kin.ai` | Domain AI: `AIResponder` port, `AIRequest`, `PromptRequest`/`PromptType`, `PromptAssembler` (pure façade) |

@@ -8,7 +8,7 @@ import { subscriptionApi, type SubscriptionStatus } from "@/services/subscriptio
 import { authService } from "@/services/auth";
 import { forceLogout } from "@/services/session";
 import ProgressCircle from "@/components/ProgressCircle";
-import { categoryBadge, statusBadge } from "@/utils/badgeColors";
+import { statusBadge } from "@/utils/badgeColors";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
 export default function ProjectsPage() {
@@ -152,8 +152,16 @@ export default function ProjectsPage() {
                 </p>
               )}
               <div className="flex gap-2 mt-3">
-                <span className={`text-xs px-2 py-1 rounded-full font-medium ${categoryBadge(project.category)}`}>
-                  {project.category}
+                <span
+                  className="text-xs px-2 py-1 rounded-full font-medium"
+                  style={{
+                    backgroundColor: project.categoryColor
+                      ? `${project.categoryColor}1A`
+                      : undefined,
+                    color: project.categoryColor ?? undefined,
+                  }}
+                >
+                  {project.categoryName ?? project.category}
                 </span>
                 <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusBadge(project.status)}`}>
                   {project.status}

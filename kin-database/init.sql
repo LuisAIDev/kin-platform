@@ -48,7 +48,7 @@ CREATE TABLE projects (
     user_id         UUID NOT NULL,
     title           VARCHAR(255) NOT NULL,
     description     TEXT,
-    category        VARCHAR(30) NOT NULL,
+    category_id     UUID,
     status          VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
     viability_score NUMERIC(5, 2)
                         CHECK (viability_score >= 0 AND viability_score <= 100),
@@ -65,11 +65,30 @@ CREATE TABLE projects (
 );
 
 CREATE INDEX idx_projects_user_id ON projects (user_id);
-CREATE INDEX idx_projects_category ON projects (category);
+CREATE INDEX idx_projects_category_id ON projects (category_id);
 CREATE INDEX idx_projects_status ON projects (status);
-CREATE INDEX idx_projects_user_category ON projects (user_id, category);
 CREATE INDEX idx_projects_user_status ON projects (user_id, status);
 CREATE INDEX idx_projects_created_at ON projects (created_at DESC);
+
+-- ============================================================
+-- TABLE: categories (catálogo SaaS-ready, reemplaza el enum ProjectCategory)
+-- ============================================================
+
+CREATE TABLE categories (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    code            VARCHAR(60) NOT NULL UNIQUE,
+    name            VARCHAR(120) NOT NULL,
+    description     VARCHAR(255),
+    display_order   INTEGER NOT NULL,
+    icon            VARCHAR(40),
+    color           VARCHAR(20),
+    active          BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- El FK lo aporta la migración Flyway V6 (ALTER TABLE projects ADD CONSTRAINT ...).
+-- El seed inicial de 17 categorías también lo aporta la migración V6.
 
 -- ============================================================
 -- TABLE: chat_messages

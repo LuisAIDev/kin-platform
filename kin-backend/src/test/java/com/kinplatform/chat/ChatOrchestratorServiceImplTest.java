@@ -7,7 +7,7 @@ import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.ChatRequest;
 import com.kinplatform.chat.dto.SaveMessageRequest;
 import com.kinplatform.project.Project;
-import com.kinplatform.project.ProjectCategory;
+import com.kinplatform.project.Category;
 import com.kinplatform.project.ProjectRepository;
 import com.kinplatform.project.ProjectStatus;
 import com.kinplatform.user.User;
@@ -76,7 +76,8 @@ class ChatOrchestratorServiceImplTest {
                 .user(user)
                 .title("Proyecto Test")
                 .description("Descripción")
-                .category(ProjectCategory.EMPRENDIMIENTO)
+                .category(Category.builder().code("EMPRESARIAL").name("Empresarial")
+                    .displayOrder(2).color("#0ea5e9").active(true).build())
                 .status(ProjectStatus.DRAFT)
                 .build();
 

@@ -1,6 +1,5 @@
 package com.kinplatform.project.dto;
 
-import com.kinplatform.project.ProjectCategory;
 import com.kinplatform.project.ProjectStatus;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -14,7 +13,8 @@ public class UpdateProjectRequest {
     @Size(max = 5000, message = "Description must not exceed 5000 characters")
     private String description;
 
-    private ProjectCategory category;
+    @Size(max = 60, message = "Category code must not exceed 60 characters")
+    private String category;
 
     private ProjectStatus status;
 }

@@ -15,7 +15,7 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
     Page<Project> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
-    List<Project> findByUserIdAndCategoryOrderByCreatedAtDesc(UUID userId, ProjectCategory category);
+    List<Project> findByUserIdAndCategoryOrderByCreatedAtDesc(UUID userId, Category category);
 
     long countByUserId(UUID userId);
 

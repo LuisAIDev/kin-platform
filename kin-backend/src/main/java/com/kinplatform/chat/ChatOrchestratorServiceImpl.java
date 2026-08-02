@@ -50,7 +50,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         var history = loadHistoryForContext(userId, projectId);
         var turn = new ConversationTurn(
             projectId, userId, request.getContent(), history,
-            project.getTitle(), project.getDescription(), project.getCategory() != null ? project.getCategory().name() : null
+            project.getTitle(), project.getDescription(), project.getCategory() != null ? project.getCategory().getName() : null
         );
         var result = conversationOrchestrator.orchestrate(turn);
         log.info("=== KIN METHOD RESULT === action={}, phase={}, chars={}, events={}, validationAccepted={}",
@@ -75,7 +75,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         var history = loadHistoryForContext(userId, projectId);
         var turn = new ConversationTurn(
             projectId, userId, request.getContent(), history,
-            project.getTitle(), project.getDescription(), project.getCategory() != null ? project.getCategory().name() : null
+            project.getTitle(), project.getDescription(), project.getCategory() != null ? project.getCategory().getName() : null
         );
 
         log.info("=== STREAMING AI RESPONSE === project={}, userId={}, historySize={}",

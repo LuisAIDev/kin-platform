@@ -1,12 +1,25 @@
 import { api } from "./api";
 import type { PageResponse } from "@/types";
 
+export interface Category {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  displayOrder: number;
+  icon: string | null;
+  color: string | null;
+  active: boolean;
+}
+
 export interface Project {
   id: string;
   userId: string;
   title: string;
   description: string | null;
   category: string;
+  categoryName: string | null;
+  categoryColor: string | null;
   status: string;
   viabilityScore: number | null;
   aiSummary: string | null;
@@ -36,4 +49,6 @@ export const projectsService = {
     api.put<Project>(`/projects/${id}`, data),
 
   delete: (id: string) => api.delete<void>(`/projects/${id}`),
+
+  getCategories: () => api.get<Category[]>("/categories"),
 };
