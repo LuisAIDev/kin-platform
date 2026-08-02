@@ -6,6 +6,7 @@ import com.kinplatform.kin.interview.InterviewRepository;
 import com.kinplatform.kin.interview.InterviewState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,7 @@ public class JpaInterviewRepository implements InterviewRepository {
     private final ObjectMapper objectMapper;
     private final InterviewStateMapper mapper;
 
+    @Autowired
     public JpaInterviewRepository(InterviewStateJpaRepository repository, ObjectMapper objectMapper) {
         this(repository, objectMapper, new InterviewStateMapper());
     }
