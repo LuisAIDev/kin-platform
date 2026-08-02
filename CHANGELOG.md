@@ -5,6 +5,112 @@ Todos los cambios notables de este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/),
 y el versionado del proyecto en [SemVer](https://semver.org/lang/es/).
 
+## [v1.1.0-phase9] - 2026-08-02
+
+**FASE 9 (KIN 2.1 — "Pipeline Estabilizado") completada y cerrada oficialmente.** ADR-017
+**Aprobado**, pipeline resiliente (retry/timeout/métricas/error handling), semántica completa de
+eventos, consumo real de `ResponseValidation` con `ResponseFallback` e integración end-to-end.
+BUILD SUCCESS con **1210 tests** (0 failures, 0 errors, 0 skipped), cobertura de dominio ≥ 90 %
+en los paquetes afectados y contratos congelados intactos.
+
+### Added
+
+- Paquete de dominio `com.kinplatform.kin.pipeline.resilience` (ADR-017, POJO puro, sin Spring):
+  - `StagePolicy` — política determinista por stage (reintentos máximos, acción ante fallo `FAIL`/`RETRY`/`SKIP`, timeout en ms).
+  - `StageRetryPolicy` — estrategia de reintento (máximo, backoff `NONE`/`FIXED`/`EXPONENTIAL`, stages elegibles).
+  - `StageTimeoutConfig` — timeout por stage (por defecto y específico) y acción ante timeout.
+  - `StageExecutionStats` — estadística individual de ejecución (duración, éxito/fallo, intentos, timeout).
+  - `PipelineMetrics` — métricas inmutables del pipeline (implementa `EngineResult`).
+  - `PipelineExecutionException` — excepción de dominio (`TIMEOUT`/`RETRY_EXHAUSTED`/`UNEXPECTED`).
+  - `PipelineErrorHandler` — clasificador determinista de errores (detección de `TimeoutException`).
+- `com.kinplatform.kin.conversation.ResponseFallback` — fallback determinista de respuesta ante
+  `accepted=false` (respuesta enlatada en español / reintento acotado).
+- **Pipeline resiliente** (E3): `Pipeline` con error handling por stage (retry/fail/skip), timeout
+  por stage y métricas — manteniendo la firma congelada `execute(PipelineContext)` y la API de
+  `PipelineStage`; getter aditivo `Pipeline.metrics()`.
+- **Semántica completa de eventos** (E4): `EventStage` emite `question_generated` (ASK),
+  `report_generated` (solo si el reporte fue generado), `score_calculated`, `risk_detected` (por
+  cada riesgo) y `conversation_completed` (siempre), en orden determinista y sin duplicados.
+- **Consumo de `ResponseValidation`** (E5):
+  - `ConversationOrchestrator` (bloqueante): reintento acotado (re-invocando `KinMethod`) y
+    respuesta segura al agotarse; nunca lanza ni devuelve null.
+  - `ConsultorStage` (streaming): reintento acotado re-suscribiendo el flujo del LLM; no rompe SSE.
+  - `KinMethod`: safety net que anexa la respuesta segura si la validación final quedó rechazada.
+  - `ChatOrchestratorServiceImpl`: consume el resultado del fallback (log de validación).
+
+### Changed
+
+- Pipeline de 13 etapas **resiliente**: cada stage ejecutado con política (fail-fast por defecto,
+  retry solo donde la política lo permite), timeout medido y métricas internas.
+- `ConversationOrchestrator`, `ConsultorStage` y `KinMethod` ganan constructores aditivos con
+  `ResponseFallback` (compatibilidad total; firmas públicas intactas).
+- ADR-017 pasa de **Propuesto** a **Aprobado**; `FASE9_0.md` queda **FINALIZADA**.
+
+### Improved
+
+- Observabilidad: métricas de duración/éxito/fallo/reintentos por stage (internas, sin persistir).
+- Robustez de la comunicación: ante una respuesta inválida del LLM, KIN reintenta (acotado) o
+  entrega una respuesta segura determinista.
+- Semántica de eventos completa según el flujo real de la conversación.
+
+### Fixed
+
+- `ResponseValidation` dejó de ser un artefacto de auditoría: ahora es consumido en bloqueante y
+  streaming (fallback/reintento determinista), tal como documentaba BASELINE §7.5 Prioridad 2.
+- `RiskDetectedEvent` (existente) ahora se emite realmente por cada riesgo del flujo REPORT.
+
+### Architecture
+
+- Bounded context `com.kinplatform.kin.pipeline.resilience` (dominio POJO, sin Spring/JPA/IA).
+- Clean Architecture + DDD + Ports & Adapters respetados; contratos congelados intactos (solo
+  aditivos sancionados por ADR-017).
+- Principio rector preservado: **Java decide. El LLM únicamente comunica.**
+
+### Testing
+
+- 27 tests nuevos (de 1183 a **1210**): dominio `kin/pipeline/resilience/` (8 clases), tests del
+  pipeline (resilience/retry/timeout/metrics/failure), `EventStageSemanticsTest`/
+  `EventStageOrderingTest`/`EventStageCompatibilityTest`, fallback (`ConversationOrchestratorFallbackTest`,
+  `ConsultorStageFallbackTest`, `KinMethodFallbackTest`, `StreamingFallbackTest`,
+  `ResponseFallbackExecutionTest`) e integración end-to-end (`EndToEndPipelineIntegrationTest`,
+  `PipelineControllerIntegrationTest`, `PipelineFlowIntegrationTest`).
+- `./mvnw clean verify`: **1210 tests, 0 fallos, 0 errores, 0 skipped, BUILD SUCCESS**.
+- Cobertura (JaCoCo): `kin.pipeline` 93.7 %; `kin.pipeline.stage` 97.4 %; `kin.pipeline.resilience`
+  99.7 %; `kin.conversation` 99.2 %; `kin.reporting*` 99.0 %; `kin.enrichment*` 97.7 %.
+
+### Documentation
+
+- ADR-017 (**Aprobado**), `FASE9_0.md` (**FINALIZADA**), `BASELINE_ARCHITECTURE.md` (+ sección KIN 2.1).
+- `README.md` y `CHANGELOG.md` actualizados para la release.
+
+### Known Issues
+
+- `kin.event` con cobertura baja (61 %) — paquete no sujeto al requisito de dominio; records finos.
+- Semántica de reintentos: `StagePolicy.retriesExhausted` (intentos totales ≤ maxRetries+1) y
+  `ResponseFallback.shouldRetry` (intento ≤ maxRetries) difieren en un intento; ambas internamente
+  consistentes y testeables, documentadas en el dominio.
+- `Pipeline.java` al 93.7 %: rutas defensivas (interrupción de backoff, guardas nulas) sin cubrir.
+- Retry bloqueante re-invoca `KinMethod` (eventos publicados por intento, acumulados en el
+  `TurnResult`) — comportamiento documentado; default conservador sin reintentos.
+
+## [Unreleased]
+
+### Planned
+
+FASE 9 (KIN 2.1 — "Pipeline Estabilizado"). Hito documentado en `ARQUITECTURA_BASE_KIN_2.0.md` §9 y
+`BASELINE_ARCHITECTURE.md` §KIN 2.1; diseño sancionado por `ADR-017` (Propuesto) y `FASE9_0.md`
+(E1 COMPLETADA, E2–E7 pendientes). Nada de lo siguiente está implementado todavía:
+
+- **Pipeline Resilience** — manejo de errores por stage con estrategias retry/fail (fail-fast por
+  defecto, retry limitado a stages seguros), manteniendo la firma congelada `Pipeline.execute`.
+- **Timeout** — timeout por stage (`StageTimeoutConfig`).
+- **Pipeline Metrics** — métricas de duración/éxito/fallo por stage (`PipelineMetrics` /
+  `StageExecutionStats`).
+- **EventStage Semantics** — semántica completa de eventos según decisión y flujo real.
+- **Response Fallback** — consumo de `ResponseValidation` (BASELINE §7.5 Prioridad 2): fallback
+  determinista (respuesta enlatada / reintento) ante `accepted=false`, en bloqueante y streaming.
+- **Integration Test** — test end-to-end ChatController → Orchestrator → KinMethod → Pipeline → DB.
+
 ## [v1.0.0-phase8] - 2026-08-02
 
 **Primera release estable del proyecto.** Cierra oficialmente las Fases 6, 7 y 8

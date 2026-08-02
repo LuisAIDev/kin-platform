@@ -10,8 +10,10 @@ import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.TurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.kin.event.DomainEvent;
 import reactor.core.publisher.Flux;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,12 +43,28 @@ public class ConversationOrchestrator {
     private final KinMethod kinMethod;
     private final ResponseGuard responseGuard;
     private final ContextRepository contextRepository;
+    private final ResponseFallback responseFallback;
 
     public ConversationOrchestrator(HistoryWindow historyWindow,
                                     TurnPolicy turnPolicy,
                                     KinMethod kinMethod,
                                     ResponseGuard responseGuard,
                                     ContextRepository contextRepository) {
+        this(historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository,
+            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0));
+    }
+
+    /**
+     * Constructor aditivo (ADR-017, Etapa E5): permite inyectar el
+     * {@link ResponseFallback} que consume la {@link ResponseValidation} del
+     * turno (reintento acotado o respuesta segura).
+     */
+    public ConversationOrchestrator(HistoryWindow historyWindow,
+                                    TurnPolicy turnPolicy,
+                                    KinMethod kinMethod,
+                                    ResponseGuard responseGuard,
+                                    ContextRepository contextRepository,
+                                    ResponseFallback responseFallback) {
         if (historyWindow == null) {
             throw new IllegalArgumentException("historyWindow no puede ser null");
         }
@@ -62,11 +80,15 @@ public class ConversationOrchestrator {
         if (contextRepository == null) {
             throw new IllegalArgumentException("contextRepository no puede ser null");
         }
+        if (responseFallback == null) {
+            throw new IllegalArgumentException("responseFallback no puede ser null");
+        }
         this.historyWindow = historyWindow;
         this.turnPolicy = turnPolicy;
         this.kinMethod = kinMethod;
         this.responseGuard = responseGuard;
         this.contextRepository = contextRepository;
+        this.responseFallback = responseFallback;
     }
 
     /**
@@ -121,15 +143,29 @@ public class ConversationOrchestrator {
 
         ResponseValidation validation = responseGuard.validate(
                 result.aiResponse(), directive);
+        List<DomainEvent> events = new ArrayList<>(result.events());
+
+        if (!validation.accepted()) {
+            int attempt = 0;
+            while (!validation.accepted() && responseFallback.shouldRetry(validation, ++attempt)) {
+                result = kinMethod.execute(command);
+                events.addAll(result.events());
+                validation = responseGuard.validate(result.aiResponse(), directive);
+            }
+        }
+
+        String response = validation.accepted()
+                ? result.aiResponse()
+                : responseFallback.cannedResponse(validation);
 
         return new TurnResult(
                 result.projectContext(),
                 result.decision(),
                 directive,
-                result.aiResponse(),
+                response,
                 validation,
                 result.consultingReport(),
-                result.events());
+                events);
     }
 
     /**

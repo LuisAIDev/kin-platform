@@ -53,11 +53,12 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
             project.getTitle(), project.getDescription(), project.getCategory() != null ? project.getCategory().name() : null
         );
         var result = conversationOrchestrator.orchestrate(turn);
-        log.info("=== KIN METHOD RESULT === action={}, phase={}, chars={}, events={}",
+        log.info("=== KIN METHOD RESULT === action={}, phase={}, chars={}, events={}, validationAccepted={}",
                 result.decision() != null ? result.decision().action() : null,
                 result.directive() != null ? result.directive().phase() : null,
                 result.aiResponse() != null ? result.aiResponse().length() : 0,
-                result.events().size());
+                result.events().size(),
+                result.validation() != null ? result.validation().accepted() : null);
         var assistantMessage = saveAssistantMessage(userId, projectId, result.aiResponse());
         return ChatResponse.builder()
                 .userMessageId(userMessage.getId())

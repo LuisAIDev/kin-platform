@@ -420,3 +420,27 @@ git status                                   # working tree clean (tras commit d
 ---
 
 *Baseline KIN 2.0 Alpha 1 (enmendado por ADR-006 … ADR-015). Cualquier desviación requiere ADR aprobada.*
+
+---
+
+## KIN 2.1 — Pipeline Estabilizado (FASE 9)
+
+> Sección informativa del siguiente hito documentado en `ARQUITECTURA_BASE_KIN_2.0.md` §9 y
+> `FASE9_0.md`, sancionado por **ADR-017 (Propuesto)**. NO constituye contrato congelado hasta la
+> aprobación del ADR. No modifica ninguna sección previa de este baseline.
+
+**Objetivo** (textual, `ARQUITECTURA_BASE_KIN_2.0.md` §9): *"Pipeline completamente funcional y
+testeado en ambos flujos."*
+
+| Tema | Contenido |
+|------|-----------|
+| **Pipeline Resilience** | Manejo de errores por stage con estrategias retry/fail (fail-fast por defecto, retry limitado a stages seguros), manteniendo la firma congelada `Pipeline.execute(PipelineContext)` y la API de `PipelineStage` |
+| **Retry** | `StageRetryPolicy`: reintentos máximos, backoff, stages elegibles (idempotentes/sin efectos duplicados) |
+| **Timeout** | `StageTimeoutConfig`: umbral de timeout por stage y acción ante timeout |
+| **Metrics** | `PipelineMetrics` / `StageExecutionStats`: duración, éxito/fallo y reintentos por stage (registro inmutable separado del `PipelineContext`) |
+| **Response Fallback** | Consumo de `ResponseValidation` (BASELINE §7.5 Prioridad 2, ADR-013): fallback determinista (respuesta enlatada en español / reintento acotado) ante `accepted=false`, en bloqueante (`ConversationOrchestrator`) y streaming (`ConsultorStage`/`KinMethod`) |
+| **EventStage Semantics** | `EventStage` con semántica completa de eventos según decisión y flujo real (mitiga el riesgo R2; hoy distingue ASK/REPORT) |
+
+**Integración de verificación del hito** (`ARQUITECTURA_BASE_KIN_2.0.md` §9): test de integración
+end-to-end ChatController → Orchestrator → KinMethod → Pipeline → DB. Contratos congelados de este
+baseline se mantienen intactos (solo aditivos sancionados por ADR-017).

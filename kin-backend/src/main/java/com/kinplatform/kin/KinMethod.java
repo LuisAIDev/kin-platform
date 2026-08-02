@@ -1,6 +1,8 @@
 package com.kinplatform.kin;
 
 import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.kin.conversation.ResponseFallback;
+import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.pipeline.Pipeline;
@@ -31,11 +33,24 @@ public class KinMethod {
     private final Pipeline pipeline;
     private final DomainEventBus eventBus;
     private final ContextRepository contextRepository;
+    private final ResponseFallback responseFallback;
 
     public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository) {
+        this(pipeline, eventBus, contextRepository,
+            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0));
+    }
+
+    /**
+     * Constructor aditivo (ADR-017, Etapa E5): inyecta el
+     * {@link ResponseFallback} que garantiza la respuesta segura final en el
+     * flujo streaming.
+     */
+    public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository,
+                     ResponseFallback responseFallback) {
         this.pipeline = pipeline;
         this.eventBus = eventBus;
         this.contextRepository = contextRepository;
+        this.responseFallback = responseFallback;
     }
 
     public KinMethodResult execute(KinMethodCommand command) {
@@ -72,7 +87,19 @@ public class KinMethod {
         contextRepository.save(command.projectId(), result.projectContext());
         publish(result.events());
 
-        return result.aiResponseFlux();
+        Flux<String> flux = result.aiResponseFlux();
+        if (flux == null) {
+            return null;
+        }
+        // Safety net (ADR-017, E5): si la validación final de la respuesta
+        // streamed fue rechazada, anexa la respuesta segura determinista.
+        return flux.concatWith(Flux.defer(() -> {
+            ResponseValidation validation = result.responseValidation();
+            if (validation != null && !validation.accepted()) {
+                return Flux.just(responseFallback.cannedResponse(validation));
+            }
+            return Flux.empty();
+        }));
     }
 
     private PipelineContext prepare(KinMethodCommand command) {

@@ -379,6 +379,8 @@ Cobertura de dominio ≥ 90 % (JaCoCo):
 
 ## 🗺️ Roadmap
 
+> **Status**: ✅ **Phase 8 Complete** · ✅ **Phase 9 Complete** (KIN 2.1 — Pipeline Estabilizado)
+
 - [x] Autenticación JWT con roles de usuario
 - [x] CRUD completo de proyectos + paginación
 - [x] Chat con IA integrado (bloqueante + streaming SSE)
@@ -390,6 +392,7 @@ Cobertura de dominio ≥ 90 % (JaCoCo):
 - [x] **Fase 8 — Knowledge-Enhanced Analysis** (ADR-016): EnrichmentEngine, SourcesSection, pipeline de 13 etapas
 - [x] **1049 tests, 0 fallos, cobertura de dominio ≥ 90 %**
 - [x] **Release `v1.0.0-phase8`**
+- [x] **Fase 9 (KIN 2.1)** — Pipeline Resilience (retry/timeout/metrics), EventStage semantics, Response Fallback (ver `kin-docs/FASE9_0.md` y `ADR-017`)
 - [ ] Despliegue en producción (backend en Render, frontend en Vercel, PostgreSQL en Neon)
 - [ ] E2E de frontend con Playwright (flujo completo)
 

@@ -6,6 +6,8 @@ import com.kinplatform.kin.ai.PromptAssembler;
 import com.kinplatform.kin.ai.PromptRequest;
 import com.kinplatform.kin.conversation.CommunicationMode;
 import com.kinplatform.kin.conversation.ConversationPhase;
+import com.kinplatform.kin.conversation.ResponseFallback;
+import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.conversation.TurnConstraints;
 import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
@@ -15,6 +17,9 @@ import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 import reactor.core.publisher.Flux;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Etapa de consultoría: pide la respuesta de IA al puerto {@link AIResponder}.
@@ -42,6 +47,7 @@ public class ConsultorStage implements PipelineStage {
     private final AIResponder aiResponder;
     private final PromptAssembler promptAssembler;
     private final ResponseGuard responseGuard;
+    private final ResponseFallback responseFallback;
 
     public ConsultorStage(AIResponder aiResponder, PromptAssembler promptAssembler) {
         this(aiResponder, promptAssembler, new ResponseGuard());
@@ -49,6 +55,16 @@ public class ConsultorStage implements PipelineStage {
 
     public ConsultorStage(AIResponder aiResponder, PromptAssembler promptAssembler,
                           ResponseGuard responseGuard) {
+        this(aiResponder, promptAssembler, responseGuard,
+            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0));
+    }
+
+    /**
+     * Constructor aditivo (ADR-017, Etapa E5): permite inyectar el
+     * {@link ResponseFallback} que decide el reintento acotado en streaming.
+     */
+    public ConsultorStage(AIResponder aiResponder, PromptAssembler promptAssembler,
+                          ResponseGuard responseGuard, ResponseFallback responseFallback) {
         if (aiResponder == null) {
             throw new IllegalArgumentException("aiResponder no puede ser null");
         }
@@ -58,9 +74,13 @@ public class ConsultorStage implements PipelineStage {
         if (responseGuard == null) {
             throw new IllegalArgumentException("responseGuard no puede ser null");
         }
+        if (responseFallback == null) {
+            throw new IllegalArgumentException("responseFallback no puede ser null");
+        }
         this.aiResponder = aiResponder;
         this.promptAssembler = promptAssembler;
         this.responseGuard = responseGuard;
+        this.responseFallback = responseFallback;
     }
 
     @Override
@@ -97,23 +117,46 @@ public class ConsultorStage implements PipelineStage {
         var systemPrompt = promptAssembler.assemble(promptRequest, context.interviewResult());
         var request = new AIRequest(context.history(), context.userMessage(), systemPrompt);
         if (context.streaming()) {
-            context.aiResponseFlux(attachStreamGuard(context, aiResponder.respondStream(request)));
+            context.aiResponseFlux(attachStreamGuard(context, aiResponder.respondStream(request), request));
         } else {
             context.aiResponse(aiResponder.respond(request));
         }
         return context;
     }
 
-    private Flux<String> attachStreamGuard(PipelineContext context, Flux<String> flux) {
+    private Flux<String> attachStreamGuard(PipelineContext context, Flux<String> flux, AIRequest request) {
         TurnDirective directive = resolveDirective(context, context.decision());
         if (directive == null || flux == null) {
             return flux;
         }
+        return guardedFlux(context, flux, directive, request, new AtomicInteger(0));
+    }
+
+    /**
+     * Flujo con reintento acotado (ADR-017, Etapa E5): al completar cada
+     * intento valida la respuesta con {@link ResponseGuard} y, si fue rechazada
+     * y el {@link ResponseFallback} permite reintentar, re-suscribe un flujo
+     * nuevo del LLM (intento siguiente). La validación final queda en
+     * {@code PipelineContext.responseValidation}; la respuesta segura final la
+     * garantiza {@code KinMethod} (safety net). No rompe el contrato SSE.
+     */
+    private Flux<String> guardedFlux(PipelineContext context, Flux<String> flux, TurnDirective directive,
+                                     AIRequest request, AtomicInteger attempts) {
         StringBuilder accumulated = new StringBuilder();
         return flux
                 .doOnNext(accumulated::append)
-                .doOnComplete(() -> context.responseValidation(
-                        responseGuard.validate(accumulated.toString(), directive)));
+                .concatWith(Flux.defer(() -> {
+                    ResponseValidation validation = responseGuard.validate(accumulated.toString(), directive);
+                    context.responseValidation(validation);
+                    if (validation.accepted()) {
+                        return Flux.empty();
+                    }
+                    int attempt = attempts.incrementAndGet();
+                    if (responseFallback.shouldRetry(validation, attempt)) {
+                        return guardedFlux(context, aiResponder.respondStream(request), directive, request, attempts);
+                    }
+                    return Flux.empty();
+                }));
     }
 
     private TurnDirective resolveDirective(PipelineContext context, ConversationDecision decision) {
