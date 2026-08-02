@@ -309,7 +309,7 @@ sin tocar la política de turno congelada.
       y las etapas de análisis se omiten; solo con `InterviewResult.complete() == true` se habilita
       el `REPORT`.
 - [x] `./mvnw clean verify` → **BUILD SUCCESS**; **902 tests verdes** (0 fallos, 0 errores, 0 skipped).
-- [x] Cobertura de dominio ≥ 90 % (JaCoCo) en `kin.interview` (**98.72 %** agregado dominio+adaptador).
+- [x] Cobertura de dominio ≥ 90 % (JaCoCo) en `kin.interview` (**98.39 %** agregado dominio+adaptador).
 - [x] Persistencia entre turnos: nunca se repite una pregunta respondida (garantizado en Java).
 
 ---

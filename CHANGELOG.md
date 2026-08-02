@@ -40,7 +40,7 @@ Principio: **Java decide. El LLM únicamente formula preguntas.** La entrevista 
 
 - 227 tests nuevos (de 675 a **902**): dominio `kin/interview/` (tipos/enums/records, `InterviewStateTest`, `InterviewDecisionTest`, `InterviewDirectiveTest`, `AnswerRulesTest`, `AnswerValidationTest`, `InterviewEngineTest`, `InterviewBlueprintTest`, `AnswerValidatorTest`, `InterviewStageTest`, `InterviewStagePipelineTest`), adapter `ai/interview/` (`JpaInterviewRepositoryTest`, `InterviewStateEntityTest`, `InterviewStateMapperTest`), `PromptAssemblerInterviewTest` (3), `ConversationPromptBuilderInterviewTest` (6), `ConversationOrchestratorInterviewIntegrationTest` (6), `ConsultorStageTest` +4 (gating ASK/REPORT de entrevista), `KinMethodTest` + pipeline de 12 etapas.
 - `./mvnw clean verify`: **902 tests, 0 fallos, 0 errores, 0 skipped, BUILD SUCCESS**.
-- Cobertura (JaCoCo): **`kin.interview` + `ai.interview.adapter` 98.72 %** (engine 95 %, stage 100 %, adapter 100 %); `kin.conversation` 100 %; `kin.knowledge` 100 %; `ai.knowledge.adapter` 100 %; `kin.ai` 99.7 %; `kin.ai.prompt` 99.7 %; `kin.ai.prompt.formatter` 99.9 %; `kin.reporting*` 99.2 %; `kin.engine` 99.1 %; `kin.scoring` 95.1 %. Requisito de ≥ 90 % en `kin.interview` cumplido.
+- Cobertura (JaCoCo): **`kin.interview` + `ai.interview.adapter` 98.39 %** (engine 95 %, stage 100 %, adapter 100 %); `kin.conversation` 100 %; `kin.knowledge` 100 %; `ai.knowledge.adapter` 100 %; `kin.ai` 99.7 %; `kin.ai.prompt` 95.9 %; `kin.ai.prompt.formatter` 99.9 %; `kin.reporting*` 99.2 %; `kin.engine` 99.1 %; `kin.scoring` 95.1 %. Requisito de ≥ 90 % en `kin.interview` cumplido.
 
 ### Known Issues
 

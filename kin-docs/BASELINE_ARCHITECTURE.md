@@ -197,7 +197,7 @@ El principio rector de la entrevista (ADR-015):
 - [x] **Fase 7** — Strategic Interview Engine (ADR-015): `kin.interview` (motor `InterviewEngine`, `InterviewBlueprint`, `AnswerValidator`, tipos, puerto `InterviewRepository`) + `ai.interview.adapter` (`JpaInterviewRepository`) + integración aditiva (`InterviewStage` + `PipelineContext.interviewResult` + sección `## ENTREVISTA ESTRATÉGICA`). ADR-015 **Aprobada**. **Fase 7 cerrada oficialmente**.
 - [x] Motores, inputs y results canonizados bajo el contrato `DomainEngine`.
 - [x] **902 tests verdes** (`./mvnw clean verify`), BUILD SUCCESS, 0 fallos, 0 errores, 0 skipped.
-- [x] **Cobertura de dominio ≥ 90 %**: `kin.engine` 99.1 %, `kin.ai` 99.7 %, `kin.ai.prompt` 99.7 %, `kin.ai.prompt.formatter` 99.9 %, `kin.reporting*` 99.2 %, `kin.reporting.report` 99–100 %, `kin.reporting.opportunity` 100 %, `kin.reporting.risk` 99.5 %, `kin.scoring` 95.1 %, **`kin.conversation` 100 %**, **`kin.knowledge` 100 %** (engine 99.47 %, stage 100 %), **`ai.knowledge.adapter` 100 %**, **`kin.interview` + `ai.interview.adapter` 98.72 %** (engine 95 %, stage 100 %, adapter 100 %).
+- [x] **Cobertura de dominio ≥ 90 %**: `kin.engine` 99.1 %, `kin.ai` 99.7 %, `kin.ai.prompt` 95.9 %, `kin.ai.prompt.formatter` 99.9 %, `kin.reporting*` 99.2 %, `kin.reporting.report` 99–100 %, `kin.reporting.opportunity` 100 %, `kin.reporting.risk` 99.5 %, `kin.scoring` 95.1 %, **`kin.conversation` 100 %**, **`kin.knowledge` 100 %** (engine 99.47 %, stage 100 %), **`ai.knowledge.adapter` 100 %**, **`kin.interview` + `ai.interview.adapter` 98.39 %** (engine 95 %, stage 100 %, adapter 100 %).
 - [x] **15 ADRs** aprobadas (ADR-001 … ADR-015).
 - [x] Documentación por fase (FASE5_0/5_1/5_2/5_2_1/5_3/5_4/5_5/5_6 + FASE6_0 + FASE7) + Gobernanza + AGENTS.md + CHANGELOG + Release Notes.
 
@@ -412,7 +412,7 @@ tocar los contratos estables**.
 
 ```bash
 cd kin-backend && ./mvnw clean verify       # 902 tests, 0 fallos, BUILD SUCCESS
-# Cobertura: kin.conversation 100 %, kin.knowledge 100 % (engine 99.47 %, stage 100 %), ai.knowledge.adapter 100 %, kin.interview+adapter 98.72 % (engine 95 %, stage 100 %), kin.ai 99.7 %, kin.ai.prompt 99.7 %, kin.ai.prompt.formatter 99.9 %, kin.reporting* 99.2 %, kin.engine 99.1 %, kin.scoring 95.1 %
+# Cobertura: kin.conversation 100 %, kin.knowledge 100 % (engine 99.47 %, stage 100 %), ai.knowledge.adapter 100 %, kin.interview+adapter 98.39 % (engine 95 %, stage 100 %), kin.ai 99.7 %, kin.ai.prompt 95.9 %, kin.ai.prompt.formatter 99.9 %, kin.reporting* 99.2 %, kin.engine 99.1 %, kin.scoring 95.1 %
 cd kin-backend && ./mvnw spring-boot:run     # arranque dev H2 (project_context + interview_state auto-creados)
 git status                                   # working tree clean (tras commit de la fase)
 ```
