@@ -122,19 +122,12 @@ en los paquetes afectados y contratos congelados intactos.
 
 ### Planned
 
-FASE 9 (KIN 2.1 — "Pipeline Estabilizado"). Hito documentado en `ARQUITECTURA_BASE_KIN_2.0.md` §9 y
-`BASELINE_ARCHITECTURE.md` §KIN 2.1; diseño sancionado por `ADR-017` (Propuesto) y `FASE9_0.md`
-(E1 COMPLETADA, E2–E7 pendientes). Nada de lo siguiente está implementado todavía:
+FASE 9 (KIN 2.1 — "Pipeline Estabilizado") fue **publicada** en la release **`v1.1.0-phase9`**
+(Tag `v1.1.0-phase9` publicado · **Latest Release**); sus novedades están documentadas en su
+entrada del changelog. Nada de esta fase queda pendiente de implementación.
 
-- **Pipeline Resilience** — manejo de errores por stage con estrategias retry/fail (fail-fast por
-  defecto, retry limitado a stages seguros), manteniendo la firma congelada `Pipeline.execute`.
-- **Timeout** — timeout por stage (`StageTimeoutConfig`).
-- **Pipeline Metrics** — métricas de duración/éxito/fallo por stage (`PipelineMetrics` /
-  `StageExecutionStats`).
-- **EventStage Semantics** — semántica completa de eventos según decisión y flujo real.
-- **Response Fallback** — consumo de `ResponseValidation` (BASELINE §7.5 Prioridad 2): fallback
-  determinista (respuesta enlatada / reintento) ante `accepted=false`, en bloqueante y streaming.
-- **Integration Test** — test end-to-end ChatController → Orchestrator → KinMethod → Pipeline → DB.
+FASE 10 (planeada): reemplazo de la heurística de longitud en `ScoringEngine` (KIN 2.5), EventBus
+async (KIN 2.4), provider deduplication (KIN 2.3) y despliegue en producción (Render/Neon).
 
 ## [v1.0.0-phase8] - 2026-08-02
 
