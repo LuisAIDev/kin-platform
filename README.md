@@ -51,6 +51,23 @@ Docker.
 > **"Java decide. El LLM únicamente comunica."**
 > Ver [`kin-docs/releases/v1.0.0-phase8.md`](kin-docs/releases/v1.0.0-phase8.md).
 
+> ⭐ **Current Stable Version**: `v1.1.0-phase9` — FASE 9 (KIN 2.1) COMPLETADA.
+>
+> **Highlights**
+> - 🛡️ **Pipeline Resilience**
+> - 🔁 **Retry Policies**
+> - ⏱️ **Timeout Policies**
+> - 📊 **Pipeline Metrics**
+> - ✅ **Response Validation**
+> - 🧯 **Response Fallback**
+> - 📣 **Event Semantics**
+> - 🔗 **End-to-End Integration**
+> - 🧪 **1210 Automated Tests**
+> - 🧱 **Clean Architecture**
+> - 🏛️ **DDD**
+> - 📐 **SOLID**
+> - 🌐 **Offline First**
+
 ---
 
 ## ✨ Características
@@ -379,7 +396,7 @@ Cobertura de dominio ≥ 90 % (JaCoCo):
 
 ## 🗺️ Roadmap
 
-> **Status**: ✅ **Phase 8 Complete** · ✅ **Phase 9 Complete** (KIN 2.1 — Pipeline Estabilizado)
+> **Status**: ✅ **Phase 8 Complete** · ✅ **Phase 9 Complete** (KIN 2.1 — Pipeline Estabilizado) · ⏳ **Phase 10 Planned**
 
 - [x] Autenticación JWT con roles de usuario
 - [x] CRUD completo de proyectos + paginación
@@ -393,6 +410,7 @@ Cobertura de dominio ≥ 90 % (JaCoCo):
 - [x] **1049 tests, 0 fallos, cobertura de dominio ≥ 90 %**
 - [x] **Release `v1.0.0-phase8`**
 - [x] **Fase 9 (KIN 2.1)** — Pipeline Resilience (retry/timeout/metrics), EventStage semantics, Response Fallback (ver `kin-docs/FASE9_0.md` y `ADR-017`)
+- [ ] **Fase 10** — planeada (ScoringEngine heuristic replacement, EventBus async, provider dedup, despliegue en producción)
 - [ ] Despliegue en producción (backend en Render, frontend en Vercel, PostgreSQL en Neon)
 - [ ] E2E de frontend con Playwright (flujo completo)
 

@@ -83,7 +83,32 @@ en los paquetes afectados y contratos congelados intactos.
 - ADR-017 (**Aprobado**), `FASE9_0.md` (**FINALIZADA**), `BASELINE_ARCHITECTURE.md` (+ sección KIN 2.1).
 - `README.md` y `CHANGELOG.md` actualizados para la release.
 
-### Known Issues
+### Performance
+
+- Métricas internas por stage (duración, éxito/fallo, reintentos, timeout) capturadas sin persistir
+  ni exponer (sin Micrometer ni Actuator); overhead de medición mínimo (`System.nanoTime`).
+- Timeout por stage medido de forma síncrona sin infraestructura externa (solo Java 17).
+- Default conservador sin reintentos (`maxRetries=0`) para no re-ejecutar el pipeline sin configurar;
+  el reintento con backoff (`NONE`/`FIXED`/`EXPONENTIAL`) solo cuando la política lo permite.
+
+### Security
+
+- `ResponseGuard` ahora se consume en bloqueante y streaming: una respuesta inválida del LLM nunca
+  se entrega tal cual (reintento acotado o respuesta segura determinista en español).
+- El fallback es 100 % Java y determinista: no incorpora contenido del LLM ni infiere intención;
+  ninguna credencial ni secreto nuevo se expone.
+- Las métricas del pipeline permanecen internas (no se exponen vía REST/Actuator).
+
+### Compatibility
+
+- **Backward compatible**: todos los cambios son aditivos; ningún contrato congelado del baseline
+  se modificó (solo aditivos sancionados por ADR-017).
+- Constructores de `ConversationOrchestrator`, `ConsultorStage` y `KinMethod` con overload aditivo
+  `ResponseFallback`; los constructores históricos conservan su comportamiento.
+- 1210 tests verdes sin modificación de aserciones; API REST y contratos de streaming SSE intactos.
+- Offline-first preservado: sin reintentos configurados, el pipeline se comporta como antes.
+
+### Known Limitations
 
 - `kin.event` con cobertura baja (61 %) — paquete no sujeto al requisito de dominio; records finos.
 - Semántica de reintentos: `StagePolicy.retriesExhausted` (intentos totales ≤ maxRetries+1) y
