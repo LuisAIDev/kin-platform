@@ -13,6 +13,7 @@ import com.kinplatform.kin.reporting.report.model.ReportMetadata;
 import com.kinplatform.kin.reporting.report.model.ReportSection;
 import com.kinplatform.kin.reporting.report.model.RisksSection;
 import com.kinplatform.kin.reporting.report.model.ScoresSection;
+import com.kinplatform.kin.reporting.report.model.SourcesSection;
 import com.kinplatform.kin.ai.prompt.formatter.ExecutiveSummaryFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.FinancialSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.InnovationSectionFormatter;
@@ -23,8 +24,10 @@ import com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.SourcesSectionFormatter;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Construye el prompt para la fase de reporte (explicación del ConsultingReport).
@@ -46,6 +49,7 @@ public class ReportPromptBuilder {
     private final InnovationSectionFormatter innovationSectionFormatter;
     private final NextStepsSectionFormatter nextStepsSectionFormatter;
     private final ReportMetadataFormatter reportMetadataFormatter;
+    private final SourcesSectionFormatter sourcesSectionFormatter;
 
     public ReportPromptBuilder(List<SectionFormatter<?>> formatters) {
         if (formatters == null || formatters.isEmpty()) {
@@ -61,6 +65,8 @@ public class ReportPromptBuilder {
         this.innovationSectionFormatter = requireSingle(formatters, InnovationSectionFormatter.class);
         this.nextStepsSectionFormatter = requireSingle(formatters, NextStepsSectionFormatter.class);
         this.reportMetadataFormatter = requireSingle(formatters, ReportMetadataFormatter.class);
+        this.sourcesSectionFormatter = findOptional(formatters, SourcesSectionFormatter.class)
+            .orElseGet(SourcesSectionFormatter::new);
     }
 
     public String build(PromptRequest request) {
@@ -122,6 +128,9 @@ public class ReportPromptBuilder {
         if (section instanceof NextStepsSection s) {
             return nextStepsSectionFormatter.format(s);
         }
+        if (section instanceof SourcesSection s) {
+            return sourcesSectionFormatter.format(s);
+        }
         if (section instanceof ReportMetadata s) {
             return reportMetadataFormatter.format(s);
         }
@@ -137,5 +146,16 @@ public class ReportPromptBuilder {
             throw new IllegalArgumentException("Se requiere exactamente un " + type.getSimpleName());
         }
         return matches.get(0);
+    }
+
+    private static <T extends SectionFormatter<?>> Optional<T> findOptional(List<SectionFormatter<?>> formatters, Class<T> type) {
+        List<T> matches = formatters.stream()
+            .filter(type::isInstance)
+            .map(type::cast)
+            .toList();
+        if (matches.size() > 1) {
+            throw new IllegalArgumentException("Se requiere como máximo un " + type.getSimpleName());
+        }
+        return matches.stream().findFirst();
     }
 }

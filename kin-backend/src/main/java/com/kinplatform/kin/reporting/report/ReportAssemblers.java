@@ -10,9 +10,10 @@ import com.kinplatform.kin.reporting.report.assembler.RecommendationsSectionAsse
 import com.kinplatform.kin.reporting.report.assembler.ReportMetadataAssembler;
 import com.kinplatform.kin.reporting.report.assembler.RisksSectionAssembler;
 import com.kinplatform.kin.reporting.report.assembler.ScoresSectionAssembler;
+import com.kinplatform.kin.reporting.report.assembler.SourcesSectionAssembler;
 
 /**
- * Agrupación tipada de los 10 {@link SectionAssembler} del reporte.
+ * Agrupación tipada de los 11 {@link SectionAssembler} del reporte.
  *
  * <p>Evita el auto-descubrimiento con {@code List<?>} + casts y el dispatch
  * por {@code switch}: el {@code ReportEngine} accede a cada ensamblador por su
@@ -28,6 +29,21 @@ public record ReportAssemblers(
     MarketSectionAssembler market,
     InnovationSectionAssembler innovation,
     NextStepsSectionAssembler nextSteps,
-    ReportMetadataAssembler metadata
+    ReportMetadataAssembler metadata,
+    SourcesSectionAssembler sources
 ) {
+
+    public ReportAssemblers(ExecutiveSummaryAssembler executiveSummary,
+                            ScoresSectionAssembler scores,
+                            RecommendationsSectionAssembler recommendations,
+                            RisksSectionAssembler risks,
+                            OpportunitiesSectionAssembler opportunities,
+                            FinancialSectionAssembler financial,
+                            MarketSectionAssembler market,
+                            InnovationSectionAssembler innovation,
+                            NextStepsSectionAssembler nextSteps,
+                            ReportMetadataAssembler metadata) {
+        this(executiveSummary, scores, recommendations, risks, opportunities, financial,
+            market, innovation, nextSteps, metadata, new SourcesSectionAssembler());
+    }
 }

@@ -26,12 +26,16 @@ public class OpportunityStage implements PipelineStage {
                 && context.decision() != null
                 && context.decision().shouldGenerateReport()
                 && context.scoreResult() != null,
-            context -> new OpportunityInput(
-                context.projectContext(),
-                context.evaluation(),
-                context.decision(),
-                context.scoreResult()
-            ),
+            context -> {
+                var input = new OpportunityInput(
+                    context.projectContext(),
+                    context.evaluation(),
+                    context.decision(),
+                    context.scoreResult()
+                );
+                var enrichment = context.enrichmentResult();
+                return enrichment == null ? input : input.withEnrichment(enrichment);
+            },
             PipelineContext::opportunityResult
         );
     }

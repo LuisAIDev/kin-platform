@@ -26,6 +26,7 @@ public final class ReportBuilder {
     private MarketSection market;
     private InnovationSection innovation;
     private NextStepsSection nextSteps;
+    private SourcesSection sources;
     private ReportMetadata metadata;
 
     private ReportBuilder(UUID projectId) {
@@ -93,6 +94,12 @@ public final class ReportBuilder {
         return this;
     }
 
+    public ReportBuilder sources(SourcesSection section) {
+        checkNotAssigned(sources, "sources");
+        sources = section;
+        return this;
+    }
+
     public ReportBuilder metadata(ReportMetadata section) {
         checkNotAssigned(metadata, "metadata");
         metadata = section;
@@ -118,7 +125,7 @@ public final class ReportBuilder {
             metadata.reportVersion());
         var finalMetadata = metadata.withGeneratedAt(now).withSectionsIncluded(sectionsIncluded());
         return new ConsultingReport(id, projectId, executiveSummary, scores, recommendations,
-            risks, opportunities, financial, market, innovation, nextSteps, finalMetadata);
+            risks, opportunities, financial, market, innovation, nextSteps, sources, finalMetadata);
     }
 
     private void checkNotAssigned(Object section, String name) {
@@ -138,6 +145,7 @@ public final class ReportBuilder {
         if (market != null) names.add(market.sectionName());
         if (innovation != null) names.add(innovation.sectionName());
         if (nextSteps != null) names.add(nextSteps.sectionName());
+        if (sources != null && !sources.isEmpty()) names.add(sources.sectionName());
         names.add(metadata.sectionName());
         return List.copyOf(names);
     }

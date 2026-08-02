@@ -2,6 +2,11 @@ package com.kinplatform.kin.reporting.risk;
 
 import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.CompletenessEvaluation;
+import com.kinplatform.kin.enrichment.EnrichmentResult;
+import com.kinplatform.kin.enrichment.EvidenceCategory;
+import com.kinplatform.kin.enrichment.EvidenceRank;
+import com.kinplatform.kin.enrichment.KnowledgeEvidence;
+import com.kinplatform.kin.knowledge.KnowledgeFact;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,6 +67,11 @@ public class TechnicalRiskAnalyzer implements RiskAnalyzer {
                 evaluation));
         }
 
+        var enrichment = input.enrichment();
+        if (enrichment != null && !enrichment.isEmpty()) {
+            addEnrichedRisks(enrichment, evaluation, risks);
+        }
+
         return risks;
     }
 
@@ -76,5 +86,35 @@ public class TechnicalRiskAnalyzer implements RiskAnalyzer {
         var reason = "La dimensión " + dimension.displayName() + " no está cubierta, lo que incrementa el riesgo técnico.";
         return assembler.build(category(), title, description, severity, probability, impact,
             rules, dimension, reason, evidence, evaluation, version());
+    }
+
+    private void addEnrichedRisks(EnrichmentResult enrichment, CompletenessEvaluation evaluation,
+                                  List<Risk> risks) {
+        enrichment.rankFor(EvidenceCategory.INNOVATION)
+            .flatMap(EvidenceRank::top)
+            .ifPresent(ev -> risks.add(buildEnrichedRisk(
+                "Riesgo técnico señalado por evidencia de innovación externa",
+                "Un hecho verificado señala una condición tecnológica que conviene mitigar.",
+                RiskLevel.MEDIUM, RiskLevel.MEDIUM, RiskLevel.MEDIUM,
+                List.of("ENRIQUECIDO_INNOVACION"),
+                AnalyzedDimension.SOLUTION,
+                evidenceOf(ev),
+                evaluation)));
+    }
+
+    private Risk buildEnrichedRisk(String title, String description, RiskLevel severity,
+                                   RiskLevel probability, RiskLevel impact, List<String> rules,
+                                   AnalyzedDimension dimension, String evidence,
+                                   CompletenessEvaluation evaluation) {
+        var reason = "La evidencia de conocimiento externo verificada sustenta un riesgo de la categoría "
+            + category().displayName() + ".";
+        return assembler.build(category(), title, description, severity, probability, impact,
+            rules, dimension, reason, evidence, evaluation, version());
+    }
+
+    private static String evidenceOf(KnowledgeEvidence evidence) {
+        var fact = evidence.fact();
+        var source = (fact.url() == null || fact.url().isBlank()) ? fact.sourceId() : fact.url();
+        return fact.claim() + " (fuente: " + source + ")";
     }
 }

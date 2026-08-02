@@ -29,11 +29,15 @@ public class ReportStage implements PipelineStage {
                 && context.recommendationResult() != null
                 && context.riskResult() != null
                 && context.opportunityResult() != null,
-            context -> new ReportInput(
-                context.projectId(), context.projectTitle(), context.projectCategory(),
-                context.projectContext(), context.evaluation(), context.decision(),
-                context.scoreResult(), context.recommendationResult(),
-                context.riskResult(), context.opportunityResult()),
+            context -> {
+                var input = new ReportInput(
+                    context.projectId(), context.projectTitle(), context.projectCategory(),
+                    context.projectContext(), context.evaluation(), context.decision(),
+                    context.scoreResult(), context.recommendationResult(),
+                    context.riskResult(), context.opportunityResult());
+                var enrichment = context.enrichmentResult();
+                return enrichment == null ? input : input.withEnrichment(enrichment);
+            },
             PipelineContext::consultingReport
         );
     }

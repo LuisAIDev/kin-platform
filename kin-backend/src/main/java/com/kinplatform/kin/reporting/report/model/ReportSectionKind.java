@@ -13,5 +13,6 @@ public enum ReportSectionKind {
     ANALYTIC,
     PROJECTION,
     AGGREGATE,
+    SOURCES,
     METADATA
 }

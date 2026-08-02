@@ -2,6 +2,11 @@ package com.kinplatform.kin.reporting.opportunity;
 
 import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.CompletenessEvaluation;
+import com.kinplatform.kin.enrichment.EnrichmentResult;
+import com.kinplatform.kin.enrichment.EvidenceCategory;
+import com.kinplatform.kin.enrichment.EvidenceRank;
+import com.kinplatform.kin.enrichment.KnowledgeEvidence;
+import com.kinplatform.kin.knowledge.KnowledgeFact;
 import com.kinplatform.kin.reporting.EffortLevel;
 import com.kinplatform.kin.reporting.ImpactLevel;
 
@@ -71,6 +76,11 @@ public class FinancialOpportunityAnalyzer implements OpportunityAnalyzer {
                 evaluation));
         }
 
+        var enrichment = input.enrichment();
+        if (enrichment != null && !enrichment.isEmpty()) {
+            addEnrichedOpportunities(enrichment, priorityFromScore, evaluation, opportunities);
+        }
+
         return opportunities;
     }
 
@@ -88,5 +98,37 @@ public class FinancialOpportunityAnalyzer implements OpportunityAnalyzer {
         return assembler.build(category(), title, description,
             priorityFromScore, missingBonus, detectedBonus,
             impact, effort, rules, dimension, reason, evidence, evaluation, version());
+    }
+
+    private void addEnrichedOpportunities(EnrichmentResult enrichment, int priorityFromScore,
+                                          CompletenessEvaluation evaluation,
+                                          List<Opportunity> opportunities) {
+        enrichment.rankFor(EvidenceCategory.FINANCIAL)
+            .flatMap(EvidenceRank::top)
+            .ifPresent(ev -> opportunities.add(buildEnrichedOpportunity(
+                "Capitalizar la evidencia financiera externa",
+                "Un hecho verificado respalda una oportunidad financiera que conviene explotar.",
+                priorityFromScore, ImpactLevel.HIGH, EffortLevel.MEDIUM,
+                List.of("ENRIQUECIDO_FINANCIERO"),
+                AnalyzedDimension.OBJECTIVES,
+                evidenceOf(ev),
+                evaluation)));
+    }
+
+    private Opportunity buildEnrichedOpportunity(String title, String description, int priorityFromScore,
+                                                 ImpactLevel impact, EffortLevel effort, List<String> rules,
+                                                 AnalyzedDimension dimension, String evidence,
+                                                 CompletenessEvaluation evaluation) {
+        var reason = "La evidencia de conocimiento externo verificada sustenta una oportunidad de la categoría "
+            + category().displayName() + ".";
+        return assembler.build(category(), title, description,
+            priorityFromScore, 0, 2,
+            impact, effort, rules, dimension, reason, evidence, evaluation, version());
+    }
+
+    private static String evidenceOf(KnowledgeEvidence evidence) {
+        var fact = evidence.fact();
+        var source = (fact.url() == null || fact.url().isBlank()) ? fact.sourceId() : fact.url();
+        return fact.claim() + " (fuente: " + source + ")";
     }
 }

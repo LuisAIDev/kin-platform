@@ -12,8 +12,9 @@ import com.kinplatform.kin.reporting.report.model.ReportBuilder;
  * Orquestador puro del {@link ConsultingReport}.
  *
  * <p>Recibe los resultados YA calculados por el pipeline en {@link ReportInput}
- * y coordina los 10 {@link SectionAssembler} tipados para ensamblar el reporte
- * con {@link ReportBuilder}. No invoca motores, no recalcula scores,
+ * y coordina los 11 {@link SectionAssembler} tipados (10 históricos + el
+ * aditivo {@code sources}) para ensamblar el reporte con {@link ReportBuilder}.
+ * No invoca motores, no recalcula scores,
  * prioridades, confianzas ni niveles. Servicio de dominio puro: stateless,
  * determinista y sin infraestructura.</p>
  */
@@ -51,6 +52,7 @@ public class ReportEngine implements DomainEngine<ReportInput, ConsultingReport>
             .market(assemblers.market().assemble(input))
             .innovation(assemblers.innovation().assemble(input))
             .nextSteps(assemblers.nextSteps().assemble(input))
+            .sources(assemblers.sources().assemble(input))
             .metadata(assemblers.metadata().assemble(input))
             .build();
     }

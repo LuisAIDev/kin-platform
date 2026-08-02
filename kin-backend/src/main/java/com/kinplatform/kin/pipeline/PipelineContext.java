@@ -6,6 +6,7 @@ import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.kin.enrichment.EnrichmentResult;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.interview.InterviewResult;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
@@ -43,6 +44,7 @@ public class PipelineContext {
     private ConsultingReport consultingReport;
     private KnowledgeResult knowledgeResult;
     private InterviewResult interviewResult;
+    private EnrichmentResult enrichmentResult;
     private final List<DomainEvent> events = new ArrayList<>();
     private final Map<String, Object> attributes = new HashMap<>();
     private final Map<String, EngineResult> engineResults = new HashMap<>();
@@ -56,6 +58,19 @@ public class PipelineContext {
     public PipelineContext(UUID projectId, UUID userId, String userMessage,
                            List<com.kinplatform.kin.context.Message> history,
                            String projectTitle, String projectDescription, String projectCategory) {
+        this(projectId, userId, userMessage, history, projectTitle, projectDescription,
+            projectCategory, null);
+    }
+
+    /**
+     * Constructor aditivo (ADR-016, Etapa E6): inicializa además el
+     * {@link EnrichmentResult} del turno. El constructor de 7 parámetros
+     * (compatibilidad) delega en este con {@code null}.
+     */
+    public PipelineContext(UUID projectId, UUID userId, String userMessage,
+                           List<com.kinplatform.kin.context.Message> history,
+                           String projectTitle, String projectDescription, String projectCategory,
+                           EnrichmentResult enrichmentResult) {
         this.projectId = projectId;
         this.userId = userId;
         this.userMessage = userMessage;
@@ -63,6 +78,7 @@ public class PipelineContext {
         this.projectTitle = projectTitle;
         this.projectDescription = projectDescription;
         this.projectCategory = projectCategory;
+        this.enrichmentResult = enrichmentResult;
     }
 
     public UUID projectId() { return projectId; }
@@ -105,6 +121,9 @@ public class PipelineContext {
 
     public InterviewResult interviewResult() { return interviewResult; }
     public void interviewResult(InterviewResult r) { this.interviewResult = r; }
+
+    public EnrichmentResult enrichmentResult() { return enrichmentResult; }
+    public void withEnrichmentResult(EnrichmentResult r) { this.enrichmentResult = r; }
 
     public void setEngineResult(String engineName, EngineResult result) { engineResults.put(engineName, result); }
     @SuppressWarnings("unchecked")

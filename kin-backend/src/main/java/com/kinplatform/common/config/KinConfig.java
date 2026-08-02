@@ -20,6 +20,7 @@ import com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
+import com.kinplatform.kin.ai.prompt.formatter.SourcesSectionFormatter;
 import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.CompletenessEvaluator;
 import com.kinplatform.kin.context.ContextAnalyzerPort;
@@ -37,6 +38,9 @@ import com.kinplatform.kin.event.InMemoryDomainEventBus;
 import com.kinplatform.kin.engine.DomainEngine;
 import com.kinplatform.kin.engine.EngineExecutor;
 import com.kinplatform.kin.engine.EngineRegistry;
+import com.kinplatform.kin.enrichment.EnrichmentEngine;
+import com.kinplatform.kin.enrichment.FactRanker;
+import com.kinplatform.kin.enrichment.stage.EnrichmentStage;
 import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.knowledge.KnowledgeSource;
 import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
@@ -214,6 +218,11 @@ public class KinConfig {
     @Bean
     public ReportMetadataFormatter reportMetadataFormatter() {
         return new ReportMetadataFormatter();
+    }
+
+    @Bean
+    public SourcesSectionFormatter sourcesSectionFormatter() {
+        return new SourcesSectionFormatter();
     }
 
     @Bean
@@ -469,6 +478,21 @@ public class KinConfig {
     }
 
     @Bean
+    public FactRanker factRanker() {
+        return new FactRanker();
+    }
+
+    @Bean
+    public EnrichmentEngine enrichmentEngine(FactRanker factRanker) {
+        return new EnrichmentEngine(factRanker);
+    }
+
+    @Bean
+    public EnrichmentStage enrichmentStage(EnrichmentEngine enrichmentEngine) {
+        return new EnrichmentStage(enrichmentEngine);
+    }
+
+    @Bean
     public AnswerValidator answerValidator() {
         return new AnswerValidator();
     }
@@ -510,6 +534,7 @@ public class KinConfig {
             StrategistStage strategist,
             InterviewStage interview,
             KnowledgeStage knowledge,
+            EnrichmentStage enrichment,
             ConsultorStage consultor,
             ScoringStage scoring,
             RecommendationStage recommendation,
@@ -518,7 +543,7 @@ public class KinConfig {
             ReportStage report,
             EventStage eventStage) {
         return new Pipeline(List.of(analyzer, evaluator, strategist, interview, knowledge,
-            scoring, recommendation, risk, opportunity, report, consultor, eventStage));
+            enrichment, scoring, recommendation, risk, opportunity, report, consultor, eventStage));
     }
 
     @Bean

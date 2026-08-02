@@ -1,15 +1,17 @@
 # ADR-016: Knowledge-Enhanced Analysis — analizadores de dominio que consumen conocimiento externo verificado y lo citan en el reporte
 
-**Estado**: **Propuesto** (Etapas E1–E3 completadas: diseño arquitectónico, modelo de dominio y
-ranking determinista implementados. E4…E7 pendientes de implementación)
+**Estado**: **Aprobado** (Etapas E1–E7 completadas: diseño arquitectónico, modelo de dominio,
+ranking determinista, enriquecimiento del análisis, citas en el reporte, integración al pipeline
+y auditoría de cierre implementados y certificados mediante auditoría técnica)
 **Fecha**: 2026-08-01
 **Autor**: KIN Architecture Team
 
 > **Alcance**: este ADR propone y congela (una vez aprobada) la arquitectura de la **Fase 8
 > (Knowledge-Enhanced Analysis / Enriquecimiento del Análisis con Conocimiento Externo)**,
-> documentada en `kin-docs/FASE8_0.md`. En estado **Propuesto**, sus decisiones están sujetas a
-> revisión y no producen cambios de contrato. Las etapas E2–E3 (modelo de dominio y ranking)
-> están implementadas de forma aditiva, sin modificar contratos congelados. La integración es
+> documentada en `kin-docs/FASE8_0.md`. En estado **Aprobado**, sus decisiones quedan congeladas
+> y constituyen contrato. Las etapas E2–E6 (modelo de dominio, ranking, enriquecimiento del
+> análisis, citas en el reporte e integración al pipeline) están implementadas de forma aditiva,
+> sin modificar contratos congelados. La integración es
 > **aditiva** (patrón ADR-011/014/015) y mantiene el principio rector del proyecto:
 > **Java decide. El LLM únicamente comunica.**
 
@@ -147,7 +149,7 @@ stages aditivos):
 | `EnrichmentRepository` | puerto puro (E2 ✅) | `find(UUID)` / `save(UUID, EnrichmentResult)` + default `findOrEmpty` (offline-first); implementación de infraestructura en etapa posterior |
 | `EnrichmentStage` | Stage aditivo (E6 ⏳) | Composición pura sobre `EngineStage`; construye `EnrichmentInput` (contexto + `PipelineContext.knowledgeResult`), invoca `EnrichmentEngine`, escribe `PipelineContext.enrichmentResult` |
 
-### Cambios aditivos propuestos (se sancionarán en E4…E6)
+### Cambios aditivos sancionados (E4…E6)
 
 | Contrato | Cambio propuesto | Tipo |
 |----------|------------------|------|
@@ -244,38 +246,45 @@ stages aditivos):
 
 ## Roadmap E1…E7
 
-> Estado: **E1–E3 COMPLETADAS** — este ADR (estado **Propuesto**) + `FASE8_0.md`. El diseño
-> (E1), el modelo de dominio (E2) y el ranking determinista (E3) están implementados. La
-> aprobación habilitará E4…E7.
+> Estado: **E1–E7 COMPLETADAS** — este ADR (estado **Aprobado**) + `FASE8_0.md`. El diseño
+> (E1), el modelo de dominio (E2), el ranking determinista (E3), el enriquecimiento del análisis
+> (E4), las citas en el reporte (E5) y la integración al pipeline (E6) están implementados; la
+> auditoría de cierre (E7) certificó la fase como APROBADA.
 
 | Etapa | Contenido | Entregable | Estado |
 |-------|-----------|-----------|--------|
 | **E1** | Diseño arquitectónico: ADR-016 (Propuesto) + documento FASE8_0 (arquitectura, componentes, flujo, integración, roadmap, criterios) | Documentación | ✅ **Completada (2026-08-01)** |
 | **E2** | Modelo de dominio `kin.enrichment`: `EvidenceCategory`/`EvidenceScore`/`KnowledgeEvidence`/`EvidenceRank`/`EnrichmentInput`/`EnrichmentResult`/`EnrichmentRepository` + `FactRanker` + `EnrichmentEngine` canonizado (`DomainEngine`, fase `ANALYSIS`, prioridad 55) + tests de dominio | Código de dominio | ✅ **Completada (2026-08-02)** |
 | **E3** | `FactRanker` determinista (mapeo por categoría, score por `SourceTrust`/frescura/cobertura, umbral, dedup) + tests por categoría (`FactRankerTest`, `FactRankerCategoryTest`, `FactRankerFreshnessTest`, …) | Ranking y relevancia | ✅ **Completada (2026-08-02)** |
-| **E4** | Inputs aditivos (`RecommendationInput`/`RiskInput`/`OpportunityInput`.withEnrichment) + analizadores de mercado/innovación/financiero/competitivo consumen hechos + tests | Enriquecimiento del análisis | Pendiente |
-| **E5** | Sección `SourcesSection` (11.ª) en `ConsultingReport` + `SourcesSectionAssembler` + `SourcesSectionFormatter` + `ReportInput` aditivo + tests | Citas en el reporte | Pendiente |
-| **E6** | Integración aditiva al pipeline: `EnrichmentStage` + `PipelineContext.enrichmentResult` + cableado en `KinConfig` + tests de integración/frontera | Integración pipeline | Pendiente |
-| **E7** | Auditoría de cierre: ADR-016 → **Aprobado**, contratos congelados intactos, `./mvnw clean verify` (BUILD SUCCESS), cobertura `kin.enrichment` ≥ 90 % (JaCoCo), cierre oficial de la Fase 8 | Cierre de fase | Pendiente |
+| **E4** | Inputs aditivos (`RecommendationInput`/`RiskInput`/`OpportunityInput`.withEnrichment) + analizadores de mercado/innovación/financiero/competitivo consumen hechos + tests | Enriquecimiento del análisis | ✅ **Completada (2026-08-02)** |
+| **E5** | Sección `SourcesSection` (11.ª) en `ConsultingReport` + `SourcesSectionAssembler` + `SourcesSectionFormatter` + `ReportInput` aditivo + tests | Citas en el reporte | ✅ **Completada (2026-08-02)** |
+| **E6** | Integración aditiva al pipeline: `EnrichmentStage` + `PipelineContext.enrichmentResult` + cableado en `KinConfig` + tests de integración/frontera | Integración pipeline | ✅ **Completada (2026-08-02)** |
+| **E7** | Auditoría de cierre: ADR-016 → **Aprobado**, contratos congelados intactos, `./mvnw clean verify` (BUILD SUCCESS), cobertura `kin.enrichment` ≥ 90 % (JaCoCo), cierre oficial de la Fase 8 | Cierre de fase | ✅ **Completada (2026-08-02)** |
 
 ---
 
 ## Criterios de aceptación
 
-- [ ] ADR-016 en estado **Aprobado** tras E1…E7 (actualmente **Propuesto**).
+- [x] ADR-016 en estado **Aprobado** tras E1…E7 (actualmente **Aprobado**).
 - [x] `kin.enrichment` es 100 % POJO (sin Spring/JPA/IA; solo `java.*`/`org.slf4j`).
 - [x] `EnrichmentEngine` implementa `DomainEngine` (fase `ANALYSIS`/tipo `DOMAIN`/prioridad 55).
 - [x] `FactRanker` es 100 % determinista: selecciona, pondera y ordena hechos en Java; nunca consulta al LLM.
-- [ ] Contratos congelados (`KinMethod`, `Pipeline`, `PipelineStage`, `ConversationOrchestrator`, `PromptAssembler`, `AIResponder`, `KnowledgeEngine`, `InterviewEngine`, `ReportEngine`, `ConsultingReport` existente, `kin/engine`, `ProjectContext`, `ConversationDecision`) **sin cambios** — solo aditivos sancionados.
-- [ ] Inputs de análisis con overloads aditivos; constructores originales intactos; tests existentes verdes sin modificación de aserciones.
-- [ ] Frontera ADR-012 intacta: el prompt REPORT consume solo `ConsultingReport` (con la nueva sección de fuentes).
-- [ ] Offline-first: sin hechos, `EnrichmentResult.empty()` y el pipeline se comporta como hoy.
-- [ ] `./mvnw clean verify` → **BUILD SUCCESS**; cobertura de dominio ≥ 90 % en `kin.enrichment` (JaCoCo).
+- [x] Contratos congelados (`KinMethod`, `Pipeline`, `PipelineStage`, `ConversationOrchestrator`, `PromptAssembler`, `AIResponder`, `KnowledgeEngine`, `InterviewEngine`, `ReportEngine`, `ConsultingReport` existente, `kin/engine`, `ProjectContext`, `ConversationDecision`) **sin cambios** — solo aditivos sancionados.
+- [x] Inputs de análisis con overloads aditivos; constructores originales intactos; tests existentes verdes sin modificación de aserciones.
+- [x] Frontera ADR-012 intacta: el prompt REPORT consume solo `ConsultingReport` (con la nueva sección de fuentes).
+- [x] Offline-first: sin hechos, `EnrichmentResult.empty()` y el pipeline se comporta como hoy.
+- [x] `./mvnw clean verify` → **BUILD SUCCESS**; cobertura de dominio ≥ 90 % en `kin.enrichment` (JaCoCo, 97.65 % de instrucciones).
 
 ---
 
 ## Estado
 
-**PROPUESTO** — Etapas E1–E3 de la Fase 8 (diseño arquitectónico, modelo de dominio y ranking
-determinista) completadas. Este ADR NO modifica contratos congelados. Requiere aprobación antes
-de implementar E4…E7.
+**APROBADO** — Etapas E1–E7 de la Fase 8 (diseño arquitectónico, modelo de dominio, ranking
+determinista, enriquecimiento del análisis, citas en el reporte, integración al pipeline y
+auditoría de cierre) completadas. La implementación fue **completada y certificada mediante
+auditoría técnica**: `./mvnw clean verify` → **BUILD SUCCESS**, **1049 tests** (0 failures, 0
+errors, 0 skipped), cobertura de dominio ≥ 90 % en `kin.enrichment` (JaCoCo 97.65 % de
+instrucciones), contratos congelados intactos e integración de extremo a extremo verificada
+(Knowledge → Enrichment → Recommendation/Risk/Opportunity → Report → Prompt). Este ADR NO
+modifica contratos congelados: todos los cambios sancionados son aditivos. La Fase 8 queda
+**oficialmente cerrada**.

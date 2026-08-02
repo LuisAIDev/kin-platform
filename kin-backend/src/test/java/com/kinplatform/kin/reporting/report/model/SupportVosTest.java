@@ -59,7 +59,8 @@ class SupportVosTest {
         assertNotNull(ReportSectionKind.valueOf("ANALYTIC"));
         assertNotNull(ReportSectionKind.valueOf("PROJECTION"));
         assertNotNull(ReportSectionKind.valueOf("AGGREGATE"));
+        assertNotNull(ReportSectionKind.valueOf("SOURCES"));
         assertNotNull(ReportSectionKind.valueOf("METADATA"));
-        assertEquals(7, ReportSectionKind.values().length);
+        assertEquals(8, ReportSectionKind.values().length);
     }
 }
