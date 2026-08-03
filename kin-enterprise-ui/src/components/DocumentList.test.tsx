@@ -39,4 +39,19 @@ describe("DocumentList", () => {
     expect(screen.getByText(/2.0 KB/)).toBeInTheDocument();
     expect(screen.getByText(/512 B/)).toBeInTheDocument();
   });
+
+  it("formatea tamaños grandes en MB", () => {
+    const big: EnterpriseDocument = {
+      id: "c",
+      type: "FINANCIAL_PLAN",
+      size: 5 * 1024 * 1024,
+      createdAt: "2026-08-02T10:00:00Z",
+      generatedBy: "FinancialPlanEngine",
+      engineVersion: "1.0.0",
+      version: 1,
+      inputHash: "hash-c",
+    };
+    render(<DocumentList documents={[big]} />);
+    expect(screen.getByText(/5.0 MB/)).toBeInTheDocument();
+  });
 });

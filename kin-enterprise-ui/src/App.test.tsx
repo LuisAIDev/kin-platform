@@ -19,13 +19,15 @@ vi.mock("./services/enterpriseApi", async () => {
   };
 });
 
+let mockConnection = {
+  events: [],
+  connected: true,
+  error: null as string | null,
+  terminal: false,
+};
+
 vi.mock("./hooks/useEnterpriseProgress", () => ({
-  useEnterpriseProgress: () => ({
-    events: [],
-    connected: true,
-    error: null,
-    terminal: false,
-  }),
+  useEnterpriseProgress: () => mockConnection,
 }));
 
 const dashboard: EnterpriseDashboard = {
@@ -142,5 +144,34 @@ describe("App", () => {
     vi.mocked(enterpriseApi.getDashboard).mockRejectedValue(new Error("boom"));
     render(<App projectId="p1" version={1} />);
     expect(await screen.findByText(/boom/)).toBeInTheDocument();
+  });
+
+  it("muestra un error cuando la descarga falla", async () => {
+    vi.mocked(enterpriseApi.downloadDocument).mockRejectedValue(
+      new Error("download boom"),
+    );
+    render(<App projectId="p1" version={1} />);
+    await waitFor(() =>
+      expect(screen.getAllByText("LEAN CANVAS").length).toBeGreaterThan(0),
+    );
+    await userEvent.click(screen.getAllByRole("button", { name: "PDF" })[0]);
+    expect(await screen.findByText(/download boom/)).toBeInTheDocument();
+  });
+
+  it("muestra el aviso de reconexión SSE cuando hay error de conexión", async () => {
+    mockConnection = {
+      events: [],
+      connected: false,
+      error: "SSE down",
+      terminal: false,
+    };
+    render(<App projectId="p1" version={1} />);
+    expect(await screen.findByText(/reconectando/)).toBeInTheDocument();
+    mockConnection = {
+      events: [],
+      connected: true,
+      error: null,
+      terminal: false,
+    };
   });
 });

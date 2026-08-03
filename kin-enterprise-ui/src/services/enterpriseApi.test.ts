@@ -72,6 +72,22 @@ describe("enterpriseApi", () => {
     expect((init.headers as Record<string, string>).Authorization).toBe("Bearer tok");
     localStorage.removeItem("kin_token_v2");
   });
+
+  it("no incluye Authorization sin token", async () => {
+    localStorage.removeItem("kin_token_v2");
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(dashboard));
+    await enterpriseApi.getDashboard("p1", 1);
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect((init.headers as Record<string, string>).Authorization).toBeUndefined();
+  });
+
+  it("lanza un error cuando la descarga falla", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("", { status: 403 }));
+    await expect(enterpriseApi.downloadDocument("p1", 1, "KPI", "PDF")).rejects.toThrow(
+      "403",
+    );
+    await expect(enterpriseApi.downloadBundle("p1", 1, "PDF")).rejects.toThrow("403");
+  });
 });
 
 describe("downloadBlob", () => {
