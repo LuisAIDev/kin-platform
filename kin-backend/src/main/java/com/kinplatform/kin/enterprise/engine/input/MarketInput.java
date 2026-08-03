@@ -1,14 +1,25 @@
 package com.kinplatform.kin.enterprise.engine.input;
 
+import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.kin.engine.EngineInput;
+import com.kinplatform.kin.enterprise.valueobjects.MarketPlan;
+import com.kinplatform.kin.knowledge.KnowledgeResult;
+import com.kinplatform.kin.reporting.RecommendationResult;
+import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
 
 /**
- * Entrada tipada del {@code MarketEngine} (Fase 10, Milestone 2A).
+ * Entrada tipada del {@code MarketEngine} (Fase 10, Milestone 2D).
  *
- * <p>Contrato de entrada: en el Milestone 2 expondrá los datos que el motor de
- * mercado necesita (p. ej. hechos verificados del motor de conocimiento y el
- * análisis de mercado del pipeline) para producir el plan de mercado. El
- * Milestone 2A define únicamente el tipo, sin campos ni lógica.</p>
+ * <p>Porta los datos que el motor de mercado consume para construir el
+ * {@link MarketPlan}: el contexto del proyecto y los resultados del pipeline.
+ * Los hechos verificados de {@link KnowledgeResult} se priorizan cuando
+ * existen; en modo offline (resultado vacío) el motor opera sin datos
+ * externos.</p>
  */
-public record MarketInput() implements EngineInput {
+public record MarketInput(
+    ProjectContext context,
+    RecommendationResult recommendations,
+    OpportunityResult opportunities,
+    KnowledgeResult knowledge
+) implements EngineInput {
 }
