@@ -10,12 +10,15 @@ import java.util.UUID;
  * <p>Se emitirá cuando la conversación de un proyecto alcance la decisión
  * {@code REPORT} y el informe de consultoría haya sido generado, solicitando
  * al {@code EnterpriseGenerationOrchestrator} la generación del proyecto
- * empresarial (Fase 10). El Milestone 1 solo define el contrato; la emisión y
- * el consumo se implementarán en milestones posteriores.</p>
+ * empresarial (Fase 10). Porta la versión solicitada para correlacionar la
+ * petición con su resultado (versión establecida por el orquestador como
+ * {@code siguiente = última + 1}). El Milestone 2A solo define el contrato; la
+ * emisión y el consumo se implementarán en milestones posteriores.</p>
  *
  * @param projectId identificador del proyecto de KIN origen
+ * @param version   versión solicitada del proyecto empresarial
  */
-public record EnterpriseProjectRequested(UUID projectId) implements DomainEvent {
+public record EnterpriseProjectRequested(UUID projectId, int version) implements DomainEvent {
 
     @Override
     public String type() {

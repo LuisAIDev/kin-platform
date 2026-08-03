@@ -39,11 +39,4 @@ public record EnterpriseProject(
     public EnterpriseProject {
         documents = documents == null ? List.of() : List.copyOf(documents);
     }
-
-    /**
-     * Colección inmutable de documentos de la versión.
-     */
-    public List<DocumentArtifact> documents() {
-        return List.copyOf(documents);
-    }
 }

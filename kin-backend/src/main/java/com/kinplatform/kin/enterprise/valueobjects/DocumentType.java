@@ -1,4 +1,4 @@
-package com.kinplatform.kin.enterprise.document;
+package com.kinplatform.kin.enterprise.valueobjects;
 
 /**
  * Catálogo de documentos que conforman el proyecto empresarial de la Fase 10.
