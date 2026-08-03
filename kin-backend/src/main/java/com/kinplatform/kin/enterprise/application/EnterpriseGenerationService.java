@@ -184,22 +184,41 @@ public final class EnterpriseGenerationService {
         EnterpriseProject persistedRequested = repository.save(requested);
         eventBus.publish(new EnterpriseProjectRequested(projectId, persistedRequested.version()));
 
-        EnterpriseProject running = persistedRequested.startGeneration();
-        repository.save(running);
+        return generateFrom(request, persistedRequested);
+    }
 
-        try {
-            List<DocumentArtifact> documents = generateDocuments(request, running.version());
-            EnterpriseProject withDocuments = running;
-            for (DocumentArtifact document : documents) {
-                withDocuments = withDocuments.attachDocument(document);
-            }
-            EnterpriseProject completed = withDocuments.completeGeneration();
-            EnterpriseProject saved = repository.save(completed);
-            eventBus.publish(new EnterpriseProjectGenerated(projectId, saved.version()));
-            return saved;
-        } catch (RuntimeException ex) {
-            return fail(projectId, running, ex);
+    /**
+     * Genera una versión concreta del proyecto empresarial sin publicar
+     * {@code EnterpriseProjectRequested} (Fase 10, Milestone 2F).
+     *
+     * <p>Es el punto de entrada del flujo integrado con el pipeline: el
+     * {@link EnterpriseProjectTrigger} ya publicó el evento de solicitud con la
+     * versión resuelta y el {@code EnterpriseProjectRequestedListener} delega
+     * aquí de forma asíncrona. El evento no se publica de nuevo (una sola
+     * solicitud por generación). Idempotente: si la versión ya existe
+     * (en vuelo o terminal) se devuelve tal cual.</p>
+     *
+     * @param request solicitud de generación (obligatoria)
+     * @param version versión solicitada (mayor o igual a 1)
+     * @return el aggregate persistido de la versión solicitada
+     * @throws IllegalArgumentException si {@code request} es {@code null} o la
+     *                                  versión es inválida
+     */
+    public EnterpriseProject generateRequested(EnterpriseGenerationRequest request, int version) {
+        if (request == null) {
+            throw new IllegalArgumentException("La solicitud de generación no puede ser null.");
         }
+        if (version < 1) {
+            throw new IllegalArgumentException("La versión solicitada debe ser mayor o igual a 1 (recibida: "
+                + version + ").");
+        }
+        UUID projectId = request.projectId();
+        Optional<EnterpriseProject> existing = repository.findByVersion(projectId, version);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        EnterpriseProject requested = EnterpriseProject.request(projectId, version);
+        return generateFrom(request, repository.save(requested));
     }
 
     /**
@@ -241,13 +260,39 @@ public final class EnterpriseGenerationService {
     }
 
     /**
+     * Flujo común de generación a partir de un aggregate {@code REQUESTED}
+     * persistido: transición a {@code RUNNING}, ejecución de los motores,
+     * ensamblado de documentos, cierre {@code COMPLETED} y emisión de
+     * {@code EnterpriseProjectGenerated}; ante cualquier
+     * {@link RuntimeException} persiste {@code FAILED} y emite
+     * {@code EnterpriseProjectFailed}.
+     */
+    private EnterpriseProject generateFrom(EnterpriseGenerationRequest request, EnterpriseProject requested) {
+        UUID projectId = request.projectId();
+        EnterpriseProject running = requested.startGeneration();
+        repository.save(running);
+        try {
+            List<DocumentArtifact> documents = generateDocuments(request, running.version());
+            EnterpriseProject withDocuments = running;
+            for (DocumentArtifact document : documents) {
+                withDocuments = withDocuments.attachDocument(document);
+            }
+            EnterpriseProject completed = withDocuments.completeGeneration();
+            EnterpriseProject saved = repository.save(completed);
+            eventBus.publish(new EnterpriseProjectGenerated(projectId, saved.version()));
+            return saved;
+        } catch (RuntimeException ex) {
+            return fail(projectId, running, ex);
+        }
+    }
+
+    /**
      * Ejecuta los ocho motores en orden de dependencia y ensambla los
      * documentos de la versión. El Enterprise Score se calcula como parte de la
      * coordinación (depende de todos los planes) aunque no se documente en el
      * aggregate.
      */
-    private List<DocumentArtifact> generateDocuments(EnterpriseGenerationRequest request, int version) {
-        ProjectContext context = request.context();
+    private List<DocumentArtifact> generateDocuments(EnterpriseGenerationRequest request, int version) {        ProjectContext context = request.context();
         RecommendationResult recommendations = request.recommendations();
         OpportunityResult opportunities = request.opportunities();
         KnowledgeResult knowledge = request.knowledge();

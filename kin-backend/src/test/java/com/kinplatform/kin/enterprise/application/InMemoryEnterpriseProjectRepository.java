@@ -14,9 +14,11 @@ import java.util.UUID;
 /**
  * Repositorio en memoria del proyecto empresarial para pruebas (Fase 10,
  * Milestone 2E): guarda las versiones por {@code (projectId, version)} y
- * devuelve la más reciente en la consulta de última versión.
+ * devuelve la más reciente en la consulta de última versión. Público para
+ * compartirse con los tests de integración del flujo de conversación
+ * (Milestone 2F).
  */
-final class InMemoryEnterpriseProjectRepository implements EnterpriseProjectRepository {
+public final class InMemoryEnterpriseProjectRepository implements EnterpriseProjectRepository {
 
     private final Map<UUID, TreeMap<Integer, EnterpriseProject>> store = new HashMap<>();
 

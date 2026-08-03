@@ -59,6 +59,23 @@ public final class EnterpriseGenerationOrchestrator {
     }
 
     /**
+     * Genera una versión concreta del proyecto empresarial sin volver a
+     * publicar {@code EnterpriseProjectRequested} (Fase 10, Milestone 2F).
+     *
+     * <p>Punto de entrada del flujo integrado con el pipeline: el
+     * {@link EnterpriseProjectTrigger} publicó la solicitud con la versión
+     * resuelta y el {@code EnterpriseProjectRequestedListener} delega aquí de
+     * forma asíncrona tras capturar el evento.</p>
+     *
+     * @param request solicitud de generación (obligatoria)
+     * @param version versión solicitada (mayor o igual a 1)
+     * @return el aggregate persistido de la versión solicitada
+     */
+    public EnterpriseProject generateRequested(EnterpriseGenerationRequest request, int version) {
+        return service.generateRequested(request, version);
+    }
+
+    /**
      * Firma histórica del Milestone 1, conservada por compatibilidad binaria.
      *
      * <p>Sin la solicitud tipada (contexto y resultados del pipeline) no es

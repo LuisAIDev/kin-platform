@@ -51,6 +51,20 @@ class EnterpriseGenerationOrchestratorTest {
     }
 
     @Test
+    void generateRequested_delegaEnElServicioConLaVersion() {
+        var service = mock(EnterpriseGenerationService.class);
+        var orchestrator = new EnterpriseGenerationOrchestrator(service);
+        var request = request();
+        var expected = EnterpriseProject.request(request.projectId(), 2);
+        when(service.generateRequested(request, 2)).thenReturn(expected);
+
+        var result = orchestrator.generateRequested(request, 2);
+
+        assertSame(expected, result);
+        verify(service).generateRequested(request, 2);
+    }
+
+    @Test
     void generateHistorico_conSoloProjectId_lanzaUnsupportedOperation() {
         var service = mock(EnterpriseGenerationService.class);
         var orchestrator = new EnterpriseGenerationOrchestrator(service);

@@ -10,11 +10,13 @@ import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.TurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
 import com.kinplatform.kin.event.DomainEvent;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Fachada de dominio del ciclo de conversación (ADR-013, Etapas 5 y 6).
@@ -44,6 +46,10 @@ public class ConversationOrchestrator {
     private final ResponseGuard responseGuard;
     private final ContextRepository contextRepository;
     private final ResponseFallback responseFallback;
+    private final EnterpriseProjectTrigger enterpriseTrigger;
+
+    /** Trigger por defecto: sin integración Enterprise, no emite nada. */
+    private static final EnterpriseProjectTrigger NO_OP_TRIGGER = projectId -> { };
 
     public ConversationOrchestrator(HistoryWindow historyWindow,
                                     TurnPolicy turnPolicy,
@@ -51,7 +57,7 @@ public class ConversationOrchestrator {
                                     ResponseGuard responseGuard,
                                     ContextRepository contextRepository) {
         this(historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository,
-            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0));
+            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0), NO_OP_TRIGGER);
     }
 
     /**
@@ -65,6 +71,37 @@ public class ConversationOrchestrator {
                                     ResponseGuard responseGuard,
                                     ContextRepository contextRepository,
                                     ResponseFallback responseFallback) {
+        this(historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository,
+            responseFallback, NO_OP_TRIGGER);
+    }
+
+    /**
+     * Constructor aditivo (Fase 10, Milestone 2F): inyecta el
+     * {@link EnterpriseProjectTrigger} que emite {@code EnterpriseProjectRequested}
+     * cuando el pipeline completa {@code REPORT}. Sin trigger, el orquestador
+     * conserva el comportamiento previo intacto.
+     */
+    public ConversationOrchestrator(HistoryWindow historyWindow,
+                                    TurnPolicy turnPolicy,
+                                    KinMethod kinMethod,
+                                    ResponseGuard responseGuard,
+                                    ContextRepository contextRepository,
+                                    EnterpriseProjectTrigger enterpriseTrigger) {
+        this(historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository,
+            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0), enterpriseTrigger);
+    }
+
+    /**
+     * Constructor aditivo completo (Fase 10, Milestone 2F): permite inyectar
+     * tanto el {@link ResponseFallback} como el {@link EnterpriseProjectTrigger}.
+     */
+    public ConversationOrchestrator(HistoryWindow historyWindow,
+                                    TurnPolicy turnPolicy,
+                                    KinMethod kinMethod,
+                                    ResponseGuard responseGuard,
+                                    ContextRepository contextRepository,
+                                    ResponseFallback responseFallback,
+                                    EnterpriseProjectTrigger enterpriseTrigger) {
         if (historyWindow == null) {
             throw new IllegalArgumentException("historyWindow no puede ser null");
         }
@@ -89,6 +126,7 @@ public class ConversationOrchestrator {
         this.responseGuard = responseGuard;
         this.contextRepository = contextRepository;
         this.responseFallback = responseFallback;
+        this.enterpriseTrigger = enterpriseTrigger == null ? NO_OP_TRIGGER : enterpriseTrigger;
     }
 
     /**
@@ -158,6 +196,8 @@ public class ConversationOrchestrator {
                 ? result.aiResponse()
                 : responseFallback.cannedResponse(validation);
 
+        triggerEnterpriseGeneration(result, turn.projectId());
+
         return new TurnResult(
                 result.projectContext(),
                 result.decision(),
@@ -222,5 +262,25 @@ public class ConversationOrchestrator {
 
     private ConversationDecision previousDecision(ProjectContext projectContext) {
         return projectContext != null ? projectContext.currentDecision() : null;
+    }
+
+    /**
+     * Punto mínimo de emisión de la integración Enterprise (Fase 10, M2F):
+     * tras completar el turno, si el pipeline generó un {@code REPORT} real
+     * (decisión {@code REPORT} con informe de consultoría presente), solicita
+     * la generación del proyecto empresarial.
+     *
+     * <p>La conversación finaliza exactamente igual que hoy (la respuesta ya
+     * está calculada); la generación Enterprise comienza después, de forma
+     * asíncrona en el listener, nunca antes ni durante. En modo streaming el
+     * turno no está completado al devolver el flux, por lo que la emisión solo
+     * ocurre en el flujo bloqueante.</p>
+     */
+    private void triggerEnterpriseGeneration(KinMethodResult result, UUID projectId) {
+        if (result.decision() != null
+                && result.decision().action() == ConversationDecision.Action.REPORT
+                && result.consultingReport() != null) {
+            enterpriseTrigger.request(projectId);
+        }
     }
 }

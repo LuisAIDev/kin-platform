@@ -287,6 +287,87 @@ class EnterpriseGenerationServiceTest {
     }
 
     // ------------------------------------------------------------------
+    // Generación solicitada (flujo integrado M2F)
+    // ------------------------------------------------------------------
+
+    @Test
+    void generacionSolicitada_generaVersionYNoPublicaRequested() {
+        var service = realService();
+        var projectId = UUID.randomUUID();
+
+        var result = service.generateRequested(request(projectId), 1);
+
+        assertEquals(GenerationStatus.COMPLETED, result.status());
+        assertEquals(1, result.version());
+        assertEquals(7, result.documentCount());
+        var events = eventBus.publishedEvents();
+        assertEquals(1, events.size());
+        assertTrue(events.get(0) instanceof EnterpriseProjectGenerated);
+    }
+
+    @Test
+    void generacionSolicitada_versionExistente_esIdempotente() {
+        var service = realService();
+        var projectId = UUID.randomUUID();
+        var requested = EnterpriseProject.request(projectId, 1);
+        repository.save(requested);
+
+        var result = service.generateRequested(request(projectId), 1);
+
+        assertSame(requested, result);
+        assertTrue(eventBus.publishedEvents().isEmpty());
+    }
+
+    @Test
+    void generacionSolicitada_versionTerminalExistente_devuelveSinRegenerar() {
+        var service = realService();
+        var projectId = UUID.randomUUID();
+        var now = OffsetDateTime.now();
+        var completed = EnterpriseProject.complete(projectId, 1, now, now, now, List.of());
+        repository.save(completed);
+
+        var result = service.generateRequested(request(projectId), 1);
+
+        assertSame(completed, result);
+        assertEquals(1, repository.findAllVersions(projectId).size());
+    }
+
+    @Test
+    void generacionSolicitada_versionInvalida_lanza() {
+        var service = realService();
+        assertThrows(IllegalArgumentException.class, () -> service.generateRequested(request(), 0));
+        assertThrows(IllegalArgumentException.class, () -> service.generateRequested(request(), -1));
+    }
+
+    @Test
+    void generacionSolicitada_requestNulo_lanza() {
+        var service = realService();
+        assertThrows(IllegalArgumentException.class, () -> service.generateRequested(null, 1));
+    }
+
+    @Test
+    void generacionSolicitada_conMotorFallido_creaFallido() {
+        var projectId = UUID.randomUUID();
+        var businessModel = mock(BusinessModelEngine.class);
+        when(businessModel.evaluate(any())).thenThrow(new IllegalStateException("fallo solicitado"));
+
+        var service = new EnterpriseGenerationService(businessModel,
+            new DefaultMarketEngine(), new DefaultInnovationEngine(),
+            new DefaultFinancialPlanEngine(), new DefaultRoadmapEngine(),
+            new DefaultRiskPlanEngine(), new DefaultKpiEngine(),
+            new DefaultEnterpriseScoreEngine(), new EnterpriseDocumentAssembler(),
+            repository, eventBus, Runnable::run);
+
+        var result = service.generateRequested(request(projectId), 1);
+
+        assertEquals(GenerationStatus.FAILED, result.status());
+        assertEquals("fallo solicitado", result.failedReason());
+        var events = eventBus.publishedEvents();
+        assertEquals(1, events.size());
+        assertTrue(events.get(0) instanceof EnterpriseProjectFailed);
+    }
+
+    // ------------------------------------------------------------------
     // Asíncrono
     // ------------------------------------------------------------------
 
