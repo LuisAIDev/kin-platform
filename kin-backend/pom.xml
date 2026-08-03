@@ -107,6 +107,13 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- OpenAPI / Swagger — documentación de la API REST del módulo Enterprise (M2I) -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.5.0</version>
+        </dependency>
+
         <!-- Spring AI — OpenAI (production LLM) -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
