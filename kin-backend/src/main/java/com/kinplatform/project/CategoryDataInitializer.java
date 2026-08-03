@@ -2,6 +2,7 @@ package com.kinplatform.project;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,12 +10,19 @@ import java.util.List;
 
 /**
  * Siembra el catálogo de categorías cuando la tabla está vacía (dev con
- * {@code ddl-auto: update}, donde Flyway está deshabilitado). En producción el
- * seed lo aporta la migración Flyway {@code V6}; el initializer es idempotente
- * (no inserta si ya hay datos). Una nueva categoría se agrega como dato, sin
- * tocar código.
+ * {@code ddl-auto: update}, donde Flyway está deshabilitado, y test con H2
+ * in-memory {@code create-drop}).
+ *
+ * <p><b>Nunca se ejecuta en producción</b>: {@code @Profile("!prod")} lo excluye del
+ * perfil {@code prod}, donde el seed lo aporta exclusivamente la migración Flyway
+ * {@code V6__create_categories.sql}. Esto garantiza que el catálogo de producción
+ * sea 100 % datos administrables (la siembra es un efecto de la migración, no de
+ * código Java) y evita re-siembras sorpresa tras un truncate o restore.</p>
+ *
+ * <p>El initializer es idempotente: no inserta si ya hay datos.</p>
  */
 @Component
+@Profile("!prod")
 public class CategoryDataInitializer implements ApplicationRunner {
 
     private final CategoryRepository categoryRepository;

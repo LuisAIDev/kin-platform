@@ -76,6 +76,19 @@ El dominio (pipeline, `ProjectContext`) recibe la categoría como **String** (di
 - Se eliminó el enum `ProjectCategory` y todo uso de `EnumType.ORDINAL` (el mapeo pasó a
   `category_id UUID` + FK). No quedan inconsistencias entre JPA y PostgreSQL.
 
+## Hardening (pre-release)
+
+- **`CategoryDataInitializer` solo dev/test**: `@Profile("!prod")` — en producción la siembra es
+  exclusiva de la migración Flyway `V6`; el initializer no se ejecuta jamás en `prod` (evita
+  re-siembras tras un truncate/restore y mantiene el catálogo como dato administrable).
+- **Migración V6 totalmente idempotente**: seed con `ON CONFLICT (id) DO NOTHING`, FK envuelta en
+  `DO $$ ... IF NOT EXISTS (pg_constraint) ... $$`, `ADD COLUMN`/`DROP COLUMN`/`CREATE INDEX` con
+  `IF [NOT] EXISTS`. Segura en escenarios de restore/recuperación sobre bases parcialmente preparadas.
+- **JaCoCo enforcement**: el goal `check` (fase `verify`) exige **≥90 % de instrucciones cubiertas**
+  en los paquetes de dominio `com.kinplatform.kin.{reporting,engine,ai,conversation,knowledge,interview}*`
+  (reglas por `PACKAGE` con `includes`). No penaliza DTOs, entidades JPA, config ni clases generadas
+  (no están incluidas). El build **falla** si la cobertura baja del umbral.
+
 ## Tests (com.kinplatform.project)
 
 - `CategoryServiceTest` (5): obtener activas, orden por `display_order`, exclusión de inactivas,
