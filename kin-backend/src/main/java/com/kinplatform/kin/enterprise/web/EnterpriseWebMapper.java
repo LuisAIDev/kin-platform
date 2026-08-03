@@ -8,6 +8,7 @@ import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
 import com.kinplatform.kin.enterprise.valueobjects.RenderFormat;
 import com.kinplatform.kin.enterprise.web.dto.EnterpriseDocumentResponse;
+import com.kinplatform.kin.enterprise.web.dto.EnterpriseDashboardResponse;
 import com.kinplatform.kin.enterprise.web.dto.EnterpriseExportResponse;
 import com.kinplatform.kin.enterprise.web.dto.EnterpriseGenerateRequest;
 import com.kinplatform.kin.enterprise.web.dto.EnterpriseProjectResponse;
@@ -188,5 +189,63 @@ public final class EnterpriseWebMapper {
         if (project == null) {
             throw new IllegalArgumentException("project no puede ser null");
         }
+    }
+
+    /**
+     * Construye el dashboard de una versión del proyecto empresarial (Fase 10,
+     * Milestone 2J): estado, progreso, documentos, fechas, versiones y
+     * estadísticas. El Enterprise Score no forma parte del aggregate (contrato
+     * congelado) y se expone como {@code null}.
+     *
+     * @param project  versión consultada (obligatoria)
+     * @param versions todas las versiones del proyecto (obligatorio)
+     * @return DTO de dashboard
+     */
+    public EnterpriseDashboardResponse toDashboard(EnterpriseProject project,
+                                                   List<EnterpriseProject> versions) {
+        requireProject(project);
+        if (versions == null) {
+            throw new IllegalArgumentException("versions no puede ser null");
+        }
+        long totalBytes = project.documents().stream()
+            .mapToLong(DocumentArtifact::size)
+            .sum();
+        Long durationMillis = (project.completedAt() != null && project.createdAt() != null)
+            ? java.time.Duration.between(project.createdAt(), project.completedAt()).toMillis()
+            : null;
+        Map<String, Long> statistics = new LinkedHashMap<>();
+        statistics.put("documentCount", (long) project.documentCount());
+        statistics.put("versionsCount", (long) versions.size());
+        statistics.put("totalBytes", totalBytes);
+        if (durationMillis != null) {
+            statistics.put("generationDurationMs", durationMillis);
+        }
+        return new EnterpriseDashboardResponse(
+            project.projectId(),
+            project.version(),
+            project.status().name(),
+            progress(project.status()),
+            project.documentCount(),
+            versions.size(),
+            project.createdAt(),
+            project.updatedAt(),
+            project.completedAt(),
+            project.failedReason(),
+            durationMillis,
+            null,
+            toDocuments(project.documents()),
+            versions.stream().map(this::toVersion).toList(),
+            Map.copyOf(statistics));
+    }
+
+    /**
+     * Progreso porcentual derivado del estado de la generación.
+     */
+    private int progress(com.kinplatform.kin.enterprise.aggregate.GenerationStatus status) {
+        return switch (status) {
+            case REQUESTED -> 5;
+            case RUNNING -> 40;
+            case COMPLETED, FAILED -> 100;
+        };
     }
 }

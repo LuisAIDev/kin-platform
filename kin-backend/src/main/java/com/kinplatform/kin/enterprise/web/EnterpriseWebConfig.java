@@ -5,11 +5,14 @@ import com.kinplatform.kin.enterprise.application.EnterpriseExportService;
 import com.kinplatform.kin.enterprise.application.EnterpriseGenerationOrchestrator;
 import com.kinplatform.kin.enterprise.application.EnterpriseGenerationService;
 import com.kinplatform.kin.enterprise.application.EnterpriseRendererFactory;
+import com.kinplatform.kin.enterprise.application.ProgressPublishingEnterpriseProjectRepository;
 import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
+import com.kinplatform.kin.enterprise.progress.EnterpriseProgressPublisher;
 import com.kinplatform.kin.event.DomainEventBus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 /**
  * Cableado Spring de la capa de aplicación del módulo Enterprise (Fase 10,
@@ -77,5 +80,37 @@ public class EnterpriseWebConfig {
     @Bean
     public EnterpriseWebMapper enterpriseWebMapper() {
         return new EnterpriseWebMapper();
+    }
+
+    /**
+     * Servicio de progreso SSE (heartbeat de 15 s en segundo plano).
+     */
+    @Bean
+    public EnterpriseProgressService enterpriseProgressService() {
+        return new EnterpriseProgressService();
+    }
+
+    /**
+     * Publicador de progreso (traduce el estado del aggregate a eventos SSE).
+     */
+    @Bean
+    public EnterpriseProgressPublisher enterpriseProgressPublisher(
+            EnterpriseProgressService progressService) {
+        return new EnterpriseProgressPublisher(progressService);
+    }
+
+    /**
+     * Repositorio decorado con publicación de progreso: envuelve al adaptador
+     * JPA y publica el estado de cada {@code save} vía SSE. Se marca como
+     * {@code @Primary} para que los orquestadores y el controlador usen el
+     * decorador (las lecturas se delegan sin cambios).
+     */
+    @Bean
+    @Primary
+    public EnterpriseProjectRepository enterpriseProgressPublishingRepository(
+            EnterpriseProjectRepository enterpriseProjectRepository,
+            EnterpriseProgressPublisher enterpriseProgressPublisher) {
+        return new ProgressPublishingEnterpriseProjectRepository(
+            enterpriseProjectRepository, enterpriseProgressPublisher);
     }
 }

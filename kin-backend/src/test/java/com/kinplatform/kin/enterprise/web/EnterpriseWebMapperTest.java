@@ -168,5 +168,58 @@ class EnterpriseWebMapperTest {
             () -> mapper.toDomain(PROJECT_ID, null, EngineTestFixtures.contextWithAll()));
         assertThrows(IllegalArgumentException.class,
             () -> mapper.toDomain(PROJECT_ID, new EnterpriseGenerateRequest(false, null), null));
+        assertThrows(IllegalArgumentException.class,
+            () -> mapper.toDashboard(null, java.util.List.of()));
+        assertThrows(IllegalArgumentException.class,
+            () -> mapper.toDashboard(WebTestFixtures.completed(PROJECT_ID, 1, DocumentType.KPI), null));
+    }
+
+    @Test
+    void toDashboard_deberiaConsolidarLaVista() {
+        var project = WebTestFixtures.completed(PROJECT_ID, 2, DocumentType.LEAN_CANVAS, DocumentType.KPI);
+        var versions = java.util.List.of(
+            WebTestFixtures.completed(PROJECT_ID, 1, DocumentType.ROADMAP),
+            project);
+
+        var dashboard = mapper.toDashboard(project, versions);
+
+        assertEquals(PROJECT_ID, dashboard.projectId());
+        assertEquals(2, dashboard.version());
+        assertEquals("COMPLETED", dashboard.status());
+        assertEquals(100, dashboard.progress());
+        assertEquals(2, dashboard.documentCount());
+        assertEquals(2, dashboard.versionsCount());
+        assertEquals(project.completedAt(), dashboard.completedAt());
+        assertEquals(2, dashboard.documents().size());
+        assertEquals(2, dashboard.versions().size());
+        assertNull(dashboard.score());
+        assertEquals(2L, dashboard.statistics().get("documentCount"));
+        assertEquals(2L, dashboard.statistics().get("versionsCount"));
+        assertTrue(dashboard.statistics().get("totalBytes") > 0);
+    }
+
+    @Test
+    void toDashboard_conProyectoRequested_deberiaReflejarProgresoInicial() {
+        var project = com.kinplatform.kin.enterprise.aggregate.EnterpriseProject.request(PROJECT_ID, 1);
+
+        var dashboard = mapper.toDashboard(project, java.util.List.of(project));
+
+        assertEquals("REQUESTED", dashboard.status());
+        assertEquals(5, dashboard.progress());
+        assertEquals(0, dashboard.documentCount());
+        assertEquals(1, dashboard.versionsCount());
+    }
+
+    @Test
+    void toDashboard_conProyectoFallido_deberiaReflejarElMotivo() {
+        var now = java.time.OffsetDateTime.now();
+        var project = EnterpriseProject.fail(PROJECT_ID, 1, now, now, "motor falló",
+            java.util.List.of());
+
+        var dashboard = mapper.toDashboard(project, java.util.List.of(project));
+
+        assertEquals("FAILED", dashboard.status());
+        assertEquals(100, dashboard.progress());
+        assertEquals("motor falló", dashboard.failedReason());
     }
 }
