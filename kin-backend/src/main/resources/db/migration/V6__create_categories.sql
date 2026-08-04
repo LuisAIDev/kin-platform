@@ -46,10 +46,25 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS category_id UUID;
 -- Backfill del enum legacy (soporta nombre del enum u ordinal, según cómo lo
 -- haya persistido JPA: STRING → nombres, u ORDINAL → enteros 0..3). Es idempotente:
 -- re-ejecutar solo re-asigna los mismos valores (UPDATE determinista).
-UPDATE projects p SET category_id = (SELECT id FROM categories WHERE code = 'EMPRESARIAL')
-    WHERE p.category IN ('EMPRESARIAL', 'EMPRENDIMIENTO', '1', '2');
-UPDATE projects p SET category_id = (SELECT id FROM categories WHERE code = 'IMPACTO_SOCIAL')
-    WHERE p.category IN ('SOCIAL', '3');
+--
+-- CONDICIONAL a la existencia de la columna `category` (C3/C5 - Opción B):
+-- en bases nuevas (V1 crea `projects` sin la columna legacy) es un no-op; en
+-- bases legacy que aún tengan `category` conserva exactamente el backfill
+-- original. No altera el comportamiento sobre bases que ya migraron.
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'projects'
+          AND column_name = 'category'
+    ) THEN
+        UPDATE projects p SET category_id = (SELECT id FROM categories WHERE code = 'EMPRESARIAL')
+            WHERE p.category IN ('EMPRESARIAL', 'EMPRENDIMIENTO', '1', '2');
+        UPDATE projects p SET category_id = (SELECT id FROM categories WHERE code = 'IMPACTO_SOCIAL')
+            WHERE p.category IN ('SOCIAL', '3');
+    END IF;
+END $$;
 
 -- FK idempotente: se agrega únicamente si aún no existe la restricción
 -- (escenarios de restore/recuperación donde ya podría estar creada).
