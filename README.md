@@ -13,6 +13,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
 [![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-4D6BFE?style=flat&logo=deepseek&logoColor=white)](https://www.deepseek.com/)
+[![Release](https://img.shields.io/badge/Release-v2.0.0--phase10-6DB33F?style=flat&logo=github&logoColor=white)](https://github.com/LuisAIDev/kin-platform/releases/tag/v2.0.0-phase10)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [![GitHub](https://img.shields.io/badge/GitHub-LuisAIDev-181717?style=flat&logo=github&logoColor=white)](https://github.com/LuisAIDev)
@@ -43,30 +44,29 @@ backend enterprise (**Java 17 + Spring Boot 3.2.5**) combinado con un frontend m
 Event-Driven**, autenticación stateless con JWT, y buenas prácticas de seguridad y despliegue con
 Docker.
 
-> ✅ **Estado actual: FASE 8 COMPLETADA** — Release `v1.0.0-phase8` (2026-08-02).
-> Pipeline de dominio de **13 etapas**, **1049 tests, 0 fallos**, cobertura de dominio ≥ 90 %
-> (JaCoCo) y **16 ADRs aprobadas** (ADR-001 … ADR-016). Núcleo inteligente con Knowledge Engine,
-> Interview Engine, Enrichment Engine, Scoring, Recommendation, Risk, Opportunity, Report Engine,
-> Prompt Engine y sección de fuentes citadas (`SourcesSection`). Principio rector:
+> ✅ **Estado actual: FASE 10 COMPLETADA** — Release `v2.0.0-phase10` (2026-08-04).
+> Pipeline de dominio de **13 etapas**, **1850 tests backend (0 fallos)** + **66 tests frontend**,
+> cobertura de dominio ≥ 90 % (JaCoCo) y **18 ADRs aprobadas** (ADR-001 … ADR-018). Núcleo
+> inteligente con Knowledge Engine, Interview Engine, Enrichment Engine, Scoring, Recommendation,
+> Risk, Opportunity, Report Engine, Prompt Engine, sección de fuentes citadas (`SourcesSection`) y
+> **Bounded Context Enterprise** (ADR-018) de generación de documentos de negocio. Principio rector:
 > **"Java decide. El LLM únicamente comunica."**
-> Ver [`kin-docs/releases/v1.0.0-phase8.md`](kin-docs/releases/v1.0.0-phase8.md).
+> Ver [`kin-docs/releases/v2.0.0-phase10.md`](kin-docs/releases/v2.0.0-phase10.md).
 
-> ⭐ **Current Stable Version**: `v1.1.0-phase9` — FASE 9 (KIN 2.1) COMPLETADA.
+> ⭐ **Current Stable Version**: `v2.0.0-phase10` — FASE 10 COMPLETADA (Enterprise Document Generation, ADR-018).
 >
 > **Highlights**
-> - 🛡️ **Pipeline Resilience**
-> - 🔁 **Retry Policies**
-> - ⏱️ **Timeout Policies**
-> - 📊 **Pipeline Metrics**
-> - ✅ **Response Validation**
-> - 🧯 **Response Fallback**
-> - 📣 **Event Semantics**
-> - 🔗 **End-to-End Integration**
-> - 🧪 **1210 Automated Tests**
-> - 🧱 **Clean Architecture**
-> - 🏛️ **DDD**
-> - 📐 **SOLID**
-> - 🌐 **Offline First**
+> - 🏭 **Enterprise Module** (BC `kin.enterprise`, ADR-018) — generación/exportación de documentos de negocio (PDF/DOCX/PPTX)
+> - 📄 **9 tipos de documento** — lean canvas, plan de mercado, plan financiero, hoja de ruta, matriz de riesgos, KPIs, plan de innovación, Executive Report y DOFA
+> - 🔄 **Ciclo automático** conversación → generación (M3B) · **resultados reales del pipeline** (M3C)
+> - 📊 **Enterprise Score** persistido y expuesto (M3D) · 🧠 **narrativa IA** (M3E)
+> - 🖥️ **Enterprise Dashboard** integrado en `kin-frontend` (M3F) + acción de generación desde la UI (M3G)
+> - 📦 **Deployment M3H** — `init.sql` sincronizado y Flyway V1..V10 desde cero
+> - 🧪 **1850 Automated Tests** (backend) + **66** (frontend)
+> - 🛡️ **Pipeline Resilience** · 🔁 **Retry Policies** · ⏱️ **Timeout Policies** · 📊 **Pipeline Metrics**
+> - ✅ **Response Validation** · 🧯 **Response Fallback** · 📣 **Event Semantics** · 🔗 **End-to-End Integration**
+> - 🧱 **Clean Architecture** · 🏛️ **DDD** · 📐 **SOLID** · 🌐 **Offline First**
+> - 🏷️ **Último tag**: [`v2.0.0-phase10`](https://github.com/LuisAIDev/kin-platform/releases/tag/v2.0.0-phase10)
 
 ---
 
@@ -79,6 +79,7 @@ Docker.
 - 📚 **Knowledge Engine** (ADR-014) — adquisición y validación de conocimiento externo verificado (HTTP/JDBC/RAG/Documento), offline-first
 - 🎙️ **Interview Engine** (ADR-015) — entrevista estratégica dirigida por Java que garantiza un `ProjectContext` completo antes del análisis
 - 🔬 **Enrichment Engine** (ADR-016) — selección determinista de hechos relevantes (`FactRanker`) que enriquece recomendaciones, riesgos y oportunidades, y cita las fuentes en el reporte
+- 📄 **Enterprise Module** (ADR-018, Fase 10) — Bounded Context de generación de documentos de negocio (lean canvas, plan de mercado, plan financiero, hoja de ruta, matriz de riesgos, KPIs, plan de innovación, Executive Report y DOFA) en PDF/DOCX/PPTX, con versionado, REST + OpenAPI, dashboard SSE integrado en `kin-frontend` y ciclo automático desde la conversación
 - 📊 **Scoring Engine** — score de viabilidad por categoría y dimensión
 - 🎭 **Roles de usuario** diferenciados: `FREE`, `PREMIUM`, `FACILITADOR`, `ADMIN`
 - 🐳 **Contenerizado con Docker Compose** — PostgreSQL 16, backend y frontend
@@ -159,6 +160,7 @@ dominio `kin.*` con sus bounded contexts:
 | `kin.knowledge` | `KnowledgeEngine`, `KnowledgeGateway`, `SourceValidator` (Fase 6) |
 | `kin.interview` | `InterviewEngine`, `InterviewBlueprint`, `AnswerValidator` (Fase 7) |
 | `kin.enrichment` | `EnrichmentEngine`, `FactRanker`, `EvidenceCategory` (Fase 8) |
+| `kin.enterprise` | BC Enterprise (Fase 10, ADR-018): `EnterpriseProject` (aggregate versionado), 8 motores deterministas aislados, eventos, `DocumentRenderer`, REST/SSE |
 
 ---
 
@@ -376,11 +378,35 @@ Orquesta PostgreSQL 16, backend y frontend en contenedores usando las variables 
 | `/auth/register` | `POST` | No | Registro de nuevo usuario |
 | `/auth/login` | `POST` | No | Inicio de sesión, devuelve JWT |
 | `/auth/me` | `GET` | Bearer JWT | Datos del usuario autenticado |
+| `/categories` | `GET` | No | Catálogo de categorías activas ordenadas por `display_order` |
 | `/projects` | `GET` / `POST` | Bearer JWT | Listar / crear proyectos |
 | `/projects/{id}` | `GET` / `PUT` / `DELETE` | Bearer JWT | CRUD de un proyecto específico |
 | `/projects/{id}/chat` | `POST` | Bearer JWT | Enviar mensaje al asistente IA |
 | `/projects/{id}/chat/stream` | `POST` | Bearer JWT | Streaming SSE de la respuesta IA |
 | `/projects/{id}/messages` | `GET` / `DELETE` | Bearer JWT | Historial / limpieza de mensajes |
+| `/pricing-plans` | `GET` | No | Planes de precios activos |
+| `/pricing-plans/{id}` | `GET` | No | Detalle de un plan |
+| `/admin/pricing-plans` | `POST` / `PUT` / `DELETE` | ADMIN | CRUD de planes de precios |
+| `/subscriptions/current` | `GET` | Bearer JWT | Suscripción activa del usuario |
+| `/subscriptions/status` | `GET` | Bearer JWT | Estado del plan (límites, mensajes restantes) |
+| `/subscriptions` | `POST` | Bearer JWT | Suscribirse a un plan |
+| `/subscriptions/trial` | `POST` | Bearer JWT | Iniciar prueba de un plan |
+| `/subscriptions/cancel` | `POST` | Bearer JWT | Cancelar suscripción |
+| `/subscriptions/available-upgrades` | `GET` | Bearer JWT | Planes superiores disponibles |
+| `/stripe/create-checkout-session` | `POST` | Bearer JWT | Sesión de checkout Stripe |
+| `/stripe/webhook` | `POST` | No | Webhook de Stripe |
+| `/enterprise/{projectId}` | `GET` | Bearer JWT | Dashboard enterprise (última versión) |
+| `/enterprise/{projectId}/latest` | `GET` | Bearer JWT | Última versión enterprise |
+| `/enterprise/{projectId}/versions` | `GET` | Bearer JWT | Listado de versiones |
+| `/enterprise/{projectId}/{version}` | `GET` | Bearer JWT | Versión específica |
+| `/enterprise/{projectId}/generate` | `POST` | Bearer JWT | Generar (o regenerar) documentos |
+| `/enterprise/{projectId}/{version}/documents` | `GET` | Bearer JWT | Documentos de una versión |
+| `/enterprise/{projectId}/{version}/documents/{type}` | `GET` | Bearer JWT | Detalle de un documento |
+| `/enterprise/{projectId}/{version}/export` | `GET` | Bearer JWT | Exportar documentos (bundle) |
+| `/enterprise/{projectId}/{version}/export/{format}` | `GET` | Bearer JWT | Exportar en formato (PDF/DOCX/PPTX) |
+| `/enterprise/{projectId}/{version}/export/{type}/{format}` | `GET` | Bearer JWT | Exportar un documento en formato |
+| `/enterprise/{projectId}/{version}/dashboard` | `GET` | Bearer JWT | Dashboard consolidado de una versión |
+| `/enterprise/{projectId}/{version}/stream` | `GET` | Bearer JWT | SSE de progreso de generación |
 
 ---
 
@@ -395,21 +421,25 @@ cd kin-backend
 
 ### Resumen
 
-**1049 tests, 0 fallos, 0 errores, 0 skipped** (`./mvnw clean verify`, **BUILD SUCCESS**).
-Cobertura de dominio ≥ 90 % (JaCoCo):
+**1850 tests backend, 0 fallos, 0 errores, 0 skipped** + **66 tests frontend (Vitest, 12 archivos)**
+(`./mvnw clean verify`, **BUILD SUCCESS**). Cobertura de dominio ≥ 90 % (JaCoCo, último build):
 
 | Dominio | Cobertura |
 |---|---|
-| `kin.conversation` | 100 % |
-| `kin.knowledge` + `ai.knowledge.adapter` | 100 % |
-| `kin.reporting` | 98.96 % |
-| `kin.ai.prompt` | 98.64 % |
+| `kin.conversation` | 99.26 % |
+| `kin.knowledge` + `ai.knowledge.adapter` | 99.70 % |
+| `kin.reporting` (agregado) | 99.07 % |
+| `kin.reporting.opportunity` | 99.41 % |
+| `kin.reporting.risk` | 99.15 % |
+| `kin.reporting.report` | 100 % |
+| `kin.ai` | 100 % |
+| `kin.ai.prompt` | 95.18 % |
 | `kin.enrichment` | 97.65 % |
-| `kin.pipeline` | 96.29 % |
-| `kin.interview` + adapter | 98.39 % |
-| `kin.ai` | 99.7 % |
+| `kin.pipeline` | 96.93 % |
+| `kin.interview` | 99.10 % |
 | `kin.engine` | 99.06 % |
 | `kin.scoring` | 95.14 % |
+| `kin.enterprise` (agregado) | 97.81 % |
 
 ---
 
@@ -432,7 +462,7 @@ Cobertura de dominio ≥ 90 % (JaCoCo):
 - [x] **Fase 6 — Knowledge Engine + RAG** (ADR-014)
 - [x] **Fase 7 — Strategic Interview Engine** (ADR-015)
 - [x] **Fase 8 — Knowledge-Enhanced Analysis** (ADR-016): EnrichmentEngine, SourcesSection, pipeline de 13 etapas
-- [x] **1049 tests, 0 fallos, cobertura de dominio ≥ 90 %**
+- [x] **1850 tests, 0 fallos, cobertura de dominio ≥ 90 %**
 - [x] **Release `v1.0.0-phase8`**
 - [x] **Fase 9 (KIN 2.1)** — Pipeline Resilience (retry/timeout/metrics), EventStage semantics, Response Fallback (ver `kin-docs/FASE9_0.md` y `ADR-017`)
 - [x] **Catálogo de categorías SaaS-ready** — el enum `ProjectCategory` se reemplazó por la entidad/tabla `categories` administrable (ver sección [Catálogo de categorías](#-catálogo-de-categorías-saas-ready))
@@ -442,8 +472,10 @@ Cobertura de dominio ≥ 90 % (JaCoCo):
   **Enterprise Dashboard integrado en kin-frontend** (`/dashboard/projects/[id]/enterprise`, M3F); ciclo
   automático conversación → generación (M3B), resultados reales del pipeline (M3C), Enterprise Score
   persistido (M3D), narrativa IA (M3E), acción de generación desde la UI (M3G) e **infraestructura
-  de producción (M3H)** — `init.sql` sincronizado con V7 y `docker compose up --build` verificado
+  de producción (M3H)** — `init.sql` sincronizado con V7–V10 y `docker compose up --build` verificado
   (PostgreSQL + Backend + Frontend, Flyway V1..V10 desde cero). Ver `kin-docs/AUDITORIA_ENTERPRISE_M3.md`
+- [x] **Release `v2.0.0-phase10`** — tag publicado en GitHub (ver `kin-docs/releases/v2.0.0-phase10.md`)
+- [x] **Fix de esquema de suscripciones (V9/V10)** — `users.current_plan_id` y tabla `user_subscriptions` sincronizados con Flyway
 - [ ] Despliegue en producción (backend en Render, frontend en Vercel, PostgreSQL en Neon)
 - [ ] ScoringEngine heuristic replacement (KIN 2.5) · EventBus async (KIN 2.4) · provider dedup (KIN 2.3)
 - [ ] E2E de frontend con Playwright (flujo completo)
