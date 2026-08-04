@@ -19,6 +19,11 @@ import java.util.List;
  * <p>Reglas (orden de evaluación): {@code response.empty},
  * {@code response.too_long}, {@code response.multiple_questions} y
  * {@code response.forbidden_marker}; {@code accepted = issues.isEmpty()}.</p>
+ *
+ * <p>Política de longitud suave (ADR-017 E5): un rechazo compuesto SOLO por
+ * {@code response.too_long} NO exige sustituir la respuesta — el texto contiene
+ * contenido útil y debe entregarse. {@link #requiresFallback} distingue ese
+ * caso de los rechazos duros (vacío, múltiples preguntas, marcador prohibido).</p>
  */
 public final class ResponseGuard {
 
@@ -64,6 +69,31 @@ public final class ResponseGuard {
         return issues.isEmpty()
                 ? ResponseValidation.ok()
                 : ResponseValidation.rejected(issues);
+    }
+
+    /**
+     * {@code true} si la validación rechazada exige sustituir la respuesta del
+     * LLM por la respuesta segura determinista (rechazo duro).
+     *
+     * <p>Un rechazo compuesto exclusivamente por issues blandos (únicamente
+     * {@code response.too_long}) NO exige fallback: la respuesta contiene
+     * contenido útil y se entrega al usuario. Los rechazos duros
+     * ({@code response.empty}, {@code response.multiple_questions},
+     * {@code response.forbidden_marker}) sí exigen fallback o reintento.</p>
+     *
+     * @param validation validación de la comunicación (obligatoria; {@code null}
+     *                   o aceptada ⇒ {@code false})
+     */
+    public static boolean requiresFallback(ResponseValidation validation) {
+        if (validation == null || validation.accepted()) {
+            return false;
+        }
+        for (String issue : validation.issues()) {
+            if (!ISSUE_TOO_LONG.equals(issue)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private long countQuestionMarks(String response) {

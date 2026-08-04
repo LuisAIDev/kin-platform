@@ -135,10 +135,15 @@ public class ConsultorStage implements PipelineStage {
     /**
      * Flujo con reintento acotado (ADR-017, Etapa E5): al completar cada
      * intento valida la respuesta con {@link ResponseGuard} y, si fue rechazada
-     * y el {@link ResponseFallback} permite reintentar, re-suscribe un flujo
-     * nuevo del LLM (intento siguiente). La validación final queda en
-     * {@code PipelineContext.responseValidation}; la respuesta segura final la
-     * garantiza {@code KinMethod} (safety net). No rompe el contrato SSE.
+     * con un rechazo duro y el {@link ResponseFallback} permite reintentar,
+     * re-suscribe un flujo nuevo del LLM (intento siguiente). La validación
+     * final queda en {@code PipelineContext.responseValidation}; la respuesta
+     * segura final la garantiza {@code KinMethod} (safety net). No rompe el
+     * contrato SSE.
+     *
+     * <p>Política de longitud suave: un rechazo compuesto SOLO por
+     * {@code response.too_long} no se reintenta ni sustituye — los tokens ya
+     * entregados al usuario son contenido útil y el flujo completa tal cual.</p>
      */
     private Flux<String> guardedFlux(PipelineContext context, Flux<String> flux, TurnDirective directive,
                                      AIRequest request, AtomicInteger attempts) {
@@ -148,7 +153,7 @@ public class ConsultorStage implements PipelineStage {
                 .concatWith(Flux.defer(() -> {
                     ResponseValidation validation = responseGuard.validate(accumulated.toString(), directive);
                     context.responseValidation(validation);
-                    if (validation.accepted()) {
+                    if (validation.accepted() || !ResponseGuard.requiresFallback(validation)) {
                         return Flux.empty();
                     }
                     int attempt = attempts.incrementAndGet();

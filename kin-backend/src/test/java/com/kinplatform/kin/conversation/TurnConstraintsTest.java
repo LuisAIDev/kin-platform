@@ -15,7 +15,7 @@ class TurnConstraintsTest {
     @Test
     void question_deberiaConfigurarModoPregunta() {
         var constraints = TurnConstraints.question();
-        assertEquals(280, constraints.maxLength());
+        assertEquals(TurnConstraints.QUESTION_MAX_LENGTH, constraints.maxLength());
         assertTrue(constraints.singleQuestion());
         assertTrue(constraints.forbiddenMarkers().contains("=== CONSULTING REPORT ==="));
         assertTrue(constraints.forbiddenMarkers().contains("## INFORME DE VIABILIDAD"));
@@ -25,7 +25,7 @@ class TurnConstraintsTest {
     @Test
     void reportExplanation_deberiaConfigurarModoReporte() {
         var constraints = TurnConstraints.reportExplanation();
-        assertEquals(1200, constraints.maxLength());
+        assertEquals(TurnConstraints.REPORT_EXPLANATION_MAX_LENGTH, constraints.maxLength());
         assertFalse(constraints.singleQuestion());
         assertTrue(constraints.forbiddenMarkers().isEmpty());
     }

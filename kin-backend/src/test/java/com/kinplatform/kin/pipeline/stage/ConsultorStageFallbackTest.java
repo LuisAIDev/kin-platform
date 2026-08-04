@@ -127,6 +127,22 @@ class ConsultorStageFallbackTest {
     }
 
     @Test
+    void rechazoPorLongitud_deberiaConservarElContenidoSinReintentar() {
+        when(aiResponder.respondStream(any())).thenReturn(
+            Flux.just("a".repeat(TurnConstraints.QUESTION_MAX_LENGTH + 1) + "?"));
+
+        var ctx = streamingContext();
+        stage(new ResponseFallback(List.of("segura"), 2)).execute(ctx);
+
+        StepVerifier.create(ctx.aiResponseFlux())
+            .expectNext("a".repeat(TurnConstraints.QUESTION_MAX_LENGTH + 1) + "?")
+            .verifyComplete();
+        assertFalse(ctx.responseValidation().accepted());
+        assertTrue(ctx.responseValidation().issues().contains("response.too_long"));
+        verify(aiResponder, times(1)).respondStream(any());
+    }
+
+    @Test
     void validacionRechazada_conRetryAgotado_deberiaReintentarHastaAgotar() {
         when(aiResponder.respondStream(any())).thenReturn(Flux.just("¿A? ¿B?"));
 

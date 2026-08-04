@@ -52,11 +52,12 @@ class ResponseFallbackExecutionTest {
     }
 
     @Test
-    void respuestaSegura_deberiaIncluirElMotivo() {
+    void respuestaSegura_deberiaOcultarElMotivoTecnico() {
         var fallback = new ResponseFallback();
         var rejected = ResponseValidation.rejected(List.of("response.empty"));
 
-        assertTrue(fallback.cannedResponse(rejected).contains("response.empty"));
+        assertFalse(fallback.cannedResponse(rejected).contains("response.empty"));
+        assertEquals(ResponseFallback.DEFAULT_CANNED_RESPONSE, fallback.cannedResponse(rejected));
     }
 
     @Test

@@ -6,6 +6,7 @@ import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.ConversationTurn;
 import com.kinplatform.kin.conversation.ResponseFallback;
+import com.kinplatform.kin.conversation.TurnConstraints;
 import com.kinplatform.kin.conversation.TurnResult;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.UUID;
@@ -83,10 +85,28 @@ class PipelineFlowIntegrationTest {
         assertNotNull(result.validation());
         assertFalse(result.validation().accepted());
         assertTrue(result.validation().issues().contains("response.multiple_questions"));
-        assertEquals(ResponseFallback.DEFAULT_CANNED_RESPONSE + " Motivo: response.multiple_questions.",
+        assertEquals(ResponseFallback.DEFAULT_CANNED_RESPONSE,
             result.aiResponse());
         assertNotNull(result.aiResponse());
         assertNotNull(result.consultingReport());
         assertFalse(result.events().isEmpty());
+    }
+
+    @Test
+    void flujoStreaming_conRespuestaMuyLarga_deberiaEntregarElContenidoSinErrorTecnico() {
+        stubContextoCompleto();
+        String base = "## Dónde podría quedar bien tu restaurante\n"
+            + "- Calle del Arsenal\n- Plaza Santo Domingo\n- Callejón Ancho\n- Calle de la Mantilla\n";
+        String respuesta = base + "a".repeat(TurnConstraints.REPORT_EXPLANATION_MAX_LENGTH);
+        when(aiResponder.respondStream(any(AIRequest.class))).thenReturn(Flux.just(respuesta));
+
+        String content = orchestrator().orchestrateStream(turn())
+            .reduce("", (acc, next) -> acc + next)
+            .block();
+
+        assertEquals(respuesta, content);
+        assertFalse(content.contains("No pude generar"));
+        assertFalse(content.contains("response.too_long"));
+        assertFalse(content.contains("Motivo"));
     }
 }

@@ -164,7 +164,7 @@ class ResponseGuardTest {
 
     @Test
     void multiplesIssues_deberiaAcumularse() {
-        String larga = "¿a?".repeat(100) + "=== CONSULTING REPORT ===";
+        String larga = "¿a?".repeat(TurnConstraints.QUESTION_MAX_LENGTH + 1) + "=== CONSULTING REPORT ===";
 
         ResponseValidation validation = guard.validate(larga, directivaQuestion());
 
@@ -220,7 +220,8 @@ class ResponseGuardTest {
         ResponseValidation vacia = guard.validate("", directivaQuestion());
         assertTrue(vacia.issues().contains("response.empty"));
 
-        ResponseValidation larga = guard.validate("a".repeat(281), directivaQuestion());
+        ResponseValidation larga = guard.validate(
+            "a".repeat(TurnConstraints.QUESTION_MAX_LENGTH + 1), directivaQuestion());
         assertTrue(larga.issues().contains("response.too_long"));
 
         ResponseValidation multi = guard.validate("¿a? ¿b?", directivaQuestion());
@@ -236,5 +237,56 @@ class ResponseGuardTest {
 
         assertTrue(validation.accepted());
         assertEquals(List.of(), validation.issues());
+    }
+
+    @Test
+    void requiresFallback_validacionAceptada_deberiaSerFalso() {
+        assertFalse(ResponseGuard.requiresFallback(ResponseValidation.ok()));
+    }
+
+    @Test
+    void requiresFallback_validacionNula_deberiaSerFalso() {
+        assertFalse(ResponseGuard.requiresFallback(null));
+    }
+
+    @Test
+    void requiresFallback_rechazoPorLongitudSolo_deberiaSerFalso() {
+        String larga = "a".repeat(TurnConstraints.QUESTION_MAX_LENGTH + 1);
+        ResponseValidation validation = guard.validate(larga, directivaQuestion());
+
+        assertFalse(validation.accepted());
+        assertTrue(validation.issues().contains("response.too_long"));
+        assertFalse(ResponseGuard.requiresFallback(validation));
+    }
+
+    @Test
+    void requiresFallback_rechazoVacio_deberiaSerCierto() {
+        ResponseValidation validation = guard.validate("", directivaQuestion());
+
+        assertTrue(ResponseGuard.requiresFallback(validation));
+    }
+
+    @Test
+    void requiresFallback_rechazoPorMultiplesPreguntas_deberiaSerCierto() {
+        ResponseValidation validation = guard.validate("¿a? ¿b?", directivaQuestion());
+
+        assertTrue(ResponseGuard.requiresFallback(validation));
+    }
+
+    @Test
+    void requiresFallback_rechazoPorMarcador_deberiaSerCierto() {
+        ResponseValidation validation = guard.validate("Scoring: 1", directivaQuestion());
+
+        assertTrue(ResponseGuard.requiresFallback(validation));
+    }
+
+    @Test
+    void requiresFallback_rechazoMixtoConLongitud_yMarcador_deberiaSerCierto() {
+        ResponseValidation validation = guard.validate(
+            "a".repeat(TurnConstraints.QUESTION_MAX_LENGTH + 1) + " Scoring: 1", directivaQuestion());
+
+        assertTrue(validation.issues().contains("response.too_long"));
+        assertTrue(validation.issues().contains("response.forbidden_marker"));
+        assertTrue(ResponseGuard.requiresFallback(validation));
     }
 }

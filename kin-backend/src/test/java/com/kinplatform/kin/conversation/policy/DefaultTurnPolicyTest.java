@@ -187,7 +187,7 @@ class DefaultTurnPolicyTest {
     @Test
     void restricciones_question_deberianSerCorrectas() {
         var constraints = TurnConstraints.question();
-        assertEquals(280, constraints.maxLength());
+        assertEquals(TurnConstraints.QUESTION_MAX_LENGTH, constraints.maxLength());
         assertTrue(constraints.singleQuestion());
         assertTrue(constraints.forbiddenMarkers().contains("=== CONSULTING REPORT ==="));
         assertTrue(constraints.forbiddenMarkers().contains("## INFORME DE VIABILIDAD"));
@@ -197,7 +197,7 @@ class DefaultTurnPolicyTest {
     @Test
     void restricciones_reportExplanation_deberianSerCorrectas() {
         var constraints = TurnConstraints.reportExplanation();
-        assertEquals(1200, constraints.maxLength());
+        assertEquals(TurnConstraints.REPORT_EXPLANATION_MAX_LENGTH, constraints.maxLength());
         assertTrue(!constraints.singleQuestion());
         assertTrue(constraints.forbiddenMarkers().isEmpty());
     }

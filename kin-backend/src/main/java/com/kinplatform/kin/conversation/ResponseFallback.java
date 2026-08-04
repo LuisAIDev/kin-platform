@@ -50,13 +50,15 @@ public final class ResponseFallback {
     }
 
     /**
-     * Respuesta enlatada contextual: incluye el primer issue de la validación
-     * cuando existe; si no, la respuesta por defecto.
+     * Respuesta enlatada contextual.
+     *
+     * <p>Nunca expone códigos técnicos internos ({@code response.too_long},
+     * {@code finish_reason}, etc.) al usuario: devuelve siempre la respuesta
+     * segura sin filtrar detalles de implementación. La causa de la validación
+     * sigue siendo observable para auditoría en {@link ResponseValidation} y en
+     * los logs, pero jamás en el mensaje de cara al usuario.</p>
      */
     public String cannedResponse(ResponseValidation validation) {
-        if (validation != null && validation.issues() != null && !validation.issues().isEmpty()) {
-            return DEFAULT_CANNED_RESPONSE + " Motivo: " + validation.issues().get(0) + ".";
-        }
         return cannedResponse();
     }
 
