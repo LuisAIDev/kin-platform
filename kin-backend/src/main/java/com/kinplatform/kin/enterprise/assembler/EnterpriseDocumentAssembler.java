@@ -100,7 +100,42 @@ public final class EnterpriseDocumentAssembler {
     }
 
     /**
-     * Serialización determinista del value object a representación neutral.
+     * Crea un documento narrativo (Fase 10, Milestone 3E): artefacto generado
+     * por la IA (o su fallback determinista) para los tipos sin value object
+     * propio ({@code EXECUTIVE_REPORT} y {@code DOFA}). Reutiliza el hash de
+     * entrada y la construcción común de {@link DocumentArtifact}.
+     *
+     * @param version       versión del proyecto empresarial a la que pertenece
+     * @param type          tipo de documento narrativo (no nulo)
+     * @param content       contenido narrativo (no nulo ni en blanco)
+     * @param generatedBy   motor que generó el documento (obligatorio)
+     * @param engineVersion versión del motor (obligatorio)
+     * @return artefacto de documento narrativo
+     * @throws IllegalArgumentException si el contenido es nulo o en blanco
+     */
+    public DocumentArtifact narrative(int version, DocumentType type, String content,
+                                      String generatedBy, String engineVersion) {
+        if (type == null) {
+            throw new IllegalArgumentException("type no puede ser null");
+        }
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("'content' narrativo no puede ser nulo o en blanco.");
+        }
+        return new DocumentArtifact(
+            UUID.randomUUID(),
+            type,
+            content,
+            OffsetDateTime.now(),
+            generatedBy,
+            engineVersion,
+            inputHash(content),
+            version);
+    }
+
+    /**
+     * Serialización determinista del value object a representación neutral
+     * (reutilizable por el generador narrativo para alimentar el prompt de la
+     * IA con los mismos datos que los documentos deterministas).
      *
      * <p>Recorre los componentes del record en orden de declaración y produce
      * líneas {@code nombre: valor}. Las listas se serializan como ítems
@@ -108,7 +143,7 @@ public final class EnterpriseDocumentAssembler {
      * salida depende únicamente de los datos del value object: misma entrada,
      * mismo contenido.</p>
      */
-    private String render(Object value) {
+    public String render(Object value) {
         var sb = new StringBuilder();
         append(sb, value);
         return sb.toString();

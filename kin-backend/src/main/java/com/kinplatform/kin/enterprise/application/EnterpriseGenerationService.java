@@ -1,5 +1,6 @@
 package com.kinplatform.kin.enterprise.application;
 
+import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
@@ -40,12 +41,14 @@ import com.kinplatform.kin.enterprise.events.EnterpriseProjectGenerated;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
+import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.reporting.RecommendationResult;
 import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
 import com.kinplatform.kin.reporting.risk.RiskResult;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -111,11 +114,13 @@ public final class EnterpriseGenerationService {
     private final EnterpriseProjectRepository repository;
     private final DomainEventBus eventBus;
     private final Executor executor;
+    private final EnterpriseNarrativeGenerator narrativeGenerator;
 
     /**
      * Constructor principal con los ocho motores, el ensamblador de
      * documentos, los puertos de salida y el ejecutor para la generación
-     * asíncrona.
+     * asíncrona. Sin generador narrativo (IA), la generación produce solo los
+     * documentos deterministas.
      */
     public EnterpriseGenerationService(
         BusinessModelEngine businessModelEngine,
@@ -130,6 +135,31 @@ public final class EnterpriseGenerationService {
         EnterpriseProjectRepository repository,
         DomainEventBus eventBus,
         Executor executor) {
+        this(businessModelEngine, marketEngine, innovationEngine, financialPlanEngine,
+            roadmapEngine, riskPlanEngine, kpiEngine, enterpriseScoreEngine,
+            documentAssembler, repository, eventBus, executor, null);
+    }
+
+    /**
+     * Constructor aditivo (Fase 10, Milestone 3E): inyecta el puerto de IA
+     * {@code AIResponder} que genera los documentos narrativos (Executive
+     * Report y DOFA) al final de la generación, sin sustituir los motores
+     * deterministas.
+     */
+    public EnterpriseGenerationService(
+        BusinessModelEngine businessModelEngine,
+        MarketEngine marketEngine,
+        InnovationEngine innovationEngine,
+        FinancialPlanEngine financialPlanEngine,
+        RoadmapEngine roadmapEngine,
+        RiskPlanEngine riskPlanEngine,
+        KpiEngine kpiEngine,
+        EnterpriseScoreEngine enterpriseScoreEngine,
+        EnterpriseDocumentAssembler documentAssembler,
+        EnterpriseProjectRepository repository,
+        DomainEventBus eventBus,
+        Executor executor,
+        AIResponder aiResponder) {
         this.businessModelEngine = requireNonNull(businessModelEngine, "businessModelEngine");
         this.marketEngine = requireNonNull(marketEngine, "marketEngine");
         this.innovationEngine = requireNonNull(innovationEngine, "innovationEngine");
@@ -142,6 +172,10 @@ public final class EnterpriseGenerationService {
         this.repository = requireNonNull(repository, "repository");
         this.eventBus = requireNonNull(eventBus, "eventBus");
         this.executor = requireNonNull(executor, "executor");
+        this.narrativeGenerator = aiResponder == null
+            ? null
+            : new EnterpriseNarrativeGenerator(aiResponder, documentAssembler,
+                new EnterpriseNarrativePromptBuilder(documentAssembler));
     }
 
     /**
@@ -153,11 +187,24 @@ public final class EnterpriseGenerationService {
         EnterpriseDocumentAssembler documentAssembler,
         EnterpriseProjectRepository repository,
         DomainEventBus eventBus) {
+        this(documentAssembler, repository, eventBus, null);
+    }
+
+    /**
+     * Constructor de conveniencia aditivo (Fase 10, Milestone 3E): motores
+     * deterministas por defecto más el puerto de IA para la generación
+     * narrativa.
+     */
+    public EnterpriseGenerationService(
+        EnterpriseDocumentAssembler documentAssembler,
+        EnterpriseProjectRepository repository,
+        DomainEventBus eventBus,
+        AIResponder aiResponder) {
         this(new DefaultBusinessModelEngine(), new DefaultMarketEngine(),
             new DefaultInnovationEngine(), new DefaultFinancialPlanEngine(),
             new DefaultRoadmapEngine(), new DefaultRiskPlanEngine(),
             new DefaultKpiEngine(), new DefaultEnterpriseScoreEngine(),
-            documentAssembler, repository, eventBus, ForkJoinPool.commonPool());
+            documentAssembler, repository, eventBus, ForkJoinPool.commonPool(), aiResponder);
     }
 
     /**
@@ -272,12 +319,15 @@ public final class EnterpriseGenerationService {
         EnterpriseProject running = requested.startGeneration();
         repository.save(running);
         try {
-            List<DocumentArtifact> documents = generateDocuments(request, running.version());
+            GeneratedContent content = generateContent(request, running.version());
             EnterpriseProject withDocuments = running;
-            for (DocumentArtifact document : documents) {
+            for (DocumentArtifact document : content.documents()) {
                 withDocuments = withDocuments.attachDocument(document);
             }
-            EnterpriseProject completed = withDocuments.completeGeneration();
+            EnterpriseProject withScore = content.score() != null
+                ? withDocuments.withScore(content.score())
+                : withDocuments;
+            EnterpriseProject completed = withScore.completeGeneration();
             EnterpriseProject saved = repository.save(completed);
             eventBus.publish(new EnterpriseProjectGenerated(projectId, saved.version()));
             return saved;
@@ -287,12 +337,13 @@ public final class EnterpriseGenerationService {
     }
 
     /**
-     * Ejecuta los ocho motores en orden de dependencia y ensambla los
-     * documentos de la versión. El Enterprise Score se calcula como parte de la
-     * coordinación (depende de todos los planes) aunque no se documente en el
+     * Ejecuta los ocho motores en orden de dependencia y produce los documentos
+     * de la versión junto con el Enterprise Score calculado (Fase 10, M3D). El
+     * score se calcula exclusivamente por el {@code EnterpriseScoreEngine}
+     * (única fuente de verdad) y viaja con el contenido para adjuntarse al
      * aggregate.
      */
-    private List<DocumentArtifact> generateDocuments(EnterpriseGenerationRequest request, int version) {        ProjectContext context = request.context();
+    private GeneratedContent generateContent(EnterpriseGenerationRequest request, int version) {        ProjectContext context = request.context();
         RecommendationResult recommendations = request.recommendations();
         OpportunityResult opportunities = request.opportunities();
         KnowledgeResult knowledge = request.knowledge();
@@ -319,14 +370,46 @@ public final class EnterpriseGenerationService {
         KpiResult kpi = nonNull(kpiEngine.evaluate(
             new KpiInput(context, market.plan(), financialPlan.plan())),
             KpiResult.empty());
-        nonNull(enterpriseScoreEngine.evaluate(new EnterpriseScoreInput(
-            context, businessModel.canvas(), market.plan(), innovation.plan(),
-            financialPlan.plan(), riskPlan.matrix(), roadmap.roadmap(), kpi.kpis(),
-            recommendations, opportunities, knowledge, riskResult)),
+        EnterpriseScoreResult scoreResult = nonNull(enterpriseScoreEngine.evaluate(
+            new EnterpriseScoreInput(
+                context, businessModel.canvas(), market.plan(), innovation.plan(),
+                financialPlan.plan(), riskPlan.matrix(), roadmap.roadmap(), kpi.kpis(),
+                recommendations, opportunities, knowledge, riskResult)),
             EnterpriseScoreResult.empty());
 
-        return documentAssembler.assemble(version, businessModel, market, innovation,
-            financialPlan, roadmap, riskPlan, kpi);
+        List<DocumentArtifact> documents = documentAssembler.assemble(version, businessModel,
+            market, innovation, financialPlan, roadmap, riskPlan, kpi);
+        if (narrativeGenerator != null && scoreResult.score() != null) {
+            documents = withNarrativeDocuments(version, context, recommendations, opportunities,
+                knowledge, riskResult, scoreResult.score(), documents);
+        }
+        return new GeneratedContent(documents, scoreResult.score());
+    }
+
+    /**
+     * Anexa los documentos narrativos (Executive Report y DOFA) generados por
+     * la IA al final de la generación, sin modificar los documentos
+     * deterministas (Fase 10, Milestone 3E).
+     */
+    private List<DocumentArtifact> withNarrativeDocuments(int version, ProjectContext context,
+                                                          RecommendationResult recommendations,
+                                                          OpportunityResult opportunities,
+                                                          KnowledgeResult knowledge,
+                                                          RiskResult riskResult,
+                                                          EnterpriseScore score,
+                                                          List<DocumentArtifact> documents) {
+        var all = new ArrayList<>(documents);
+        all.addAll(narrativeGenerator.generate(version, context, recommendations, opportunities,
+            knowledge, riskResult, score, documents));
+        return List.copyOf(all);
+    }
+
+    /**
+     * Contenido de la generación: documentos de la versión y Enterprise Score
+     * calculado por el motor (puede ser {@code null} si el motor no produjo
+     * puntuación).
+     */
+    private record GeneratedContent(List<DocumentArtifact> documents, EnterpriseScore score) {
     }
 
     /**

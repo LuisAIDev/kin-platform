@@ -257,7 +257,7 @@ sin modificar Java ni React.
 | Persistencia | Spring Data JPA / Hibernate |
 | Base de datos (dev) | H2 file-based (Flyway deshabilitado) |
 | Base de datos (prod) | PostgreSQL 16 (Docker) / Neon |
-| Migraciones | Flyway (V1…V6) + `kin-database/init.sql` |
+| Migraciones | Flyway (V1…V8) + `kin-database/init.sql` (referencia histórica) |
 | IA | DeepSeek (default) + OpenAI + Ollama (fallback en español) |
 | Testing | JUnit 5, Mockito, Reactor Test |
 | Cobertura | JaCoCo (dominio ≥ 90 %) |
@@ -305,9 +305,10 @@ proyecto-kin/
 │       └── kin/                          # Dominio puro (POJO)
 │           ├── engine/ pipeline/ context/ decision/ scoring/ reporting/
 │           ├── ai/ ai/prompt/ conversation/ knowledge/ interview/ enrichment/ event/
-├── kin-frontend/           # Cliente — Next.js 16 + TypeScript + Tailwind 4
-├── kin-database/           # init.sql PostgreSQL (Docker)
-├── kin-docs/               # ADRs (001…016), fases, releases, BASELINE
+│           ├── enterprise/                 # BC Enterprise (generación de documentos, ADR-018)
+├── kin-frontend/           # Cliente — Next.js 16 + TypeScript + Tailwind 4 (incluye Enterprise Dashboard en /dashboard/projects/[id]/enterprise)
+├── kin-database/           # init.sql (referencia histórica; Flyway V1..V8 crea el esquema)
+├── kin-docs/               # ADRs (001…018), fases, releases, BASELINE
 ├── docs/                   # Demos y guías (docs/demo/DEMO.md)
 ├── docker-compose.yml      # Orquestación de los 3 servicios
 └── .env.example            # Variables de entorno documentadas
@@ -420,13 +421,13 @@ Cobertura de dominio ≥ 90 % (JaCoCo):
 
 ## 🗺️ Roadmap
 
-> **Status**: ✅ **Phase 8 Complete** · ✅ **Phase 9 Complete** (KIN 2.1 — Pipeline Estabilizado) · ⏳ **Phase 10 Planned**
+> **Status**: ✅ **Phase 8 Complete** · ✅ **Phase 9 Complete** (KIN 2.1 — Pipeline Estabilizado) · ✅ **Phase 10 Complete** (Enterprise Document Generation, ADR-018)
 
 - [x] Autenticación JWT con roles de usuario
 - [x] CRUD completo de proyectos + paginación
 - [x] Chat con IA integrado (bloqueante + streaming SSE)
 - [x] Contenerización con Docker Compose
-- [x] Migraciones versionadas con Flyway (V1…V6)
+- [x] Migraciones versionadas con Flyway (V1…V8)
 - [x] **Fase 5.x — Núcleo inteligente**: pipeline, Scoring, Recommendation, Risk, Opportunity, Report, Prompt
 - [x] **Fase 6 — Knowledge Engine + RAG** (ADR-014)
 - [x] **Fase 7 — Strategic Interview Engine** (ADR-015)
@@ -435,8 +436,16 @@ Cobertura de dominio ≥ 90 % (JaCoCo):
 - [x] **Release `v1.0.0-phase8`**
 - [x] **Fase 9 (KIN 2.1)** — Pipeline Resilience (retry/timeout/metrics), EventStage semantics, Response Fallback (ver `kin-docs/FASE9_0.md` y `ADR-017`)
 - [x] **Catálogo de categorías SaaS-ready** — el enum `ProjectCategory` se reemplazó por la entidad/tabla `categories` administrable (ver sección [Catálogo de categorías](#-catálogo-de-categorías-saas-ready))
-- [ ] **Fase 10** — planeada (ScoringEngine heuristic replacement, EventBus async, provider dedup, despliegue en producción)
+- [x] **Fase 10 — Módulo Enterprise (ADR-018)**: Bounded Context de generación/exportación de documentos
+  de negocio (lean canvas, plan de mercado, plan financiero, hoja de ruta, matriz de riesgos, KPIs, plan de
+  innovación, Executive Report y DOFA) en PDF/DOCX/PPTX, con versionado, REST + OpenAPI, dashboard SSE y
+  **Enterprise Dashboard integrado en kin-frontend** (`/dashboard/projects/[id]/enterprise`, M3F); ciclo
+  automático conversación → generación (M3B), resultados reales del pipeline (M3C), Enterprise Score
+  persistido (M3D), narrativa IA (M3E), acción de generación desde la UI (M3G) e **infraestructura
+  de producción (M3H)** — `init.sql` sincronizado con V7 y `docker compose up --build` verificado
+  (PostgreSQL + Backend + Frontend, Flyway V1..V8 desde cero). Ver `kin-docs/AUDITORIA_ENTERPRISE_M3.md`
 - [ ] Despliegue en producción (backend en Render, frontend en Vercel, PostgreSQL en Neon)
+- [ ] ScoringEngine heuristic replacement (KIN 2.5) · EventBus async (KIN 2.4) · provider dedup (KIN 2.3)
 - [ ] E2E de frontend con Playwright (flujo completo)
 
 ---

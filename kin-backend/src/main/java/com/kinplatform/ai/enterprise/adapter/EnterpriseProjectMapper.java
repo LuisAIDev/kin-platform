@@ -5,7 +5,6 @@ import com.kinplatform.kin.enterprise.aggregate.GenerationStatus;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
 
 import java.util.List;
-
 /**
  * Mapeador del proyecto empresarial (Fase 10, Milestone 2G).
  *
@@ -16,14 +15,14 @@ import java.util.List;
  * el estado se traduce a {@code String} y se reconstruye mediante las fábricas
  * del aggregate según el estado persistido.</p>
  *
- * <p>El score de dominio no forma parte del aggregate (contrato congelado), por
- * lo que la conversión a entidad lo deja en {@code null}: la capacidad de
- * persistencia del score queda soportada por la entidad y se ejercita a nivel
- * de repositorio. Los aggregates {@code REQUESTED} se reconstruyen con
+ * <p>El Enterprise Score se persiste como {@code @Embedded} opcional en la misma
+ * fila (columnas {@code score_*}): una versión {@code COMPLETED} suele portarlo,
+ * mientras que {@code REQUESTED} nunca y {@code RUNNING}/{@code FAILED} pueden
+ * no tenerlo. Los aggregates {@code REQUESTED} se reconstruyen con
  * {@link EnterpriseProject#request(java.util.UUID, int)} (timestamps del
  * instante de recarga, estado transitorio); {@code RUNNING}/{@code COMPLETED}/
- * {@code FAILED} conservan los timestamps persistidos mediante sus fábricas de
- * reconstrucción.</p>
+ * {@code FAILED} conservan los timestamps y el score persistidos mediante sus
+ * fábricas de reconstrucción.</p>
  */
 public final class EnterpriseProjectMapper {
 
@@ -67,6 +66,7 @@ public final class EnterpriseProjectMapper {
         entity.setUpdatedAt(project.updatedAt());
         entity.setCompletedAt(project.completedAt());
         entity.setFailedReason(project.failedReason());
+        entity.setScore(scoreMapper.toEmbedded(project.score()));
         List<DocumentArtifactEntity> documents = project.documents().stream()
             .map(artifact -> documentMapper.toEntity(artifact, entity))
             .toList();
@@ -75,7 +75,8 @@ public final class EnterpriseProjectMapper {
     }
 
     /**
-     * Reconstruye el aggregate de dominio a partir de la entidad persistida.
+     * Reconstruye el aggregate de dominio a partir de la entidad persistida,
+     * incluyendo el Enterprise Score cuando la versión lo porta.
      *
      * @param entity entidad JPA (obligatoria)
      * @return el aggregate de dominio equivalente
@@ -87,15 +88,16 @@ public final class EnterpriseProjectMapper {
         List<DocumentArtifact> documents = entity.getDocuments().stream()
             .map(documentMapper::toDomain)
             .toList();
+        var score = scoreMapper.toDomain(entity.getScore());
         GenerationStatus status = GenerationStatus.valueOf(entity.getStatus());
         return switch (status) {
             case REQUESTED -> EnterpriseProject.request(entity.getProjectId(), entity.getVersion());
             case RUNNING -> EnterpriseProject.start(entity.getProjectId(), entity.getVersion(),
-                entity.getCreatedAt(), entity.getUpdatedAt(), documents);
+                entity.getCreatedAt(), entity.getUpdatedAt(), documents, score);
             case COMPLETED -> EnterpriseProject.complete(entity.getProjectId(), entity.getVersion(),
-                entity.getCreatedAt(), entity.getUpdatedAt(), entity.getCompletedAt(), documents);
+                entity.getCreatedAt(), entity.getUpdatedAt(), entity.getCompletedAt(), documents, score);
             case FAILED -> EnterpriseProject.fail(entity.getProjectId(), entity.getVersion(),
-                entity.getCreatedAt(), entity.getUpdatedAt(), entity.getFailedReason(), documents);
+                entity.getCreatedAt(), entity.getUpdatedAt(), entity.getFailedReason(), documents, score);
         };
     }
 }

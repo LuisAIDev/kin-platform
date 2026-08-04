@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { projectsService, type Project } from "@/services/projects";
 import { chatService, type ChatMessage, type ChatResponse } from "@/services/chat";
@@ -9,6 +10,7 @@ import { forceLogout } from "@/services/session";
 import ViabilityScore from "@/components/ViabilityScore";
 import PdfReportButton from "@/components/PdfReportButton";
 import ProgressCircle from "@/components/ProgressCircle";
+import { GenerateEnterpriseButton } from "@/components/enterprise/GenerateEnterpriseButton";
 import { statusBadge } from "@/utils/badgeColors";
 
 const STREAMING_ID_PREFIX = "streaming-";
@@ -228,6 +230,15 @@ export default function ProjectDetailPage({ params }: Props) {
           )}
 
           <PdfReportButton project={project} messages={messages} />
+
+          <GenerateEnterpriseButton projectId={id} />
+
+          <Link
+            href={`/dashboard/projects/${id}/enterprise`}
+            className="block w-full rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-medium text-white text-center hover:bg-primary-700 transition mt-3"
+          >
+            Enterprise Dashboard
+          </Link>
 
           {project.aiSummary && (
             <div>

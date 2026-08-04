@@ -4,6 +4,9 @@ import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.context.ProjectContextSyncPort;
 import com.kinplatform.kin.conversation.ResponseFallback;
 import com.kinplatform.kin.conversation.ResponseValidation;
+import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.kin.enterprise.application.EnterprisePipelineResultStore;
+import com.kinplatform.kin.enterprise.application.EnterpriseTurnResults;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.pipeline.Pipeline;
@@ -13,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Punto de entrada único del runtime de KIN (consolidación de la Fase 5.2.1).
@@ -36,12 +40,23 @@ public class KinMethod {
     private final ContextRepository contextRepository;
     private final ResponseFallback responseFallback;
     private final ProjectContextSyncPort contextSync;
+    private final EnterprisePipelineResultStore pipelineResultStore;
 
     private static final ProjectContextSyncPort NO_OP_SYNC = (projectId, context) -> { };
+    private static final EnterprisePipelineResultStore NO_OP_RESULT_STORE = new EnterprisePipelineResultStore() {
+        @Override
+        public void store(EnterpriseTurnResults results) { }
+
+        @Override
+        public java.util.Optional<EnterpriseTurnResults> consume(UUID projectId) {
+            return java.util.Optional.empty();
+        }
+    };
 
     public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository) {
         this(pipeline, eventBus, contextRepository,
-            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0), NO_OP_SYNC);
+            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0), NO_OP_SYNC,
+            NO_OP_RESULT_STORE);
     }
 
     /**
@@ -51,7 +66,7 @@ public class KinMethod {
      */
     public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository,
                      ResponseFallback responseFallback) {
-        this(pipeline, eventBus, contextRepository, responseFallback, NO_OP_SYNC);
+        this(pipeline, eventBus, contextRepository, responseFallback, NO_OP_SYNC, NO_OP_RESULT_STORE);
     }
 
     /**
@@ -62,16 +77,46 @@ public class KinMethod {
     public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository,
                      ProjectContextSyncPort contextSync) {
         this(pipeline, eventBus, contextRepository,
-            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0), contextSync);
+            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0), contextSync,
+            NO_OP_RESULT_STORE);
     }
 
     public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository,
                      ResponseFallback responseFallback, ProjectContextSyncPort contextSync) {
+        this(pipeline, eventBus, contextRepository, responseFallback, contextSync, NO_OP_RESULT_STORE);
+    }
+
+    /**
+     * Constructor aditivo (Fase 10, Milestone 3C): inyecta la
+     * {@link EnterprisePipelineResultStore} que recibe los resultados reales
+     * del pipeline cuando un turno completa {@code REPORT}. Sin store, el
+     * runtime conserva el comportamiento previo (offline-first para
+     * Enterprise).
+     */
+    public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository,
+                     ProjectContextSyncPort contextSync,
+                     EnterprisePipelineResultStore pipelineResultStore) {
+        this(pipeline, eventBus, contextRepository,
+            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
+            contextSync, pipelineResultStore);
+    }
+
+    /**
+     * Constructor aditivo (Fase 10, Milestone 3C): inyecta la
+     * {@link EnterprisePipelineResultStore} que recibe los resultados reales
+     * del pipeline cuando un turno completa {@code REPORT}. Sin store, el
+     * runtime conserva el comportamiento previo (offline-first para
+     * Enterprise).
+     */
+    public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository,
+                     ResponseFallback responseFallback, ProjectContextSyncPort contextSync,
+                     EnterprisePipelineResultStore pipelineResultStore) {
         this.pipeline = pipeline;
         this.eventBus = eventBus;
         this.contextRepository = contextRepository;
         this.responseFallback = responseFallback;
         this.contextSync = contextSync == null ? NO_OP_SYNC : contextSync;
+        this.pipelineResultStore = pipelineResultStore == null ? NO_OP_RESULT_STORE : pipelineResultStore;
     }
 
     public KinMethodResult execute(KinMethodCommand command) {
@@ -82,6 +127,7 @@ public class KinMethod {
         contextRepository.save(command.projectId(), result.projectContext());
         contextSync.sync(command.projectId(), result.projectContext());
         publish(result.events());
+        capturePipelineResults(command.projectId(), result);
 
         return new KinMethodResult(
             result.projectContext(),
@@ -150,5 +196,28 @@ public class KinMethod {
         for (var event : events) {
             eventBus.publish(event);
         }
+    }
+
+    /**
+     * Entrega los resultados reales del pipeline a la generación Enterprise
+     * (Fase 10, Milestone 3C): cuando un turno completa {@code REPORT} con
+     * informe presente, publica los cuatro resultados deterministas
+     * (recomendaciones, oportunidades, conocimiento y riesgo) en la
+     * {@link EnterprisePipelineResultStore}. Los resultados se reutilizan
+     * exactamente como los produjo el pipeline: no se recalculan ni se vuelven
+     * a ejecutar motores. Sin store o fuera de REPORT no hay efecto.
+     */
+    private void capturePipelineResults(UUID projectId, PipelineContext result) {
+        if (result.decision() == null
+                || result.decision().action() != ConversationDecision.Action.REPORT
+                || result.consultingReport() == null) {
+            return;
+        }
+        pipelineResultStore.store(new EnterpriseTurnResults(
+            projectId,
+            result.recommendationResult(),
+            result.opportunityResult(),
+            result.knowledgeResult(),
+            result.riskResult()));
     }
 }

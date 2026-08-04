@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -20,10 +22,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Mapeo global de excepciones de la API Enterprise (Fase 10, Milestone 2I).
+ * Mapeo de excepciones de la API Enterprise (Fase 10, Milestone 2I).
  *
- * <p>Traduce las excepciones de dominio y de la capa web a respuestas HTTP con
- * el cuerpo uniforme {@link EnterpriseApiError}:</p>
+ * <p>Advice acotado a los controladores Enterprise (remediación ALTO-2): con
+ * {@code @Order(HIGHEST_PRECEDENCE)} se consulta antes que el advice global y,
+ * al estar limitado por {@code assignableTypes}, no altera el formato de error
+ * de los demás controladores (auth, project, chat…). Traduce las excepciones de
+ * dominio y de la capa web a respuestas HTTP con el cuerpo uniforme
+ * {@link EnterpriseApiError}:</p>
  *
  * <ul>
  *   <li>{@link EnterpriseNotFoundException} y {@link EnterpriseExportException}
@@ -35,7 +41,12 @@ import java.util.Map;
  *   <li>Cualquier otra excepción → 500 Internal Server Error (logeada).</li>
  * </ul>
  */
-@RestControllerAdvice
+@RestControllerAdvice(assignableTypes = {
+    EnterpriseController.class,
+    EnterpriseDashboardController.class,
+    EnterpriseProgressController.class
+})
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class EnterpriseApiExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(EnterpriseApiExceptionHandler.class);

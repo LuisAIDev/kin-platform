@@ -42,6 +42,8 @@ import com.kinplatform.kin.engine.EngineRegistry;
 import com.kinplatform.kin.enrichment.EnrichmentEngine;
 import com.kinplatform.kin.enrichment.FactRanker;
 import com.kinplatform.kin.enrichment.stage.EnrichmentStage;
+import com.kinplatform.kin.enterprise.application.EnterprisePipelineResultStore;
+import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
 import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.knowledge.KnowledgeSource;
 import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
@@ -549,8 +551,10 @@ public class KinConfig {
 
     @Bean
     public KinMethod kinMethod(Pipeline chatPipeline, DomainEventBus eventBus, ContextRepository contextRepository,
-                               ProjectContextSyncPort projectContextSyncPort) {
-        return new KinMethod(chatPipeline, eventBus, contextRepository, projectContextSyncPort);
+                               ProjectContextSyncPort projectContextSyncPort,
+                               EnterprisePipelineResultStore enterprisePipelineResultStore) {
+        return new KinMethod(chatPipeline, eventBus, contextRepository,
+            projectContextSyncPort, enterprisePipelineResultStore);
     }
 
     @Bean
@@ -573,8 +577,9 @@ public class KinConfig {
                                                              DefaultTurnPolicy turnPolicy,
                                                              KinMethod kinMethod,
                                                              ResponseGuard responseGuard,
-                                                             ContextRepository contextRepository) {
+                                                             ContextRepository contextRepository,
+                                                             EnterpriseProjectTrigger enterpriseProjectTrigger) {
         return new ConversationOrchestrator(historyWindow, turnPolicy, kinMethod,
-            responseGuard, contextRepository);
+            responseGuard, contextRepository, enterpriseProjectTrigger);
     }
 }

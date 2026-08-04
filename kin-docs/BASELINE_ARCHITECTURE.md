@@ -263,7 +263,7 @@ El principio rector de la entrevista (ADR-015):
 | CORS dual | `CorsConfig.java` + `SecurityConfig.java` (agregar orígenes en ambos) |
 | JWT | Filtro `JwtAuthenticationFilter` + `JwtService` (stateless) |
 | Env vars | `NEXT_PUBLIC_API_URL`, `.env` (gitignored, copiar de `.env.example`) |
-| Migraciones Flyway | V1…V4 (solo prod/PostgreSQL); dev usa `ddl-auto: update` |
+| Migraciones Flyway | V1…V8 (solo prod/PostgreSQL; V7 crea el BC Enterprise — ADR-018, Fase 10); dev usa `ddl-auto: update` |
 
 ---
 

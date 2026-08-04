@@ -2,6 +2,7 @@ package com.kinplatform.kin.enterprise.aggregate;
 
 import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
+import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ public final class EnterpriseProject {
     private final OffsetDateTime completedAt;
     private final String failedReason;
     private final List<DocumentArtifact> documents;
+    private final EnterpriseScore score;
 
     /**
      * Constructor privado: punto único de validación de todas las invariantes.
@@ -65,7 +67,7 @@ public final class EnterpriseProject {
     private EnterpriseProject(UUID projectId, int version, GenerationStatus status,
                               OffsetDateTime createdAt, OffsetDateTime updatedAt,
                               OffsetDateTime completedAt, String failedReason,
-                              List<DocumentArtifact> documents) {
+                              List<DocumentArtifact> documents, EnterpriseScore score) {
         this.projectId = requireNotNull(projectId, "projectId");
         this.version = requireValidVersion(version);
         this.status = requireNotNull(status, "status");
@@ -75,6 +77,7 @@ public final class EnterpriseProject {
         this.completedAt = validateCompletedAt(status, completedAt);
         this.failedReason = validateFailedReason(status, failedReason);
         this.documents = copyDocuments(documents);
+        this.score = validateScore(status, score);
     }
 
     // ------------------------------------------------------------------
@@ -93,7 +96,7 @@ public final class EnterpriseProject {
     public static EnterpriseProject request(UUID projectId, int version) {
         var now = OffsetDateTime.now();
         return new EnterpriseProject(projectId, version, GenerationStatus.REQUESTED,
-            now, now, null, null, List.of());
+            now, now, null, null, List.of(), null);
     }
 
     /**
@@ -115,8 +118,19 @@ public final class EnterpriseProject {
     public static EnterpriseProject start(UUID projectId, int version,
                                           OffsetDateTime createdAt, OffsetDateTime updatedAt,
                                           List<DocumentArtifact> documents) {
+        return start(projectId, version, createdAt, updatedAt, documents, null);
+    }
+
+    /**
+     * Fábrica de reconstrucción {@code RUNNING} con el Enterprise Score ya
+     * calculado (Fase 10, Milestone 3D).
+     */
+    public static EnterpriseProject start(UUID projectId, int version,
+                                          OffsetDateTime createdAt, OffsetDateTime updatedAt,
+                                          List<DocumentArtifact> documents,
+                                          EnterpriseScore score) {
         return new EnterpriseProject(projectId, version, GenerationStatus.RUNNING,
-            createdAt, updatedAt, null, null, documents);
+            createdAt, updatedAt, null, null, documents, score);
     }
 
     /**
@@ -139,8 +153,20 @@ public final class EnterpriseProject {
                                              OffsetDateTime createdAt, OffsetDateTime updatedAt,
                                              OffsetDateTime completedAt,
                                              List<DocumentArtifact> documents) {
+        return complete(projectId, version, createdAt, updatedAt, completedAt, documents, null);
+    }
+
+    /**
+     * Fábrica de reconstrucción {@code COMPLETED} con el Enterprise Score
+     * persistido (Fase 10, Milestone 3D).
+     */
+    public static EnterpriseProject complete(UUID projectId, int version,
+                                             OffsetDateTime createdAt, OffsetDateTime updatedAt,
+                                             OffsetDateTime completedAt,
+                                             List<DocumentArtifact> documents,
+                                             EnterpriseScore score) {
         return new EnterpriseProject(projectId, version, GenerationStatus.COMPLETED,
-            createdAt, updatedAt, completedAt, null, documents);
+            createdAt, updatedAt, completedAt, null, documents, score);
     }
 
     /**
@@ -162,8 +188,19 @@ public final class EnterpriseProject {
     public static EnterpriseProject fail(UUID projectId, int version,
                                          OffsetDateTime createdAt, OffsetDateTime updatedAt,
                                          String failedReason, List<DocumentArtifact> documents) {
+        return fail(projectId, version, createdAt, updatedAt, failedReason, documents, null);
+    }
+
+    /**
+     * Fábrica de reconstrucción {@code FAILED} con el Enterprise Score parcial
+     * persistido, si lo hubiera (Fase 10, Milestone 3D).
+     */
+    public static EnterpriseProject fail(UUID projectId, int version,
+                                         OffsetDateTime createdAt, OffsetDateTime updatedAt,
+                                         String failedReason, List<DocumentArtifact> documents,
+                                         EnterpriseScore score) {
         return new EnterpriseProject(projectId, version, GenerationStatus.FAILED,
-            createdAt, updatedAt, null, failedReason, documents);
+            createdAt, updatedAt, null, failedReason, documents, score);
     }
 
     // ------------------------------------------------------------------
@@ -205,6 +242,14 @@ public final class EnterpriseProject {
         return documents;
     }
 
+    /**
+     * Enterprise Score de la versión, o {@code null} si aún no se calculó
+     * (un aggregate {@code REQUESTED} nunca porta score).
+     */
+    public EnterpriseScore score() {
+        return score;
+    }
+
     // ------------------------------------------------------------------
     // Transiciones de la máquina de estados
     // ------------------------------------------------------------------
@@ -220,7 +265,7 @@ public final class EnterpriseProject {
     public EnterpriseProject startGeneration() {
         requireState(GenerationStatus.REQUESTED, "iniciar la generación");
         return EnterpriseProject.start(projectId, version, createdAt,
-            OffsetDateTime.now(), documents);
+            OffsetDateTime.now(), documents, score);
     }
 
     /**
@@ -235,7 +280,7 @@ public final class EnterpriseProject {
         requireState(GenerationStatus.RUNNING, "completar la generación");
         var now = OffsetDateTime.now();
         return EnterpriseProject.complete(projectId, version, createdAt, now,
-            now, documents);
+            now, documents, score);
     }
 
     /**
@@ -249,7 +294,7 @@ public final class EnterpriseProject {
     public EnterpriseProject failGeneration(String reason) {
         requireState(GenerationStatus.RUNNING, "abortar la generación");
         return EnterpriseProject.fail(projectId, version, createdAt,
-            OffsetDateTime.now(), reason, documents);
+            OffsetDateTime.now(), reason, documents, score);
     }
 
     // ------------------------------------------------------------------
@@ -276,7 +321,7 @@ public final class EnterpriseProject {
         var updated = new ArrayList<>(documents);
         updated.add(document);
         return EnterpriseProject.start(projectId, version, createdAt,
-            OffsetDateTime.now(), updated);
+            OffsetDateTime.now(), updated, score);
     }
 
     /**
@@ -301,7 +346,27 @@ public final class EnterpriseProject {
         var updated = new ArrayList<>(documents);
         updated.set(index, document);
         return EnterpriseProject.start(projectId, version, createdAt,
-            OffsetDateTime.now(), updated);
+            OffsetDateTime.now(), updated, score);
+    }
+
+    /**
+     * Adjunta el Enterprise Score calculado a la versión en generación
+     * (Fase 10, Milestone 3D). El score se calcula exclusivamente por el
+     * {@code EnterpriseScoreEngine} y se conserva en las transiciones
+     * posteriores ({@link #completeGeneration()}, {@link #failGeneration(String)}).
+     *
+     * @param score Enterprise Score calculado (no nulo)
+     * @return nueva instancia {@code RUNNING} con el score adjuntado
+     * @throws EnterpriseProjectException si el estado no es {@code RUNNING} o el
+     *         score es nulo
+     */
+    public EnterpriseProject withScore(EnterpriseScore score) {
+        requireState(GenerationStatus.RUNNING, "adjuntar el score");
+        if (score == null) {
+            throw new EnterpriseProjectException(identity() + " no admite un score nulo.");
+        }
+        return new EnterpriseProject(projectId, version, status, createdAt,
+            OffsetDateTime.now(), completedAt, failedReason, documents, score);
     }
 
     /**
@@ -468,6 +533,14 @@ public final class EnterpriseProject {
                 + status + ").");
         }
         return failedReason;
+    }
+
+    private static EnterpriseScore validateScore(GenerationStatus status, EnterpriseScore score) {
+        if (status == GenerationStatus.REQUESTED && score != null) {
+            throw new EnterpriseProjectException(
+                "Un proyecto REQUESTED no puede portar Enterprise Score (actual: " + status + ").");
+        }
+        return score;
     }
 
     private static List<DocumentArtifact> copyDocuments(List<DocumentArtifact> documents) {

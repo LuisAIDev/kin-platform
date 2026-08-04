@@ -2,6 +2,14 @@
 -- KIN Platform - Database Initialization Script
 -- Knowledge, Innovation & Navigation
 -- PostgreSQL 16
+--
+-- NOTA (C3/C5 - Opción B): este script ya NO forma parte de la ruta de
+-- despliegue. Queda ÚNICAMENTE como referencia histórica del esquema.
+-- El esquema de producción lo crea Flyway desde cero (migraciones
+-- V1..V8 en kin-backend/src/main/resources/db/migration, incluidas las
+-- tablas enterprise de V7) sobre una base PostgreSQL vacía; ningún
+-- docker-compose monta este archivo en /docker-entrypoint-initdb.d.
+-- M3H (Fase 10): sincronizado con V7 (enterprise_project/enterprise_document).
 -- ============================================================
 
 -- Enable UUID generation
@@ -190,6 +198,70 @@ CREATE TABLE interview_state (
 );
 
 CREATE INDEX idx_interview_state_updated_at ON interview_state (updated_at);
+
+-- ============================================================
+-- TABLE: enterprise_project / enterprise_document
+-- Bounded Context Enterprise (Fase 10, M2G/ADR-018, migración Flyway V7).
+-- Generación/versionado/persistencia de documentos de negocio.
+-- ============================================================
+
+CREATE TABLE enterprise_project (
+    project_id           UUID NOT NULL,
+    version              INTEGER NOT NULL,
+    status               VARCHAR(32) NOT NULL,
+    created_at           TIMESTAMPTZ NOT NULL,
+    updated_at           TIMESTAMPTZ NOT NULL,
+    completed_at         TIMESTAMPTZ,
+    failed_reason        TEXT,
+
+    -- EnterpriseScore (@Embedded opcional, M3D)
+    score_market         DOUBLE PRECISION,
+    score_innovation     DOUBLE PRECISION,
+    score_viability      DOUBLE PRECISION,
+    score_financial      DOUBLE PRECISION,
+    score_risk           DOUBLE PRECISION,
+    score_scalability    DOUBLE PRECISION,
+    score_team           DOUBLE PRECISION,
+    score_sustainability DOUBLE PRECISION,
+    score_overall        INTEGER,
+    score_confidence     DOUBLE PRECISION,
+    score_grade          VARCHAR(16),
+
+    PRIMARY KEY (project_id, version),
+
+    CONSTRAINT fk_enterprise_project_project
+        FOREIGN KEY (project_id)
+        REFERENCES projects (id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE enterprise_document (
+    id             UUID PRIMARY KEY,
+    project_id     UUID NOT NULL,
+    version        INTEGER NOT NULL,
+    type           VARCHAR(32) NOT NULL,
+    content        TEXT NOT NULL,
+    created_at     TIMESTAMPTZ NOT NULL,
+    generated_by   VARCHAR(128) NOT NULL,
+    engine_version VARCHAR(32) NOT NULL,
+    input_hash     VARCHAR(128) NOT NULL,
+    metadata_json  TEXT,
+    checksum       VARCHAR(128),
+    size           BIGINT NOT NULL,
+    mime_type      VARCHAR(128),
+    render_format  VARCHAR(32),
+
+    CONSTRAINT fk_enterprise_document_project
+        FOREIGN KEY (project_id, version)
+        REFERENCES enterprise_project (project_id, version)
+        ON DELETE CASCADE,
+
+    CONSTRAINT uq_enterprise_document_type
+        UNIQUE (project_id, version, type)
+);
+
+CREATE INDEX idx_enterprise_document_project
+    ON enterprise_document (project_id, version);
 
 -- ============================================================
 -- FUNCTION: auto-update updated_at

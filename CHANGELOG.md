@@ -120,13 +120,73 @@ en los paquetes afectados y contratos congelados intactos.
 
 ## [Unreleased]
 
+### Added
+
+- **FASE 10 — Módulo Enterprise (ADR-018, Bounded Context de generación de documentos)**
+  implementado y sancionado:
+  - `kin.enterprise` (dominio POJO, sin Spring): aggregate `EnterpriseProject` con máquina
+    `REQUESTED → RUNNING → COMPLETED | FAILED` y versionado `(projectId, version)`, 20+ value
+    objects con invariantes y 8 motores deterministas puros aislados de `EngineRegistry`.
+  - Aplicación: `EnterpriseGenerationService`, `EnterpriseGenerationOrchestrator`,
+    `EnterpriseExportService/Orchestrator`, `DefaultEnterpriseProjectTrigger`,
+    `EnterpriseProjectRequestedListener` (generación asíncrona), `EnterpriseRendererFactory`,
+    `ProgressPublishingEnterpriseProjectRepository`.
+  - Infraestructura: `ai.enterprise.adapter` (JPA, tablas `enterprise_project`/`enterprise_document`,
+    migración `V7__create_enterprise_project.sql`).
+  - Exportación: renderers PDF/DOCX/PPTX (JDK puro) + bundle ZIP.
+  - REST + OpenAPI: `EnterpriseController` (11 endpoints), `EnterpriseDashboardController`,
+    `EnterpriseProgressController` (SSE con heartbeat de 15 s).
+  - Frontend: `kin-enterprise-ui` (React 19 + Vite + Vitest, **55 tests**, ~96 % cobertura).
+  - **Ciclo automático (M3B)**: la conversación dispara la generación al completar `REPORT` vía
+    `EnterpriseProjectTrigger` → `DomainEventBus` → listener → generación asíncrona; beans de
+    trigger/listener/executor en `EnterpriseWebConfig` y `KinConfig` inyecta el trigger real al
+    `ConversationOrchestrator` (constructor aditivo, `NO_OP_TRIGGER` fuera de producción).
+
+### Changed
+
+- ADR-018 pasa de **Propuesto** a **Aprobado**; `AUDITORIA_ENTERPRISE_M3.md` documenta el estado y
+  el roadmap M3 (M3A..M3H).
+- `KinConfig.conversationOrchestrator(...)` inyecta `EnterpriseProjectTrigger` (wiring aditivo; sin
+  cambios en contratos congelados ni en las firmas `orchestrate/orchestrateStream`).
+- `EnterpriseWebConfig` define los beans `enterpriseGenerationExecutor`, `enterpriseProjectTrigger`
+  y `enterpriseProjectRequestedListener`.
+
+### Improved
+
+- Enterprise se activa desde el flujo real del pipeline (turno REPORT) con progreso SSE y
+  persistencia durable; idempotencia garantizada por versión.
+
+### Fixed
+
+- El ciclo automático dejó de ser código muerto: `DefaultEnterpriseProjectTrigger` y
+  `EnterpriseProjectRequestedListener` ahora son beans Spring y el `ConversationOrchestrator` usa el
+  trigger real en producción.
+- Corrección de arranque en PostgreSQL: `pricing_plans.features` (JSONB) se mapea con
+  `@JdbcTypeCode(SqlTypes.JSON)` y se añade la migración `V8__enforce_pricing_plans_features_jsonb.sql`;
+  el seed de planes ya no falla con "column features is of type jsonb but expression is of type
+  character varying" en Docker Compose.
+
+### Changed
+
+- **M3H (infraestructura de producción) completado**: `kin-database/init.sql` sincronizado con la
+  migración V7 (tablas `enterprise_project`/`enterprise_document`, score `@Embedded`); `docker compose
+  up --build` verificado (PostgreSQL + Backend + Frontend) con Flyway V1..V8 migrando desde una base
+  vacía y el `DataInitializer` sembrando los planes en JSONB. CORS dual validado para el origin del
+  frontend (`http://localhost:3000`).
+
 ### Planned
 
 FASE 9 (KIN 2.1 — "Pipeline Estabilizado") fue **publicada** en la release **`v1.1.0-phase9`**
 (Tag `v1.1.0-phase9` publicado · **Latest Release**); sus novedades están documentadas en su
 entrada del changelog. Nada de esta fase queda pendiente de implementación.
 
-FASE 10 (planeada): reemplazo de la heurística de longitud en `ScoringEngine` (KIN 2.5), EventBus
+FASE 10 (Enterprise, ADR-018): **COMPLETADA**. Roadmap M3 cerrado — M3A (documentación) y M3B
+(ciclo automático) completados; M3C (resultados reales del pipeline en la generación), M3D
+(Enterprise Score persistido), M3E (EXECUTIVE_REPORT/DOFA + narrativa LLM), M3F/G (integración UI en
+kin-frontend y acción de generación desde la UI) y M3H (infraestructura de producción: `init.sql`
+sincronizado con V7 y despliegue Docker Compose verificado con Flyway V1..V8 desde cero).
+
+FASE 11 (planeada): reemplazo de la heurística de longitud en `ScoringEngine` (KIN 2.5), EventBus
 async (KIN 2.4), provider deduplication (KIN 2.3) y despliegue en producción (Render/Neon).
 
 ## [v1.0.0-phase8] - 2026-08-02

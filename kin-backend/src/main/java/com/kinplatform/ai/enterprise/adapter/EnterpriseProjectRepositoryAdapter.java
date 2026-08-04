@@ -2,6 +2,7 @@ package com.kinplatform.ai.enterprise.adapter;
 
 import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,8 +32,12 @@ public class EnterpriseProjectRepositoryAdapter implements EnterpriseProjectRepo
     private final EnterpriseProjectMapper mapper;
 
     /**
+     * Constructor principal de Spring (autowired): el mapeador se crea por
+     * defecto con sus mapeadores internos, sin necesidad de bean adicional.
+     *
      * @param repository repositorio Spring Data (obligatorio)
      */
+    @Autowired
     public EnterpriseProjectRepositoryAdapter(EnterpriseProjectJpaRepository repository) {
         this(repository, new EnterpriseProjectMapper());
     }

@@ -6,10 +6,9 @@ import jakarta.validation.constraints.PositiveOrZero;
 /**
  * Sección del Enterprise Score del dashboard Enterprise (Fase 10, Milestone 2J).
  *
- * <p>Puntuación multidimensional del proyecto empresarial. El aggregate
- * {@code EnterpriseProject} (contrato congelado) no porta el score, por lo que
- * en el flujo actual este DTO es {@code null} en el dashboard; la estructura
- * queda preparada para cuando la puntuación se persista.</p>
+ * <p>Puntuación multidimensional del proyecto empresarial persistida en la
+ * versión (Fase 10, Milestone 3D). Cuando la versión no porta score (p. ej.
+ * {@code REQUESTED}), el dashboard expone {@code null}.</p>
  *
  * @param overall       puntuación global (0-100)
  * @param grade         grado derivado
@@ -23,7 +22,7 @@ import jakarta.validation.constraints.PositiveOrZero;
  * @param team          dimensión de equipo
  * @param sustainability dimensión de sostenibilidad
  */
-@Schema(description = "Enterprise Score del proyecto empresarial (no disponible en el flujo actual)")
+@Schema(description = "Enterprise Score del proyecto empresarial (null si la versión no lo porta)")
 public record EnterpriseScoreSection(
     @PositiveOrZero @Schema(description = "Puntuación global (0-100)", example = "72")
     Integer overall,

@@ -6,6 +6,7 @@ import com.kinplatform.kin.enterprise.application.EnterpriseDocumentBundle;
 import com.kinplatform.kin.enterprise.application.EnterpriseGenerationRequest;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
+import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
 import com.kinplatform.kin.enterprise.valueobjects.RenderFormat;
 import com.kinplatform.kin.enterprise.web.dto.EnterpriseDocumentResponse;
 import com.kinplatform.kin.enterprise.web.dto.EnterpriseDashboardResponse;
@@ -13,6 +14,7 @@ import com.kinplatform.kin.enterprise.web.dto.EnterpriseExportResponse;
 import com.kinplatform.kin.enterprise.web.dto.EnterpriseGenerateRequest;
 import com.kinplatform.kin.enterprise.web.dto.EnterpriseProjectResponse;
 import com.kinplatform.kin.enterprise.web.dto.EnterpriseProjectSummaryResponse;
+import com.kinplatform.kin.enterprise.web.dto.EnterpriseScoreSection;
 import com.kinplatform.kin.enterprise.web.dto.EnterpriseStatusResponse;
 import com.kinplatform.kin.enterprise.web.dto.EnterpriseVersionResponse;
 
@@ -193,9 +195,9 @@ public final class EnterpriseWebMapper {
 
     /**
      * Construye el dashboard de una versión del proyecto empresarial (Fase 10,
-     * Milestone 2J): estado, progreso, documentos, fechas, versiones y
-     * estadísticas. El Enterprise Score no forma parte del aggregate (contrato
-     * congelado) y se expone como {@code null}.
+     * Milestone 2J): estado, progreso, documentos, score, fechas, versiones y
+     * estadísticas. El Enterprise Score se expone cuando la versión lo porta
+     * (Fase 10, Milestone 3D); sin score persistido, {@code null}.
      *
      * @param project  versión consultada (obligatoria)
      * @param versions todas las versiones del proyecto (obligatorio)
@@ -232,10 +234,35 @@ public final class EnterpriseWebMapper {
             project.completedAt(),
             project.failedReason(),
             durationMillis,
-            null,
+            toScoreSection(project.score()),
             toDocuments(project.documents()),
             versions.stream().map(this::toVersion).toList(),
             Map.copyOf(statistics));
+    }
+
+    /**
+     * Convierte el Enterprise Score de dominio en su sección REST (Fase 10,
+     * Milestone 3D). Devuelve {@code null} cuando la versión no porta score.
+     *
+     * @param score Enterprise Score de la versión, o {@code null}
+     * @return sección del score, o {@code null}
+     */
+    public EnterpriseScoreSection toScoreSection(EnterpriseScore score) {
+        if (score == null) {
+            return null;
+        }
+        return new EnterpriseScoreSection(
+            score.overallScore(),
+            score.grade().name(),
+            score.confidence(),
+            score.market(),
+            score.innovation(),
+            score.viability(),
+            score.financial(),
+            score.risk(),
+            score.scalability(),
+            score.team(),
+            score.sustainability());
     }
 
     /**

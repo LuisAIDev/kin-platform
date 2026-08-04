@@ -36,6 +36,18 @@ public final class EnterpriseProjectRequestedListener {
     private final EnterpriseGenerationOrchestrator orchestrator;
     private final ContextRepository contextRepository;
     private final Executor executor;
+    private final EnterprisePipelineResultStore pipelineResultStore;
+
+    /** Store no operativo (sin resultados del pipeline → offline-first). */
+    private static final EnterprisePipelineResultStore NO_OP_RESULT_STORE = new EnterprisePipelineResultStore() {
+        @Override
+        public void store(EnterpriseTurnResults results) { }
+
+        @Override
+        public java.util.Optional<EnterpriseTurnResults> consume(java.util.UUID projectId) {
+            return java.util.Optional.empty();
+        }
+    };
 
     /**
      * Construye el listener y lo suscribe al bus de eventos.
@@ -49,16 +61,39 @@ public final class EnterpriseProjectRequestedListener {
                                               ContextRepository contextRepository,
                                               DomainEventBus eventBus,
                                               Executor executor) {
+        this(orchestrator, contextRepository, eventBus, executor, NO_OP_RESULT_STORE);
+    }
+
+    /**
+     * Constructor aditivo (Fase 10, Milestone 3C): inyecta la
+     * {@link EnterprisePipelineResultStore} con los resultados reales del
+     * pipeline del turno {@code REPORT}, que se fusionan en la
+     * {@code EnterpriseGenerationRequest}. Sin store, la generación opera en
+     * modo offline-first (resultados vacíos), comportamiento previo.
+     *
+     * @param orchestrator       orquestador que ejecuta la generación (obligatorio)
+     * @param contextRepository  repositorio del contexto durable (obligatorio)
+     * @param eventBus           bus de eventos de dominio existente (obligatorio)
+     * @param executor           ejecutor para la generación asíncrona (obligatorio)
+     * @param pipelineResultStore resultados reales del pipeline (obligatorio)
+     */
+    public EnterpriseProjectRequestedListener(EnterpriseGenerationOrchestrator orchestrator,
+                                              ContextRepository contextRepository,
+                                              DomainEventBus eventBus,
+                                              Executor executor,
+                                              EnterprisePipelineResultStore pipelineResultStore) {
         this.orchestrator = requireNonNull(orchestrator, "orchestrator");
         this.contextRepository = requireNonNull(contextRepository, "contextRepository");
         this.executor = requireNonNull(executor, "executor");
+        this.pipelineResultStore = requireNonNull(pipelineResultStore, "pipelineResultStore");
         requireNonNull(eventBus, "eventBus")
             .subscribe(EnterpriseProjectRequested.class, this::onRequested);
     }
 
     /**
      * Maneja el evento de solicitud: delega la generación de la versión
-     * solicitada de forma asíncrona en el ejecutor.
+     * solicitada de forma asíncrona en el ejecutor, fusionando los resultados
+     * reales del pipeline del turno cuando existen.
      *
      * @param event evento de solicitud recibido
      */
@@ -72,8 +107,12 @@ public final class EnterpriseProjectRequestedListener {
                 if (context.isEmpty()) {
                     return;
                 }
+                EnterpriseTurnResults turnResults = pipelineResultStore.consume(event.projectId())
+                    .orElse(EnterpriseTurnResults.empty());
                 EnterpriseGenerationRequest request = new EnterpriseGenerationRequest(
-                    event.projectId(), context.get(), null, null, null, null);
+                    event.projectId(), context.get(),
+                    turnResults.recommendations(), turnResults.opportunities(),
+                    turnResults.knowledge(), turnResults.riskResult());
                 orchestrator.generateRequested(request, event.version());
             } catch (RuntimeException ex) {
                 // La generación registra su propio EnterpriseProjectFailed; no se propaga.

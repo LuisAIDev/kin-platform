@@ -1,9 +1,15 @@
 package com.kinplatform.kin.enterprise.web;
 
+import com.kinplatform.kin.ai.AIResponder;
+import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.kin.enterprise.ports.EnterpriseProjectAccessControl;
+import com.kinplatform.kin.enterprise.application.DefaultEnterpriseProjectTrigger;
 import com.kinplatform.kin.enterprise.application.EnterpriseExportOrchestrator;
 import com.kinplatform.kin.enterprise.application.EnterpriseExportService;
 import com.kinplatform.kin.enterprise.application.EnterpriseGenerationOrchestrator;
 import com.kinplatform.kin.enterprise.application.EnterpriseGenerationService;
+import com.kinplatform.kin.enterprise.application.EnterpriseProjectRequestedListener;
+import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
 import com.kinplatform.kin.enterprise.application.EnterpriseRendererFactory;
 import com.kinplatform.kin.enterprise.application.InMemoryEnterpriseProjectRepository;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
@@ -14,7 +20,10 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.concurrent.Executor;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 /**
  * Test del cableado Spring de la capa de aplicación del módulo Enterprise
@@ -36,6 +45,10 @@ class EnterpriseWebConfigTest {
             assertThat(context).hasSingleBean(EnterpriseGenerationService.class);
             assertThat(context).hasSingleBean(EnterpriseGenerationOrchestrator.class);
             assertThat(context).hasSingleBean(EnterpriseWebMapper.class);
+            assertThat(context).hasSingleBean(Executor.class);
+            assertThat(context).hasSingleBean(EnterpriseProjectTrigger.class);
+            assertThat(context).hasSingleBean(DefaultEnterpriseProjectTrigger.class);
+            assertThat(context).hasSingleBean(EnterpriseProjectRequestedListener.class);
         });
     }
 
@@ -65,6 +78,21 @@ class EnterpriseWebConfigTest {
         @Bean
         DomainEventBus domainEventBus() {
             return new InMemoryDomainEventBus();
+        }
+
+        @Bean
+        ContextRepository contextRepository() {
+            return mock(ContextRepository.class);
+        }
+
+        @Bean
+        AIResponder aiResponder() {
+            return mock(AIResponder.class);
+        }
+
+        @Bean
+        EnterpriseProjectAccessControl enterpriseProjectAccessControl() {
+            return mock(EnterpriseProjectAccessControl.class);
         }
     }
 }
