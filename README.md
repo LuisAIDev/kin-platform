@@ -257,7 +257,7 @@ sin modificar Java ni React.
 | Persistencia | Spring Data JPA / Hibernate |
 | Base de datos (dev) | H2 file-based (Flyway deshabilitado) |
 | Base de datos (prod) | PostgreSQL 16 (Docker) / Neon |
-| Migraciones | Flyway (V1…V8) + `kin-database/init.sql` (referencia histórica) |
+| Migraciones | Flyway (V1…V10) + `kin-database/init.sql` (referencia histórica) |
 | IA | DeepSeek (default) + OpenAI + Ollama (fallback en español) |
 | Testing | JUnit 5, Mockito, Reactor Test |
 | Cobertura | JaCoCo (dominio ≥ 90 %) |
@@ -307,7 +307,7 @@ proyecto-kin/
 │           ├── ai/ ai/prompt/ conversation/ knowledge/ interview/ enrichment/ event/
 │           ├── enterprise/                 # BC Enterprise (generación de documentos, ADR-018)
 ├── kin-frontend/           # Cliente — Next.js 16 + TypeScript + Tailwind 4 (incluye Enterprise Dashboard en /dashboard/projects/[id]/enterprise)
-├── kin-database/           # init.sql (referencia histórica; Flyway V1..V8 crea el esquema)
+├── kin-database/           # init.sql (referencia histórica; Flyway V1..V10 crea el esquema)
 ├── kin-docs/               # ADRs (001…018), fases, releases, BASELINE
 ├── docs/                   # Demos y guías (docs/demo/DEMO.md)
 ├── docker-compose.yml      # Orquestación de los 3 servicios
@@ -427,7 +427,7 @@ Cobertura de dominio ≥ 90 % (JaCoCo):
 - [x] CRUD completo de proyectos + paginación
 - [x] Chat con IA integrado (bloqueante + streaming SSE)
 - [x] Contenerización con Docker Compose
-- [x] Migraciones versionadas con Flyway (V1…V8)
+- [x] Migraciones versionadas con Flyway (V1…V10)
 - [x] **Fase 5.x — Núcleo inteligente**: pipeline, Scoring, Recommendation, Risk, Opportunity, Report, Prompt
 - [x] **Fase 6 — Knowledge Engine + RAG** (ADR-014)
 - [x] **Fase 7 — Strategic Interview Engine** (ADR-015)
@@ -443,7 +443,7 @@ Cobertura de dominio ≥ 90 % (JaCoCo):
   automático conversación → generación (M3B), resultados reales del pipeline (M3C), Enterprise Score
   persistido (M3D), narrativa IA (M3E), acción de generación desde la UI (M3G) e **infraestructura
   de producción (M3H)** — `init.sql` sincronizado con V7 y `docker compose up --build` verificado
-  (PostgreSQL + Backend + Frontend, Flyway V1..V8 desde cero). Ver `kin-docs/AUDITORIA_ENTERPRISE_M3.md`
+  (PostgreSQL + Backend + Frontend, Flyway V1..V10 desde cero). Ver `kin-docs/AUDITORIA_ENTERPRISE_M3.md`
 - [ ] Despliegue en producción (backend en Render, frontend en Vercel, PostgreSQL en Neon)
 - [ ] ScoringEngine heuristic replacement (KIN 2.5) · EventBus async (KIN 2.4) · provider dedup (KIN 2.3)
 - [ ] E2E de frontend con Playwright (flujo completo)

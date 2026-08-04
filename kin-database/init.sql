@@ -6,10 +6,12 @@
 -- NOTA (C3/C5 - Opción B): este script ya NO forma parte de la ruta de
 -- despliegue. Queda ÚNICAMENTE como referencia histórica del esquema.
 -- El esquema de producción lo crea Flyway desde cero (migraciones
--- V1..V8 en kin-backend/src/main/resources/db/migration, incluidas las
--- tablas enterprise de V7) sobre una base PostgreSQL vacía; ningún
--- docker-compose monta este archivo en /docker-entrypoint-initdb.d.
+-- V1..V10 en kin-backend/src/main/resources/db/migration, incluidas las
+-- tablas enterprise de V7 y el plan/suscripción de V9/V10) sobre una base
+-- PostgreSQL vacía; ningún docker-compose monta este archivo en
+-- /docker-entrypoint-initdb.d.
 -- M3H (Fase 10): sincronizado con V7 (enterprise_project/enterprise_document).
+-- Brecha de esquema (V9/V10): current_plan_id en users y user_subscriptions.
 -- ============================================================
 
 -- Enable UUID generation
@@ -36,6 +38,7 @@ CREATE TABLE users (
     credits         INTEGER NOT NULL DEFAULT 10
                         CHECK (credits >= 0),
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+    current_plan_id UUID,
     last_login_at   TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -46,6 +49,7 @@ CREATE TABLE users (
 CREATE INDEX idx_users_role ON users (role);
 CREATE INDEX idx_users_is_active ON users (is_active);
 CREATE INDEX idx_users_created_at ON users (created_at);
+CREATE INDEX idx_users_current_plan_id ON users (current_plan_id);
 
 -- ============================================================
 -- TABLE: projects
@@ -301,6 +305,45 @@ CREATE TABLE pricing_plans (
 );
 
 CREATE INDEX idx_pricing_plans_display_order ON pricing_plans (display_order);
+
+-- FK users -> pricing_plans (V9). La columna current_plan_id vive en CREATE
+-- TABLE users; la FK se declara aquí porque pricing_plans se crea después.
+ALTER TABLE users ADD CONSTRAINT fk_users_current_plan
+    FOREIGN KEY (current_plan_id)
+    REFERENCES pricing_plans (id)
+    ON DELETE SET NULL;
+
+-- ============================================================
+-- TABLE: user_subscriptions (V10 — sistema de suscripciones por plan)
+-- ============================================================
+
+CREATE TABLE user_subscriptions (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id         UUID NOT NULL,
+    plan_id         UUID NOT NULL,
+    start_date      TIMESTAMPTZ NOT NULL,
+    end_date        TIMESTAMPTZ,
+    status          VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
+                        CHECK (status IN ('ACTIVE', 'EXPIRED', 'CANCELLED', 'TRIAL')),
+    messages_used   INTEGER NOT NULL DEFAULT 0,
+    last_reset_date TIMESTAMPTZ NOT NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_user_subscriptions_user
+        FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_user_subscriptions_plan
+        FOREIGN KEY (plan_id)
+        REFERENCES pricing_plans (id)
+        ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_user_subscriptions_user_id ON user_subscriptions (user_id);
+CREATE INDEX idx_user_subscriptions_user_status ON user_subscriptions (user_id, status);
+CREATE INDEX idx_user_subscriptions_plan_id ON user_subscriptions (plan_id);
 
 -- ============================================================
 -- SEED: pricing plans

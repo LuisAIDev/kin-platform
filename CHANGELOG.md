@@ -165,12 +165,18 @@ en los paquetes afectados y contratos congelados intactos.
   `@JdbcTypeCode(SqlTypes.JSON)` y se añade la migración `V8__enforce_pricing_plans_features_jsonb.sql`;
   el seed de planes ya no falla con "column features is of type jsonb but expression is of type
   character varying" en Docker Compose.
+- Corrección de login en PostgreSQL: el commit `44edbf4` (sistema de planes/suscripciones) añadió la
+  relación `User.currentPlan` → `current_plan_id` y la entidad `UserSubscription` SIN migraciones. Se
+  añaden `V9__add_current_plan_to_users.sql` (columna + FK + índice) y
+  `V10__create_user_subscriptions.sql` (tabla + FKs + CHECK + índices); ya no aparece
+  "column u1_0.current_plan_id does not exist" en el login y las suscripciones/límites funcionan.
+  `kin-database/init.sql` sincronizado.
 
 ### Changed
 
 - **M3H (infraestructura de producción) completado**: `kin-database/init.sql` sincronizado con la
   migración V7 (tablas `enterprise_project`/`enterprise_document`, score `@Embedded`); `docker compose
-  up --build` verificado (PostgreSQL + Backend + Frontend) con Flyway V1..V8 migrando desde una base
+  up --build` verificado (PostgreSQL + Backend + Frontend) con Flyway V1..V10 migrando desde una base
   vacía y el `DataInitializer` sembrando los planes en JSONB. CORS dual validado para el origin del
   frontend (`http://localhost:3000`).
 
@@ -184,7 +190,7 @@ FASE 10 (Enterprise, ADR-018): **COMPLETADA**. Roadmap M3 cerrado — M3A (docum
 (ciclo automático) completados; M3C (resultados reales del pipeline en la generación), M3D
 (Enterprise Score persistido), M3E (EXECUTIVE_REPORT/DOFA + narrativa LLM), M3F/G (integración UI en
 kin-frontend y acción de generación desde la UI) y M3H (infraestructura de producción: `init.sql`
-sincronizado con V7 y despliegue Docker Compose verificado con Flyway V1..V8 desde cero).
+sincronizado con V7 y despliegue Docker Compose verificado con Flyway V1..V10 desde cero).
 
 FASE 11 (planeada): reemplazo de la heurística de longitud en `ScoringEngine` (KIN 2.5), EventBus
 async (KIN 2.4), provider deduplication (KIN 2.3) y despliegue en producción (Render/Neon).
