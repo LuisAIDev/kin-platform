@@ -118,7 +118,16 @@ en los paquetes afectados y contratos congelados intactos.
 - Retry bloqueante re-invoca `KinMethod` (eventos publicados por intento, acumulados en el
   `TurnResult`) — comportamiento documentado; default conservador sin reintentos.
 
-## [Unreleased]
+## [v2.0.0-phase10] - 2026-08-04
+
+**FASE 10 (Enterprise Document Generation, ADR-018) completada y cerrada oficialmente.** ADR-018
+**Aprobado**, Bounded Context Enterprise (aggregate, 8 motores deterministas, generación/exportación
+de documentos PDF/DOCX/PPTX), ciclo automático conversación → generación, resultados reales del
+pipeline, Enterprise Score persistido, narrativa IA, Enterprise Dashboard integrado en
+`kin-frontend` y despliegue Docker verificado desde cero. BUILD SUCCESS con **1850 tests backend**
+(0 failures, 0 errors, 0 skipped) + **66 tests frontend**, cobertura de dominio ≥ 90 % (JaCoCo),
+18 ADRs aprobadas y contratos congelados intactos. Incluye el fix de esquema de suscripciones
+(V9/V10) que resuelve el fallo de login `column current_plan_id does not exist` en PostgreSQL.
 
 ### Added
 
@@ -136,7 +145,8 @@ en los paquetes afectados y contratos congelados intactos.
   - Exportación: renderers PDF/DOCX/PPTX (JDK puro) + bundle ZIP.
   - REST + OpenAPI: `EnterpriseController` (11 endpoints), `EnterpriseDashboardController`,
     `EnterpriseProgressController` (SSE con heartbeat de 15 s).
-  - Frontend: `kin-enterprise-ui` (React 19 + Vite + Vitest, **55 tests**, ~96 % cobertura).
+  - Frontend: Enterprise Dashboard **integrado en `kin-frontend`** (`/dashboard/projects/[id]/enterprise`,
+    Next.js 16 + React 19, **66 tests Vitest**); el standalone `kin-enterprise-ui` (Vite) fue eliminado en M3F.
   - **Ciclo automático (M3B)**: la conversación dispara la generación al completar `REPORT` vía
     `EnterpriseProjectTrigger` → `DomainEventBus` → listener → generación asíncrona; beans de
     trigger/listener/executor en `EnterpriseWebConfig` y `KinConfig` inyecta el trigger real al
@@ -182,15 +192,10 @@ en los paquetes afectados y contratos congelados intactos.
 
 ### Planned
 
-FASE 9 (KIN 2.1 — "Pipeline Estabilizado") fue **publicada** en la release **`v1.1.0-phase9`**
-(Tag `v1.1.0-phase9` publicado · **Latest Release**); sus novedades están documentadas en su
-entrada del changelog. Nada de esta fase queda pendiente de implementación.
-
-FASE 10 (Enterprise, ADR-018): **COMPLETADA**. Roadmap M3 cerrado — M3A (documentación) y M3B
-(ciclo automático) completados; M3C (resultados reales del pipeline en la generación), M3D
-(Enterprise Score persistido), M3E (EXECUTIVE_REPORT/DOFA + narrativa LLM), M3F/G (integración UI en
-kin-frontend y acción de generación desde la UI) y M3H (infraestructura de producción: `init.sql`
-sincronizado con V7 y despliegue Docker Compose verificado con Flyway V1..V10 desde cero).
+FASE 10 (Enterprise, ADR-018) fue **publicada** en la release **`v2.0.0-phase10`** (tag publicado,
+2026-08-04); sus novedades están documentadas en `kin-docs/releases/v2.0.0-phase10.md`. Roadmap M3
+cerrado (M3A..M3H) y esquema de suscripciones sincronizado (V9/V10). Nada de esta fase queda
+pendiente de implementación.
 
 FASE 11 (planeada): reemplazo de la heurística de longitud en `ScoringEngine` (KIN 2.5), EventBus
 async (KIN 2.4), provider deduplication (KIN 2.3) y despliegue en producción (Render/Neon).
