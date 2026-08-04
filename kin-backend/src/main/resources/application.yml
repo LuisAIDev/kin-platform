@@ -81,8 +81,13 @@ spring:
   # Spring AI — OpenAI (fallback)
   # -----------------------------------------------------------
   ai:
+    # Selección de modelo: 'deepseek' desactiva el autoconfig OpenAI de Spring AI
+    # (OpenAiChatAutoConfiguration), de modo que el arranque NO exige
+    # OPENAI_API_KEY. El ChatModel real es el bean expuesto por DeepSeekConfig.
+    model:
+      chat: deepseek
     openai:
-      api-key: ${OPENAI_API_KEY}
+      api-key: ${OPENAI_API_KEY:}
       chat:
         model: gpt-4o-mini
         options:
