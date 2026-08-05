@@ -20,6 +20,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,6 +35,8 @@ public class SecurityConfig {
 
     @Value("${app.cors.allowed-origins:http://localhost:3000}")
     private String allowedOrigins;
+
+    private static final String PRODUCTION_ORIGIN = "https://kin-platform.vercel.app";
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -84,9 +87,15 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        var origins = Arrays.stream(allowedOrigins.split(","))
+        var origins = new ArrayList<>(Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
-                .toList();
+                .filter(s -> !s.isBlank())
+                .toList());
+        // Garantía de producción: el frontend de Vercel nunca se pierde,
+        // incluso si ALLOWED_ORIGINS está definido sin incluirlo.
+        if (!origins.contains(PRODUCTION_ORIGIN)) {
+            origins.add(PRODUCTION_ORIGIN);
+        }
         var config = new CorsConfiguration();
         config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
