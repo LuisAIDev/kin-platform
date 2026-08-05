@@ -1,4 +1,4 @@
-FROM maven:3.9-eclipse-temurin-17-alpine AS build
+FROM maven:3-eclipse-temurin-24-alpine AS build
 WORKDIR /app
 
 # Capa de dependencias: solo cambia cuando pom.xml cambia (cache de build óptima)
