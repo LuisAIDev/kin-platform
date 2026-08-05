@@ -54,13 +54,24 @@ class KinMethodFallbackTest {
     }
 
     @Test
-    void validacionRechazada_deberiaAnexarRespuestaSegura() {
+    void validacionRechazada_dura_deberiaAnexarRespuestaSegura() {
         stubPipeline(Flux.just("token"), ResponseValidation.rejected(List.of("issue")));
 
         var flux = kinMethod(new ResponseFallback(List.of("respuesta segura"), 0)).executeStream(command());
 
         StepVerifier.create(flux)
-            .expectNext("token", ResponseFallback.DEFAULT_CANNED_RESPONSE + " Motivo: issue.")
+            .expectNext("token", "respuesta segura")
+            .verifyComplete();
+    }
+
+    @Test
+    void validacionRechazada_porLongitud_noDeberiaAnexarNada() {
+        stubPipeline(Flux.just("token"), ResponseValidation.rejected(List.of("response.too_long")));
+
+        var flux = kinMethod(new ResponseFallback(List.of("respuesta segura"), 0)).executeStream(command());
+
+        StepVerifier.create(flux)
+            .expectNext("token")
             .verifyComplete();
     }
 

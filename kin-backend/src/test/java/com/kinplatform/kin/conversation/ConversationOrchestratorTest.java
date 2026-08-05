@@ -265,12 +265,14 @@ class ConversationOrchestratorTest {
     @Test
     void responseGuard_deberiaRechazarRespuestaExcesivamenteLarga() {
         stubContextoExploracion();
-        stubEjecucion(resultadoAsking("a".repeat(300) + "?"));
+        String respuestaLarga = "a".repeat(TurnConstraints.QUESTION_MAX_LENGTH + 1) + "?";
+        stubEjecucion(resultadoAsking(respuestaLarga));
 
         var result = orchestrator().orchestrate(turn(List.of()));
 
         assertFalse(result.validation().accepted());
         assertTrue(result.validation().issues().contains("response.too_long"));
+        assertEquals(respuestaLarga, result.aiResponse());
     }
 
     @Test

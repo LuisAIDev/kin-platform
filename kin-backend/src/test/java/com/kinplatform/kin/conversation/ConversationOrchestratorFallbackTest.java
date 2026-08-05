@@ -91,9 +91,27 @@ class ConversationOrchestratorFallbackTest {
         var result = orchestrator(new ResponseFallback(List.of("respuesta segura"), 0)).orchestrate(turn());
 
         assertFalse(result.validation().accepted());
-        assertEquals(ResponseFallback.DEFAULT_CANNED_RESPONSE + " Motivo: response.multiple_questions.",
+        assertEquals("respuesta segura",
             result.aiResponse());
         assertNotNull(result.aiResponse());
+        verify(kinMethod, times(1)).execute(any(KinMethodCommand.class));
+    }
+
+    @Test
+    void rechazoPorLongitud_deberiaEntregarElContenidoUtilSinFallback() {
+        stubContexto();
+        String base = "## Dónde podría quedar bien tu restaurante\n"
+            + "- Calle del Arsenal\n- Plaza Santo Domingo\n- Callejón Ancho\n- Calle de la Mantilla\n"
+            + "Estas zonas tienen alto tránsito peatonal y turístico, ideales para un restaurante.\n";
+        String respuestaLarga = base + "a".repeat(TurnConstraints.QUESTION_MAX_LENGTH);
+        when(kinMethod.execute(any(KinMethodCommand.class))).thenReturn(resultado(respuestaLarga));
+
+        var result = orchestrator(new ResponseFallback(List.of("respuesta segura"), 0)).orchestrate(turn());
+
+        assertFalse(result.validation().accepted());
+        assertTrue(result.validation().issues().contains("response.too_long"));
+        assertEquals(respuestaLarga, result.aiResponse());
+        assertFalse(result.aiResponse().contains("respuesta segura"));
         verify(kinMethod, times(1)).execute(any(KinMethodCommand.class));
     }
 
@@ -119,7 +137,7 @@ class ConversationOrchestratorFallbackTest {
         var result = orchestrator(new ResponseFallback(List.of("segura"), 2)).orchestrate(turn());
 
         assertFalse(result.validation().accepted());
-        assertEquals(ResponseFallback.DEFAULT_CANNED_RESPONSE + " Motivo: response.multiple_questions.",
+        assertEquals("segura",
             result.aiResponse());
         assertNotNull(result.aiResponse());
         verify(kinMethod, times(3)).execute(any(KinMethodCommand.class));

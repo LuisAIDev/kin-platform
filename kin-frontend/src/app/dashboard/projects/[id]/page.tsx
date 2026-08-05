@@ -15,6 +15,9 @@ import { statusBadge } from "@/utils/badgeColors";
 
 const STREAMING_ID_PREFIX = "streaming-";
 
+const LONG_ANSWER_THRESHOLD = 1000;
+const CONTINUE_PROMPT = "Continúa, por favor.";
+
 type Props = {
   params: Promise<{ id: string }>;
 };
@@ -67,8 +70,8 @@ export default function ProjectDetailPage({ params }: Props) {
     };
   }, []);
 
-  const handleSend = () => {
-    const text = input.trim();
+  const handleSend = (textOverride?: string) => {
+    const text = (textOverride ?? input).trim();
     if (!text || sendingRef.current) return;
     sendingRef.current = true;
     setSending(true);
@@ -275,6 +278,9 @@ export default function ProjectDetailPage({ params }: Props) {
           {messages.map((msg) => {
             const isUser = msg.role === "USER";
             const isStreaming = msg.id === streamingId;
+            const isLast = msg.id === messages[messages.length - 1]?.id;
+            const showContinue = !isUser && !isStreaming && isLast
+              && msg.content.length >= LONG_ANSWER_THRESHOLD;
             return (
               <div
                 key={msg.id}
@@ -304,6 +310,15 @@ export default function ProjectDetailPage({ params }: Props) {
                   {isStreaming && (
                     <span className="inline-block w-2 h-4 bg-primary-500 animate-pulse ml-0.5" />
                   )}
+                  {showContinue && (
+                    <button
+                      type="button"
+                      onClick={() => handleSend(CONTINUE_PROMPT)}
+                      className="mt-2 inline-block rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 transition"
+                    >
+                      La respuesta es extensa. ¿Deseas que continúe?
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -323,7 +338,7 @@ export default function ProjectDetailPage({ params }: Props) {
               className="flex-1 rounded-xl border border-neutral-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 min-h-11"
             />
             <button
-              onClick={handleSend}
+              onClick={() => handleSend()}
               disabled={sending || !input.trim()}
               className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-50 min-h-11"
             >

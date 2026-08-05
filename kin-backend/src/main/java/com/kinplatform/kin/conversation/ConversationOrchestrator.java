@@ -183,18 +183,24 @@ public class ConversationOrchestrator {
                 result.aiResponse(), directive);
         List<DomainEvent> events = new ArrayList<>(result.events());
 
-        if (!validation.accepted()) {
+        // Reintento acotado SOLO ante un rechazo duro (respuesta no entregable:
+        // vacía, múltiples preguntas o marcador prohibido). Un rechazo por
+        // longitud excesiva (response.too_long) NO se reintenta ni descarta:
+        // la respuesta contiene contenido útil y debe entregarse (política de
+        // longitud suave, ADR-017 E5).
+        if (ResponseGuard.requiresFallback(validation)) {
             int attempt = 0;
-            while (!validation.accepted() && responseFallback.shouldRetry(validation, ++attempt)) {
+            while (ResponseGuard.requiresFallback(validation)
+                    && responseFallback.shouldRetry(validation, ++attempt)) {
                 result = kinMethod.execute(command);
                 events.addAll(result.events());
                 validation = responseGuard.validate(result.aiResponse(), directive);
             }
         }
 
-        String response = validation.accepted()
-                ? result.aiResponse()
-                : responseFallback.cannedResponse(validation);
+        String response = ResponseGuard.requiresFallback(validation)
+                ? responseFallback.cannedResponse(validation)
+                : result.aiResponse();
 
         triggerEnterpriseGeneration(result, turn.projectId());
 

@@ -62,14 +62,15 @@ class ResponseFallbackTest {
     }
 
     @Test
-    void cannedResponse_conValidacionRechazada_deberiaIncluirElMotivo() {
+    void cannedResponse_conValidacionRechazada_deberiaOcultarElMotivoTecnico() {
         var fallback = new ResponseFallback();
-        var validation = ResponseValidation.rejected(List.of("respuesta vacía"));
+        var validation = ResponseValidation.rejected(List.of("response.too_long"));
 
         var response = fallback.cannedResponse(validation);
 
-        assertTrue(response.contains("respuesta vacía"));
-        assertTrue(response.contains(ResponseFallback.DEFAULT_CANNED_RESPONSE));
+        assertEquals(ResponseFallback.DEFAULT_CANNED_RESPONSE, response);
+        assertFalse(response.contains("response.too_long"));
+        assertFalse(response.contains("Motivo"));
     }
 
     @Test

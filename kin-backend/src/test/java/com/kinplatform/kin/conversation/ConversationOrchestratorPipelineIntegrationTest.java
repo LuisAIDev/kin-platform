@@ -6,6 +6,7 @@ import com.kinplatform.kin.context.CompletenessEvaluator;
 import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.context.EvaluationPolicies;
 import com.kinplatform.kin.context.ExplorationPriority;
+import com.kinplatform.kin.context.Message;
 import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.kin.context.strategy.ConversationStrategist;
 import com.kinplatform.kin.context.strategy.DefaultExplorationStrategy;
@@ -241,5 +242,48 @@ class ConversationOrchestratorPipelineIntegrationTest {
         verify(aiResponder).respondStream(captor.capture());
         assertTrue(captor.getValue().systemPrompt().contains("## DIRECTIVA DE COMUNICACIÓN"));
         assertFalse(eventBus.publishedEvents().isEmpty());
+    }
+
+    @Test
+    void flujoStreaming_conRespuestaMayorA6000Caracteres_deberiaEntregarTodoSinErroresNiMensajesTecnicos() {
+        stubNuevoContexto();
+
+        String parte1 = "## Dónde podría quedar bien tu restaurante\n"
+            + "- Calle del Arsenal\n- Plaza Santo Domingo\n- Callejón Ancho\n- Calle de la Mantilla\n"
+            + "Estas zonas combinan tránsito turístico y peatonal constante, ideales para un restaurante.\n";
+        String respuesta1 = parte1 + "x".repeat(6000);
+        assertTrue(respuesta1.length() > 6000);
+        when(aiResponder.respondStream(any(AIRequest.class))).thenReturn(Flux.just(respuesta1));
+
+        var turno1 = new ConversationTurn(PROJECT_ID, USER_ID, "¿Dónde puedo ubicar mi restaurante?",
+            List.of(), "Proyecto Test", "Descripción", "Software");
+        String contenido1 = orchestrator.orchestrateStream(turno1)
+            .reduce("", (acc, next) -> acc + next).block();
+
+        assertEquals(respuesta1, contenido1);
+        assertFalse(contenido1.contains("No pude generar"));
+        assertFalse(contenido1.contains("response.too_long"));
+        assertFalse(contenido1.contains("Motivo"));
+
+        // Turno 2: el usuario pulsa "La respuesta es extensa. ¿Deseas que continúe?"
+        // -> se envía "Continúa, por favor." y la IA produce SOLO la continuación.
+        String respuesta2 = "## Continuación\n"
+            + "Ubicaciones alternativas: Centro Histórico, Getsemaní y Bocagrande.\n"
+            + "- Avenida San Martín\n- Parque de la Marina\n- Castillo San Felipe\n";
+        when(aiResponder.respondStream(any(AIRequest.class))).thenReturn(Flux.just(respuesta2));
+
+        var historial = List.of(
+            Message.user("¿Dónde puedo ubicar mi restaurante?"),
+            Message.assistant(contenido1));
+        var turno2 = new ConversationTurn(PROJECT_ID, USER_ID, "Continúa, por favor.",
+            historial, "Proyecto Test", "Descripción", "Software");
+        String contenido2 = orchestrator.orchestrateStream(turno2)
+            .reduce("", (acc, next) -> acc + next).block();
+
+        assertEquals(respuesta2, contenido2);
+        assertFalse(contenido2.contains("No pude generar"));
+        assertFalse(contenido2.contains("response.too_long"));
+        assertFalse(contenido2.contains("Motivo"));
+        assertEquals(respuesta1, contenido1);
     }
 }

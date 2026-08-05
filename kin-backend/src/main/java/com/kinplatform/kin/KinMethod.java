@@ -4,6 +4,7 @@ import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.context.ProjectContextSyncPort;
 import com.kinplatform.kin.conversation.ResponseFallback;
 import com.kinplatform.kin.conversation.ResponseValidation;
+import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.enterprise.application.EnterprisePipelineResultStore;
 import com.kinplatform.kin.enterprise.application.EnterpriseTurnResults;
@@ -161,10 +162,12 @@ public class KinMethod {
             return null;
         }
         // Safety net (ADR-017, E5): si la validación final de la respuesta
-        // streamed fue rechazada, anexa la respuesta segura determinista.
+        // streamed fue rechazada con un rechazo duro, anexa la respuesta segura
+        // determinista. Un rechazo blando (response.too_long) NO anexa nada: los
+        // tokens ya entregados son contenido útil y se conservan íntegros.
         return flux.concatWith(Flux.defer(() -> {
             ResponseValidation validation = result.responseValidation();
-            if (validation != null && !validation.accepted()) {
+            if (validation != null && ResponseGuard.requiresFallback(validation)) {
                 return Flux.just(responseFallback.cannedResponse(validation));
             }
             return Flux.empty();

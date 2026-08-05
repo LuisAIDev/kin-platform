@@ -216,7 +216,8 @@ class ConsultorStageTest {
 
     @Test
     void execute_streaming_conDirectiva_deberiaMarcarResponseValidationRechazado() {
-        when(aiResponder.respondStream(any(AIRequest.class))).thenReturn(Flux.just("a".repeat(300) + "?"));
+        when(aiResponder.respondStream(any(AIRequest.class)))
+            .thenReturn(Flux.just("a".repeat(TurnConstraints.QUESTION_MAX_LENGTH + 1) + "?"));
 
         var ctx = context(true);
         ctx.turnDirective(directivaExploracion());

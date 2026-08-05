@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -59,10 +60,23 @@ class StreamingFallbackTest {
     }
 
     @Test
-    void streamConValidacionRechazada_deberiaCompletarConRespuestaSegura() {
+    void streamConValidacionRechazada_porLongitud_deberiaConservarLosTokensEntregados() {
         stubPipeline(Flux.just("t1", "t2"), ResponseValidation.rejected(List.of("response.too_long")));
 
-        String expected = "t1t2" + ResponseFallback.DEFAULT_CANNED_RESPONSE + " Motivo: response.too_long.";
+        String content = kinMethod().executeStream(command())
+            .reduce("", (acc, next) -> acc + next)
+            .block();
+
+        assertEquals("t1t2", content);
+        assertFalse(content.contains(ResponseFallback.DEFAULT_CANNED_RESPONSE));
+        assertFalse(content.contains("response.too_long"));
+    }
+
+    @Test
+    void streamConValidacionRechazada_dura_deberiaCompletarConRespuestaSegura() {
+        stubPipeline(Flux.just("t1", "t2"), ResponseValidation.rejected(List.of("response.multiple_questions")));
+
+        String expected = "t1t2" + "respuesta segura";
         String content = kinMethod().executeStream(command())
             .reduce("", (acc, next) -> acc + next)
             .block();
