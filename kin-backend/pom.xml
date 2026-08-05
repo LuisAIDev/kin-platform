@@ -107,6 +107,19 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- Prometheus — endpoint /actuator/prometheus para scraping (Fase 7 observabilidad) -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!-- Redis — caché distribuida opcional (Fase 13, adapter detrás de KnowledgeRepository).
+             Solo se activa con kin.cache.redis.enabled=true; sin servidor no conecta en arranque. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
         <!-- OpenAPI / Swagger — documentación de la API REST del módulo Enterprise (M2I) -->
         <dependency>
             <groupId>org.springdoc</groupId>

@@ -1,6 +1,10 @@
 target/
+data/
 **/.classpath
 **/.project
 **/.settings/
 **/.idea/
 **/*.iml
+**/.env*
+**/.git/
+**/.mvn/wrapper/maven-wrapper.jar

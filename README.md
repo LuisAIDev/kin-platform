@@ -16,6 +16,14 @@
 [![Release](https://img.shields.io/badge/Release-v2.0.0--phase10-6DB33F?style=flat&logo=github&logoColor=white)](https://github.com/LuisAIDev/kin-platform/releases/tag/v2.0.0-phase10)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+<!-- Badges automáticos (FASE 11 — DevSecOps). Activos cuando los workflows corren en GitHub. -->
+[![Backend CI](https://github.com/LuisAIDev/kin-platform/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/LuisAIDev/kin-platform/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/LuisAIDev/kin-platform/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/LuisAIDev/kin-platform/actions/workflows/frontend-ci.yml)
+[![Security Scan](https://github.com/LuisAIDev/kin-platform/actions/workflows/security.yml/badge.svg)](https://github.com/LuisAIDev/kin-platform/actions/workflows/security.yml)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=kin-platform&metric=alert_status)](https://sonarcloud.io/dashboard?id=kin-platform)
+[![Coverage](https://img.shields.io/badge/Cobertura-≥90%25-2ea44f?style=flat)](kin-docs/FASE14_0_PERFORMANCE_ENGINEERING.md)
+[![Version](https://img.shields.io/github/v/release/LuisAIDev/kin-platform?style=flat&logo=github&logoColor=white)](https://github.com/LuisAIDev/kin-platform/releases)
+
 [![GitHub](https://img.shields.io/badge/GitHub-LuisAIDev-181717?style=flat&logo=github&logoColor=white)](https://github.com/LuisAIDev)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Conectemos-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/luis-orlando-guerra-gonzalez-49aa30244)
 
@@ -479,6 +487,127 @@ cd kin-backend
 - [ ] Despliegue en producción (backend en Render, frontend en Vercel, PostgreSQL en Neon)
 - [ ] ScoringEngine heuristic replacement (KIN 2.5) · EventBus async (KIN 2.4) · provider dedup (KIN 2.3)
 - [ ] E2E de frontend con Playwright (flujo completo)
+
+---
+
+## 📊 Product Intelligence (FASE 16)
+
+Inteligencia de producto **offline y sin IA** sobre analytics local (sin envío externo):
+
+- **Dashboard de uso** — `/dashboard/analytics`: KPIs por día/semana/mes, mensajes IA, tokens/coste estimados, feedback, adopción de funciones.
+- **Insights** — `/dashboard/insights`: longitud promedio, preguntas, duración, intención predominante, temas, calidad, satisfacción y línea de tiempo.
+- **Recomendaciones** — `/dashboard/recommendations`: próximos pasos, funciones no usadas, tips y mejora a IA Pro (por reglas).
+- **Reportes** — `/dashboard/reports`: exportación **JSON / CSV / PDF** de todas las métricas (componente separado de `PdfReportButton`).
+
+Servicios: `AnalyticsAggregator`, `UsageStatistics`, `ConversationInsights`, `FeatureUsageTracker`,
+`RecommendationEngine`, `ProductMetrics`, `Exporters` + hook `useProductIntelligence`.
+Ver [`kin-docs/FASE20_0_PRODUCT_INTELLIGENCE.md`](kin-docs/FASE20_0_PRODUCT_INTELLIGENCE.md).
+
+---
+
+## 🛡️ AI Experience & Guardrails (FASE 15)
+
+Capa de protección y experiencia IA en la **capa de aplicación** (sin tocar el dominio):
+
+- **Prompt Guardrails** (backend): `PromptGuardrail` detecta inyección de prompts, jailbreak y
+  solicitudes inseguras de forma **determinista (sin LLM)**, antes de llegar al conversador.
+  Se aplica en `/chat` y `/chat/stream` (`ChatOrchestratorServiceImpl`): mensajes bloqueados
+  reciben una respuesta segura y quedan registrados.
+- **Preferencias IA** (frontend): en `/dashboard/settings` se configura proveedor preferido,
+  creatividad (temperatura) y longitud de respuesta, persistidas localmente.
+- **Cost Intelligence** (frontend): `services/tokenEstimator` estima tokens y coste (heurística
+  chars/4, sin APIs externas).
+- **Feedback 👍👎**: `services/feedback` registra feedback y reporte de respuestas en analytics local.
+- **Analytics IA**: eventos `ai_feedback`, `ai_feedback_report`, `settings_saved` — sin envío a terceros.
+
+> Evolución futura (documentada): resumen automático de conversaciones, reintentos exponenciales
+> sobre proveedores, health scoring de proveedores y consumo real de tokens por conversación.
+
+---
+
+## 🧭 Product Experience (FASE 14)
+
+Mejoras de UX Enterprise implementadas (aditivas, sin tocar backend):
+
+- **Onboarding**: checklist de bienvenida (`OnboardingChecklist`) con pasos guiados y persistencia en `localStorage` (`useOnboarding`).
+- **Feedback visual**: sistema de **toasts** (`ToastProvider`/`useToast`) con roles accesibles y auto-descarte.
+- **Estados visuales reutilizables**: `EmptyState`, `Skeleton`, `ErrorState` (con reintentar).
+- **Configuración**: página `/dashboard/settings` (perfil, tema, idioma, nivel de IA, notificaciones) con `useSettings` + `settingsService`.
+- **Analytics de producto**: `services/analytics` registra eventos en `localStorage`/consola — **sin envío de datos externos** (arquitectura preparada).
+- **Páginas de error**: `app/error.tsx` (error boundary con reintentar) y `app/not-found.tsx`.
+- **Navegación**: enlace "Configuración" añadido al Sidebar.
+
+> Funcionalidades de evolución futura (documentadas, no implementadas): tour interactivo guiado, favoritos/archivado de proyectos, búsqueda/filtros/sort en la lista, regenerar/copiar respuesta en el chat, modo oscuro completo e i18n.
+
+---
+
+## 🧪 Testing Frontend (FASE 12)
+
+El frontend alcanza calidad Enterprise con pruebas automáticas y cobertura ≥90 %.
+
+| Herramienta | Cómo ejecutar | Alcance |
+|---|---|---|
+| Vitest + React Testing Library | `cd kin-frontend && npm test` | 130 tests · componentes, hooks, servicios, utils |
+| Cobertura (v8) | `npx vitest run --coverage` | components 94.5 % · hooks 96.9 % · services 96.7 % · utils 100 % |
+| ESLint | `npm run lint` | 0 errores |
+| TypeScript | `npx tsc --noEmit` | 0 errores |
+| Playwright (E2E) | `npx playwright test` (requiere backend: `cd kin-backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=test`) | login, dashboard flow |
+
+- **Testing Library**: los tests usan roles y `aria-*` accesibles (`getByRole`, `getByLabelText`).
+- **Servicios**: `fetch` mockeado (`vi.spyOn(globalThis, "fetch")`); sin dependencia de Internet.
+- **Accesibilidad**: validación automática de roles/labels/focus en los tests de componentes
+  (recomendación: integrar `jest-axe`/`vitest-axe` para escaneo de contraste y ARIA completo).
+- **Lighthouse**: ejecutar `npx lighthouse http://localhost:3000` (Performance, Accessibility,
+  Best Practices, SEO, Core Web Vitals) — resultados a documentar por entorno.
+- **Visual Regression**: recomendado integrar Playwright snapshots (`toHaveScreenshot`) o
+  Chromatic/Percy; actualmente no hay infraestructura de snapshots visuales.
+
+---
+
+## ☁️ Cloud & Deployment (FASE 13)
+
+KIN está preparada para despliegue Cloud Enterprise:
+
+- **Render Blueprint** — [`render.yaml`](render.yaml): PostgreSQL + backend (Docker, healthcheck `/api/v1/actuator/health`) + frontend (Next.js), `autoDeploy: true`.
+- **Perfiles**: `prod` (propiedades) · `render` · `enterprise` (pool 20, compresión, health probes) · `test` · `dev` (default).
+- **Docker**: imágenes multi-stage con usuario **no-root** y **HEALTHCHECK**; `docker compose up --build`.
+- **Redis** (opcional): adaptador `RedisKnowledgeRepository` detrás del puerto `KnowledgeRepository`, activable con `KIN_REDIS_ENABLED=true` (pendiente de ADR de clave de caché).
+- **Observabilidad**: `/actuator/prometheus`, `/actuator/metrics`, health probes readiness/liveness, logs estructurados con correlación.
+- **Backups/DR y costos**: guía en [`kin-docs/FASE17_0_ENTERPRISE_CLOUD_INFRASTRUCTURE.md`](kin-docs/FASE17_0_ENTERPRISE_CLOUD_INFRASTRUCTURE.md).
+
+Variables de entorno: ver [`.env.example`](.env.example).
+
+---
+
+## 🚀 DevSecOps & CI/CD (FASE 11)
+
+Toda Pull Request valida automáticamente: **build, tests, coverage, seguridad,
+análisis estático y quality gates**.
+
+| Workflow | Qué valida |
+|---|---|
+| [Backend CI](.github/workflows/backend-ci.yml) | Java 17, `mvn verify`, JaCoCo, artefactos |
+| [Frontend CI](.github/workflows/frontend-ci.yml) | Node LTS, `npm ci`, ESLint, Vitest, Playwright, build |
+| [Security Scan](.github/workflows/security.yml) | CodeQL (Java/JS/TS), Gitleaks (secrets), OWASP Dependency Check |
+| [Quality Gate](.github/workflows/quality-gate.yml) | SonarQube (cobertura, duplicación, maintainability, reliability, security) |
+| [Release](.github/workflows/release.yml) | Tags `v*` → artifacts + release notes |
+
+Automatización de dependencias: **Dependabot** (`.github/dependabot.yml`, Maven/npm/Actions/Docker)
+y **Renovate** (`renovate.json`, agrupado por categorías). Escaneo de secretos con **Gitleaks**.
+
+### Branch Protection (recomendado)
+
+- `main` protegida: sin push directo.
+- Require pull request + 1 review aprobado.
+- Require status checks: `Backend CI`, `Frontend CI`, `Security Scan`.
+
+### Conventional Commits
+
+Los mensajes de commit siguen [Conventional Commits](https://www.conventionalcommits.org/):
+`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `ci:` — habilita versionado semántico y release notes automáticos.
+
+> Nota: SonarQube y Codecov requieren `SONAR_TOKEN`/`SONAR_HOST_URL`/`CODECOV_TOKEN` en los
+> secrets del repositorio; sin ellos, esos pasos se omiten sin fallar (pendiente de entorno real).
 
 ---
 

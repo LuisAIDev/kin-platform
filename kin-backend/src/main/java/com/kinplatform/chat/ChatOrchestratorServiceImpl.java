@@ -1,6 +1,8 @@
 package com.kinplatform.chat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kinplatform.ai.guardrails.GuardrailStatus;
+import com.kinplatform.ai.guardrails.PromptGuardrail;
 import com.kinplatform.kin.context.Message;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.ConversationTurn;
@@ -9,9 +11,9 @@ import com.kinplatform.chat.dto.ChatRequest;
 import com.kinplatform.chat.dto.ChatResponse;
 import com.kinplatform.chat.dto.SaveMessageRequest;
 import com.kinplatform.project.ProjectRepository;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -31,21 +33,56 @@ import java.util.UUID;
  * I/O HTTP: persistir los mensajes y emitir el SSE.
  */
 @Service
-@RequiredArgsConstructor
 public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
 
     private static final Logger log = LoggerFactory.getLogger(ChatOrchestratorServiceImpl.class);
     private static final long SSE_TIMEOUT = 180_000L;
+    private static final String BLOCKED_MESSAGE =
+        "No puedo procesar esa solicitud: parece contener instrucciones que intentan "
+        + "manipular el comportamiento del asistente. Por favor, reformúlala.";
 
     private final ChatService chatService;
     private final ProjectRepository projectRepository;
     private final ObjectMapper objectMapper;
     private final ConversationOrchestrator conversationOrchestrator;
+    private final PromptGuardrail promptGuardrail;
+
+    @Autowired
+    public ChatOrchestratorServiceImpl(ChatService chatService, ProjectRepository projectRepository,
+                                       ObjectMapper objectMapper,
+                                       ConversationOrchestrator conversationOrchestrator,
+                                       PromptGuardrail promptGuardrail) {
+        this.chatService = chatService;
+        this.projectRepository = projectRepository;
+        this.objectMapper = objectMapper;
+        this.conversationOrchestrator = conversationOrchestrator;
+        this.promptGuardrail = promptGuardrail;
+    }
+
+    /**
+     * Constructor de compatibilidad (4 args): usaba la firma previa antes de la
+     * capa de guardrails (Fase 15). Activa los guardrails por defecto.
+     */
+    public ChatOrchestratorServiceImpl(ChatService chatService, ProjectRepository projectRepository,
+                                       ObjectMapper objectMapper,
+                                       ConversationOrchestrator conversationOrchestrator) {
+        this(chatService, projectRepository, objectMapper, conversationOrchestrator, new PromptGuardrail());
+    }
 
     @Override
     @Transactional
     public ChatResponse processMessage(UUID userId, UUID projectId, ChatRequest request) {
         var project = findProject(userId, projectId);
+        if (isBlocked(request.getContent())) {
+            var userMessage = saveUserMessage(userId, projectId, request.getContent());
+            var assistantMessage = saveAssistantMessage(userId, projectId, BLOCKED_MESSAGE);
+            return ChatResponse.builder()
+                .userMessageId(userMessage.getId())
+                .assistantMessageId(assistantMessage.getId())
+                .content(BLOCKED_MESSAGE)
+                .tokensUsed(0)
+                .build();
+        }
         var userMessage = saveUserMessage(userId, projectId, request.getContent());
         var history = loadHistoryForContext(userId, projectId);
         var turn = new ConversationTurn(
@@ -71,6 +108,10 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
     @Override
     public SseEmitter processMessageStream(UUID userId, UUID projectId, ChatRequest request) {
         var project = findProject(userId, projectId);
+        if (isBlocked(request.getContent())) {
+            saveUserMessage(userId, projectId, request.getContent());
+            return blockedEmitter();
+        }
         var userMessage = saveUserMessage(userId, projectId, request.getContent());
         var history = loadHistoryForContext(userId, projectId);
         var turn = new ConversationTurn(
@@ -147,8 +188,40 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         return emitter;
     }
 
-    private com.kinplatform.project.Project findProject(UUID userId, UUID projectId) {
-        var project = projectRepository.findById(projectId)
+    private boolean isBlocked(String content) {
+        if (promptGuardrail == null || content == null || content.isBlank()) {
+            return false;
+        }
+        boolean blocked = promptGuardrail.analyze(content).blocked();
+        if (blocked) {
+            log.warn("=== GUARDRAIL BLOCKED === input contained prompt injection signals");
+        }
+        return blocked;
+    }
+
+    private SseEmitter blockedEmitter() {
+        var emitter = new SseEmitter(SSE_TIMEOUT);
+        try {
+            emitter.send(SseEmitter.event()
+                .name("token")
+                .data(objectMapper.writeValueAsString(Map.of("token", BLOCKED_MESSAGE))));
+            emitter.send(SseEmitter.event()
+                .name("done")
+                .data(objectMapper.writeValueAsString(Map.of(
+                    "done", true,
+                    "userMessageId", "",
+                    "assistantMessageId", "",
+                    "content", BLOCKED_MESSAGE,
+                    "tokensUsed", 0))));
+        } catch (IOException e) {
+            log.error("Failed to emit guardrail blocked event", e);
+        } finally {
+            emitter.complete();
+        }
+        return emitter;
+    }
+
+    private com.kinplatform.project.Project findProject(UUID userId, UUID projectId) {        var project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
         if (!project.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("Project does not belong to this user");

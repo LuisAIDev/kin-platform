@@ -8,6 +8,11 @@ server:
     context-path: /api/v1
   tomcat:
     max-swallow-size: 2MB
+  # Fase 13: compresión de respuestas API
+  compression:
+    enabled: true
+    mime-types: application/json,text/plain
+    min-response-size: 1024
 
 spring:
   application:
@@ -111,16 +116,28 @@ ai:
     enabled: true
 
 # -----------------------------------------------------------
-# Actuator — health check endpoints
+# Actuator — health check + metrics (Fase 7 observabilidad:
+# se exponen metrics y prometheus para monitoreo Enterprise;
+# Fase 13: probes readiness/liveness para orquestadores)
 # -----------------------------------------------------------
 management:
   endpoints:
     web:
       exposure:
-        include: health, info
+        include: health, info, metrics, prometheus
   endpoint:
     health:
       show-details: never
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState, db
+        liveness:
+          include: livenessState
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 # -----------------------------------------------------------
 # Stripe

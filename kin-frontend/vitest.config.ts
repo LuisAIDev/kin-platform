@@ -20,11 +20,17 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: [
-        "src/components/enterprise/**",
-        "src/hooks/useEnterpriseProgress.ts",
-        "src/services/enterpriseApi.ts",
+        "src/components/**",
+        "src/hooks/**",
+        "src/services/**",
+        "src/utils/**",
       ],
-      exclude: ["src/components/enterprise/**/*.test.*", "src/test/**"],
+      exclude: [
+        "src/components/**/*.test.*",
+        "src/hooks/**/*.test.*",
+        "src/services/**/*.test.*",
+        "src/test/**",
+      ],
     },
   },
 });

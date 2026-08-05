@@ -1,0 +1,71 @@
+# Dependabot — actualización automática de dependencias (FASE 11)
+
+version: 2
+updates:
+  # Backend Java / Maven
+  - package-ecosystem: "maven"
+    directory: "/kin-backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "java"
+    groups:
+      spring:
+        patterns:
+          - "org.springframework*"
+          - "org.springframework.boot*"
+      jackson:
+        patterns:
+          - "com.fasterxml.jackson*"
+      mockito:
+        patterns:
+          - "org.mockito*"
+
+  # Frontend npm
+  - package-ecosystem: "npm"
+    directory: "/kin-frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "javascript"
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+      next:
+        patterns:
+          - "next"
+          - "eslint-config-next"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "ci"
+      - "dependencies"
+
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/kin-backend"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "docker"
+      - "dependencies"
+
+  - package-ecosystem: "docker"
+    directory: "/kin-frontend"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "docker"
+      - "dependencies"

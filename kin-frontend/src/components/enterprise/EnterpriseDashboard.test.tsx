@@ -244,7 +244,7 @@ describe("EnterpriseDashboard", () => {
     render(<EnterpriseDashboard projectId="p1" version={1} />);
 
     await waitFor(() =>
-      expect(enterpriseApi.getDashboard.mock.calls.length).toBeGreaterThanOrEqual(2),
+      expect(vi.mocked(enterpriseApi.getDashboard).mock.calls.length).toBeGreaterThanOrEqual(2),
     );
     mockConnection = {
       events: [],

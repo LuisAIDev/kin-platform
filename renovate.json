@@ -1,0 +1,31 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits"],
+  "dependencyDashboard": true,
+  "prHourlyLimit": 4,
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "matchManagers": ["maven"],
+      "groupName": "Java dependencies",
+      "addLabels": ["java"],
+      "matchPackagePatterns": ["*"]
+    },
+    {
+      "matchManagers": ["npm"],
+      "groupName": "Frontend dependencies",
+      "addLabels": ["javascript"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "addLabels": ["ci"]
+    },
+    {
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "groupName": "Docker images",
+      "addLabels": ["docker"]
+    }
+  ],
+  "schedule": ["before 6am on monday"]
+}

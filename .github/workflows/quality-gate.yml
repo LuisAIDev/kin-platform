@@ -1,0 +1,48 @@
+name: Quality Gate (SonarQube)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  sonar:
+    name: SonarQube analysis
+    runs-on: ubuntu-latest
+    # Solo se ejecuta si hay servidor SonarQube configurado (SONAR_TOKEN).
+    # Sin servidor, el job se omite sin fallar (entorno de despliegue pendiente).
+    if: ${{ secrets.SONAR_TOKEN != '' && secrets.SONAR_HOST_URL != '' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Generate JaCoCo report (requerido por el Quality Gate)
+        working-directory: kin-backend
+        run: ./mvnw -B -q test
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        with:
+          projectBaseDir: kin-backend
+          args: >
+            -Dsonar.projectKey=kin-platform
+            -Dsonar.projectName=KIN Platform
+            -Dsonar.sources=src/main/java
+            -Dsonar.tests=src/test/java
+            -Dsonar.java.binaries=target/classes
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+            -Dsonar.qualitygate.wait=true

@@ -44,7 +44,7 @@ export default function PricingPage() {
           `${origin}/dashboard/subscription?success=true`,
           `${origin}/dashboard/pricing?cancelled=true`
         );
-        window.location.href = checkout.url;
+        window.location.assign(checkout.url);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al procesar la suscripción");

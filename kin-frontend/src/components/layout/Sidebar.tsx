@@ -8,8 +8,13 @@ import { useState } from "react";
 const NAV_ITEMS = [
   { label: "Mis Proyectos", href: "/dashboard/projects" },
   { label: "Nuevo Proyecto", href: "/dashboard/projects/new" },
+  { label: "Analytics", href: "/dashboard/analytics" },
+  { label: "Insights", href: "/dashboard/insights" },
+  { label: "Recomendaciones", href: "/dashboard/recommendations" },
+  { label: "Reportes", href: "/dashboard/reports" },
   { label: "Planes", href: "/dashboard/pricing" },
   { label: "Suscripción", href: "/dashboard/subscription" },
+  { label: "Configuración", href: "/dashboard/settings" },
 ];
 
 const ADMIN_ITEM = { label: "Administración", href: "/dashboard/admin/pricing" };

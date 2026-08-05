@@ -1,136 +1,91 @@
 package com.kinplatform.kin.knowledge.engine;
 
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeFact;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
+import com.kinplatform.kin.knowledge.KnowledgeRepository;
 import com.kinplatform.kin.knowledge.KnowledgeRequest;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.SourceTrust;
-import com.kinplatform.kin.knowledge.SourceValidation;
-
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
+import com.kinplatform.kin.knowledge.orchestrator.ContextAssembler;
+import com.kinplatform.kin.knowledge.orchestrator.ExecutionEnvironment;
+import com.kinplatform.kin.knowledge.orchestrator.KnowledgeOrchestrator;
+import com.kinplatform.kin.knowledge.orchestrator.OrchestrationRequest;
+import com.kinplatform.kin.knowledge.orchestrator.OrchestrationStrategy;
+import com.kinplatform.kin.knowledge.policy.KnowledgePolicyEngine;
+import com.kinplatform.kin.knowledge.policy.PolicyConfig;
+import com.kinplatform.kin.knowledge.planner.QueryPlanner;
 
 /**
- * Coordinador de la adquisición de conocimiento externo (ADR-014, §5.2).
+ * Punto de composición de la adquisición de conocimiento (ADR-014, §5.2) tras la
+ * integración física del Knowledge Engine.
  *
- * <p>Únicamente orquesta: deriva la {@link KnowledgeQuery} del
- * {@link KnowledgeRequest}, consulta las fuentes del {@link SourceRegistry},
- * delega la validación en el {@link SourceValidator}, normaliza los candidatos
- * aceptados en {@link KnowledgeFact} y agrega las métricas deterministas
- * (confianza, calidad, fuentes aceptadas y descartadas) para construir el
- * {@link KnowledgeResult}.</p>
+ * <p>Ya no contiene lógica de coordinación: construye el request de orquestación,
+ * delega el ciclo completo al {@link KnowledgeOrchestrator} y devuelve el
+ * {@link KnowledgeResult}. No conoce estrategias, políticas ni fuentes concretas.
+ * Sin red o sin fuentes, degrada con gracia a un resultado vacío (offline-first).</p>
  *
- * <p>No contiene reglas de negocio (protocolo, allowlist, estado, frescura,
- * formato, deduplicación y confianza viven en {@link SourceValidator}), no
- * toca la red ni conoce Internet: el dominio solo consume el puerto
- * {@link com.kinplatform.kin.knowledge.KnowledgeSource}.</p>
+ * <p>El contrato público {@code acquire(KnowledgeRequest) → KnowledgeResult} y los
+ * constructores existentes se conservan; el comportamiento observable es idéntico
+ * al núcleo congelado (las métricas de confianza/explicación se replican en el
+ * ensamblador de dominio).</p>
  */
 public class KnowledgeGateway {
 
-    private final SourceRegistry registry;
-    private final SourceValidator validator;
+    private final KnowledgeOrchestrator orchestrator;
+    private final ContextAssembler assembler;
+
+    public KnowledgeGateway(SourceRegistry registry, SourceValidator validator) {
+        this(registry, validator, null);
+    }
 
     /**
-     * @param registry  registro de fuentes; si es {@code null} se usa uno vacío
-     * @param validator validador de candidatos; si es {@code null} se usa el
-     *                  validador estricto (offline-first)
+     * @param registry   registro de fuentes; si es {@code null} se usa uno vacío
+     * @param validator  validador de candidatos; si es {@code null} se usa el
+     *                   validador estricto (offline-first)
+     * @param repository caché de resultados validados (puede ser {@code null}:
+     *                   sin caché, como el núcleo congelado)
      */
-    public KnowledgeGateway(SourceRegistry registry, SourceValidator validator) {
-        this.registry = registry == null ? SourceRegistry.empty() : registry;
-        this.validator = validator == null ? SourceValidator.strict() : validator;
+    public KnowledgeGateway(SourceRegistry registry, SourceValidator validator,
+                            KnowledgeRepository repository) {
+        var safeRegistry = registry == null ? SourceRegistry.empty() : registry;
+        var safeValidator = validator == null ? SourceValidator.strict() : validator;
+        this.orchestrator = new KnowledgeOrchestrator(
+            new QueryPlanner(), new KnowledgePolicyEngine(),
+            new SourceRegistryAdapter(safeRegistry), repository,
+            new SourceValidatorAdapter(safeValidator),
+            new DomainContextRanker(), new DomainContextAssembler());
+        this.assembler = new DomainContextAssembler();
+    }
+
+    /**
+     * Factory de inyección completa (integración): permite cablear un
+     * {@link KnowledgeOrchestrator} con colaboradores de ejecución y un
+     * {@link ContextAssembler} propios.
+     */
+    public static KnowledgeGateway wired(KnowledgeOrchestrator orchestrator, ContextAssembler assembler) {
+        return new KnowledgeGateway(orchestrator, assembler);
+    }
+
+    private KnowledgeGateway(KnowledgeOrchestrator orchestrator, ContextAssembler assembler) {
+        this.orchestrator = orchestrator;
+        this.assembler = assembler == null ? new DomainContextAssembler() : assembler;
     }
 
     /**
      * Adquiere y normaliza conocimiento para una {@link KnowledgeRequest},
-     * calculando determinísticamente confianza y calidad. Sin red, degrada con
-     * gracia a un resultado vacío (offline-first).
+     * delegando el ciclo completo al orquestador. Sin red, degrada con gracia a
+     * un resultado vacío (offline-first).
      */
     public KnowledgeResult acquire(KnowledgeRequest request) {
         if (request == null || request.topic() == null || request.topic().isBlank()) {
-            return emptyResult("Tema vacío; no se consultaron fuentes.");
+            return assembler.emptyResult("Tema vacío; no se consultaron fuentes.");
         }
-        var query = KnowledgeQuery.from(request);
-        var candidates = collectCandidates(query);
-        if (candidates.isEmpty()) {
-            return emptyResult("No se obtuvieron candidatos de las fuentes registradas.");
+        var orchestration = orchestrator.coordinateWithResult(OrchestrationRequest.of(
+            request, PolicyConfig.defaults(), OrchestrationStrategy.GRACEFUL_DEGRADATION,
+            ExecutionEnvironment.online()));
+        KnowledgeResult knowledge = orchestration.knowledge();
+        if (knowledge != null) {
+            return knowledge;
         }
-        var validations = validator.validateAll(candidates);
-        var facts = new ArrayList<KnowledgeFact>();
-        var used = new LinkedHashSet<String>();
-        for (int i = 0; i < candidates.size(); i++) {
-            if (validations.get(i).accepted()) {
-                facts.add(normalize(candidates.get(i), validations.get(i).trust()));
-                used.add(candidates.get(i).sourceId());
-            }
-        }
-        var factsCopy = List.copyOf(facts);
-        var sourcesUsed = List.copyOf(new ArrayList<>(used));
-        var validationsCopy = List.copyOf(validations);
-        double confidence = computeConfidence(factsCopy, candidates.size());
-        String explanation = buildExplanation(factsCopy, validationsCopy, candidates.size(), confidence);
-        return new KnowledgeResult(factsCopy, sourcesUsed, validationsCopy, confidence,
-            explanation, KnowledgeEngine.GENERATOR_NAME, KnowledgeEngine.ENGINE_VERSION);
-    }
-
-    private List<KnowledgeCandidate> collectCandidates(KnowledgeQuery query) {
-        var all = new ArrayList<KnowledgeCandidate>();
-        for (var source : registry.all()) {
-            var fetched = source.fetch(query);
-            if (fetched != null) {
-                all.addAll(fetched);
-            }
-        }
-        return all;
-    }
-
-    private KnowledgeFact normalize(KnowledgeCandidate candidate, SourceTrust trust) {
-        String category = candidate.meta().getOrDefault(SourceValidator.META_CATEGORY, "");
-        return KnowledgeFact.of(candidate.content().strip(), candidate.sourceId(), candidate.url(),
-            candidate.publishedAt(), trust, category);
-    }
-
-    private double computeConfidence(List<KnowledgeFact> facts, int totalCandidates) {
-        if (facts.isEmpty()) {
-            return 0.0;
-        }
-        double acceptance = (double) facts.size() / totalCandidates;
-        double avgTrust = facts.stream()
-            .mapToDouble(fact -> trustWeight(fact.trust()))
-            .average().orElse(0.0);
-        double quality = 0.5 * acceptance + 0.5 * avgTrust;
-        double contentQuality = facts.stream()
-            .mapToDouble(fact -> contentQuality(fact.claim()))
-            .average().orElse(0.0);
-        double confidence = 0.6 * quality + 0.4 * contentQuality;
-        return Math.max(0.0, Math.min(1.0, confidence));
-    }
-
-    private double trustWeight(SourceTrust trust) {
-        return switch (trust) {
-            case OFFICIAL_PUBLIC -> 1.0;
-            case SECONDARY -> 0.7;
-            case UNVERIFIED -> 0.4;
-        };
-    }
-
-    private double contentQuality(String claim) {
-        return Math.min(1.0, claim == null ? 0.0 : claim.length() / 200.0);
-    }
-
-    private String buildExplanation(List<KnowledgeFact> facts, List<SourceValidation> validations,
-                                    int totalCandidates, double confidence) {
-        int accepted = facts.size();
-        int rejected = totalCandidates - accepted;
-        String qualityPercent = String.format(Locale.ROOT, "%.0f", confidence * 100);
-        return "Candidatos aceptados: " + accepted + " de " + totalCandidates
-            + " (" + rejected + " descartados). Calidad: " + qualityPercent + "%.";
-    }
-
-    private KnowledgeResult emptyResult(String reason) {
-        return new KnowledgeResult(List.of(), List.of(), List.of(), 0.0,
-            reason, KnowledgeEngine.GENERATOR_NAME, KnowledgeEngine.ENGINE_VERSION);
+        String reason = orchestration.orchestration().failureReason();
+        return assembler.emptyResult(reason == null || reason.isBlank()
+            ? "No se obtuvo conocimiento externo." : reason);
     }
 }
