@@ -110,7 +110,7 @@ Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven
 | `EventStage` | Publica eventos según decisión (ASK→Question, REPORT→Report+Score, siempre ConversationCompleted) |
 | `PipelineContext` | Flujo de datos mutable entre stages + `engineResults` + flag `streaming` + `aiResponseFlux` + `turnDirective` + `responseValidation` (ADR-013) + `knowledgeResult` (ADR-014) + `interviewResult` (ADR-015) |
 
-El pipeline actual tiene **12 stages**: Analizador → Evaluador → Estratega → **Entrevista** → **Conocimiento** → Scoring → Recomendaciones → Riesgos → Oportunidades → **Reporte** → **Consultor** → Eventos. `InterviewStage` se inserta entre `StrategistStage` y `KnowledgeStage` (ADR-015, integración aditiva patrón ADR-011/014). `ConsultorStage` se reposicionó tras `ReportStage` (ADR-012) para que el LLM reciba el `ConsultingReport` en modo REPORT; en modo CONVERSATION las etapas de análisis se omiten según predicado.
+El pipeline actual tiene **13 stages**: Analizador → Evaluador → Estratega → **Entrevista** → **Conocimiento** → Scoring → Recomendaciones → Riesgos → Oportunidades → **Reporte** → **Consultor** → Eventos. `InterviewStage` se inserta entre `StrategistStage` y `KnowledgeStage` (ADR-015, integración aditiva patrón ADR-011/014). `ConsultorStage` se reposicionó tras `ReportStage` (ADR-012) para que el LLM reciba el `ConsultingReport` en modo REPORT; en modo CONVERSATION las etapas de análisis se omiten según predicado.
 
 ### 2.5 AI — `ai/` y `kin/ai`
 
@@ -367,7 +367,7 @@ contexto es durable (`ContextRepository`), la infraestructura de motores (`Domai
 `EngineExecutor`, `EngineStage`) es reutilizable, el ciclo de conversación está dirigido
 (`ConversationOrchestrator`, ADR-013), la adquisición de conocimiento externo es aditiva al
 pipeline (`KnowledgeStage`, ADR-014) y la recolección de información está dirigida por la
-entrevista estratégica (`InterviewStage` + `InterviewEngine`, ADR-015, pipeline de 12 etapas). La
+entrevista estratégica (`InterviewStage` + `InterviewEngine`, ADR-015, pipeline de 13 etapas). La
 siguiente fase puede consumir el `ProjectContext` durable, el turno tipado/directiva (`TurnResult`,
 `TurnDirective`), el `KnowledgeResult` y el `InterviewResult` como puntos de extensión, **sin
 tocar los contratos estables**.

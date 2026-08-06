@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { projectsService, type Project } from "@/services/projects";
 import { subscriptionApi, type SubscriptionStatus } from "@/services/subscriptionApi";
 import { authService } from "@/services/auth";
-import { forceLogout } from "@/services/session";
 import ProgressCircle from "@/components/ProgressCircle";
 import { statusBadge } from "@/utils/badgeColors";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -41,8 +40,12 @@ export default function ProjectsPage() {
         setTotalPages(projectsRes.totalPages);
         setSubscription(sub);
       })
-      .catch(() => {
-        if (!cancelled) forceLogout();
+      .catch((err) => {
+        if (!cancelled) {
+          console.error("=== FAILED TO LOAD PROJECTS/SUBSCRIPTION ===", err);
+          setProjects([]);
+          setSubscription(null);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { projectsService, type Project } from "@/services/projects";
 import { chatService, type ChatMessage, type ChatResponse } from "@/services/chat";
 import { authService } from "@/services/auth";
-import { forceLogout } from "@/services/session";
 import ViabilityScore from "@/components/ViabilityScore";
 import PdfReportButton from "@/components/PdfReportButton";
 import ProgressCircle from "@/components/ProgressCircle";
@@ -55,7 +54,6 @@ export default function ProjectDetailPage({ params }: Props) {
       })
       .catch((err) => {
         console.error("=== FAILED TO LOAD PROJECT/HISTORY ===", err);
-        forceLogout();
       })
       .finally(() => setLoading(false));
   }, [id, router]);

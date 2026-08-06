@@ -95,9 +95,12 @@ jobs:
 
       - name: Start backend (test profile, H2 en memoria)
         working-directory: kin-backend
-        env:
-          JWT_SECRET: a2luLXBsYXRmb3JtLXNlY3VyZS1qd3Qtc2VjcmV0LWZvci1wcm9kdWN0aW9uLWNlcnRpZmljYXRpb24tMjAyNi0wMTIzNDU2Nzg5YWJjZGVm
         run: |
+          # El backend requiere jwt.secret. En CI se genera una JWT_SECRET efimera
+          # por ejecucion (nunca se commitea ningun secreto ni se depende de un
+          # valor hardcodeado o de un repo secret). El test profile espera una
+          # clave base64; cualquier valor aleatorio es valido para los E2E.
+          export JWT_SECRET=$(openssl rand -base64 48)
           nohup java -jar target/*.jar --spring.profiles.active=test --springdotenv.enabled=false > backend.log 2>&1 &
           for i in $(seq 1 60); do
             if curl -sf http://localhost:8080/api/v1/actuator/health > /dev/null; then break; fi

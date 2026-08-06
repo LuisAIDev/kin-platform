@@ -14,7 +14,7 @@ Full-stack project management platform with AI-guided viability assessment.
 | `kin-backend/` | Spring Boot 3.2.5 / Java 17 — Maven (wrapper: `mvnw`) |
 | `kin-frontend/` | Next.js 16 App Router / TypeScript 5 strict / Tailwind CSS 4 |
 | `kin-database/` | PostgreSQL init scripts (used by Docker) |
-| `kin-docs/` | Architecture docs, ADRs (001…015), phase docs, release notes |
+| `kin-docs/` | Architecture docs, ADRs (001…019), phase docs, release notes |
 
 ## Commands
 

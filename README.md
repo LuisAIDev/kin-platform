@@ -54,7 +54,7 @@ Docker.
 
 > ✅ **Estado actual: FASE 10 COMPLETADA** — Release `v2.0.0-phase10` (2026-08-04).
 > Pipeline de dominio de **13 etapas**, **1850 tests backend (0 fallos)** + **66 tests frontend**,
-> cobertura de dominio ≥ 90 % (JaCoCo) y **18 ADRs aprobadas** (ADR-001 … ADR-018). Núcleo
+> cobertura de dominio ≥ 90 % (JaCoCo) y **19 ADRs aprobadas** (ADR-001 … ADR-019). Núcleo
 > inteligente con Knowledge Engine, Interview Engine, Enrichment Engine, Scoring, Recommendation,
 > Risk, Opportunity, Report Engine, Prompt Engine, sección de fuentes citadas (`SourcesSection`) y
 > **Bounded Context Enterprise** (ADR-018) de generación de documentos de negocio. Principio rector:
