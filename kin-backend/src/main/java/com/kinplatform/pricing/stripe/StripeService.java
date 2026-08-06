@@ -15,6 +15,7 @@ import com.stripe.param.checkout.SessionCreateParams;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,16 +29,19 @@ public class StripeService {
     private final PricingPlanRepository planRepository;
     private final UserRepository userRepository;
     private final UserSubscriptionRepository subscriptionRepository;
+    private final StripeWebhookEventRepository webhookEventRepository;
 
     @Value("${stripe.webhook-secret}")
     private String webhookSecret;
 
     public StripeService(PricingPlanRepository planRepository,
                          UserRepository userRepository,
-                         UserSubscriptionRepository subscriptionRepository) {
+                         UserSubscriptionRepository subscriptionRepository,
+                         StripeWebhookEventRepository webhookEventRepository) {
         this.planRepository = planRepository;
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
+        this.webhookEventRepository = webhookEventRepository;
     }
 
     @PostConstruct
@@ -155,6 +159,39 @@ public class StripeService {
             log.error("Failed to process checkout completed event for session {}", sessionId, e);
             throw new RuntimeException("Failed to activate subscription", e);
         }
+    }
+
+    /**
+     * Procesa un evento de webhook de forma idempotente. El registro del evento
+     * y su efecto (p. ej. activar la suscripci�n) viven en la misma transacci�n:
+     * si el evento ya fue procesado, la columna UNIQUE {@code webhook_events.event_id}
+     * lanza {@link DataIntegrityViolationException} al hacer flush y el m�todo
+     * devuelve {@code false} sin efectos secundarios.
+     *
+     * @return {@code true} si el evento se proces�, {@code false} si era un duplicado.
+     */
+    @Transactional
+    public boolean processWebhookEvent(Event event) {
+        try {
+            webhookEventRepository.saveAndFlush(
+                    new StripeWebhookEvent(event.getId(), event.getType()));
+        } catch (DataIntegrityViolationException e) {
+            log.info("Webhook event {} ({}), ya procesado - se omite", event.getId(), event.getType());
+            return false;
+        }
+
+        switch (event.getType()) {
+            case "checkout.session.completed" -> {
+                var session = (Session) event.getDataObjectDeserializer()
+                        .getObject()
+                        .orElseThrow(() -> new RuntimeException("Failed to deserialize session"));
+                handleCheckoutCompleted(session.getId());
+                log.info("Checkout session completed: {}", session.getId());
+            }
+            case "checkout.session.expired" -> log.warn("Checkout session expired");
+            default -> log.debug("Unhandled Stripe event type: {}", event.getType());
+        }
+        return true;
     }
 
     public Event constructWebhookEvent(String payload, String sigHeader) {

@@ -23,6 +23,16 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Value("${app.rate-limit.enabled:true}")
     private boolean rateLimitEnabled = true;
 
+    /**
+     * Cuando es {@code true}, se conf�a en el header {@code X-Forwarded-For}
+     * (primer valor) para obtener la IP del cliente. SOLO debe activarse cuando
+     * el tr�fico llega exclusivamente a trav�s de un proxy de confianza (p. ej.
+     * Render/Vercel). Por defecto es {@code false}: se usa la IP del peer
+     * directo (remoteAddr), que no puede ser falseada por el cliente.
+     */
+    @Value("${app.rate-limit.trust-proxy-headers:false}")
+    private boolean trustProxyHeaders = false;
+
     private final Map<String, RateLimitState> buckets = new ConcurrentHashMap<>();
 
     @Override
@@ -37,7 +47,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             return;
         }
 
-        String ip = getClientIP(request);
+        String ip = getClientIP(request, trustProxyHeaders);
         RateLimitState state = buckets.computeIfAbsent(ip, k -> new RateLimitState());
 
         synchronized (state) {
@@ -58,10 +68,12 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private static String getClientIP(HttpServletRequest request) {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) {
-            return xff.split(",")[0].trim();
+    private static String getClientIP(HttpServletRequest request, boolean trustProxyHeaders) {
+        if (trustProxyHeaders) {
+            String xff = request.getHeader("X-Forwarded-For");
+            if (xff != null && !xff.isBlank()) {
+                return xff.split(",")[0].trim();
+            }
         }
         return request.getRemoteAddr();
     }

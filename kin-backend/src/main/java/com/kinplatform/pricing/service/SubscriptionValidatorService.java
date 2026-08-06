@@ -129,7 +129,13 @@ public class SubscriptionValidatorService {
                && subscription.getEndDate().isAfter(OffsetDateTime.now());
     }
 
-    @Cacheable(value = "activeSubscription", key = "#userId")
+    /**
+     * Consulta la suscripci�n activa del usuario. Sin {@code @Cacheable}: este
+     * m�todo se invoca por self-invocation desde otros m�todos del mismo bean,
+     * por lo que un anotaci�n AOP nunca se disparar�a (cach� muerta) y, adem�s,
+     * cachear la entidad JPA devolver�a estado obsoleto tras las mutaciones de
+     * {@link #incrementMessageCount(UUID)}.
+     */
     public UserSubscription getActiveSubscription(UUID userId) {
         return subscriptionRepository
             .findByUserIdAndStatusAndEndDateAfter(

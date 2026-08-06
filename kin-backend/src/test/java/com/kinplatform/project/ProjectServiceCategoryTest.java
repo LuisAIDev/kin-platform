@@ -17,6 +17,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -65,21 +66,19 @@ class ProjectServiceCategoryTest {
     }
 
     @Test
-    void proyectoLegacy_sinCategoria_deberiaResponderSinCategoria() {
+    void delete_deberiaInvalidarLaCacheDeProjectLimit() {
         var project = Project.builder()
             .id(UUID.randomUUID())
             .user(User.builder().id(USER_ID).build())
-            .title("Proyecto antiguo")
-            .category(null)
+            .title("Proyecto a borrar")
             .build();
         when(projectRepository.findById(any())).thenReturn(Optional.of(project));
 
         var service = new ProjectServiceImpl(projectRepository, userRepository,
             chatMessageRepository, subscriptionValidatorService,
             new CategoryService(categoryRepository));
-        var response = service.getById(USER_ID, project.getId());
+        service.delete(USER_ID, project.getId());
 
-        assertNull(response.getCategory());
-        assertNull(response.getCategoryName());
+        verify(subscriptionValidatorService).evictProjectLimitCache(USER_ID);
     }
 }

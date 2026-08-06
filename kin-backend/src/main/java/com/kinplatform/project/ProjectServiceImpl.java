@@ -85,6 +85,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         project = projectRepository.save(project);
+        subscriptionValidator.evictProjectLimitCache(userId);
         return toResponse(project);
     }
 
@@ -93,6 +94,7 @@ public class ProjectServiceImpl implements ProjectService {
     public void delete(UUID userId, UUID projectId) {
         var project = findOwnedProject(userId, projectId);
         projectRepository.delete(project);
+        subscriptionValidator.evictProjectLimitCache(userId);
     }
 
     private Project findOwnedProject(UUID userId, UUID projectId) {

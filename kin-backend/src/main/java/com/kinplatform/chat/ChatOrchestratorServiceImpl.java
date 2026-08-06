@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
@@ -69,8 +68,14 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         this(chatService, projectRepository, objectMapper, conversationOrchestrator, new PromptGuardrail());
     }
 
+    /**
+     * Sin {@code @Transactional}: la llamada a la IA (orchestrate) es I/O externa
+     * lenta y no debe retener una conexi�n JDBC durante segundos. La persistencia
+     * de mensajes se realiza a trav�s de {@link ChatService}, que s� aplica sus
+     * propias transacciones de corta vida por operaci�n (saveMessage,
+     * getConversationHistory).
+     */
     @Override
-    @Transactional
     public ChatResponse processMessage(UUID userId, UUID projectId, ChatRequest request) {
         var project = findProject(userId, projectId);
         if (isBlocked(request.getContent())) {
