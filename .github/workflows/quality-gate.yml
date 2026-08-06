@@ -13,9 +13,12 @@ jobs:
   sonar:
     name: SonarQube analysis
     runs-on: ubuntu-latest
-    # Solo se ejecuta si hay servidor SonarQube configurado (SONAR_TOKEN).
-    # Sin servidor, el job se omite sin fallar (entorno de despliegue pendiente).
-    if: ${{ secrets.SONAR_TOKEN != '' && secrets.SONAR_HOST_URL != '' }}
+    # El contexto 'secrets' NO está disponible en la condición 'if' de un job
+    # (GitHub rechaza el workflow al iniciar). Se expone vía env de job y la
+    # ejecución se condiciona a nivel de paso.
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
     steps:
       - name: Checkout
@@ -39,6 +42,7 @@ jobs:
         run: ./mvnw -B -q test
 
       - name: SonarQube Scan
+        if: "${{ env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != '' }}"
         uses: SonarSource/sonarqube-scan-action@v5
         with:
           projectBaseDir: kin-backend
@@ -50,3 +54,7 @@ jobs:
             -Dsonar.java.binaries=target/classes
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
             -Dsonar.qualitygate.wait=true
+
+      - name: SonarQube omitido (SONAR_TOKEN/SONAR_HOST_URL no configurados)
+        if: "${{ env.SONAR_TOKEN == '' || env.SONAR_HOST_URL == '' }}"
+        run: 'echo "::warning::SonarQube omitido: el Secret SONAR_TOKEN/SONAR_HOST_URL no está configurado."'
