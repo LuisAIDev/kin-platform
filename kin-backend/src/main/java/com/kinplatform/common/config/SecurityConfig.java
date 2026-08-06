@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/pricing-plans/**").permitAll()
                 .requestMatchers("/stripe/webhook").permitAll()
-                .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/test/**").hasRole("ADMIN")
                 .requestMatchers("/subscriptions/**").authenticated()

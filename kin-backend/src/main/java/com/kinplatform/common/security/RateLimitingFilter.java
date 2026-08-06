@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -19,6 +20,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final int MAX_REQUESTS = 5;
     private static final Duration WINDOW = Duration.ofMinutes(1);
 
+    @Value("${app.rate-limit.enabled:true}")
+    private boolean rateLimitEnabled = true;
+
     private final Map<String, RateLimitState> buckets = new ConcurrentHashMap<>();
 
     @Override
@@ -28,7 +32,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String path = request.getRequestURI();
-        if (!path.startsWith(request.getContextPath() + "/auth/")) {
+        if (!rateLimitEnabled || !path.startsWith(request.getContextPath() + "/auth/")) {
             filterChain.doFilter(request, response);
             return;
         }

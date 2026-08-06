@@ -23,7 +23,8 @@ test.describe('Dashboard flow', () => {
 
     // Crear proyecto
     await page.goto('/dashboard/projects/new');
-    await page.locator('input[name="title"]').fill(PROJECT_TITLE);
+    await page.locator('input#title').fill(PROJECT_TITLE);
+    await page.locator('select#category').selectOption({ index: 1 });
     await page.getByRole('button', { name: /crear|guardar|siguiente/i }).first().click();
 
     // El proyecto aparece en la lista

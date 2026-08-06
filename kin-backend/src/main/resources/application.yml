@@ -73,6 +73,16 @@ spring:
     locations: classpath:db/migration
 
   # -----------------------------------------------------------
+  # Caché — en memoria por defecto (spring-boot-starter-data-redis está en el
+  # classpath y, sin spring.cache.type, Spring Boot auto-configura RedisCacheManager,
+  # lo que hace fallar @Cacheable (p. ej. SubscriptionValidatorService) con
+  # "Unable to connect to Redis" cuando no hay servidor Redis. Redis es opcional:
+  # para usarlo, definir spring.cache.type=redis junto a kin.cache.redis.enabled=true.
+  # -----------------------------------------------------------
+  cache:
+    type: simple
+
+  # -----------------------------------------------------------
   # Jackson
   # -----------------------------------------------------------
   jackson:
@@ -135,6 +145,13 @@ management:
           include: readinessState, db
         liveness:
           include: livenessState
+
+  # Redis es una caché opcional (kin.cache.redis.enabled=false por defecto).
+  # Sin servidor Redis disponible, su HealthIndicator marcaría el health global
+  # como DOWN pese a que la app no lo requiere. Se excluye del agregado.
+  health:
+    redis:
+      enabled: false
   metrics:
     tags:
       application: ${spring.application.name}

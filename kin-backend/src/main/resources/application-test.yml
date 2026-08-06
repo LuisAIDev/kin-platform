@@ -4,3 +4,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+
+# El E2E de Playwright dispara varias llamadas /auth/** (register, login,
+# /auth/me del middleware, logout) desde una misma IP en menos de un minuto.
+# El rate limit (5/min/IP) las bloquea con 429. Se desactiva SOLO en el
+# perfil de test; producción conserva la protección anti-brute-force.
+app:
+  rate-limit:
+    enabled: false
