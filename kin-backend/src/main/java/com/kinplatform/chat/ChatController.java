@@ -41,7 +41,6 @@ public class ChatController {
                 auth != null ? auth.getName() : "null",
                 auth != null ? auth.isAuthenticated() : false,
                 auth != null ? auth.getAuthorities() : "[]");
-        log.info("Mensaje del usuario: {}", request.getContent());
         var userId = getAuthenticatedUserId(auth);
         var response = chatOrchestratorService.processMessage(userId, projectId, request);
         return ResponseEntity.ok(response);

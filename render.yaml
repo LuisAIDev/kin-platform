@@ -33,6 +33,18 @@ services:
         fromDatabase:
           name: kin-db
           property: connectionString
+      - key: DB_HOST
+        fromDatabase:
+          name: kin-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: kin-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: kin-db
+          property: database
       - key: DATABASE_USER
         fromDatabase:
           name: kin-db
