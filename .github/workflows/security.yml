@@ -86,7 +86,7 @@ jobs:
 
       - name: OWASP omitido (NVD_API_KEY no configurada)
         if: "${{ env.NVD_API_KEY == '' }}"
-        run: echo "::warning::OWASP Dependency Check omitido: el Secret NVD_API_KEY no está configurado."
+        run: 'echo "::warning::OWASP Dependency Check omitido: el Secret NVD_API_KEY no está configurado."'
 
       - name: Upload report
         if: "${{ always() && env.NVD_API_KEY != '' }}"
