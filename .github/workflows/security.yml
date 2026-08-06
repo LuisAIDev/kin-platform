@@ -80,16 +80,16 @@ jobs:
           cache: maven
 
       - name: Run OWASP Dependency-Check
-        if: env.NVD_API_KEY != ''
+        if: "${{ env.NVD_API_KEY != '' }}"
         working-directory: kin-backend
         run: ./mvnw -B -q org.owasp:dependency-check-maven:check -DskipTests -DnvdApiKey="${NVD_API_KEY}"
 
       - name: OWASP omitido (NVD_API_KEY no configurada)
-        if: env.NVD_API_KEY == ''
+        if: "${{ env.NVD_API_KEY == '' }}"
         run: echo "::warning::OWASP Dependency Check omitido: el Secret NVD_API_KEY no está configurado."
 
       - name: Upload report
-        if: always() && env.NVD_API_KEY != ''
+        if: "${{ always() && env.NVD_API_KEY != '' }}"
         uses: actions/upload-artifact@v4
         with:
           name: owasp-report
