@@ -33,6 +33,11 @@ jobs:
         with:
           languages: ${{ matrix.language }}
 
+      - name: Make Maven Wrapper executable
+        if: matrix.language == 'java-kotlin'
+        working-directory: kin-backend
+        run: chmod +x mvnw
+
       - name: Build backend (autobuild java)
         if: matrix.language == 'java-kotlin'
         working-directory: kin-backend
@@ -78,6 +83,10 @@ jobs:
           distribution: temurin
           java-version: "17"
           cache: maven
+
+      - name: Make Maven Wrapper executable
+        working-directory: kin-backend
+        run: chmod +x mvnw
 
       - name: Run OWASP Dependency-Check
         if: "${{ env.NVD_API_KEY != '' }}"

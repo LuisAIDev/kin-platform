@@ -30,6 +30,10 @@ jobs:
           java-version: "17"
           cache: maven
 
+      - name: Make Maven Wrapper executable
+        working-directory: kin-backend
+        run: chmod +x mvnw
+
       - name: Generate JaCoCo report (requerido por el Quality Gate)
         working-directory: kin-backend
         run: ./mvnw -B -q test

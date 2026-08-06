@@ -42,6 +42,9 @@ jobs:
           java-version: "17"
           cache: maven
 
+      - name: Make Maven Wrapper executable
+        run: chmod +x mvnw
+
       - name: mvn verify (build + tests + JaCoCo)
         run: ./mvnw -B verify
 

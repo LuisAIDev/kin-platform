@@ -30,6 +30,10 @@ jobs:
           cache: npm
           cache-dependency-path: kin-frontend/package-lock.json
 
+      - name: Make Maven Wrapper executable
+        working-directory: kin-backend
+        run: chmod +x mvnw
+
       - name: Build backend jar
         working-directory: kin-backend
         run: ./mvnw -B -q -DskipTests package

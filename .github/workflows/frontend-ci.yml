@@ -85,6 +85,10 @@ jobs:
           java-version: "17"
           cache: maven
 
+      - name: Make Maven Wrapper executable
+        working-directory: kin-backend
+        run: chmod +x mvnw
+
       - name: Build backend (jar)
         working-directory: kin-backend
         run: ./mvnw -B -q -DskipTests package
