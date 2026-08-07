@@ -9,11 +9,8 @@ target/
 *.class
 .mvn/timing.xml
 
-# H2 local database (development)
-data/
+# Local database artifacts (H2 eliminado)
 *.db
-*.mv.db
-*.trace.db
 
 # IDE
 .idea/

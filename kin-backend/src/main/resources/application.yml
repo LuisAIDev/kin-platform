@@ -19,40 +19,14 @@ spring:
     name: kin-backend
 
   # -----------------------------------------------------------
-  # Datasource — H2 file-based (persistente localmente)
-  # -----------------------------------------------------------
-  datasource:
-    url: jdbc:h2:file:./data/kindb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
-      idle-timeout: 30000
-      max-lifetime: 1800000
-      connection-timeout: 20000
-
-  # -----------------------------------------------------------
-  # H2 Console (enable for debugging)
-  # -----------------------------------------------------------
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-
-  # -----------------------------------------------------------
-  # JPA / Hibernate
+  # JPA / Hibernate — el datasource lo aporta cada perfil
+  # (dev / prod / test); no hay base por defecto ni H2.
   # -----------------------------------------------------------
   jpa:
-    database: H2
     show-sql: true
     open-in-view: false
-    hibernate:
-      ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
         jdbc:
           lob:
             non_contextual_creation: true
@@ -63,9 +37,9 @@ spring:
           provider_disables_autocommit: false
 
   # -----------------------------------------------------------
-  # Flyway — migraciones solo para PRODUCCIÓN (PostgreSQL).
-  # Dev (H2 file-based) usa ddl-auto: update: el esquema lo gestiona JPA,
-  # sin Docker ni migraciones. Prod re-habilita Flyway vía application-prod.
+  # Flyway — deshabilitado por defecto; lo habilitan los perfiles
+  # (dev vía application-dev.yml, prod vía application-prod.properties).
+  # Las migraciones V1..V11 administran el esquema PostgreSQL.
   # -----------------------------------------------------------
   flyway:
     enabled: false

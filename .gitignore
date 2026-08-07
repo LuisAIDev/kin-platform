@@ -39,8 +39,6 @@ logs/
 tmp/
 *.log
 
-# H2 / local database artifacts
-*.mv.db
-*.trace.db
+# Local database artifacts (H2 eliminado; se conservan patrones genéricos)
 *.old
 *.db

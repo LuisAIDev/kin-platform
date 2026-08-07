@@ -19,12 +19,13 @@ Full-stack project management platform with AI-guided viability assessment.
 ## Commands
 
 ```bash
-# Backend dev (H2 file-based, no Docker needed)
+# Backend dev (PostgreSQL local, perfil 'dev'; requiere Docker para la base)
 # IMPORTANTE: usa SIEMPRE el script de arranque con guard FAIL-FAST.
 # NUNCA ejecutes `mvnw spring-boot:run` directo: puede crear una segunda
-# instancia y bloquear kindb.mv.db (concurrencia H2). El script detecta
-# KinApplication / Maven Wrapper / puerto 8080 y, si existe alguno,
-# muestra "Backend ya está ejecutándose." y lo reutiliza sin arrancar otro.
+# instancia. El script detecta KinApplication / Maven Wrapper / puerto 8080 y,
+# si existe alguno, muestra "Backend ya está ejecutándose." y lo reutiliza.
+# La base es PostgreSQL (docker compose up -d postgres-db); si no responde,
+# el script informa el problema y se detiene.
 powershell -ExecutionPolicy Bypass -File scripts/start-dev-backend.ps1   # Windows
 bash scripts/start-dev-backend.sh                                         # Linux/macOS
 # Solo si el script dice que NO hay backend en marcha, arranca una instancia.
@@ -41,10 +42,10 @@ docker compose up --build                      # from repo root
 
 ## Key quirks
 
-- **Category catalog (SaaS-ready)**: the `ProjectCategory` enum was replaced by the `Category` entity / `categories` table. `Project.category` is `@ManyToOne → Category` (`category_id`). `GET /categories` returns only active categories ordered by `displayOrder`. `POST/PUT /projects` receive the category `code` string (backend resolves it; 400 if unknown). `ProjectResponse` exposes `category` (code), `categoryName` and `categoryColor`. Prod seeds via Flyway `V6__create_categories.sql`; dev (H2, no Flyway) seeds via `CategoryDataInitializer`. The frontend `new/page.tsx` loads `GET /categories` (no hardcoded lists); badge color comes from `category.color`. The AI pipeline still receives the category as a String (SECTOR dimension).
+- **Category catalog (SaaS-ready)**: the `ProjectCategory` enum was replaced by the `Category` entity / `categories` table. `Project.category` is `@ManyToOne → Category` (`category_id`). `GET /categories` returns only active categories ordered by `displayOrder`. `POST/PUT /projects` receive the category `code` string (backend resolves it; 400 if unknown). `ProjectResponse` exposes `category` (code), `categoryName` and `categoryColor`. Prod seeds via Flyway `V6__create_categories.sql`; dev (PostgreSQL, Flyway) seeds via `CategoryDataInitializer` (idempotente). The frontend `new/page.tsx` loads `GET /categories` (no hardcoded lists); badge color comes from `category.color`. The AI pipeline still receives the category as a String (SECTOR dimension).
 
-- **PostgreSQL dependency is commented out** in `pom.xml`. Dev uses H2 file-based (`data/kindb`). Only Docker deployment uses PostgreSQL.
-- **Dev H2 is persistent**: dev uses `ddl-auto: update` (Hibernate owns the schema, Flyway disabled). The H2 file lives at `kin-backend/data/kindb.mv.db` (gitignored). When the JPA model changes, Hibernate tries to `ALTER TABLE` the existing file on boot; if it cannot apply a NOT NULL column to an already-populated table, H2 throws e.g. `JdbcSQLIntegrityConstraintViolationException: NULL not allowed for column ...`. **The fix is NEVER to change entities to match the DB.** Delete only the local file `kin-backend/data/kindb.mv.db` and restart: Hibernate recreates the full schema from the entities on an empty DB. Use `scripts/reset-dev-db.ps1` (Windows) or `scripts/reset-dev-db.sh` (Linux/macOS), which stop the app, delete the DB and restart Spring Boot.
+- **PostgreSQL everywhere** (H2 eliminado): driver `org.postgresql:postgresql` activo. Dev usa el perfil `dev` (`application-dev.yml` → PostgreSQL local, Flyway V1..V11); test usa Testcontainers PostgreSQL 18; prod usa Neon/PostgreSQL.
+- **Dev database is PostgreSQL** (H2 eliminado): el perfil `dev` usa `application-dev.yml` con `DATABASE_URL`/`DATABASE_USER`/`DATABASE_PASSWORD`, Flyway V1..V11 y `ddl-auto: none`. Para regenerar el esquema local usa `scripts/reset-dev-db.ps1` (Windows) o `.sh` (Linux/macOS): operación destructiva que exige confirmación `RESET` y solo se aplica a la base local.
 - **CORS single source**: only `SecurityConfig.java` (bean `corsConfigurationSource`) configures CORS; the legacy MVC `CorsConfig` was removed (consolidación T12/K-506). Add new origins only in `SecurityConfig`.
 - **AI engine** (`AiEngineService.java`) implements the domain port `AIResponder` (`com.kinplatform.kin.ai`) and routes through `ProviderRouter` (DeepSeek/OpenAI/Ollama) with a Spanish mock fallback on failure — safe to develop without a LLM running. Prompt construction lives in `PromptAssembler` (domain, `kin.ai`), not in the service.
 - **PromptAssembler** is a pure façade (`kin.ai`): `assemble(PromptRequest) → String` delegates to `ConversationPromptBuilder` (CONVERSATION) or `ReportPromptBuilder` (REPORT, via 10 `SectionFormatter` in `kin.ai.prompt`). `PromptRequest.forConversation(...)` / `forReport(...)` enforce the ADR-012 boundary (REPORT only consumes `ConsultingReport`; raw sources are forbidden). `PromptRequest.forConversation(context, decision, directive)` is the additive ADR-013 overload; when a directive is present, `ConversationPromptBuilder` appends the `## DIRECTIVA DE COMUNICACIÓN` section (phase/mode/constraints). The additive ADR-015 overload `assemble(PromptRequest, InterviewResult)` propagates the interview result in CONVERSATION mode (REPORT ignores it), and `ConversationPromptBuilder.build(request, interviewResult)` appends the `## ENTREVISTA ESTRATÉGICA` section when there is a pending `InterviewDirective`.
@@ -52,10 +53,10 @@ docker compose up --build                      # from repo root
 - **Single runtime**: both `POST /chat` and `POST /chat/stream` go through `ConversationOrchestrator` → `KinMethod` (`execute` / `executeStream`). `ChatOrchestratorServiceImpl` is I/O only (persists messages, emits SSE). In streaming mode `ConsultorStage` leaves a `Flux<String>` in `PipelineContext.aiResponseFlux` and the orchestrator returns it to the SSE consumer.
 - **Pipeline order**: `Analizador → Evaluador → Estratega → Entrevista → Conocimiento → Scoring → Recomendaciones → Riesgos → Oportunidades → Reporte → Consultor → Eventos` (12 stages). `InterviewStage` (ADR-015) runs between `StrategistStage` and `KnowledgeStage`, writes `PipelineContext.interviewResult`, persists state via `InterviewRepository` and applies the effective decision (ASK while incomplete / REPORT when complete). `KnowledgeStage` (ADR-014) runs after `InterviewStage`, writes `PipelineContext.knowledgeResult`; it builds a `KnowledgeRequest` from the `ProjectContext` and delegates to `KnowledgeEngine` (offline-first: `KnowledgeResult.empty()` if no source returns valid candidates). `ConsultorStage` runs after `ReportStage` so the LLM receives the `ConsultingReport`; it selects the conversation prompt with `## ENTREVISTA ESTRATÉGICA` when the interview is active with decision `ASK` (ADR-015), `PromptRequest.forReport(...)` when `decision.shouldGenerateReport()` (throws if the report is missing) and `forConversation(context, decision, turnDirective)` otherwise.
 - **Strategic Interview Engine** (ADR-015, `kin.interview`, pure domain POJOs — no Spring): `InterviewStage` (between `StrategistStage` and `KnowledgeStage`) builds `InterviewInput` from `ProjectContext` + the turn's user message + the previous `InterviewState` (loaded via `InterviewRepository.findOrCreate`), runs `InterviewEngine` (`DomainEngine<InterviewInput, InterviewResult>`, phase `VALIDATION`), writes `PipelineContext.interviewResult` and persists the new state. `AnswerValidator` (deterministic) decides accept/refine/reject; `InterviewBlueprint` decides the next question (sequence per `AnalyzedDimension`, required/optional, follow-ups). Principle: **Java decide. El LLM únicamente formula preguntas.** While the interview is incomplete the effective decision is `ASK` (priority 9) and the analysis stages are skipped; when complete the decision is `REPORT` and the report is generated in the same turn. `ConsultorStage`/`PromptAssembler.assemble(request, interviewResult)` pass the `InterviewResult` to `ConversationPromptBuilder`, which appends the `## ENTREVISTA ESTRATÉGICA` section (topic + `AnswerRules`) only when there is a pending `InterviewDirective`. Adapter: `JpaInterviewRepository` (`ai.interview.adapter`, table `interview_state`).
-- **Durable context**: `ProjectContext` is persisted per project via `ContextRepository` (port, `kin.context`) + `JpaContextRepository` (`ai.context.adapter`, JSON in table `project_context`). Dev auto-creates the table with `ddl-auto: update`; prod uses Flyway V3 + `init.sql`.
+- **Durable context**: `ProjectContext` is persisted per project via `ContextRepository` (port, `kin.context`) + `JpaContextRepository` (`ai.context.adapter`, JSON in table `project_context`). La tabla la crea Flyway V3 en todos los entornos (`ddl-auto: none`).
 - **Auth middleware** is in `src/proxy.ts` (frontend middleware, not backend). Protects `/dashboard` and redirects `/login` when authenticated.
 - **Tests** exist in `kin-backend/src/test/java/`. Run with `cd kin-backend && ./mvnw test`. Currently **902 tests**: 5 in `AiEngineServiceTest`, 5 in `ChatOrchestratorServiceImplTest` (SSE via `mockConstruction` of `ConversationOrchestrator`), 5 in `KinMethodTest` (full 12-stage pipeline, incl. REPORT prompt via `ArgumentCaptor` + directive propagation), 17 in `ConsultorStageTest` (incl. REPORT mode, guard streaming, directive framing, interview ASK/REPORT gating), 8 in `PromptAssemblerTest`, 3 in `PromptAssemblerInterviewTest`, 6 in `PromptRequestDirectiveTest`, 10 in `ReportPromptBuilderTest`, 11 in `ConversationPromptBuilderTest`, 3 in `ConversationPromptBuilderDirectiveTest`, 38 across the 10 `SectionFormatter` tests, 4 in `JpaContextRepositoryTest` (JSON round-trip), 7 in `ScoringEngineTest` + `ScoringStageTest`, 113 across `kin/conversation/` (enums/records, `HistoryWindowTest`, `ResponseGuardTest`, `DefaultTurnPolicyTest`, `ConversationOrchestratorTest`, `ConversationOrchestratorPipelineIntegrationTest`), 6 in `ConversationOrchestratorInterviewIntegrationTest`, **22 across `kin/knowledge/` (types/enums/records 8, `SourceRegistryTest`/`SourceValidatorTest`/`KnowledgeGatewayTest`/`KnowledgeEngineTest` in `engine/`, `KnowledgeStageTest` + `KnowledgeStagePipelineTest` in `stage/`)** plus **10 across `ai/knowledge/adapter/` (`CompositeKnowledgeSourceTest`, `HttpKnowledgeSourceAdapterTest`, `PublicApiConnectorTest`, `JdbcKnowledgeSourceTest`, `RagKnowledgeSourceTest`, `DocumentKnowledgeSourceTest`, `KnowledgeEngineAdapterIntegrationTest`, `KnowledgeAdapterGatewayPropagationTest`)**, plus `kin/engine/` (EngineRegistry/EngineExecutor/EngineMetadata/DeterministicId), `pipeline/stage/` (EngineStage, RecommendationStage, RiskStage, OpportunityStage, ReportStage) and `kin/reporting/` (RecommendationEngine/Result/Stage, RiskEngine/Result/Stage, RiskAssembler, RiskAnalyzers, OpportunityEngine/Result/Stage, OpportunityAssembler, OpportunityAnalyzers), `kin/reporting/report/` (ReportEngine, ReportBuilder, ConsultingReport, 10 SectionAssemblers, ReportStage), and **`kin/interview/` (tipos/enums/records + `InterviewStateTest`/`InterviewDecisionTest`/`InterviewDirectiveTest`/`AnswerRulesTest`/`AnswerValidationTest`/`InterviewEngineTest`/`InterviewBlueprintTest`/`AnswerValidatorTest`/`InterviewStageTest`/`InterviewStagePipelineTest` + adapter `ai/interview/` `JpaInterviewRepositoryTest`/`InterviewStateEntityTest`/`InterviewStateMapperTest`)**. JaCoCo is configured (`jacoco-maven-plugin`), report at `target/site/jacoco/index.html`. Domain coverage requirement: ≥90% instructions in `kin.reporting`, `kin.engine`, `kin.ai`, `kin.conversation`, `kin.knowledge` and `kin.interview` (current: **100% in `kin.conversation`**, **100% in `kin.knowledge`** (engine 99.47%, stage 100%), **100% in `ai.knowledge.adapter`**, **98.39% in `kin.interview` + `ai.interview.adapter`** (engine 95%, stage 100%, adapter 100%), 99.7% in `kin.ai`, 95.9% in `kin.ai.prompt`, 99.9% in `kin.ai.prompt.formatter`, 99.2% in `kin.reporting*` aggregate, 100% in `kin.reporting.opportunity`, 99.5% in `kin.reporting.risk`, 95.1% in `kin.scoring`, 99.1% in `kin.engine`, 99–100% in `kin.reporting.report`). Tests use Mockito + JUnit 5 + reactor-test; the AI engine tests exercise the mock fallback path (no LLM needed). No frontend tests or integration tests yet.
-- **E2E tests** (`kin-frontend/tests/`): 3 login-flow tests with Playwright. Run with `cd kin-frontend && npx playwright test`. The webServer auto-starts only the Next.js frontend. **Before running, start the backend manually**: `cd kin-backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=test` (H2 in-memory, no Docker needed).
+- **E2E tests** (`kin-frontend/tests/`): 3 login-flow tests with Playwright. Run with `cd kin-frontend && npx playwright test`. The webServer auto-starts only the Next.js frontend. **Before running, start the backend manually**: `cd kin-backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=test` (el perfil test usa PostgreSQL: Testcontainers o variables de entorno `SPRING_DATASOURCE_*`).
 - **`.env` is gitignored** — never commit secrets. Copy `.env.example` to `.env`.
 - **Frontend API URL**: controlled by `NEXT_PUBLIC_API_URL` env var (defaults to `http://localhost:8080/api/v1`).
 - **Backend API prefix**: all endpoints under `/api/v1` (set via `server.servlet.context-path`).
@@ -88,25 +89,18 @@ docker compose up --build                      # from repo root
 
 ## Database
 
-- **Dev (H2)**: `ddl-auto: update` + Flyway disabled — schema auto-created by JPA entities (incl. `project_context`).
-- **Prod (PostgreSQL, Docker)**: Flyway enabled (`ddl-auto: none`) — migrations V1…V3 + `kin-database/init.sql`. Run `docker compose up --build` to initialize.
+- **Dev (PostgreSQL)**: perfil `dev` — `application-dev.yml`, Flyway V1..V11 (`ddl-auto: none`). Base local: `docker compose up -d postgres-db`.
+- **Test (PostgreSQL 18)**: Testcontainers en los tests de integración; Flyway V1..V11.
+- **Prod (PostgreSQL, Docker/Neon)**: Flyway habilitado (`ddl-auto: none`) — migraciones V1…V11. Run `docker compose up --build` to initialize.
 
-### Dev H2 — persistencia y reset (importante)
+### Dev PostgreSQL — reset (importante)
 
-En desarrollo el backend usa una base **H2 persistente** en `kin-backend/data/kindb.mv.db`
-(gitignored), gestionada por Hibernate con `spring.jpa.hibernate.ddl-auto: update`. Flyway
-está deshabilitado en dev (sus migraciones son solo-PostgreSQL y no corren sobre H2).
+En desarrollo el backend usa **PostgreSQL local** (perfil `dev`, `application-dev.yml`).
+Flyway administra el esquema V1..V11; Hibernate usa `ddl-auto: none` (nunca modifica
+el esquema silenciosamente).
 
-**Por qué aparece `JdbcSQLIntegrityConstraintViolationException: NULL not allowed for column "..."`:**
-cuando el modelo JPA cambia (p. ej. se añade una columna `NOT NULL` a una entidad), Hibernate intenta
-aplicar un `ALTER TABLE` sobre el archivo H2 existente en el siguiente arranque. Si la tabla ya
-contiene filas, H2 rechaza la operación porque las filas existentes tendrían `NULL` en la nueva
-columna. El arranque continúa (el `ALTER` fallido se loguea como warning), pero la columna no se
-aplica y las consultas en runtime pueden fallar.
-
-**Regla de oro: NUNCA modificar entidades para adaptarlas a la base.** La base es un artefacto
-local desechable; las entidades son la fuente de verdad. Para resolverlo, elimina únicamente
-`kin-backend/data/kindb.mv.db` y reinicia: Hibernate recrea el esquema completo desde cero.
+**Regla de oro: NUNCA modificar entidades para adaptarlas a la base.** La base dev es un
+artefacto local desechable; las entidades son la fuente de verdad. Para regenerarla:
 
 ```bash
 # Windows
@@ -116,5 +110,7 @@ scripts/reset-dev-db.ps1
 bash scripts/reset-dev-db.sh
 ```
 
-Los scripts detienen la app si está corriendo, borran la base y vuelven a arrancar Spring Boot.
-La base se regenera con el esquema correcto y los seeds (`DataInitializer`, `CategoryDataInitializer`).
+Los scripts detienen la app si está corriendo, ELIMINAN el esquema `public` de la base
+local (exigen confirmación `RESET`, solo base localhost) y vuelven a arrancar Spring Boot
+con el perfil `dev`; Flyway recrea V1..V11 desde cero y los seeds (`DataInitializer`,
+`CategoryDataInitializer`).

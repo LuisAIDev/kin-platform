@@ -91,7 +91,7 @@ Docker.
 - 📊 **Scoring Engine** — score de viabilidad por categoría y dimensión
 - 🎭 **Roles de usuario** diferenciados: `FREE`, `PREMIUM`, `FACILITADOR`, `ADMIN`
 - 🐳 **Contenerizado con Docker Compose** — PostgreSQL 16, backend y frontend
-- 🔄 **Doble entorno de base de datos** — H2 embebida (dev) y PostgreSQL 16 (producción, Flyway)
+- 🐘 **PostgreSQL en todos los entornos** — dev local (perfil dev), tests (Testcontainers 18) y producción (Flyway); H2 fue eliminado
 - 🛡️ **Seguridad** — CORS dual, headers HTTP, rate limiting, gestión de secretos por entorno
 - ❤️ **Health check** vía Spring Boot Actuator
 - 📱 **Diseño responsive mobile-first**
@@ -248,7 +248,7 @@ sin modificar Java ni React.
   Educación, Impacto Social, Medio Ambiente, Industria, Gobierno, Fintech, Comercio, Turismo,
   Gastronomía, Logística, Creatividad, Marketing Digital, Investigación). En producción lo siembra
   la migración Flyway `V6__create_categories.sql` (que también migra el enum legacy y elimina la
-  columna `category`); en dev (H2, sin Flyway) lo siembra `CategoryDataInitializer` (idempotente).
+  columna `category`); en dev lo siembra `CategoryDataInitializer` (idempotente).
 - **Frontend**: el formulario de proyectos carga `GET /categories` (sin listas hardcodeadas); el
   color del badge viene de `category.color` (hex, aplicado por estilo inline).
 
@@ -265,9 +265,9 @@ sin modificar Java ni React.
 | Arquitectura | Clean Architecture + DDD Táctico + Pipeline Pattern + Event-Driven |
 | Seguridad | Spring Security + JWT (stateless), BCrypt, rate limiting |
 | Persistencia | Spring Data JPA / Hibernate |
-| Base de datos (dev) | H2 file-based (Flyway deshabilitado) |
+| Base de datos (dev) | PostgreSQL (perfil dev, Flyway V1..V11) |
 | Base de datos (prod) | PostgreSQL 16 (Docker) / Neon |
-| Migraciones | Flyway (V1…V10) + `kin-database/init.sql` (referencia histórica) |
+| Migraciones | Flyway (V1…V11) |
 | IA | DeepSeek (default) + OpenAI + Ollama (fallback en español) |
 | Testing | JUnit 5, Mockito, Reactor Test |
 | Cobertura | JaCoCo (dominio ≥ 90 %) |
@@ -357,7 +357,9 @@ cd kin-backend
 ./mvnw spring-boot:run
 ```
 
-Backend en `http://localhost:8080/api/v1` usando H2 como base de datos local (no requiere instalación adicional).
+Backend en `http://localhost:8080/api/v1` usando PostgreSQL (perfil `dev`). Requiere la base local
+(`docker compose up -d postgres-db`) y `DATABASE_PASSWORD` (coincide con `POSTGRES_PASSWORD` del `.env`).
+
 
 ### 4. Levantar el frontend
 
@@ -381,30 +383,19 @@ Orquesta PostgreSQL 16, backend y frontend en contenedores usando las variables 
 
 ## 🔄 Reset de Base Local
 
-En desarrollo el backend usa una **base H2 persistente** en `kin-backend/data/kindb.mv.db`
-(no requiere instalar nada y conserva tus datos entre reinicios). El esquema lo gestiona
-Hibernate con `ddl-auto: update` (Flyway está deshabilitado en dev; sus migraciones son
-solo para PostgreSQL/producción).
+En desarrollo el backend usa **PostgreSQL local** (perfil `dev`, `application-dev.yml`). El esquema
+lo administra **Flyway** (`V1..V11`, `ddl-auto: none`); Hibernate nunca modifica el esquema
+silenciosamente.
 
 ### ¿Cuándo debo resetear la base?
 
-Si **cambias el modelo JPA** (por ejemplo, añades una columna `NOT NULL` a una entidad) y al
-arrancar el backend aparece un error como:
-
-```
-JdbcSQLIntegrityConstraintViolationException: NULL not allowed for column "SUPPORT_LEVEL"
-```
-
-**No es un bug del código ni de la configuración.** Es que Hibernate intenta aplicar un
-`ALTER TABLE` sobre la base H2 persistente y H2 lo rechaza porque la tabla ya tiene filas
-(las filas existentes tendrían `NULL` en la nueva columna). El arranque continúa con un
-warning, pero la columna no se aplica.
+Si el esquema local quedó desincronizado (migraciones antiguas, datos de prueba, estados obsoletos)
+y quieres regenerarlo desde cero con las migraciones actuales.
 
 ### ⚠️ Regla de oro
 
-> **NUNCA modifiques las entidades para adaptarlas a la base.** La base H2 local es un
-> artefacto desechable; las entidades JPA son la fuente de verdad. La solución es eliminar
-> únicamente la base local y dejar que Hibernate la regenere desde cero.
+> **NUNCA modifiques las entidades para adaptarlas a la base.** La base local es un
+> artefacto desechable; las entidades JPA y las migraciones V1..V11 son la fuente de verdad.
 
 ### Cómo resetear
 
@@ -419,12 +410,13 @@ bash scripts/reset-dev-db.sh
 Los scripts automáticamente:
 
 1. **Detienen** el backend si está corriendo (puerto `8080`).
-2. **Eliminan** únicamente `kin-backend/data/kindb.mv.db`.
-3. **Reinician** Spring Boot: Hibernate recrea el esquema completo desde las entidades y
-   los seeds (`DataInitializer`, `CategoryDataInitializer`) vuelven a cargar datos base.
+2. **Piden confirmación explícita** (escribir `RESET`) porque la operación es destructiva.
+3. **Eliminan** el esquema `public` de la base local (solo localhost).
+4. **Reinician** Spring Boot con el perfil `dev`: Flyway recrea `V1..V11` y los seeds
+   (`DataInitializer`, `CategoryDataInitializer`) vuelven a cargar datos base.
 
-> Este reset **solo afecta a tu base local de desarrollo**. Producción (PostgreSQL + Flyway,
-> `ddl-auto: none`) no se ve afectada: su esquema lo administra exclusivamente Flyway.
+> Este reset **solo afecta a tu base local de desarrollo** (localhost). Producción/Neon no se ve
+> afectada: su esquema lo administra exclusivamente Flyway.
 
 ---
 
