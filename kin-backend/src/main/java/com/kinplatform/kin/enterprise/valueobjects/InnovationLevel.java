@@ -1,7 +1,5 @@
 package com.kinplatform.kin.enterprise.valueobjects;
 
-import java.util.List;
-
 /**
  * Nivel de innovación de un plan de innovación (value object).
  *

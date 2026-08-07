@@ -12,9 +12,7 @@ import com.kinplatform.kin.enterprise.valueobjects.RiskStatus;
 import com.kinplatform.kin.reporting.risk.Risk;
 import com.kinplatform.kin.reporting.risk.RiskLevel;
 import com.kinplatform.kin.reporting.risk.RiskResult;
-
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Implementación determinista del {@link RiskPlanEngine} (Fase 10,
@@ -60,8 +58,8 @@ public class DefaultRiskPlanEngine implements RiskPlanEngine {
 
     @Override
     public EngineMetadata metadata() {
-        return EngineMetadata.of(ENGINE_NAME, ENGINE_VERSION, ENGINE_AUTHOR,
-            EnginePhase.FINANCIAL, EngineType.DOMAIN, ENGINE_PRIORITY);
+        return EngineMetadata.of(
+                ENGINE_NAME, ENGINE_VERSION, ENGINE_AUTHOR, EnginePhase.FINANCIAL, EngineType.DOMAIN, ENGINE_PRIORITY);
     }
 
     @Override
@@ -81,11 +79,9 @@ public class DefaultRiskPlanEngine implements RiskPlanEngine {
 
         var matrix = RiskMatrix.of(risks);
 
-        String explanation = buildExplanation(risks.size(),
-            riskResult.risks().size(), input.financialPlan());
+        String explanation = buildExplanation(risks.size(), riskResult.risks().size(), input.financialPlan());
 
-        return new RiskPlanResult(matrix, riskResult.confidence(), explanation,
-            "RiskPlanEngine", ENGINE_VERSION);
+        return new RiskPlanResult(matrix, riskResult.confidence(), explanation, "RiskPlanEngine", ENGINE_VERSION);
     }
 
     private RiskMatrix.Risk toMatrixRisk(Risk risk) {
@@ -93,8 +89,7 @@ public class DefaultRiskPlanEngine implements RiskPlanEngine {
         double impact = toLevelValue(risk.impact());
         RiskSeverity severity = toSeverity(risk.severity());
         String mitigation = evidence(risk);
-        return RiskMatrix.Risk.of(probability, impact, severity,
-            mitigation, UNDEFINED, RiskStatus.IDENTIFIED);
+        return RiskMatrix.Risk.of(probability, impact, severity, mitigation, UNDEFINED, RiskStatus.IDENTIFIED);
     }
 
     private double toLevelValue(RiskLevel level) {
@@ -122,8 +117,9 @@ public class DefaultRiskPlanEngine implements RiskPlanEngine {
     }
 
     private String evidence(Risk risk) {
-        if (risk.explanation() != null && risk.explanation().evidence() != null
-            && !risk.explanation().evidence().isBlank()) {
+        if (risk.explanation() != null
+                && risk.explanation().evidence() != null
+                && !risk.explanation().evidence().isBlank()) {
             return risk.explanation().evidence();
         }
         return UNDEFINED;
@@ -134,14 +130,18 @@ public class DefaultRiskPlanEngine implements RiskPlanEngine {
     }
 
     private RiskMatrix.Risk breakEvenRisk() {
-        return RiskMatrix.Risk.of(BREAK_EVEN_PROBABILITY, BREAK_EVEN_IMPACT,
-            RiskSeverity.HIGH, "Revisar la estructura de costes para alcanzar el punto de equilibrio.",
-            UNDEFINED, RiskStatus.IDENTIFIED);
+        return RiskMatrix.Risk.of(
+                BREAK_EVEN_PROBABILITY,
+                BREAK_EVEN_IMPACT,
+                RiskSeverity.HIGH,
+                "Revisar la estructura de costes para alcanzar el punto de equilibrio.",
+                UNDEFINED,
+                RiskStatus.IDENTIFIED);
     }
 
     private String buildExplanation(int total, int original, FinancialPlan financialPlan) {
-        var sb = new StringBuilder("Matriz de riesgos con " + total + " entradas "
-            + "(transformadas de " + original + " riesgos del pipeline).");
+        var sb = new StringBuilder("Matriz de riesgos con " + total + " entradas " + "(transformadas de " + original
+                + " riesgos del pipeline).");
         if (financialPlan != null && !reachesBreakEven(financialPlan)) {
             sb.append(" Se añadió el riesgo financiero por falta de punto de equilibrio.");
         }

@@ -11,9 +11,6 @@ import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
 import com.kinplatform.kin.enterprise.valueobjects.InnovationPlan;
 import com.kinplatform.kin.enterprise.valueobjects.MarketPlan;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.reporting.RecommendationResult;
-import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
-import com.kinplatform.kin.reporting.risk.RiskLevel;
 import com.kinplatform.kin.reporting.risk.RiskResult;
 
 /**
@@ -75,8 +72,8 @@ public class DefaultEnterpriseScoreEngine implements EnterpriseScoreEngine {
 
     @Override
     public EngineMetadata metadata() {
-        return EngineMetadata.of(ENGINE_NAME, ENGINE_VERSION, ENGINE_AUTHOR,
-            EnginePhase.SCORING, EngineType.DOMAIN, ENGINE_PRIORITY);
+        return EngineMetadata.of(
+                ENGINE_NAME, ENGINE_VERSION, ENGINE_AUTHOR, EnginePhase.SCORING, EngineType.DOMAIN, ENGINE_PRIORITY);
     }
 
     @Override
@@ -91,30 +88,29 @@ public class DefaultEnterpriseScoreEngine implements EnterpriseScoreEngine {
         double viability = viabilityScore(context);
         double financial = financialScore(input.financialPlan());
         double risk = riskScore(input.riskResult());
-        double scalability = context.isDimensionCovered(
-            com.kinplatform.kin.context.AnalyzedDimension.SCALABILITY)
-            ? COVERED_SCORE : UNCOVERED_SCORE;
-        double team = context.isDimensionCovered(
-            com.kinplatform.kin.context.AnalyzedDimension.RESOURCES)
-            ? COVERED_SCORE : UNCOVERED_SCORE;
+        double scalability = context.isDimensionCovered(com.kinplatform.kin.context.AnalyzedDimension.SCALABILITY)
+                ? COVERED_SCORE
+                : UNCOVERED_SCORE;
+        double team = context.isDimensionCovered(com.kinplatform.kin.context.AnalyzedDimension.RESOURCES)
+                ? COVERED_SCORE
+                : UNCOVERED_SCORE;
         double sustainability = sustainabilityScore(input.knowledge());
 
         double confidence = aggregateConfidence(input);
-        var score = EnterpriseScore.calculate(market, innovation, viability, financial,
-            risk, scalability, team, sustainability, confidence);
+        var score = EnterpriseScore.calculate(
+                market, innovation, viability, financial, risk, scalability, team, sustainability, confidence);
 
         String explanation = buildExplanation(score, input);
 
-        return new EnterpriseScoreResult(score, confidence, explanation,
-            "EnterpriseScoreEngine", ENGINE_VERSION);
+        return new EnterpriseScoreResult(score, confidence, explanation, "EnterpriseScoreEngine", ENGINE_VERSION);
     }
 
     private double marketScore(MarketPlan marketPlan) {
         if (marketPlan == null) {
             return 0.0;
         }
-        double sizeScore = marketPlan.tam() > 0.0
-            ? Math.min(100.0, (marketPlan.som() / marketPlan.tam()) * 100.0) : 0.0;
+        double sizeScore =
+                marketPlan.tam() > 0.0 ? Math.min(100.0, (marketPlan.som() / marketPlan.tam()) * 100.0) : 0.0;
         double growthScore = Math.min(100.0, marketPlan.growthRate());
         double confidenceScore = marketPlan.confidence() * 100.0;
         return clamp((sizeScore + growthScore + confidenceScore) / 3.0);
@@ -124,11 +120,12 @@ public class DefaultEnterpriseScoreEngine implements EnterpriseScoreEngine {
         if (plan == null) {
             return 0.0;
         }
-        double base = switch (plan.innovationLevel()) {
-            case INCREMENTAL -> INNOVATION_INCREMENTAL;
-            case TRANSFORMATIONAL -> INNOVATION_TRANSFORMATIONAL;
-            case DISRUPTIVE -> INNOVATION_DISRUPTIVE;
-        };
+        double base =
+                switch (plan.innovationLevel()) {
+                    case INCREMENTAL -> INNOVATION_INCREMENTAL;
+                    case TRANSFORMATIONAL -> INNOVATION_TRANSFORMATIONAL;
+                    case DISRUPTIVE -> INNOVATION_DISRUPTIVE;
+                };
         if (!plan.differentiators().isEmpty()) {
             base += DIFFERENTIATOR_BONUS;
         }
@@ -144,8 +141,8 @@ public class DefaultEnterpriseScoreEngine implements EnterpriseScoreEngine {
             return 0.0;
         }
         double breakEvenScore = plan.breakEvenMonth() > 0
-            ? Math.max(0.0, 100.0 - (plan.breakEvenMonth() / (double) BREAK_EVEN_HORIZON_MONTHS) * 100.0)
-            : 0.0;
+                ? Math.max(0.0, 100.0 - (plan.breakEvenMonth() / (double) BREAK_EVEN_HORIZON_MONTHS) * 100.0)
+                : 0.0;
         double marginScore = plan.grossMargin();
         return clamp((breakEvenScore + marginScore) / 2.0);
     }
@@ -154,12 +151,13 @@ public class DefaultEnterpriseScoreEngine implements EnterpriseScoreEngine {
         if (riskResult == null) {
             return 0.0;
         }
-        double levelScore = switch (riskResult.overallRiskLevel()) {
-            case LOW -> RISK_LOW;
-            case MEDIUM -> RISK_MEDIUM;
-            case HIGH -> RISK_HIGH;
-            case CRITICAL -> RISK_CRITICAL;
-        };
+        double levelScore =
+                switch (riskResult.overallRiskLevel()) {
+                    case LOW -> RISK_LOW;
+                    case MEDIUM -> RISK_MEDIUM;
+                    case HIGH -> RISK_HIGH;
+                    case CRITICAL -> RISK_CRITICAL;
+                };
         return clamp(levelScore * (0.5 + 0.5 * riskResult.confidence()));
     }
 
@@ -206,6 +204,6 @@ public class DefaultEnterpriseScoreEngine implements EnterpriseScoreEngine {
             return "Puntuación empresarial parcial: faltan datos de mercado.";
         }
         return "Enterprise Score calculado: " + score.overallScore() + "/100 ("
-            + score.grade().name() + ") a partir de los planes del proyecto.";
+                + score.grade().name() + ") a partir de los planes del proyecto.";
     }
 }

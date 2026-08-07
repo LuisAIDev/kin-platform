@@ -4,7 +4,6 @@ import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
 import com.kinplatform.kin.event.DomainEventBus;
-
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -41,11 +40,11 @@ public final class EnterpriseProjectRequestedListener {
     /** Store no operativo (sin resultados del pipeline → offline-first). */
     private static final EnterprisePipelineResultStore NO_OP_RESULT_STORE = new EnterprisePipelineResultStore() {
         @Override
-        public void store(EnterpriseTurnResults results) { }
+        public void store(EnterpriseTurnResults results) {}
 
         @Override
-        public java.util.Optional<EnterpriseTurnResults> consume(java.util.UUID projectId) {
-            return java.util.Optional.empty();
+        public Optional<EnterpriseTurnResults> consume(UUID projectId) {
+            return Optional.empty();
         }
     };
 
@@ -57,10 +56,11 @@ public final class EnterpriseProjectRequestedListener {
      * @param eventBus         bus de eventos de dominio existente (obligatorio)
      * @param executor         ejecutor para la generación asíncrona (obligatorio)
      */
-    public EnterpriseProjectRequestedListener(EnterpriseGenerationOrchestrator orchestrator,
-                                              ContextRepository contextRepository,
-                                              DomainEventBus eventBus,
-                                              Executor executor) {
+    public EnterpriseProjectRequestedListener(
+            EnterpriseGenerationOrchestrator orchestrator,
+            ContextRepository contextRepository,
+            DomainEventBus eventBus,
+            Executor executor) {
         this(orchestrator, contextRepository, eventBus, executor, NO_OP_RESULT_STORE);
     }
 
@@ -77,17 +77,17 @@ public final class EnterpriseProjectRequestedListener {
      * @param executor           ejecutor para la generación asíncrona (obligatorio)
      * @param pipelineResultStore resultados reales del pipeline (obligatorio)
      */
-    public EnterpriseProjectRequestedListener(EnterpriseGenerationOrchestrator orchestrator,
-                                              ContextRepository contextRepository,
-                                              DomainEventBus eventBus,
-                                              Executor executor,
-                                              EnterprisePipelineResultStore pipelineResultStore) {
+    public EnterpriseProjectRequestedListener(
+            EnterpriseGenerationOrchestrator orchestrator,
+            ContextRepository contextRepository,
+            DomainEventBus eventBus,
+            Executor executor,
+            EnterprisePipelineResultStore pipelineResultStore) {
         this.orchestrator = requireNonNull(orchestrator, "orchestrator");
         this.contextRepository = requireNonNull(contextRepository, "contextRepository");
         this.executor = requireNonNull(executor, "executor");
         this.pipelineResultStore = requireNonNull(pipelineResultStore, "pipelineResultStore");
-        requireNonNull(eventBus, "eventBus")
-            .subscribe(EnterpriseProjectRequested.class, this::onRequested);
+        requireNonNull(eventBus, "eventBus").subscribe(EnterpriseProjectRequested.class, this::onRequested);
     }
 
     /**
@@ -107,12 +107,12 @@ public final class EnterpriseProjectRequestedListener {
                 if (context.isEmpty()) {
                     return;
                 }
-                EnterpriseTurnResults turnResults = pipelineResultStore.consume(event.projectId())
-                    .orElse(EnterpriseTurnResults.empty());
+                EnterpriseTurnResults turnResults =
+                        pipelineResultStore.consume(event.projectId()).orElse(EnterpriseTurnResults.empty());
                 EnterpriseGenerationRequest request = new EnterpriseGenerationRequest(
-                    event.projectId(), context.get(),
-                    turnResults.recommendations(), turnResults.opportunities(),
-                    turnResults.knowledge(), turnResults.riskResult());
+                        event.projectId(), context.get(),
+                        turnResults.recommendations(), turnResults.opportunities(),
+                        turnResults.knowledge(), turnResults.riskResult());
                 orchestrator.generateRequested(request, event.version());
             } catch (RuntimeException ex) {
                 // La generación registra su propio EnterpriseProjectFailed; no se propaga.

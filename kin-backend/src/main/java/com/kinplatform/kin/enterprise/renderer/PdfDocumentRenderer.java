@@ -3,7 +3,7 @@ package com.kinplatform.kin.enterprise.renderer;
 import com.kinplatform.kin.enterprise.ports.DocumentRenderer;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
 import com.kinplatform.kin.enterprise.valueobjects.RenderFormat;
-
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -60,6 +60,7 @@ public final class PdfDocumentRenderer implements DocumentRenderer {
      * exactos y tráiler. El flujo de contenido se escribe sin compresión para
      * que el texto sea inspeccionable en bytes.</p>
      */
+    @SuppressFBWarnings("VA_FORMAT_STRING_USES_NEWLINE")
     private byte[] buildPdf(List<String> lines) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         List<Integer> offsets = new ArrayList<>();
@@ -73,8 +74,10 @@ public final class PdfDocumentRenderer implements DocumentRenderer {
         writeBytes(out, "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
 
         offsets.add(out.size());
-        writeBytes(out, "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
-            + "/Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n");
+        writeBytes(
+                out,
+                "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+                        + "/Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n");
 
         byte[] stream = contentStream(lines);
         offsets.add(out.size());
@@ -101,10 +104,17 @@ public final class PdfDocumentRenderer implements DocumentRenderer {
      */
     private byte[] contentStream(List<String> lines) {
         StringBuilder stream = new StringBuilder();
-        stream.append("BT\n/F1 12 Tf\n").append(MARGIN_X).append(' ').append(START_Y).append(" Td\n");
+        stream.append("BT\n/F1 12 Tf\n")
+                .append(MARGIN_X)
+                .append(' ')
+                .append(START_Y)
+                .append(" Td\n");
         for (String line : lines) {
-            stream.append('(').append(pdfEscape(line)).append(") Tj\n0 -")
-                .append(LINE_LEADING).append(" Td\n");
+            stream.append('(')
+                    .append(pdfEscape(line))
+                    .append(") Tj\n0 -")
+                    .append(LINE_LEADING)
+                    .append(" Td\n");
         }
         stream.append("ET\n");
         return stream.toString().getBytes(StandardCharsets.ISO_8859_1);

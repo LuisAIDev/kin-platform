@@ -1,6 +1,5 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.kin.engine.EngineMetadata;
 import com.kinplatform.kin.engine.EnginePhase;
 import com.kinplatform.kin.engine.EngineType;
@@ -9,7 +8,6 @@ import com.kinplatform.kin.enterprise.engine.result.RoadmapResult;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
 import com.kinplatform.kin.enterprise.valueobjects.Roadmap;
 import com.kinplatform.kin.reporting.RecommendationResult;
-
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -53,14 +51,18 @@ public class DefaultRoadmapEngine implements RoadmapEngine {
     private static final int MONTHS_PER_PHASE = 3;
     private static final int DEFAULT_HORIZON_MONTHS = 12;
 
-    private static final List<String> PHASE_ORDER = List.of(
-        "VALIDATION", "PRODUCT", "MARKETING", "OPERATIONS", "STRATEGY",
-        "FINANCIAL", "TEAM", "INNOVATION");
+    private static final List<String> PHASE_ORDER =
+            List.of("VALIDATION", "PRODUCT", "MARKETING", "OPERATIONS", "STRATEGY", "FINANCIAL", "TEAM", "INNOVATION");
 
     @Override
     public EngineMetadata metadata() {
-        return EngineMetadata.of(ENGINE_NAME, ENGINE_VERSION, ENGINE_AUTHOR,
-            EnginePhase.EXPLANATION, EngineType.DOMAIN, ENGINE_PRIORITY);
+        return EngineMetadata.of(
+                ENGINE_NAME,
+                ENGINE_VERSION,
+                ENGINE_AUTHOR,
+                EnginePhase.EXPLANATION,
+                EngineType.DOMAIN,
+                ENGINE_PRIORITY);
     }
 
     @Override
@@ -85,8 +87,7 @@ public class DefaultRoadmapEngine implements RoadmapEngine {
         double confidence = recommendations == null ? 0.0 : recommendations.confidence();
         String explanation = buildExplanation(phases, horizon);
 
-        return new RoadmapResult(roadmap, confidence, explanation,
-            "RoadmapEngine", ENGINE_VERSION);
+        return new RoadmapResult(roadmap, confidence, explanation, "RoadmapEngine", ENGINE_VERSION);
     }
 
     private int horizon(FinancialPlan financialPlan) {
@@ -162,7 +163,6 @@ public class DefaultRoadmapEngine implements RoadmapEngine {
         if (phases.isEmpty()) {
             return "Sin recomendaciones previas: roadmap por defecto.";
         }
-        return "Roadmap de " + phases.size() + " fases sobre un horizonte de "
-            + horizon + " meses.";
+        return "Roadmap de " + phases.size() + " fases sobre un horizonte de " + horizon + " meses.";
     }
 }
