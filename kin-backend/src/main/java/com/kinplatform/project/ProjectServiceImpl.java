@@ -3,18 +3,17 @@ package com.kinplatform.project;
 import com.kinplatform.chat.ChatMessageRepository;
 import com.kinplatform.chat.MessageRole;
 import com.kinplatform.common.dto.PageResponse;
+import com.kinplatform.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.project.dto.CreateProjectRequest;
 import com.kinplatform.project.dto.ProjectResponse;
 import com.kinplatform.project.dto.UpdateProjectRequest;
-import com.kinplatform.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.user.UserRepository;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,18 +28,20 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public ProjectResponse create(UUID userId, CreateProjectRequest request) {
-        var user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        var user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         if (!subscriptionValidator.canCreateProject(userId)) {
             throw new ProjectLimitExceededException(
-                "Alcanzaste el límite de proyectos de tu plan. Mejora a Premium para crear más.");
+                    "Alcanzaste el límite de proyectos de tu plan. Mejora a Premium para crear más.");
         }
 
         var project = Project.builder()
                 .user(user)
                 .title(request.getTitle().trim())
-                .description(request.getDescription() != null ? request.getDescription().trim() : null)
+                .description(
+                        request.getDescription() != null
+                                ? request.getDescription().trim()
+                                : null)
                 .category(categoryService.requireByCode(request.getCategory()))
                 .status(ProjectStatus.DRAFT)
                 .build();
@@ -98,7 +99,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     private Project findOwnedProject(UUID userId, UUID projectId) {
-        var project = projectRepository.findById(projectId)
+        var project = projectRepository
+                .findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
 
         if (!project.getUser().getId().equals(userId)) {
@@ -133,8 +135,10 @@ public class ProjectServiceImpl implements ProjectService {
         int progress = 0;
 
         // 1. Basic info complete (20%)
-        if (project.getTitle() != null && !project.getTitle().isBlank()
-                && project.getDescription() != null && !project.getDescription().isBlank()
+        if (project.getTitle() != null
+                && !project.getTitle().isBlank()
+                && project.getDescription() != null
+                && !project.getDescription().isBlank()
                 && project.getCategory() != null) {
             progress += 20;
         }
