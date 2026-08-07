@@ -1,20 +1,14 @@
 #!/usr/bin/env bash
 # ============================================================
-# KIN Platform — Reset de base de datos H2 local (Linux/macOS)
+# KIN Platform — Reset de base de datos PostgreSQL local (Linux/macOS)
 #
-# Detiene el backend si está corriendo, elimina la base H2
-# persistente (data/kindb.mv.db) y vuelve a arrancar Spring Boot.
+# Detiene el backend si está corriendo, ELIMINA el esquema public de la
+# base de desarrollo (PostgreSQL, perfil 'dev') y vuelve a arrancar Spring
+# Boot. Flyway recrea V1..V11 desde cero en el siguiente arranque.
 #
-# Cuándo usarlo:
-#   - Aparecen errores de ALTER TABLE al arrancar, p. ej.
-#     "JdbcSQLIntegrityConstraintViolationException: NULL not allowed
-#     for column SUPPORT_LEVEL" (o similar) tras cambiar el modelo JPA.
-#   - El esquema H2 quedó obsoleto respecto a las entidades.
-#
-# Por qué: en dev Hibernate usa ddl-auto: update sobre una base H2
-# persistente. Si una entidad añade una columna NOT NULL y la tabla ya
-# tiene filas, H2 rechaza el ALTER. La solución es regenerar la base
-# desde las entidades (nunca modificar entidades para adaptarlas).
+# IMPORTANTE: operación DESTRUCTIVA (DROP SCHEMA public CASCADE). Requiere
+# confirmación explícita (escribir RESET) y solo está soportada para la
+# base local (localhost). Nunca ejecuta el reset sobre una base remota.
 #
 # Uso:
 #   bash scripts/reset-dev-db.sh
@@ -25,11 +19,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BACKEND_DIR="$ROOT_DIR/kin-backend"
-DB_FILE="$BACKEND_DIR/data/kindb.mv.db"
-TRACE_FILE="$BACKEND_DIR/data/kindb.trace.db"
+COMPOSE_FILE="$ROOT_DIR/docker-compose.yml"
 PORT="${PORT:-8080}"
 
-echo "=== KIN — Reset de base H2 local (dev) ==="
+echo "=== KIN — Reset de base PostgreSQL local (dev) ==="
 
 # 1. Detener la aplicación si está corriendo (puerto configurado)
 if command -v lsof >/dev/null 2>&1; then
@@ -52,27 +45,57 @@ fi
 pkill -f "$BACKEND_DIR.*spring-boot:run" 2>/dev/null || true
 sleep 1
 
-# 2. Eliminar la base H2 persistente
-if [ -f "$DB_FILE" ]; then
-  echo "[2/4] Eliminando base obsoleta: $DB_FILE"
-  rm -f "$DB_FILE"
-  rm -f "$TRACE_FILE"
-  echo "      Base eliminada. Hibernate la recreará desde cero al arrancar."
-else
-  echo "[2/4] No existe base local ($DB_FILE). Se creará una nueva al arrancar."
-  rm -f "$TRACE_FILE"
+# 2. Determinar la base de desarrollo
+DB_HOST="localhost"
+DB_PORT="5432"
+DB_NAME="kin_platform"
+DB_USER="kin_admin"
+if [ -n "${DATABASE_URL:-}" ] && [[ "$DATABASE_URL" =~ jdbc:postgresql://([^:/]+):([0-9]+)/([^?]+) ]]; then
+  DB_HOST="${BASH_REMATCH[1]}"
+  DB_PORT="${BASH_REMATCH[2]}"
+  DB_NAME="${BASH_REMATCH[3]}"
+fi
+if [ -n "${DATABASE_USER:-}" ]; then
+  DB_USER="$DATABASE_USER"
 fi
 
-# 3. Verificar que el wrapper Maven existe
+# Solo se resetea la base local (no se ejecuta un DROP remoto automático).
+if [[ "$DB_HOST" != "localhost" && "$DB_HOST" != "127.0.0.1" && "$DB_HOST" != "::1" ]]; then
+  echo "ERROR: El reset destructivo solo está soportado para la base DEV local." >&2
+  echo "  DATABASE_URL apunta a $DB_HOST — no se ejecuta el reset automáticamente." >&2
+  exit 1
+fi
+
+# 3. Confirmación explícita (operación destructiva, nunca automática)
+echo "[2/4] ADVERTENCIA: se ELIMINARÁN TODOS LOS DATOS del esquema public de"
+echo "      $DB_HOST:$DB_PORT/$DB_NAME"
+read -r -p "      Escribe RESET para confirmar: " confirm
+if [ "$confirm" != "RESET" ]; then
+  echo "      Cancelado. No se modificó la base."
+  exit 0
+fi
+
+# 4. Eliminar el esquema (vía psql del contenedor postgres-db de Compose)
+echo "[3/4] Eliminando esquema public de $DB_NAME ..."
+PG_ARGS=()
+if [ -n "${DATABASE_PASSWORD:-}" ]; then
+  PG_ARGS=(-e "PGPASSWORD=$DATABASE_PASSWORD")
+fi
+docker compose -f "$COMPOSE_FILE" exec -T "${PG_ARGS[@]}" postgres-db \
+  psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 \
+  -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+echo "      Esquema public eliminado. Flyway recreará V1..V11 en el siguiente arranque."
+
+# 5. Verificar que el wrapper Maven existe
 if [ ! -f "$BACKEND_DIR/mvnw" ]; then
   echo "ERROR: No se encontró $BACKEND_DIR/mvnw" >&2
   exit 1
 fi
 
-# 4. Arrancar Spring Boot de nuevo
-echo "[3/4] Arrancando Spring Boot..."
-echo "[4/4] Backend disponible en http://localhost:8080/api/v1 (Ctrl+C para detener)."
+# 6. Arrancar Spring Boot de nuevo (perfil dev)
+echo "[4/4] Arrancando Spring Boot (perfil 'dev')..."
+echo "Backend disponible en http://localhost:8080/api/v1 (Ctrl+C para detener)."
 echo ""
 
 cd "$BACKEND_DIR"
-./mvnw spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev

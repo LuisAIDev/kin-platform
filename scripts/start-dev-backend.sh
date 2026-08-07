@@ -10,6 +10,12 @@
 # Si cualquiera existe, NO arranca otro backend, muestra
 # "Backend ya está ejecutándose." y deja que se reutilice.
 #
+# Dev usa PostgreSQL (perfil 'dev', en vez de H2 - H2-2). Antes de arrancar
+# comprueba la base de datos:
+#   - DATABASE_PASSWORD debe estar definida (env o .env).
+#   - PostgreSQL debe responder en DATABASE_URL (por defecto localhost:5432).
+# Si la base no está disponible, informa el problema y DETIENE (sin bucle).
+#
 # Uso:
 #   bash scripts/start-dev-backend.sh
 # ============================================================
@@ -56,9 +62,34 @@ if [ ! -f "$BACKEND_DIR/mvnw" ]; then
   exit 1
 fi
 
-echo "No hay backend en marcha. Arrancando UNA instancia de Spring Boot..."
+# --- Chequeo de base PostgreSQL (perfil dev) ---
+DB_HOST="localhost"
+DB_PORT="5432"
+if [ -n "${DATABASE_URL:-}" ] && [[ "$DATABASE_URL" =~ jdbc:postgresql://([^:/]+):([0-9]+)/ ]]; then
+  DB_HOST="${BASH_REMATCH[1]}"
+  DB_PORT="${BASH_REMATCH[2]}"
+fi
+
+if [ -z "${DATABASE_PASSWORD:-}" ]; then
+  echo "ERROR: DATABASE_PASSWORD no está definida." >&2
+  echo "  El perfil dev usa PostgreSQL (no H2). Define en .env o en el entorno:" >&2
+  echo "    DATABASE_URL=jdbc:postgresql://localhost:5432/kin_platform" >&2
+  echo "    DATABASE_USER=kin_admin" >&2
+  echo "    DATABASE_PASSWORD=<igual que POSTGRES_PASSWORD del docker-compose.yml>" >&2
+  exit 1
+fi
+
+if ! timeout 3 bash -c "cat < /dev/null > /dev/tcp/$DB_HOST/$DB_PORT" 2>/dev/null; then
+  echo "ERROR: PostgreSQL no responde en $DB_HOST:$DB_PORT." >&2
+  echo "  Levanta la base de desarrollo:" >&2
+  echo "    docker compose up -d postgres-db   (usa POSTGRES_PASSWORD del .env)" >&2
+  echo "  El backend no se inicia sin base disponible." >&2
+  exit 1
+fi
+
+echo "PostgreSQL detectado en $DB_HOST:$DB_PORT. Arrancando backend con perfil 'dev'..."
 echo "Backend disponible en http://localhost:$PORT/api/v1 (Ctrl+C para detener)."
 echo ""
 
 cd "$BACKEND_DIR"
-./mvnw spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev

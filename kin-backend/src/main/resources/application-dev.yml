@@ -1,0 +1,37 @@
+# ============================================================
+# KIN Platform — DEV profile (PostgreSQL local en vez de H2)
+# ============================================================
+# Sustituye a H2 como base de desarrollo (H2-2). Todas las credenciales
+# llegan por variables de entorno; nunca se versionan.
+#
+# Por defecto apunta al servicio `postgres-db` de docker-compose.yml
+# (localhost:5432, db kin_platform, user kin_admin). Ejemplo:
+#   docker compose up -d postgres-db     (usa POSTGRES_PASSWORD del .env)
+#   export DATABASE_PASSWORD=$POSTGRES_PASSWORD
+#
+# Flyway habilitado: el esquema lo crean las migraciones V1..V11.
+# ddl-auto=none: Hibernate NO genera ni modifica el esquema silenciosamente.
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/kin_platform}
+    username: ${DATABASE_USER:kin_admin}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 20000
+  jpa:
+    database: POSTGRESQL
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
