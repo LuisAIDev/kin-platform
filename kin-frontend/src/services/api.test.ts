@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/services/api";
-import { forceLogout } from "@/services/session";
 
 const { mockedForceLogout } = vi.hoisted(() => ({ mockedForceLogout: vi.fn() }));
 vi.mock("@/services/session", async (importOriginal) => {

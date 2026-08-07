@@ -1,5 +1,5 @@
 import { api } from "./api";
-import { API_URL, storeSession, clearSession } from "./session";
+import { API_URL, storeSession, clearSession, getToken } from "./session";
 
 export interface RegisterRequest {
   fullName: string;
@@ -41,18 +41,19 @@ export const authService = {
   },
 
   logout() {
-    const token = localStorage.getItem("kin_token_v2");
+    const token = getToken();
     if (token) {
       fetch(`${API_URL}/auth/logout`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       }).catch(() => {});
     }
     clearSession();
   },
 
   getToken(): string | null {
-    return localStorage.getItem("kin_token_v2");
+    return getToken();
   },
 
   getUser(): AuthResponse | null {

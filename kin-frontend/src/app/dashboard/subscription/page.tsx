@@ -15,7 +15,6 @@ export default function SubscriptionPage() {
   const [cancelling, setCancelling] = useState(false);
   const [startingTrial, setStartingTrial] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
-  const [upgrades, setUpgrades] = useState<SubscriptionStatus["planName"][]>([]);
 
   useEffect(() => {
     const token = authService.getToken();

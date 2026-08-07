@@ -31,6 +31,11 @@ export function clearSession() {
   clearAllCookies();
 }
 
+export function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("kin_token_v2");
+}
+
 function setCookie(name: string, value: string) {
   document.cookie = `${name}=${value}; ${COOKIE_OPTIONS}`;
 }
@@ -39,18 +44,18 @@ export function storeSession(res: { token: string; email: string; fullName: stri
   localStorage.setItem("kin_token_v2", res.token);
   localStorage.setItem("kin_user_v2", JSON.stringify(res));
   setCookie("kin_session_v2", "active");
-  setCookie("kin_token_v2", res.token);
 }
 
 export function forceLogout() {
   if (_forceLogoutInProgress) return;
   _forceLogoutInProgress = true;
 
-  const token = localStorage.getItem("kin_token_v2");
+  const token = getToken();
   if (token) {
     fetch(`${API_URL}/auth/logout`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
     }).catch(() => {});
   }
 

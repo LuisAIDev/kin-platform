@@ -61,11 +61,11 @@ export default function RegisterPage() {
 
         <input
           type="password"
-          placeholder="Contraseña (mín. 8 caracteres)"
+          placeholder="Contraseña (mín. 12 caracteres)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          minLength={8}
+          minLength={12}
           className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
         />
 

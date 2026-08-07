@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1';
 const TEST_EMAIL = `test-${Date.now()}@kin.test`;
-const TEST_PASSWORD = 'TestPass123';
+const TEST_PASSWORD = 'TestPass123!';
 
 test.describe('Login flow', () => {
   test.beforeAll(async ({ request }) => {

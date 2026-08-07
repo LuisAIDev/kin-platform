@@ -1,21 +1,19 @@
 import type { EnterpriseDashboard } from "@/types/enterprise";
-import { API_URL } from "@/services/session";
+import { API_URL, getToken } from "@/services/session";
 
 /** URL base de la API del backend KIN (compartida con el resto de servicios). */
 export { API_URL };
 
 /** Token JWT almacenado por la aplicación principal (misma clave que el resto de servicios). */
 export function authHeaders(): Record<string, string> {
-  const token =
-    typeof window !== "undefined"
-      ? window.localStorage.getItem("kin_token_v2")
-      : null;
+  const token = getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 async function jsonRequest<T>(endpoint: string): Promise<T> {
   const res = await fetch(`${API_URL}${endpoint}`, {
     headers: { ...authHeaders(), Accept: "application/json" },
+    credentials: "include",
   });
   if (!res.ok) {
     throw new Error(`Request failed (${res.status})`);

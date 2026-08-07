@@ -53,8 +53,6 @@ export default function PricingPage() {
     }
   };
 
-  const isPaidPlan = (price: number) => price > 0;
-
   if (loading) {
     return (
       <main className="flex-1 flex items-center justify-center">

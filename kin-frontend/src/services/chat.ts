@@ -1,4 +1,5 @@
 import { api } from "./api";
+import { getToken } from "./session";
 
 export interface ChatMessage {
   id: string;
@@ -26,11 +27,6 @@ export interface StreamCallbacks {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
 
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("kin_token_v2");
-}
-
 export const chatService = {
   sendMessage: (projectId: string, content: string) =>
     api.post<ChatResponse>(`/projects/${projectId}/chat`, { content }),
@@ -57,6 +53,7 @@ export const chatService = {
           headers,
           body: JSON.stringify({ content }),
           signal: controller.signal,
+          credentials: "include",
         });
 
         console.log("=== CHAT RESPONSE ===");

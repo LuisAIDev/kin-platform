@@ -3,8 +3,6 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import Toast, { type ToastItem, type ToastType } from "@/components/ui/Toast";
 
-type ToastInput = Omit<ToastItem, "id">;
-
 type ToastContextValue = {
   toast: (type: ToastType, message: string) => void;
   success: (message: string) => void;
