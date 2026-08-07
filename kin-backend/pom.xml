@@ -21,6 +21,7 @@
 
     <properties>
         <java.version>17</java.version>
+        <flyway.version>11.20.3</flyway.version>
         <testcontainers.version>1.21.4</testcontainers.version>
         <jjwt.version>0.12.5</jjwt.version>
         <spring-ai.version>1.1.7</spring-ai.version>
@@ -158,10 +159,18 @@
             <version>24.0.0</version>
         </dependency>
 
-        <!-- Flyway — migraciones gestionadas (PostgreSQL incluido en flyway-core v9) -->
+        <!-- Flyway — migraciones gestionadas (PostgreSQL vía flyway-database-postgresql,
+             módulo separado desde Flyway 10). Versión 11.x explícita (desde Flyway 11,
+             el group de OSS sigue siendo org.flywaydb; Spring Boot 3.2.5 solo gestiona 9.22.3). -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
+            <version>${flyway.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+            <version>${flyway.version}</version>
         </dependency>
 
         <!-- dotenv — carga .env automáticamente en desarrollo -->
