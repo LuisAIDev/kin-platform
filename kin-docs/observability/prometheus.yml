@@ -1,0 +1,21 @@
+# Prometheus — KIN backend scraping config
+# Target: el backend expone /api/v1/actuator/prometheus (context-path incluido).
+global:
+  scrape_interval: 15s
+  evaluation_interval: 30s
+
+scrape_configs:
+  - job_name: kin-backend
+    metrics_path: /api/v1/actuator/prometheus
+    static_configs:
+      - targets: ["kin-backend:8080"]
+        labels:
+          application: kin-backend
+
+  - job_name: kin-backend-render
+    metrics_path: /api/v1/actuator/prometheus
+    scheme: https
+    static_configs:
+      - targets: ["kin-backend.onrender.com"]
+        labels:
+          application: kin-backend

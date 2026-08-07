@@ -17,9 +17,7 @@ import com.kinplatform.kin.knowledge.orchestrator.OrchestrationRequest;
 import com.kinplatform.kin.knowledge.orchestrator.OrchestrationResult;
 import com.kinplatform.kin.knowledge.orchestrator.OrchestrationState;
 import com.kinplatform.kin.knowledge.orchestrator.OrchestrationStrategy;
-import com.kinplatform.kin.knowledge.policy.KnowledgePolicyEngine;
 import com.kinplatform.kin.knowledge.policy.PolicyConfig;
-
 import io.micrometer.core.instrument.MeterRegistry;
 
 /**
@@ -39,8 +37,8 @@ public final class ObservableKnowledgeRuntime {
     private final KnowledgeMetrics metrics;
     private final ContextAssembler assembler;
 
-    private ObservableKnowledgeRuntime(KnowledgeOrchestrator orchestrator, KnowledgeMetrics metrics,
-                                       ContextAssembler assembler) {
+    private ObservableKnowledgeRuntime(
+            KnowledgeOrchestrator orchestrator, KnowledgeMetrics metrics, ContextAssembler assembler) {
         this.orchestrator = orchestrator;
         this.metrics = metrics;
         this.assembler = assembler;
@@ -49,8 +47,11 @@ public final class ObservableKnowledgeRuntime {
     /**
      * Construye el runtime observado sobre las fuentes/validador/caché dados.
      */
-    public static ObservableKnowledgeRuntime create(SourceRegistry registry, SourceValidator validator,
-                                                    KnowledgeRepository repository, MeterRegistry meterRegistry) {
+    public static ObservableKnowledgeRuntime create(
+            SourceRegistry registry,
+            SourceValidator validator,
+            KnowledgeRepository repository,
+            MeterRegistry meterRegistry) {
         KnowledgeMetrics metrics = new KnowledgeMetrics(meterRegistry);
         var planner = new TimedQueryPlanner(metrics);
         var policy = new TimedPolicyEngine(metrics);
@@ -59,8 +60,8 @@ public final class ObservableKnowledgeRuntime {
         var ranker = new TimedContextRanker(new DomainContextRanker(), metrics);
         var assembler = new TimedContextAssembler(new DomainContextAssembler(), metrics);
         var repo = new TimedKnowledgeRepository(repository, metrics);
-        var orchestrator = new KnowledgeOrchestrator(planner, policy, providerRegistry, repo,
-            candidateValidator, ranker, assembler);
+        var orchestrator = new KnowledgeOrchestrator(
+                planner, policy, providerRegistry, repo, candidateValidator, ranker, assembler);
         return new ObservableKnowledgeRuntime(orchestrator, metrics, assembler);
     }
 
@@ -86,8 +87,10 @@ public final class ObservableKnowledgeRuntime {
                 return empty;
             }
             var orchestration = orchestrator.coordinateWithResult(OrchestrationRequest.of(
-                request, PolicyConfig.defaults(), OrchestrationStrategy.GRACEFUL_DEGRADATION,
-                ExecutionEnvironment.online()));
+                    request,
+                    PolicyConfig.defaults(),
+                    OrchestrationStrategy.GRACEFUL_DEGRADATION,
+                    ExecutionEnvironment.online()));
             long tookMs = TimedQueryPlanner.toMs(start);
             recordOrchestration(orchestration.orchestration());
             recordKnowledge(orchestration.knowledge());
@@ -95,8 +98,8 @@ public final class ObservableKnowledgeRuntime {
             KnowledgeResult knowledge = orchestration.knowledge();
             if (knowledge == null) {
                 String reason = orchestration.orchestration().failureReason();
-                knowledge = assembler.emptyResult(reason == null || reason.isBlank()
-                    ? "No se obtuvo conocimiento externo." : reason);
+                knowledge = assembler.emptyResult(
+                        reason == null || reason.isBlank() ? "No se obtuvo conocimiento externo." : reason);
             }
             logCycle(correlation, start, knowledge.isEmpty() ? "EMPTY" : "OK");
             return knowledge;
@@ -129,7 +132,7 @@ public final class ObservableKnowledgeRuntime {
             }
         }
         if (orchestration.decisions().stream()
-            .anyMatch(decision -> decision.type() == OrchestrationDecisionType.STOP_CONSULTS)) {
+                .anyMatch(decision -> decision.type() == OrchestrationDecisionType.STOP_CONSULTS)) {
             metrics.budgetExhausted();
         }
         metrics.providersSelected(orchestration.selectedProviderTypes().size());
@@ -141,7 +144,8 @@ public final class ObservableKnowledgeRuntime {
         }
         metrics.sourcesAccepted(knowledge.factCount());
         long rejected = knowledge.validations().stream()
-            .filter(validation -> !validation.accepted()).count();
+                .filter(validation -> !validation.accepted())
+                .count();
         metrics.sourcesRejected((int) rejected);
         metrics.averageScore(knowledge.confidence());
         metrics.averageConfidence(knowledge.confidence());
