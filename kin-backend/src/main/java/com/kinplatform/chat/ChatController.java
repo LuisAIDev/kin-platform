@@ -6,18 +6,17 @@ import com.kinplatform.chat.dto.ChatResponse;
 import com.kinplatform.chat.dto.SaveMessageRequest;
 import com.kinplatform.user.UserRepository;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/projects/{projectId}")
@@ -32,15 +31,11 @@ public class ChatController {
 
     @PostMapping("/chat")
     public ResponseEntity<ChatResponse> chat(
-            Authentication auth,
-            @PathVariable UUID projectId,
-            @Valid @RequestBody ChatRequest request
-    ) {
-        log.info("=== CHAT REQUEST RECEIVED === URI=/api/v1/projects/{}/chat, user={}, authenticated={}, authorities={}",
+            Authentication auth, @PathVariable UUID projectId, @Valid @RequestBody ChatRequest request) {
+        log.info(
+                "=== CHAT REQUEST RECEIVED === projectId={}, authenticated={}",
                 projectId,
-                auth != null ? auth.getName() : "null",
-                auth != null ? auth.isAuthenticated() : false,
-                auth != null ? auth.getAuthorities() : "[]");
+                auth != null && auth.isAuthenticated());
         var userId = getAuthenticatedUserId(auth);
         var response = chatOrchestratorService.processMessage(userId, projectId, request);
         return ResponseEntity.ok(response);
@@ -48,49 +43,36 @@ public class ChatController {
 
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter chatStream(
-            Authentication auth,
-            @PathVariable UUID projectId,
-            @Valid @RequestBody ChatRequest request
-    ) {
-        log.info("=== CHAT REQUEST RECEIVED === Mensaje del usuario: {}", request.getContent());
+            Authentication auth, @PathVariable UUID projectId, @Valid @RequestBody ChatRequest request) {
+        log.info("=== CHAT STREAM REQUEST RECEIVED === projectId={}", projectId);
         var userId = getAuthenticatedUserId(auth);
         return chatOrchestratorService.processMessageStream(userId, projectId, request);
     }
 
     @PostMapping("/messages")
     public ResponseEntity<ChatMessageResponse> saveMessage(
-            Authentication auth,
-            @PathVariable UUID projectId,
-            @Valid @RequestBody SaveMessageRequest request
-    ) {
+            Authentication auth, @PathVariable UUID projectId, @Valid @RequestBody SaveMessageRequest request) {
         var userId = getAuthenticatedUserId(auth);
         var response = chatService.saveMessage(userId, projectId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/messages")
-    public ResponseEntity<List<ChatMessageResponse>> getHistory(
-            Authentication auth,
-            @PathVariable UUID projectId
-    ) {
+    public ResponseEntity<List<ChatMessageResponse>> getHistory(Authentication auth, @PathVariable UUID projectId) {
         var userId = getAuthenticatedUserId(auth);
         var messages = chatService.getConversationHistory(userId, projectId);
         return ResponseEntity.ok(messages);
     }
 
     @DeleteMapping("/messages")
-    public ResponseEntity<Void> clearConversation(
-            Authentication auth,
-            @PathVariable UUID projectId
-    ) {
+    public ResponseEntity<Void> clearConversation(Authentication auth, @PathVariable UUID projectId) {
         var userId = getAuthenticatedUserId(auth);
         chatService.clearConversation(userId, projectId);
         return ResponseEntity.noContent().build();
     }
 
     private UUID getAuthenticatedUserId(Authentication auth) {
-        var user = userRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found"));
-        return user.getId();
+        return com.kinplatform.common.security.AuthenticatedUsers.require(userRepository, auth)
+                .getId();
     }
 }
