@@ -2,8 +2,11 @@ package com.kinplatform.common.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,14 +17,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.util.List;
-
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+    private static final String TOKEN_COOKIE = "kin_token_v2";
 
     private final JwtService jwtService;
 
@@ -29,34 +30,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain
-    ) throws ServletException, IOException {
-        var authHeader = request.getHeader("Authorization");
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        log.info("=== JWT FILTER === method={}, requestURI={}, servletPath={}, contextPath={}, hasAuthorization={}, authenticatedUser={}",
-                request.getMethod(),
-                request.getRequestURI(),
-                request.getServletPath(),
-                request.getContextPath(),
-                authHeader != null,
-                auth != null ? auth.getName() : "none");
+            @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
+        String token = extractBearerToken(request);
+        if (token == null) {
+            token = extractCookieToken(request);
+        }
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.warn("=== JWT FILTER === No Bearer token found for URI={}. auth after skip: {}",
-                    request.getRequestURI(),
-                    SecurityContextHolder.getContext().getAuthentication() != null
-                            ? SecurityContextHolder.getContext().getAuthentication().getName()
-                            : "null");
+        if (token == null) {
+            log.debug("No Bearer token or session cookie found for URI={}", request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
 
-        var token = authHeader.substring(7);
-
         if (!jwtService.isTokenValid(token)) {
-            log.warn("=== JWT FILTER === Token INVALID for URI={}. Token (first 20): {}...",
-                    request.getRequestURI(),
-                    token.substring(0, Math.min(20, token.length())));
+            log.warn("Invalid or expired token for URI={}", request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
@@ -65,13 +53,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var role = jwtService.extractRole(token);
 
         var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
-        var authentication = new UsernamePasswordAuthenticationToken(
-                email, null, authorities
-        );
+        var authentication = new UsernamePasswordAuthenticationToken(email, null, authorities);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        log.info("=== JWT FILTER === AUTHENTICATION SET for URI={}, user={}, role={}, authorities={}",
-                request.getRequestURI(), email, role, authorities);
         filterChain.doFilter(request, response);
+    }
+
+    private String extractBearerToken(HttpServletRequest request) {
+        var authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        return null;
+    }
+
+    private String extractCookieToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+        for (Cookie cookie : cookies) {
+            if (TOKEN_COOKIE.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }

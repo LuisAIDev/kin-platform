@@ -2,9 +2,8 @@ package com.kinplatform.common.config;
 
 import com.kinplatform.ai.interview.adapter.JpaInterviewRepository;
 import com.kinplatform.ai.provider.AIProvider;
-import com.kinplatform.ai.provider.DeepSeekProvider;
-import com.kinplatform.ai.provider.OpenAIProvider;
 import com.kinplatform.ai.provider.ProviderRouter;
+import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.kin.ai.PromptAssembler;
 import com.kinplatform.kin.ai.prompt.ConversationPromptBuilder;
@@ -34,8 +33,6 @@ import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
-import com.kinplatform.kin.event.DomainEventBus;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
 import com.kinplatform.kin.engine.DomainEngine;
 import com.kinplatform.kin.engine.EngineExecutor;
 import com.kinplatform.kin.engine.EngineRegistry;
@@ -44,19 +41,20 @@ import com.kinplatform.kin.enrichment.FactRanker;
 import com.kinplatform.kin.enrichment.stage.EnrichmentStage;
 import com.kinplatform.kin.enterprise.application.EnterprisePipelineResultStore;
 import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
-import com.kinplatform.kin.KinMethod;
-import com.kinplatform.kin.knowledge.KnowledgeSource;
-import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
-import com.kinplatform.kin.knowledge.engine.KnowledgeGateway;
-import com.kinplatform.kin.knowledge.engine.SourceRegistry;
-import com.kinplatform.kin.knowledge.engine.SourceValidator;
-import com.kinplatform.kin.knowledge.stage.KnowledgeStage;
+import com.kinplatform.kin.event.DomainEventBus;
+import com.kinplatform.kin.event.InMemoryDomainEventBus;
 import com.kinplatform.kin.interview.InterviewQuestion;
 import com.kinplatform.kin.interview.InterviewRepository;
 import com.kinplatform.kin.interview.engine.AnswerValidator;
 import com.kinplatform.kin.interview.engine.InterviewBlueprint;
 import com.kinplatform.kin.interview.engine.InterviewEngine;
 import com.kinplatform.kin.interview.stage.InterviewStage;
+import com.kinplatform.kin.knowledge.KnowledgeSource;
+import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.kin.knowledge.engine.KnowledgeGateway;
+import com.kinplatform.kin.knowledge.engine.SourceRegistry;
+import com.kinplatform.kin.knowledge.engine.SourceValidator;
+import com.kinplatform.kin.knowledge.stage.KnowledgeStage;
 import com.kinplatform.kin.pipeline.Pipeline;
 import com.kinplatform.kin.pipeline.stage.AnalyzerStage;
 import com.kinplatform.kin.pipeline.stage.ConsultorStage;
@@ -70,13 +68,6 @@ import com.kinplatform.kin.pipeline.stage.ScoringStage;
 import com.kinplatform.kin.pipeline.stage.StrategistStage;
 import com.kinplatform.kin.reporting.RecommendationEngine;
 import com.kinplatform.kin.reporting.RecommendationModel;
-import com.kinplatform.kin.reporting.risk.BusinessRiskAnalyzer;
-import com.kinplatform.kin.reporting.risk.FinancialRiskAnalyzer;
-import com.kinplatform.kin.reporting.risk.MarketRiskAnalyzer;
-import com.kinplatform.kin.reporting.risk.RiskAnalyzer;
-import com.kinplatform.kin.reporting.risk.RiskEngine;
-import com.kinplatform.kin.reporting.risk.RiskModel;
-import com.kinplatform.kin.reporting.risk.TechnicalRiskAnalyzer;
 import com.kinplatform.kin.reporting.opportunity.AutomationOpportunityAnalyzer;
 import com.kinplatform.kin.reporting.opportunity.CompetitiveOpportunityAnalyzer;
 import com.kinplatform.kin.reporting.opportunity.FinancialOpportunityAnalyzer;
@@ -101,13 +92,18 @@ import com.kinplatform.kin.reporting.report.assembler.RecommendationsSectionAsse
 import com.kinplatform.kin.reporting.report.assembler.ReportMetadataAssembler;
 import com.kinplatform.kin.reporting.report.assembler.RisksSectionAssembler;
 import com.kinplatform.kin.reporting.report.assembler.ScoresSectionAssembler;
+import com.kinplatform.kin.reporting.risk.BusinessRiskAnalyzer;
+import com.kinplatform.kin.reporting.risk.FinancialRiskAnalyzer;
+import com.kinplatform.kin.reporting.risk.MarketRiskAnalyzer;
+import com.kinplatform.kin.reporting.risk.RiskAnalyzer;
+import com.kinplatform.kin.reporting.risk.RiskEngine;
+import com.kinplatform.kin.reporting.risk.RiskModel;
+import com.kinplatform.kin.reporting.risk.TechnicalRiskAnalyzer;
 import com.kinplatform.kin.scoring.ScoringEngine;
 import com.kinplatform.kin.scoring.ScoringModel;
-import org.springframework.beans.factory.annotation.Value;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.List;
 
 @Configuration
 public class KinConfig {
@@ -168,8 +164,8 @@ public class KinConfig {
     }
 
     @Bean
-    public PromptAssembler promptAssembler(ConversationPromptBuilder conversationBuilder,
-                                           ReportPromptBuilder reportBuilder) {
+    public PromptAssembler promptAssembler(
+            ConversationPromptBuilder conversationBuilder, ReportPromptBuilder reportBuilder) {
         return new PromptAssembler(conversationBuilder, reportBuilder);
     }
 
@@ -244,8 +240,8 @@ public class KinConfig {
     }
 
     @Bean
-    public ConsultorStage consultorStage(AIResponder aiResponder, PromptAssembler promptAssembler,
-                                         ResponseGuard responseGuard) {
+    public ConsultorStage consultorStage(
+            AIResponder aiResponder, PromptAssembler promptAssembler, ResponseGuard responseGuard) {
         return new ConsultorStage(aiResponder, promptAssembler, responseGuard);
     }
 
@@ -426,8 +422,17 @@ public class KinConfig {
             InnovationSectionAssembler innovation,
             NextStepsSectionAssembler nextSteps,
             ReportMetadataAssembler metadata) {
-        return new ReportAssemblers(executiveSummary, scores, recommendations, risks,
-            opportunities, financial, market, innovation, nextSteps, metadata);
+        return new ReportAssemblers(
+                executiveSummary,
+                scores,
+                recommendations,
+                risks,
+                opportunities,
+                financial,
+                market,
+                innovation,
+                nextSteps,
+                metadata);
     }
 
     @Bean
@@ -503,16 +508,11 @@ public class KinConfig {
     @Bean
     public InterviewBlueprint interviewBlueprint() {
         return new InterviewBlueprint(List.of(
-            InterviewQuestion.required("q-proyecto", AnalyzedDimension.PROJECT_NAME,
-                "nombre del proyecto", 1),
-            InterviewQuestion.required("q-sector", AnalyzedDimension.SECTOR,
-                "sector y giro del negocio", 2),
-            InterviewQuestion.required("q-problema", AnalyzedDimension.PROBLEM,
-                "problema que resuelve", 3),
-            InterviewQuestion.required("q-solucion", AnalyzedDimension.SOLUTION,
-                "solución propuesta", 4),
-            InterviewQuestion.required("q-cliente", AnalyzedDimension.TARGET_CUSTOMER,
-                "cliente objetivo", 5)));
+                InterviewQuestion.required("q-proyecto", AnalyzedDimension.PROJECT_NAME, "nombre del proyecto", 1),
+                InterviewQuestion.required("q-sector", AnalyzedDimension.SECTOR, "sector y giro del negocio", 2),
+                InterviewQuestion.required("q-problema", AnalyzedDimension.PROBLEM, "problema que resuelve", 3),
+                InterviewQuestion.required("q-solucion", AnalyzedDimension.SOLUTION, "solución propuesta", 4),
+                InterviewQuestion.required("q-cliente", AnalyzedDimension.TARGET_CUSTOMER, "cliente objetivo", 5)));
     }
 
     @Bean
@@ -545,16 +545,31 @@ public class KinConfig {
             OpportunityStage opportunity,
             ReportStage report,
             EventStage eventStage) {
-        return new Pipeline(List.of(analyzer, evaluator, strategist, interview, knowledge,
-            enrichment, scoring, recommendation, risk, opportunity, report, consultor, eventStage));
+        return new Pipeline(List.of(
+                analyzer,
+                evaluator,
+                strategist,
+                interview,
+                knowledge,
+                enrichment,
+                scoring,
+                recommendation,
+                risk,
+                opportunity,
+                report,
+                consultor,
+                eventStage));
     }
 
     @Bean
-    public KinMethod kinMethod(Pipeline chatPipeline, DomainEventBus eventBus, ContextRepository contextRepository,
-                               ProjectContextSyncPort projectContextSyncPort,
-                               EnterprisePipelineResultStore enterprisePipelineResultStore) {
-        return new KinMethod(chatPipeline, eventBus, contextRepository,
-            projectContextSyncPort, enterprisePipelineResultStore);
+    public KinMethod kinMethod(
+            Pipeline chatPipeline,
+            DomainEventBus eventBus,
+            ContextRepository contextRepository,
+            ProjectContextSyncPort projectContextSyncPort,
+            EnterprisePipelineResultStore enterprisePipelineResultStore) {
+        return new KinMethod(
+                chatPipeline, eventBus, contextRepository, projectContextSyncPort, enterprisePipelineResultStore);
     }
 
     @Bean
@@ -573,13 +588,14 @@ public class KinConfig {
     }
 
     @Bean
-    public ConversationOrchestrator conversationOrchestrator(HistoryWindow historyWindow,
-                                                             DefaultTurnPolicy turnPolicy,
-                                                             KinMethod kinMethod,
-                                                             ResponseGuard responseGuard,
-                                                             ContextRepository contextRepository,
-                                                             EnterpriseProjectTrigger enterpriseProjectTrigger) {
-        return new ConversationOrchestrator(historyWindow, turnPolicy, kinMethod,
-            responseGuard, contextRepository, enterpriseProjectTrigger);
+    public ConversationOrchestrator conversationOrchestrator(
+            HistoryWindow historyWindow,
+            DefaultTurnPolicy turnPolicy,
+            KinMethod kinMethod,
+            ResponseGuard responseGuard,
+            ContextRepository contextRepository,
+            EnterpriseProjectTrigger enterpriseProjectTrigger) {
+        return new ConversationOrchestrator(
+                historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository, enterpriseProjectTrigger);
     }
 }

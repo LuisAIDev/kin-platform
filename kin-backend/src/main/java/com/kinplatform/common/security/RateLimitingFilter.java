@@ -4,15 +4,14 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
@@ -31,14 +30,12 @@ public class RateLimitingFilter extends OncePerRequestFilter {
      * directo (remoteAddr), que no puede ser falseada por el cliente.
      */
     @Value("${app.rate-limit.trust-proxy-headers:false}")
-    private boolean trustProxyHeaders = false;
+    private boolean trustProxyHeaders;
 
     private final Map<String, RateLimitState> buckets = new ConcurrentHashMap<>();
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
         String path = request.getRequestURI();
@@ -80,6 +77,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private static class RateLimitState {
         Instant windowStart = Instant.now();
-        int count = 0;
+        int count;
     }
 }

@@ -4,12 +4,13 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import java.util.Date;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
-import java.util.Date;
-import java.util.UUID;
 
 @Service
 public class JwtService {
@@ -17,10 +18,9 @@ public class JwtService {
     private final SecretKey secretKey;
     private final long expirationMs;
 
-    public JwtService(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration-ms}") long expirationMs
-    ) {
+    private final Map<String, Long> blacklistedTokens = new ConcurrentHashMap<>();
+
+    public JwtService(@Value("${jwt.secret}") String secret, @Value("${jwt.expiration-ms}") long expirationMs) {
         this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
         this.expirationMs = expirationMs;
     }
@@ -47,11 +47,35 @@ public class JwtService {
 
     public boolean isTokenValid(String token) {
         try {
+            if (isBlacklisted(token)) {
+                return false;
+            }
             parseClaims(token);
             return true;
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public void blacklistToken(String token) {
+        try {
+            long exp = parseClaims(token).getExpiration().getTime();
+            blacklistedTokens.put(token, exp);
+        } catch (Exception e) {
+            blacklistedTokens.put(token, System.currentTimeMillis() + 60_000L);
+        }
+    }
+
+    private boolean isBlacklisted(String token) {
+        Long exp = blacklistedTokens.get(token);
+        if (exp == null) {
+            return false;
+        }
+        if (exp < System.currentTimeMillis()) {
+            blacklistedTokens.remove(token);
+            return false;
+        }
+        return true;
     }
 
     private Claims parseClaims(String token) {

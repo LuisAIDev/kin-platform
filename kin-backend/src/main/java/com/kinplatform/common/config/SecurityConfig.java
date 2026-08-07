@@ -2,12 +2,14 @@ package com.kinplatform.common.config;
 
 import com.kinplatform.common.security.JwtAuthenticationFilter;
 import com.kinplatform.common.security.RateLimitingFilter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,10 +21,6 @@ import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -40,48 +38,48 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/pricing-plans/**").permitAll()
-                .requestMatchers("/stripe/webhook").permitAll()
-                .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
-                .requestMatchers("/actuator/**").hasRole("ADMIN")
-                .requestMatchers("/error").permitAll()
-                .requestMatchers("/test/**").hasRole("ADMIN")
-                .requestMatchers("/subscriptions/**").authenticated()
-                .requestMatchers("/stripe/create-checkout-session").authenticated()
-                .requestMatchers(HttpMethod.GET, "/admin/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/admin/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/admin/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
-            .headers(headers -> headers
-                .contentSecurityPolicy(csp -> csp
-                    .policyDirectives("default-src 'none'; frame-ancestors 'none'")
-                )
-                .frameOptions(frameOptions -> frameOptions.deny())
-                .httpStrictTransportSecurity(hsts -> hsts
-                    .includeSubDomains(true)
-                    .maxAgeInSeconds(31536000)
-                )
-                .addHeaderWriter(new StaticHeadersWriter(
-                    "Permissions-Policy",
-                    "camera=(), microphone=(), geolocation=()"
-                ))
-                .addHeaderWriter(new StaticHeadersWriter(
-                    "Referrer-Policy",
-                    "strict-origin-when-cross-origin"
-                ))
-            )
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterBefore(rateLimitingFilter, JwtAuthenticationFilter.class)
-            .addFilterAfter(subscriptionAccessFilter, JwtAuthenticationFilter.class);
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/auth/**")
+                        .permitAll()
+                        .requestMatchers("/pricing-plans/**")
+                        .permitAll()
+                        .requestMatchers("/stripe/webhook")
+                        .permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info")
+                        .permitAll()
+                        .requestMatchers("/actuator/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers("/error")
+                        .permitAll()
+                        .requestMatchers("/test/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers("/subscriptions/**")
+                        .authenticated()
+                        .requestMatchers("/stripe/create-checkout-session")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.GET, "/admin/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/admin/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/admin/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/admin/**")
+                        .hasRole("ADMIN")
+                        .anyRequest()
+                        .authenticated())
+                .headers(headers -> headers.contentSecurityPolicy(
+                                csp -> csp.policyDirectives("default-src 'none'; frame-ancestors 'none'"))
+                        .frameOptions(frameOptions -> frameOptions.deny())
+                        .httpStrictTransportSecurity(
+                                hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
+                        .addHeaderWriter(new StaticHeadersWriter(
+                                "Permissions-Policy", "camera=(), microphone=(), geolocation=()"))
+                        .addHeaderWriter(new StaticHeadersWriter("Referrer-Policy", "strict-origin-when-cross-origin")))
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimitingFilter, JwtAuthenticationFilter.class)
+                .addFilterAfter(subscriptionAccessFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

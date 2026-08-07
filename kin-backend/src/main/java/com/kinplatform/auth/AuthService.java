@@ -12,4 +12,6 @@ public interface AuthService {
     AuthResponse login(LoginRequest request);
 
     UserDTO getCurrentUser(String token);
+
+    void logout(String token);
 }

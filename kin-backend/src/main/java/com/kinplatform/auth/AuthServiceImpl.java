@@ -25,9 +25,10 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         var email = request.getEmail().toLowerCase().trim();
+        validatePasswordStrength(request.getPassword());
 
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email already registered: " + email);
+            throw new IllegalArgumentException("El email ya está registrado");
         }
 
         var user = User.builder()
@@ -39,7 +40,8 @@ public class AuthServiceImpl implements AuthService {
 
         user = userRepository.save(user);
 
-        var token = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        var token = jwtService.generateToken(
+                user.getId(), user.getEmail(), user.getRole().name());
 
         return AuthResponse.builder()
                 .token(token)
@@ -49,19 +51,40 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    private static void validatePasswordStrength(String password) {
+        if (password == null || password.length() < 12) {
+            throw new IllegalArgumentException("La contraseña debe tener al menos 12 caracteres");
+        }
+
+        long classes = java.util.stream.Stream.of(
+                        password.matches(".*[a-z].*"),
+                        password.matches(".*[A-Z].*"),
+                        password.matches(".*\\d.*"),
+                        password.matches(".*[^A-Za-z0-9].*"))
+                .filter(Boolean::booleanValue)
+                .count();
+
+        if (classes < 3) {
+            throw new IllegalArgumentException(
+                    "La contraseña debe combinar letras mayúsculas, minúsculas, números o símbolos");
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         var email = request.getEmail().toLowerCase().trim();
 
-        var user = userRepository.findByEmail(email)
+        var user = userRepository
+                .findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new IllegalArgumentException("Invalid email or password");
         }
 
-        var token = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        var token = jwtService.generateToken(
+                user.getId(), user.getEmail(), user.getRole().name());
 
         return AuthResponse.builder()
                 .token(token)
@@ -80,8 +103,7 @@ public class AuthServiceImpl implements AuthService {
 
         var email = jwtService.extractEmail(token);
 
-        var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        var user = userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         return UserDTO.builder()
                 .id(user.getId())
@@ -91,5 +113,12 @@ public class AuthServiceImpl implements AuthService {
                 .avatarUrl(user.getAvatarUrl())
                 .credits(user.getCredits())
                 .build();
+    }
+
+    @Override
+    public void logout(String token) {
+        if (token != null && !token.isBlank()) {
+            jwtService.blacklistToken(token);
+        }
     }
 }
