@@ -29,3 +29,18 @@ Iniciando_proyecto.md
 
 # Build artifacts / stray compiled classes
 org/
+
+# Generated copies / probe artifacts
+probe-clean/
+.probe-clean/
+
+# Logs
+logs/
+tmp/
+*.log
+
+# H2 / local database artifacts
+*.mv.db
+*.trace.db
+*.old
+*.db
