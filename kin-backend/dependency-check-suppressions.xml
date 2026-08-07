@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- OWASP Dependency-Check: suppressions para hallazgos aceptados (FASE 9).
+     Sin entradas por defecto; se añaden CVEs justificadas y verificadas. -->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+</suppressions>

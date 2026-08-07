@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SpotBugs exclusion filter (FASE 9).
+     EI_EXPOSE_REP*/CT_CONSTRUCTOR_THROW son falsos positivos en entidades JPA
+     y clases con Lombok (@Data/@RequiredArgsConstructor): los accesores y
+     constructores generados exponen mutables por diseño (requerido por JPA) y
+     los constructores de adaptadores reciben beans de Spring sin subclasificar. -->
+<FindBugsFilter>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+    <Match>
+        <Bug pattern="MS_EXPOSE_REP"/>
+    </Match>
+</FindBugsFilter>
