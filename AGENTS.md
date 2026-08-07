@@ -20,7 +20,14 @@ Full-stack project management platform with AI-guided viability assessment.
 
 ```bash
 # Backend dev (H2 file-based, no Docker needed)
-cd kin-backend && ./mvnw spring-boot:run      # http://localhost:8080/api/v1
+# IMPORTANTE: usa SIEMPRE el script de arranque con guard FAIL-FAST.
+# NUNCA ejecutes `mvnw spring-boot:run` directo: puede crear una segunda
+# instancia y bloquear kindb.mv.db (concurrencia H2). El script detecta
+# KinApplication / Maven Wrapper / puerto 8080 y, si existe alguno,
+# muestra "Backend ya está ejecutándose." y lo reutiliza sin arrancar otro.
+powershell -ExecutionPolicy Bypass -File scripts/start-dev-backend.ps1   # Windows
+bash scripts/start-dev-backend.sh                                         # Linux/macOS
+# Solo si el script dice que NO hay backend en marcha, arranca una instancia.
 
 # Frontend dev
 cd kin-frontend && npm install && npm run dev  # http://localhost:3000
@@ -37,7 +44,8 @@ docker compose up --build                      # from repo root
 - **Category catalog (SaaS-ready)**: the `ProjectCategory` enum was replaced by the `Category` entity / `categories` table. `Project.category` is `@ManyToOne → Category` (`category_id`). `GET /categories` returns only active categories ordered by `displayOrder`. `POST/PUT /projects` receive the category `code` string (backend resolves it; 400 if unknown). `ProjectResponse` exposes `category` (code), `categoryName` and `categoryColor`. Prod seeds via Flyway `V6__create_categories.sql`; dev (H2, no Flyway) seeds via `CategoryDataInitializer`. The frontend `new/page.tsx` loads `GET /categories` (no hardcoded lists); badge color comes from `category.color`. The AI pipeline still receives the category as a String (SECTOR dimension).
 
 - **PostgreSQL dependency is commented out** in `pom.xml`. Dev uses H2 file-based (`data/kindb`). Only Docker deployment uses PostgreSQL.
-- **Dual CORS config**: both `CorsConfig.java` and `SecurityConfig.java` configure CORS. `SecurityConfig` takes precedence (Spring Security filter chain). Add new origins to both.
+- **Dev H2 is persistent**: dev uses `ddl-auto: update` (Hibernate owns the schema, Flyway disabled). The H2 file lives at `kin-backend/data/kindb.mv.db` (gitignored). When the JPA model changes, Hibernate tries to `ALTER TABLE` the existing file on boot; if it cannot apply a NOT NULL column to an already-populated table, H2 throws e.g. `JdbcSQLIntegrityConstraintViolationException: NULL not allowed for column ...`. **The fix is NEVER to change entities to match the DB.** Delete only the local file `kin-backend/data/kindb.mv.db` and restart: Hibernate recreates the full schema from the entities on an empty DB. Use `scripts/reset-dev-db.ps1` (Windows) or `scripts/reset-dev-db.sh` (Linux/macOS), which stop the app, delete the DB and restart Spring Boot.
+- **CORS single source**: only `SecurityConfig.java` (bean `corsConfigurationSource`) configures CORS; the legacy MVC `CorsConfig` was removed (consolidación T12/K-506). Add new origins only in `SecurityConfig`.
 - **AI engine** (`AiEngineService.java`) implements the domain port `AIResponder` (`com.kinplatform.kin.ai`) and routes through `ProviderRouter` (DeepSeek/OpenAI/Ollama) with a Spanish mock fallback on failure — safe to develop without a LLM running. Prompt construction lives in `PromptAssembler` (domain, `kin.ai`), not in the service.
 - **PromptAssembler** is a pure façade (`kin.ai`): `assemble(PromptRequest) → String` delegates to `ConversationPromptBuilder` (CONVERSATION) or `ReportPromptBuilder` (REPORT, via 10 `SectionFormatter` in `kin.ai.prompt`). `PromptRequest.forConversation(...)` / `forReport(...)` enforce the ADR-012 boundary (REPORT only consumes `ConsultingReport`; raw sources are forbidden). `PromptRequest.forConversation(context, decision, directive)` is the additive ADR-013 overload; when a directive is present, `ConversationPromptBuilder` appends the `## DIRECTIVA DE COMUNICACIÓN` section (phase/mode/constraints). The additive ADR-015 overload `assemble(PromptRequest, InterviewResult)` propagates the interview result in CONVERSATION mode (REPORT ignores it), and `ConversationPromptBuilder.build(request, interviewResult)` appends the `## ENTREVISTA ESTRATÉGICA` section when there is a pending `InterviewDirective`.
 - **Conversation Orchestrator** (ADR-013, `kin.conversation`, pure domain POJOs — no Spring): `ChatOrchestratorServiceImpl` delegates BOTH `/chat` and `/chat/stream` to `ConversationOrchestrator` (I/O only in the HTTP layer). Per turn: `HistoryWindow` caps history (default 20 messages; the current user message always stays), `DefaultTurnPolicy` decides the `TurnDirective` in Java BEFORE the pipeline from the previous decision (`ProjectContext.currentDecision()`), and the directive travels additively in `KinMethodCommand.directive` → `PipelineContext.turnDirective`. `ResponseGuard` validates the LLM response: blocking → the orchestrator emits `TurnResult.validation`; streaming → `ConsultorStage.attachStreamGuard` leaves `PipelineContext.responseValidation` (M3). **M1**: on the FIRST report-generation turn the pre-pipeline directive is derived from the previous (typically ASK) decision, e.g. `(EXPLORATION, ASK, QUESTION)`; later turns get `(REPORTING, REPORT, EXPLAIN_REPORT)`. `ConsultorStage` still uses `PromptRequest.forReport` (ADR-012 boundary intact).
@@ -82,3 +90,31 @@ docker compose up --build                      # from repo root
 
 - **Dev (H2)**: `ddl-auto: update` + Flyway disabled — schema auto-created by JPA entities (incl. `project_context`).
 - **Prod (PostgreSQL, Docker)**: Flyway enabled (`ddl-auto: none`) — migrations V1…V3 + `kin-database/init.sql`. Run `docker compose up --build` to initialize.
+
+### Dev H2 — persistencia y reset (importante)
+
+En desarrollo el backend usa una base **H2 persistente** en `kin-backend/data/kindb.mv.db`
+(gitignored), gestionada por Hibernate con `spring.jpa.hibernate.ddl-auto: update`. Flyway
+está deshabilitado en dev (sus migraciones son solo-PostgreSQL y no corren sobre H2).
+
+**Por qué aparece `JdbcSQLIntegrityConstraintViolationException: NULL not allowed for column "..."`:**
+cuando el modelo JPA cambia (p. ej. se añade una columna `NOT NULL` a una entidad), Hibernate intenta
+aplicar un `ALTER TABLE` sobre el archivo H2 existente en el siguiente arranque. Si la tabla ya
+contiene filas, H2 rechaza la operación porque las filas existentes tendrían `NULL` en la nueva
+columna. El arranque continúa (el `ALTER` fallido se loguea como warning), pero la columna no se
+aplica y las consultas en runtime pueden fallar.
+
+**Regla de oro: NUNCA modificar entidades para adaptarlas a la base.** La base es un artefacto
+local desechable; las entidades son la fuente de verdad. Para resolverlo, elimina únicamente
+`kin-backend/data/kindb.mv.db` y reinicia: Hibernate recrea el esquema completo desde cero.
+
+```bash
+# Windows
+scripts/reset-dev-db.ps1
+
+# Linux / macOS
+bash scripts/reset-dev-db.sh
+```
+
+Los scripts detienen la app si está corriendo, borran la base y vuelven a arrancar Spring Boot.
+La base se regenera con el esquema correcto y los seeds (`DataInitializer`, `CategoryDataInitializer`).

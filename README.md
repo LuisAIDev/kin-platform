@@ -379,6 +379,55 @@ Orquesta PostgreSQL 16, backend y frontend en contenedores usando las variables 
 
 ---
 
+## 🔄 Reset de Base Local
+
+En desarrollo el backend usa una **base H2 persistente** en `kin-backend/data/kindb.mv.db`
+(no requiere instalar nada y conserva tus datos entre reinicios). El esquema lo gestiona
+Hibernate con `ddl-auto: update` (Flyway está deshabilitado en dev; sus migraciones son
+solo para PostgreSQL/producción).
+
+### ¿Cuándo debo resetear la base?
+
+Si **cambias el modelo JPA** (por ejemplo, añades una columna `NOT NULL` a una entidad) y al
+arrancar el backend aparece un error como:
+
+```
+JdbcSQLIntegrityConstraintViolationException: NULL not allowed for column "SUPPORT_LEVEL"
+```
+
+**No es un bug del código ni de la configuración.** Es que Hibernate intenta aplicar un
+`ALTER TABLE` sobre la base H2 persistente y H2 lo rechaza porque la tabla ya tiene filas
+(las filas existentes tendrían `NULL` en la nueva columna). El arranque continúa con un
+warning, pero la columna no se aplica.
+
+### ⚠️ Regla de oro
+
+> **NUNCA modifiques las entidades para adaptarlas a la base.** La base H2 local es un
+> artefacto desechable; las entidades JPA son la fuente de verdad. La solución es eliminar
+> únicamente la base local y dejar que Hibernate la regenere desde cero.
+
+### Cómo resetear
+
+```bash
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -File scripts/reset-dev-db.ps1
+
+# Linux / macOS
+bash scripts/reset-dev-db.sh
+```
+
+Los scripts automáticamente:
+
+1. **Detienen** el backend si está corriendo (puerto `8080`).
+2. **Eliminan** únicamente `kin-backend/data/kindb.mv.db`.
+3. **Reinician** Spring Boot: Hibernate recrea el esquema completo desde las entidades y
+   los seeds (`DataInitializer`, `CategoryDataInitializer`) vuelven a cargar datos base.
+
+> Este reset **solo afecta a tu base local de desarrollo**. Producción (PostgreSQL + Flyway,
+> `ddl-auto: none`) no se ve afectada: su esquema lo administra exclusivamente Flyway.
+
+---
+
 ## 🔌 API Endpoints
 
 | Endpoint | Método | Auth | Descripción |
