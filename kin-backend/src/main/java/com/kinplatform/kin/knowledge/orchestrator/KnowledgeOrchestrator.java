@@ -1,29 +1,6 @@
 package com.kinplatform.kin.knowledge.orchestrator;
 
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeRepository;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.KnowledgeSource;
-import com.kinplatform.kin.knowledge.SourceValidation;
-import com.kinplatform.kin.knowledge.policy.CostBudgetUsage;
-import com.kinplatform.kin.knowledge.policy.ContextBudget;
-import com.kinplatform.kin.knowledge.policy.KnowledgePolicyEngine;
-import com.kinplatform.kin.knowledge.policy.ProviderSelection;
-import com.kinplatform.kin.knowledge.policy.QueryMode;
-import com.kinplatform.kin.knowledge.planner.PlannedQuery;
-import com.kinplatform.kin.knowledge.planner.ProviderType;
-import com.kinplatform.kin.knowledge.planner.QueryPlan;
-import com.kinplatform.kin.knowledge.planner.QueryPlanner;
-
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
+import static com.kinplatform.kin.knowledge.orchestrator.OrchestrationDecisionType.ASSEMBLY_OK;
 import static com.kinplatform.kin.knowledge.orchestrator.OrchestrationDecisionType.CACHE_ONLY;
 import static com.kinplatform.kin.knowledge.orchestrator.OrchestrationDecisionType.CONSULT_EXTERNAL;
 import static com.kinplatform.kin.knowledge.orchestrator.OrchestrationDecisionType.DEGRADE;
@@ -35,7 +12,28 @@ import static com.kinplatform.kin.knowledge.orchestrator.OrchestrationDecisionTy
 import static com.kinplatform.kin.knowledge.orchestrator.OrchestrationDecisionType.STOP;
 import static com.kinplatform.kin.knowledge.orchestrator.OrchestrationDecisionType.STOP_CONSULTS;
 import static com.kinplatform.kin.knowledge.orchestrator.OrchestrationDecisionType.VALIDATION_OK;
-import static com.kinplatform.kin.knowledge.orchestrator.OrchestrationDecisionType.ASSEMBLY_OK;
+
+import com.kinplatform.kin.knowledge.KnowledgeCandidate;
+import com.kinplatform.kin.knowledge.KnowledgeQuery;
+import com.kinplatform.kin.knowledge.KnowledgeRepository;
+import com.kinplatform.kin.knowledge.KnowledgeRequest;
+import com.kinplatform.kin.knowledge.KnowledgeResult;
+import com.kinplatform.kin.knowledge.KnowledgeSource;
+import com.kinplatform.kin.knowledge.planner.PlannedQuery;
+import com.kinplatform.kin.knowledge.planner.ProviderType;
+import com.kinplatform.kin.knowledge.planner.QueryPlan;
+import com.kinplatform.kin.knowledge.planner.QueryPlanner;
+import com.kinplatform.kin.knowledge.policy.ContextBudget;
+import com.kinplatform.kin.knowledge.policy.CostBudgetUsage;
+import com.kinplatform.kin.knowledge.policy.KnowledgePolicyEngine;
+import com.kinplatform.kin.knowledge.policy.ProviderSelection;
+import com.kinplatform.kin.knowledge.policy.QueryMode;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Coordinador determinista del ciclo de conocimiento (especificación Fase 5).
@@ -86,10 +84,14 @@ public class KnowledgeOrchestrator {
      * @param ranker           ranking de resultados validados
      * @param assembler        ensamblado del {@link KnowledgeResult}
      */
-    public KnowledgeOrchestrator(QueryPlanner planner, KnowledgePolicyEngine policyEngine,
-                                 ProviderRegistry providerRegistry, KnowledgeRepository repository,
-                                 CandidateValidator validator, ContextRanker ranker,
-                                 ContextAssembler assembler) {
+    public KnowledgeOrchestrator(
+            QueryPlanner planner,
+            KnowledgePolicyEngine policyEngine,
+            ProviderRegistry providerRegistry,
+            KnowledgeRepository repository,
+            CandidateValidator validator,
+            ContextRanker ranker,
+            ContextAssembler assembler) {
         this.planner = planner == null ? new QueryPlanner() : planner;
         this.policyEngine = policyEngine == null ? new KnowledgePolicyEngine() : policyEngine;
         this.providerRegistry = providerRegistry;
@@ -108,8 +110,14 @@ public class KnowledgeOrchestrator {
     public OrchestrationResult coordinate(OrchestrationRequest request) {
         var ctx = new OrchestrationContext(request);
         run(ctx);
-        return new OrchestrationResult(ctx.currentState(), ctx.visited(), ctx.plan(),
-            ctx.decisions(), ctx.selectedTypes(), ctx.degraded(), ctx.failureReason());
+        return new OrchestrationResult(
+                ctx.currentState(),
+                ctx.visited(),
+                ctx.plan(),
+                ctx.decisions(),
+                ctx.selectedTypes(),
+                ctx.degraded(),
+                ctx.failureReason());
     }
 
     /**
@@ -121,8 +129,14 @@ public class KnowledgeOrchestrator {
     public KnowledgeOrchestrationResult coordinateWithResult(OrchestrationRequest request) {
         var ctx = new OrchestrationContext(request);
         run(ctx);
-        var orchestration = new OrchestrationResult(ctx.currentState(), ctx.visited(),
-            ctx.plan(), ctx.decisions(), ctx.selectedTypes(), ctx.degraded(), ctx.failureReason());
+        var orchestration = new OrchestrationResult(
+                ctx.currentState(),
+                ctx.visited(),
+                ctx.plan(),
+                ctx.decisions(),
+                ctx.selectedTypes(),
+                ctx.degraded(),
+                ctx.failureReason());
         return new KnowledgeOrchestrationResult(orchestration, ctx.knowledgeResult(), ctx.cacheHit());
     }
 
@@ -162,7 +176,8 @@ public class KnowledgeOrchestrator {
     private boolean handleIdle(OrchestrationContext ctx) {
         KnowledgeRequest request = ctx.request().knowledgeRequest();
         boolean empty = request == null
-            || ((request.topic() == null || request.topic().isBlank()) && request.keywords().isEmpty());
+                || ((request.topic() == null || request.topic().isBlank())
+                        && request.keywords().isEmpty());
         if (empty) {
             fail(ctx, "Solicitud inválida: sin tema ni palabras clave");
             return false;
@@ -173,18 +188,20 @@ public class KnowledgeOrchestrator {
     private boolean handlePlanning(OrchestrationContext ctx) {
         var request = ctx.request();
         QueryPlan plan = planner.plan(request.knowledgeRequest());
-        QueryMode mode = policyEngine.decideQuery(request.knowledgeRequest(), request.policyConfig().query()).mode();
+        QueryMode mode = policyEngine
+                .decideQuery(request.knowledgeRequest(), request.policyConfig().query())
+                .mode();
         OrchestrationStrategy strategy = determineStrategy(request, plan, mode);
         ctx.setPlan(new OrchestrationPlan(strategy, mode, plan));
         if (mode == QueryMode.CACHE_ONLY) {
-            ctx.addDecision(OrchestrationDecision.of(CACHE_ONLY, OrchestrationState.PLANNING,
-                "Solo caché decidido por el Policy Engine"));
+            ctx.addDecision(OrchestrationDecision.of(
+                    CACHE_ONLY, OrchestrationState.PLANNING, "Solo caché decidido por el Policy Engine"));
             complete(ctx, "Solo caché; sin consulta externa");
             return false;
         }
         if (plan.isEmpty()) {
-            ctx.addDecision(OrchestrationDecision.of(NO_CONSULT, OrchestrationState.PLANNING,
-                "Conocimiento estable; no se consulta"));
+            ctx.addDecision(OrchestrationDecision.of(
+                    NO_CONSULT, OrchestrationState.PLANNING, "Conocimiento estable; no se consulta"));
             complete(ctx, "Conocimiento estable; no se consulta");
             return false;
         }
@@ -199,39 +216,44 @@ public class KnowledgeOrchestrator {
             if (cached.isPresent()) {
                 ctx.setCacheHit(true);
                 ctx.setKnowledgeResult(cached.get());
-                ctx.addDecision(OrchestrationDecision.of(CACHE_ONLY, OrchestrationState.CACHE_LOOKUP,
-                    "Cache HIT; resultado reutilizado"));
+                ctx.addDecision(OrchestrationDecision.of(
+                        CACHE_ONLY, OrchestrationState.CACHE_LOOKUP, "Cache HIT; resultado reutilizado"));
                 complete(ctx, "Cache hit; sin consulta externa");
                 return false;
             }
-            ctx.addDecision(OrchestrationDecision.of(CONSULT_EXTERNAL, OrchestrationState.CACHE_LOOKUP,
-                "Cache MISS; se consultan fuentes externas"));
+            ctx.addDecision(OrchestrationDecision.of(
+                    CONSULT_EXTERNAL, OrchestrationState.CACHE_LOOKUP, "Cache MISS; se consultan fuentes externas"));
             return true;
         }
         var strategy = ctx.plan().strategy();
         var policy = policyFor(strategy);
         boolean wantsCache = policy.prefersCache();
         if (!wantsCache) {
-            ctx.addDecision(OrchestrationDecision.of(CONSULT_EXTERNAL,
-                OrchestrationState.CACHE_LOOKUP,
-                "Se consultarán fuentes externas con estrategia " + strategy.displayName()));
+            ctx.addDecision(OrchestrationDecision.of(
+                    CONSULT_EXTERNAL,
+                    OrchestrationState.CACHE_LOOKUP,
+                    "Se consultarán fuentes externas con estrategia " + strategy.displayName()));
             return true;
         }
         if (request.environment().cacheHealthy()) {
-            ctx.addDecision(OrchestrationDecision.of(CACHE_ONLY, OrchestrationState.CACHE_LOOKUP,
-                "Caché disponible; estrategia " + strategy.displayName()));
+            ctx.addDecision(OrchestrationDecision.of(
+                    CACHE_ONLY,
+                    OrchestrationState.CACHE_LOOKUP,
+                    "Caché disponible; estrategia " + strategy.displayName()));
             complete(ctx, "Cache first; sin consulta externa");
             return false;
         }
-        ctx.addDecision(OrchestrationDecision.of(DEGRADE, OrchestrationState.CACHE_LOOKUP,
-            "Caché no disponible; se degrada a consulta externa"));
+        ctx.addDecision(OrchestrationDecision.of(
+                DEGRADE, OrchestrationState.CACHE_LOOKUP, "Caché no disponible; se degrada a consulta externa"));
         if (policy.failureIsFatal()) {
             fail(ctx, "Caché no disponible");
             return false;
         }
         ctx.markDegraded();
-        ctx.addDecision(OrchestrationDecision.of(CONSULT_EXTERNAL, OrchestrationState.CACHE_LOOKUP,
-            "Se consultan fuentes externas tras degradación de caché"));
+        ctx.addDecision(OrchestrationDecision.of(
+                CONSULT_EXTERNAL,
+                OrchestrationState.CACHE_LOOKUP,
+                "Se consultan fuentes externas tras degradación de caché"));
         return true;
     }
 
@@ -246,10 +268,10 @@ public class KnowledgeOrchestrator {
             return false;
         }
         var candidateStrings = candidateTypes.stream()
-            .map(ProviderTypeCatalog::sourceType)
-            .collect(Collectors.toCollection(LinkedHashSet::new));
-        ProviderSelection selection = policyEngine.selectProviders(candidateStrings,
-            request.policyConfig().provider());
+                .map(ProviderTypeCatalog::sourceType)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        ProviderSelection selection = policyEngine.selectProviders(
+                candidateStrings, request.policyConfig().provider());
         var allowed = new ArrayList<ProviderType>();
         for (String type : selection.allowedTypes()) {
             ProviderTypeCatalog.fromSourceType(type).ifPresent(allowed::add);
@@ -264,8 +286,10 @@ public class KnowledgeOrchestrator {
             }
         }
         if (!unhealthy.isEmpty()) {
-            ctx.addDecision(OrchestrationDecision.of(DEGRADE, OrchestrationState.PROVIDER_SELECTION,
-                "Proveedor(es) no disponible(s): " + names(unhealthy)));
+            ctx.addDecision(OrchestrationDecision.of(
+                    DEGRADE,
+                    OrchestrationState.PROVIDER_SELECTION,
+                    "Proveedor(es) no disponible(s): " + names(unhealthy)));
             if (policy.failureIsFatal()) {
                 fail(ctx, "Proveedor(es) no disponible(s): " + names(unhealthy));
                 return false;
@@ -273,8 +297,10 @@ public class KnowledgeOrchestrator {
             ctx.markDegraded();
         }
         if (healthy.isEmpty()) {
-            ctx.addDecision(OrchestrationDecision.of(STOP, OrchestrationState.PROVIDER_SELECTION,
-                "Sin proveedores disponibles para las facetas requeridas"));
+            ctx.addDecision(OrchestrationDecision.of(
+                    STOP,
+                    OrchestrationState.PROVIDER_SELECTION,
+                    "Sin proveedores disponibles para las facetas requeridas"));
             if (policy.failureIsFatal()) {
                 fail(ctx, "Sin proveedores disponibles");
             } else {
@@ -294,13 +320,13 @@ public class KnowledgeOrchestrator {
         var policy = policyFor(strategy);
         int queries = ctx.plan().queries().size();
         int external = (int) ctx.plan().queries().stream()
-            .filter(query -> !isLocal(query.providerType()))
-            .count();
-        var budget = policyEngine.checkBudget(new CostBudgetUsage(queries, external),
-            request.policyConfig().cost());
+                .filter(query -> !isLocal(query.providerType()))
+                .count();
+        var budget = policyEngine.checkBudget(
+                new CostBudgetUsage(queries, external), request.policyConfig().cost());
         if (budget.rejected()) {
-            ctx.addDecision(OrchestrationDecision.of(STOP_CONSULTS, OrchestrationState.FETCHING,
-                "Presupuesto agotado: " + join(budget.reasons())));
+            ctx.addDecision(OrchestrationDecision.of(
+                    STOP_CONSULTS, OrchestrationState.FETCHING, "Presupuesto agotado: " + join(budget.reasons())));
             if (policy.failureIsFatal()) {
                 fail(ctx, "Presupuesto agotado");
             } else {
@@ -310,8 +336,8 @@ public class KnowledgeOrchestrator {
             return false;
         }
         if (external > 0 && (policy.offlineOnly() || !request.environment().internetAvailable())) {
-            ctx.addDecision(OrchestrationDecision.of(DEGRADE, OrchestrationState.FETCHING,
-                "Sin acceso a Internet para consultas externas"));
+            ctx.addDecision(OrchestrationDecision.of(
+                    DEGRADE, OrchestrationState.FETCHING, "Sin acceso a Internet para consultas externas"));
             if (policy.failureIsFatal()) {
                 fail(ctx, "Sin acceso a Internet");
             } else {
@@ -337,8 +363,8 @@ public class KnowledgeOrchestrator {
             }
             ctx.setCandidates(candidates);
         }
-        ctx.addDecision(OrchestrationDecision.of(FETCH_COORDINATED, OrchestrationState.FETCHING,
-            "Ejecución coordinada; delegada al integrador"));
+        ctx.addDecision(OrchestrationDecision.of(
+                FETCH_COORDINATED, OrchestrationState.FETCHING, "Ejecución coordinada; delegada al integrador"));
         return true;
     }
 
@@ -346,13 +372,17 @@ public class KnowledgeOrchestrator {
         if (validator != null && !ctx.candidates().isEmpty()) {
             ctx.setValidations(validator.validateAll(ctx.candidates()));
         }
-        ctx.addDecision(OrchestrationDecision.of(VALIDATION_OK, OrchestrationState.VALIDATION,
-            "Validación delegada (SourceValidator + Quality Policies)"));
+        ctx.addDecision(OrchestrationDecision.of(
+                VALIDATION_OK,
+                OrchestrationState.VALIDATION,
+                "Validación delegada (SourceValidator + Quality Policies)"));
         return true;
     }
 
     private boolean handleRanking(OrchestrationContext ctx) {
-        if (ranker != null && !ctx.candidates().isEmpty() && ctx.validations().size() == ctx.candidates().size()) {
+        if (ranker != null
+                && !ctx.candidates().isEmpty()
+                && ctx.validations().size() == ctx.candidates().size()) {
             var pairs = new ArrayList<RankedCandidate>();
             var candidates = ctx.candidates();
             var validations = ctx.validations();
@@ -361,15 +391,15 @@ public class KnowledgeOrchestrator {
             }
             ctx.setRanked(ranker.rank(pairs));
         }
-        ctx.addDecision(OrchestrationDecision.of(RANKING_OK, OrchestrationState.RANKING,
-            "Ranking delegado (ContextRanker)"));
+        ctx.addDecision(
+                OrchestrationDecision.of(RANKING_OK, OrchestrationState.RANKING, "Ranking delegado (ContextRanker)"));
         return true;
     }
 
     private void handleAssembling(OrchestrationContext ctx) {
         var request = ctx.request();
-        var contextDecision = policyEngine.checkContext(new ContextBudget(0, 0, 0),
-            request.policyConfig().context());
+        var contextDecision = policyEngine.checkContext(
+                new ContextBudget(0, 0, 0), request.policyConfig().context());
         if (contextDecision.rejected()) {
             ctx.markDegraded();
             complete(ctx, "Límite de contexto excedido");
@@ -383,13 +413,12 @@ public class KnowledgeOrchestrator {
                 repository.save(result, request.knowledgeRequest().timeWindow());
             }
         }
-        ctx.addDecision(OrchestrationDecision.of(ASSEMBLY_OK, OrchestrationState.ASSEMBLING,
-            "Ensamblado delegado (ContextAssembler)"));
+        ctx.addDecision(OrchestrationDecision.of(
+                ASSEMBLY_OK, OrchestrationState.ASSEMBLING, "Ensamblado delegado (ContextAssembler)"));
         complete(ctx, "Ciclo coordinado exitosamente");
     }
 
-    private OrchestrationStrategy determineStrategy(OrchestrationRequest request, QueryPlan plan,
-                                                    QueryMode mode) {
+    private OrchestrationStrategy determineStrategy(OrchestrationRequest request, QueryPlan plan, QueryMode mode) {
         if (mode == QueryMode.CACHE_ONLY || plan.isEmpty()) {
             return request.strategy();
         }
@@ -423,8 +452,8 @@ public class KnowledgeOrchestrator {
         OrchestrationState from = ctx.currentState();
         if (from != null && !OrchestrationState.canTransition(from, target)) {
             ctx.transition(OrchestrationState.FAILED);
-            ctx.addDecision(OrchestrationDecision.of(FAIL, OrchestrationState.FAILED,
-                "Transición inválida: " + from + " → " + target));
+            ctx.addDecision(OrchestrationDecision.of(
+                    FAIL, OrchestrationState.FAILED, "Transición inválida: " + from + " → " + target));
             return;
         }
         ctx.transition(target);
@@ -461,9 +490,14 @@ public class KnowledgeOrchestrator {
     private static Map<OrchestrationStrategy, OrchestrationStrategyPolicy> registerDefaultStrategies() {
         var map = new EnumMap<OrchestrationStrategy, OrchestrationStrategyPolicy>(OrchestrationStrategy.class);
         for (OrchestrationStrategyPolicy policy : List.of(
-            new CacheFirstPolicy(), new ProviderFirstPolicy(), new HybridPolicy(),
-            new LocalFirstPolicy(), new InternetFirstPolicy(), new FailFastPolicy(),
-            new GracefulDegradationPolicy(), new OfflineModePolicy())) {
+                new CacheFirstPolicy(),
+                new ProviderFirstPolicy(),
+                new HybridPolicy(),
+                new LocalFirstPolicy(),
+                new InternetFirstPolicy(),
+                new FailFastPolicy(),
+                new GracefulDegradationPolicy(),
+                new OfflineModePolicy())) {
             map.put(policy.strategy(), policy);
         }
         return Map.copyOf(map);

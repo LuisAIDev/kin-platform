@@ -9,7 +9,7 @@ import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.interview.AnswerRules;
 import com.kinplatform.kin.interview.InterviewDirective;
 import com.kinplatform.kin.interview.InterviewResult;
-
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Locale;
 
 /**
@@ -30,7 +30,8 @@ import java.util.Locale;
  */
 public class ConversationPromptBuilder {
 
-    private static final String PERSONALIDAD = """
+    private static final String PERSONALIDAD =
+            """
             Sos KIN (Knowledge, Innovation & Navigation), un consultor senior en innovación, emprendimiento y validación de proyectos.
 
             ==============================
@@ -43,8 +44,9 @@ public class ConversationPromptBuilder {
             - Tu tono es profesional, cercano, conversacional.
             """;
 
-    private static final String CONVERSACION = """
-            
+    private static final String CONVERSACION =
+            """
+
             ==============================
             CÓMO CONVERSAR
             ==============================
@@ -113,6 +115,7 @@ public class ConversationPromptBuilder {
      * pregunta determinada por Java. Sin directiva el resultado es idéntico a
      * {@link #build(PromptRequest)}.
      */
+    @SuppressFBWarnings("VA_FORMAT_STRING_USES_NEWLINE")
     public String build(PromptRequest request, InterviewResult interviewResult) {
         if (request.type() != PromptType.CONVERSATION) {
             throw new IllegalArgumentException("ConversationPromptBuilder solo soporta CONVERSATION");
@@ -124,7 +127,9 @@ public class ConversationPromptBuilder {
         var sb = new StringBuilder();
         sb.append(PERSONALIDAD);
 
-        sb.append(String.format(Locale.ROOT, """
+        sb.append(String.format(
+                Locale.ROOT,
+                """
             \n
             ==============================
             PROYECTO ACTIVO
@@ -134,14 +139,16 @@ public class ConversationPromptBuilder {
             Categoría: %s
             Cobertura: %.1f%%
             """,
-            context.value(com.kinplatform.kin.context.AnalyzedDimension.PROJECT_NAME) != null
-                ? context.value(com.kinplatform.kin.context.AnalyzedDimension.PROJECT_NAME) : "Sin título",
-            context.value(com.kinplatform.kin.context.AnalyzedDimension.SOLUTION) != null
-                ? context.value(com.kinplatform.kin.context.AnalyzedDimension.SOLUTION) : "Sin descripción",
-            context.value(com.kinplatform.kin.context.AnalyzedDimension.SECTOR) != null
-                ? context.value(com.kinplatform.kin.context.AnalyzedDimension.SECTOR) : "Sin categoría",
-            context.coverageRatio() * 100
-        ));
+                context.value(com.kinplatform.kin.context.AnalyzedDimension.PROJECT_NAME) != null
+                        ? context.value(com.kinplatform.kin.context.AnalyzedDimension.PROJECT_NAME)
+                        : "Sin título",
+                context.value(com.kinplatform.kin.context.AnalyzedDimension.SOLUTION) != null
+                        ? context.value(com.kinplatform.kin.context.AnalyzedDimension.SOLUTION)
+                        : "Sin descripción",
+                context.value(com.kinplatform.kin.context.AnalyzedDimension.SECTOR) != null
+                        ? context.value(com.kinplatform.kin.context.AnalyzedDimension.SECTOR)
+                        : "Sin categoría",
+                context.coverageRatio() * 100));
 
         if (context.hasKnownDimensions()) {
             sb.append("\n\n## INFORMACIÓN CONOCIDA DEL PROYECTO\n");
@@ -171,16 +178,22 @@ public class ConversationPromptBuilder {
 
     private String appendDirectiva(TurnDirective directive) {
         var sb = new StringBuilder("\n\n## DIRECTIVA DE COMUNICACIÓN\n");
-        sb.append("Enmarcá tu respuesta según la fase ").append(directive.phase().name());
+        sb.append("Enmarcá tu respuesta según la fase ")
+                .append(directive.phase().name());
         sb.append(" en modo ").append(directive.communicationMode().name()).append(".\n");
 
         TurnConstraints constraints = directive.constraints();
         if (constraints != null) {
             sb.append("Restricciones de comunicación:\n");
             sb.append("- Longitud máxima: ").append(constraints.maxLength()).append(" caracteres.\n");
-            sb.append("- Una sola pregunta por turno: ").append(constraints.singleQuestion() ? "sí" : "no").append(".\n");
-            if (constraints.forbiddenMarkers() != null && !constraints.forbiddenMarkers().isEmpty()) {
-                sb.append("- Marcadores prohibidos: ").append(String.join(", ", constraints.forbiddenMarkers())).append(".\n");
+            sb.append("- Una sola pregunta por turno: ")
+                    .append(constraints.singleQuestion() ? "sí" : "no")
+                    .append(".\n");
+            if (constraints.forbiddenMarkers() != null
+                    && !constraints.forbiddenMarkers().isEmpty()) {
+                sb.append("- Marcadores prohibidos: ")
+                        .append(String.join(", ", constraints.forbiddenMarkers()))
+                        .append(".\n");
             }
         }
 
@@ -200,14 +213,19 @@ public class ConversationPromptBuilder {
             sb.append("  - Longitud mínima: ").append(rules.minLength()).append(" caracteres.\n");
             if (rules.hasKeywordRequirements()) {
                 sb.append("  - Palabras clave esperadas: ")
-                  .append(String.join(", ", rules.minKeywords())).append(".\n");
+                        .append(String.join(", ", rules.minKeywords()))
+                        .append(".\n");
             }
             if (rules.hasFormatRequirement()) {
-                sb.append("  - Formato esperado: ").append(rules.requiredFormat()).append(".\n");
+                sb.append("  - Formato esperado: ")
+                        .append(rules.requiredFormat())
+                        .append(".\n");
             }
             sb.append("  - Refinamiento permitido: ")
-              .append(rules.allowRefinement() ? "sí" : "no")
-              .append(" (máximo ").append(rules.maxRefinements()).append(").\n");
+                    .append(rules.allowRefinement() ? "sí" : "no")
+                    .append(" (máximo ")
+                    .append(rules.maxRefinements())
+                    .append(").\n");
         }
 
         sb.append("No inventes preguntas nuevas. Si esta pregunta ya fue respondida, no la repitas.\n");

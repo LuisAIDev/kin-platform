@@ -15,11 +15,7 @@ import java.util.Set;
  * dominio (p. ej. {@code government}, {@code web_search}, {@code document},
  * {@code vector_rag}): el motor de políticas nunca conoce adaptadores.</p>
  */
-public record ProviderPolicyConfig(
-    Set<String> excludedSourceTypes,
-    int maxProviders,
-    Map<String, Integer> priorities
-) {
+public record ProviderPolicyConfig(Set<String> excludedSourceTypes, int maxProviders, Map<String, Integer> priorities) {
 
     public ProviderPolicyConfig {
         excludedSourceTypes = lowerCaseSet(excludedSourceTypes);
@@ -28,32 +24,83 @@ public record ProviderPolicyConfig(
     }
 
     public static ProviderPolicyConfig defaults() {
-        return new ProviderPolicyConfig(Set.of(), 5,
-            Map.of("government", 100, "statistics", 90, "internal_db", 80,
-                "vector_rag", 70, "document", 60, "web_search", 40));
+        return new ProviderPolicyConfig(
+                Set.of(),
+                5,
+                Map.of(
+                        "government",
+                        100,
+                        "statistics",
+                        90,
+                        "internal_db",
+                        80,
+                        "vector_rag",
+                        70,
+                        "document",
+                        60,
+                        "web_search",
+                        40));
     }
 
     public static ProviderPolicyConfig dev() {
-        return new ProviderPolicyConfig(Set.of(), 8,
-            Map.of("government", 100, "statistics", 90, "internal_db", 80,
-                "vector_rag", 70, "document", 60, "web_search", 40));
+        return new ProviderPolicyConfig(
+                Set.of(),
+                8,
+                Map.of(
+                        "government",
+                        100,
+                        "statistics",
+                        90,
+                        "internal_db",
+                        80,
+                        "vector_rag",
+                        70,
+                        "document",
+                        60,
+                        "web_search",
+                        40));
     }
 
     public static ProviderPolicyConfig production() {
-        return new ProviderPolicyConfig(Set.of("social", "forum"), 5,
-            Map.of("government", 100, "statistics", 90, "internal_db", 80,
-                "vector_rag", 70, "document", 60, "web_search", 40));
+        return new ProviderPolicyConfig(
+                Set.of("social", "forum"),
+                5,
+                Map.of(
+                        "government",
+                        100,
+                        "statistics",
+                        90,
+                        "internal_db",
+                        80,
+                        "vector_rag",
+                        70,
+                        "document",
+                        60,
+                        "web_search",
+                        40));
     }
 
     public static ProviderPolicyConfig testing() {
-        return new ProviderPolicyConfig(Set.of("social", "forum"), 2,
-            Map.of("government", 100, "web_search", 40));
+        return new ProviderPolicyConfig(Set.of("social", "forum"), 2, Map.of("government", 100, "web_search", 40));
     }
 
     public static ProviderPolicyConfig enterprise() {
-        return new ProviderPolicyConfig(Set.of("social", "forum"), 10,
-            Map.of("government", 100, "statistics", 90, "internal_db", 80,
-                "vector_rag", 70, "document", 60, "web_search", 40));
+        return new ProviderPolicyConfig(
+                Set.of("social", "forum"),
+                10,
+                Map.of(
+                        "government",
+                        100,
+                        "statistics",
+                        90,
+                        "internal_db",
+                        80,
+                        "vector_rag",
+                        70,
+                        "document",
+                        60,
+                        "web_search",
+                        40));
     }
 
     public int priorityOf(String sourceType) {
@@ -78,8 +125,8 @@ public record ProviderPolicyConfig(
         for (var entry : values.entrySet()) {
             String key = entry.getKey();
             if (key != null && !key.isBlank()) {
-                out.put(key.trim().toLowerCase(Locale.ROOT),
-                    entry.getValue() == null ? 0 : entry.getValue());
+                Integer value = entry.getValue();
+                out.put(key.trim().toLowerCase(Locale.ROOT), java.util.Objects.requireNonNullElse(value, 0));
             }
         }
         return Map.copyOf(out);

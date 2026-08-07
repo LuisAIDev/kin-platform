@@ -1,6 +1,8 @@
 package com.kinplatform.ai;
 
-import com.kinplatform.common.config.DeepSeekConfig;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -10,11 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/test")
@@ -27,8 +24,7 @@ public class TestAiController {
 
     public TestAiController(
             @Qualifier("deepseekChatClient") ChatClient deepseekClient,
-            @Value("${deepseek.model}") String deepseekModel
-    ) {
+            @Value("${deepseek.model}") String deepseekModel) {
         this.deepseekClient = deepseekClient;
         this.deepseekModel = deepseekModel;
     }
@@ -44,12 +40,11 @@ public class TestAiController {
         try {
             long startTime = System.currentTimeMillis();
 
-            var future = CompletableFuture.supplyAsync(() ->
-                deepseekClient.prompt()
+            var future = CompletableFuture.supplyAsync(() -> deepseekClient
+                    .prompt()
                     .user("Hola, responde solo: OK funciono")
                     .call()
-                    .content()
-            );
+                    .content());
 
             var response = future.get(60, TimeUnit.SECONDS);
             long elapsed = System.currentTimeMillis() - startTime;
@@ -65,7 +60,6 @@ public class TestAiController {
 
             return ResponseEntity.ok(result);
         } catch (Exception e) {
-            long elapsed = 0;
             result.put("status", "error");
             result.put("exception_class", e.getClass().getName());
             result.put("exception_message", e.getMessage() != null ? e.getMessage() : "null");

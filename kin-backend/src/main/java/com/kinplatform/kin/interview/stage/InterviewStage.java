@@ -1,6 +1,5 @@
 package com.kinplatform.kin.interview.stage;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.interview.InterviewAnswer;
 import com.kinplatform.kin.interview.InterviewContext;
@@ -14,7 +13,6 @@ import com.kinplatform.kin.interview.engine.InterviewEngine;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
 import com.kinplatform.kin.pipeline.stage.EngineStage;
-
 import java.util.Optional;
 import java.util.UUID;
 
@@ -71,22 +69,18 @@ public class InterviewStage implements PipelineStage {
         }
         this.interviewRepository = interviewRepository;
         this.delegate = new EngineStage<>(
-            "Entrevista",
-            interviewEngine,
-            context -> context != null && context.projectContext() != null,
-            context -> new InterviewInput(buildRequest(context), context.userMessage()),
-            PipelineContext::interviewResult
-        );
+                "Entrevista",
+                interviewEngine,
+                context -> context != null && context.projectContext() != null,
+                context -> new InterviewInput(buildRequest(context), context.userMessage()),
+                PipelineContext::interviewResult);
     }
 
     private InterviewRequest buildRequest(PipelineContext context) {
         var project = context.projectContext();
         InterviewState previousState = interviewRepository.findOrCreate(context.projectId());
         var interviewContext = InterviewContext.of(
-            context.projectId(),
-            context.projectTitle(),
-            context.projectCategory(),
-            project.coveredDimensions());
+                context.projectId(), context.projectTitle(), context.projectCategory(), project.coveredDimensions());
         InterviewAnswer answer = null;
         if (previousState != null && previousState.current() != null) {
             answer = InterviewAnswer.of(previousState.current(), context.userMessage());
@@ -132,8 +126,8 @@ public class InterviewStage implements PipelineStage {
         }
         InterviewDirective directive = interview.directive();
         if (directive != null) {
-            return ConversationDecision.ask(directive.dimension(), ASK_PRIORITY,
-                "Entrevista estratégica: " + directive.topic());
+            return ConversationDecision.ask(
+                    directive.dimension(), ASK_PRIORITY, "Entrevista estratégica: " + directive.topic());
         }
         return null;
     }
