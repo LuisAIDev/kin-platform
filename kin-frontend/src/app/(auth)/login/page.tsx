@@ -21,11 +21,15 @@ export default function LoginPage() {
       sessionStorage.clear();
     }
 
-    const token = authService.getToken();
-    if (token) {
+    const tokenAtMount = authService.getToken();
+    if (tokenAtMount) {
       api.get("/auth/me")
         .then(() => router.push("/dashboard/projects"))
-        .catch(authService.logout)
+        .catch(() => {
+          if (authService.getToken() === tokenAtMount) {
+            authService.logout();
+          }
+        })
         .finally(() => setChecking(false));
     } else {
       setTimeout(() => setChecking(false));
