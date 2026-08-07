@@ -70,6 +70,20 @@ jobs:
     name: Playwright E2E (login flow)
     runs-on: ubuntu-latest
     needs: quality
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: kin_e2e
+          POSTGRES_USER: kin_e2e
+          POSTGRES_PASSWORD: kin_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kin_e2e -d kin_e2e"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: kin-frontend
@@ -93,7 +107,7 @@ jobs:
         working-directory: kin-backend
         run: ./mvnw -B -q -DskipTests package
 
-      - name: Start backend (test profile, H2 en memoria)
+      - name: Start backend (test profile, PostgreSQL 18)
         working-directory: kin-backend
         run: |
           # El backend requiere jwt.secret. En CI se genera una JWT_SECRET efimera
@@ -101,6 +115,9 @@ jobs:
           # valor hardcodeado o de un repo secret). El test profile espera una
           # clave base64; cualquier valor aleatorio es valido para los E2E.
           export JWT_SECRET=$(openssl rand -base64 48)
+          export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/kin_e2e
+          export SPRING_DATASOURCE_USERNAME=kin_e2e
+          export SPRING_DATASOURCE_PASSWORD=kin_e2e
           nohup java -jar target/*.jar --spring.profiles.active=test --springdotenv.enabled=false > backend.log 2>&1 &
           for i in $(seq 1 60); do
             if curl -sf http://localhost:8080/api/v1/actuator/health > /dev/null; then break; fi

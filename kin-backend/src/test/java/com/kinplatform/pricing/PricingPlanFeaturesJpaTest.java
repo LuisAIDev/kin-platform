@@ -1,30 +1,35 @@
 package com.kinplatform.pricing;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityManager;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.ActiveProfiles;
-
-import java.math.BigDecimal;
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kinplatform.test.PostgresTestSupport;
+import jakarta.persistence.EntityManager;
+import java.math.BigDecimal;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
 
 /**
  * Regression test (C7): {@code PricingPlan.features} es una columna JSON
  * (jsonb en PostgreSQL, json en H2) mapeada con
  * {@code @JdbcTypeCode(SqlTypes.JSON)} sobre un String JSON. Verifica el
- * round-trip real del JSON contra la base y que DataInitializer siembra los
- * planes sin el error "column features is of type jsonb but expression is of
- * type character varying".
+ * round-trip real del JSON contra PostgreSQL 18 (Testcontainers, con Flyway
+ * V1..V11) y que DataInitializer siembra los planes sin el error "column
+ * features is of type jsonb but expression is of type character varying".
  */
 @DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ImportAutoConfiguration(FlywayAutoConfiguration.class)
 @ActiveProfiles("test")
-class PricingPlanFeaturesJpaTest {
+class PricingPlanFeaturesJpaTest extends PostgresTestSupport {
 
     @Autowired
     private PricingPlanRepository repository;

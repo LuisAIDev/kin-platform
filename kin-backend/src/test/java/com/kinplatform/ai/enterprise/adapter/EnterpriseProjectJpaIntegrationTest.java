@@ -1,35 +1,40 @@
 package com.kinplatform.ai.enterprise.adapter;
 
-import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
-import com.kinplatform.kin.enterprise.aggregate.GenerationStatus;
-import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
-import jakarta.persistence.EntityManager;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.ActiveProfiles;
-
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
+import com.kinplatform.kin.enterprise.aggregate.GenerationStatus;
+import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
+import com.kinplatform.test.PostgresTestSupport;
+import jakarta.persistence.EntityManager;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
+
 /**
  * Test de integración JPA de la persistencia del módulo Enterprise (Fase 10,
- * Milestone 2G) sobre la infraestructura existente del proyecto (H2 en memoria
- * con el perfil {@code test}): verifica el mapeo entidad ⇄ dominio, el
- * versionado persistente, los documentos en cascada y la persistencia del
- * Enterprise Score contra una base de datos real.
+ * Milestone 2G) sobre PostgreSQL 18 real (Testcontainers, con Flyway V1..V11):
+ * verifica el mapeo entidad ⇄ dominio, el versionado persistente, los
+ * documentos en cascada y la persistencia del Enterprise Score contra una
+ * base de datos real.
  */
 @DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ImportAutoConfiguration(FlywayAutoConfiguration.class)
 @ActiveProfiles("test")
-class EnterpriseProjectJpaIntegrationTest {
+class EnterpriseProjectJpaIntegrationTest extends PostgresTestSupport {
 
     @Autowired
     private EnterpriseProjectJpaRepository jpaRepository;
@@ -44,9 +49,34 @@ class EnterpriseProjectJpaIntegrationTest {
         adapter = new EnterpriseProjectRepositoryAdapter(jpaRepository);
     }
 
+    /**
+     * La migración V7 define {@code fk_enterprise_project_project → projects.id}
+     * (H2 no la generaba en ddl-auto), por lo que cada test debe crear el
+     * proyecto padre antes de persistir el enterprise_project. Se inserta por
+     * SQL nativo para conservar exactamente el {@code id} asignado
+     * ({@code @GeneratedValue(UUID)} regeneraría el id vía merge/persist).
+     */
+    private void seedParent(UUID projectId) {
+        UUID userId = UUID.randomUUID();
+        entityManager
+                .createNativeQuery(
+                        "INSERT INTO users (id, email, password_hash, full_name, role, credits, is_active, created_at, updated_at) "
+                                + "VALUES (?, ?, 'seed', 'Proyecto semilla', 'FREE', 10, TRUE, now(), now())")
+                .setParameter(1, userId)
+                .setParameter(2, "seed-" + projectId + "@kin.test")
+                .executeUpdate();
+        entityManager
+                .createNativeQuery("INSERT INTO projects (id, user_id, title, status, created_at, updated_at) "
+                        + "VALUES (?, ?, 'Proyecto semilla', 'DRAFT', now(), now())")
+                .setParameter(1, projectId)
+                .setParameter(2, userId)
+                .executeUpdate();
+    }
+
     @Test
     void saveYfindLatestVersion_roundTripCompletoConDocumentos() {
         var projectId = UUID.randomUUID();
+        seedParent(projectId);
         var project = EnterprisePersistenceTestFixtures.completed(projectId, 1);
 
         adapter.save(project);
@@ -65,15 +95,18 @@ class EnterpriseProjectJpaIntegrationTest {
         assertTrue(restored.hasDocument(DocumentType.MARKET_PLAN));
         assertTrue(restored.hasDocument(DocumentType.FINANCIAL_PLAN));
         assertTrue(restored.findDocument(DocumentType.LEAN_CANVAS).isPresent());
-        assertEquals("checksum-LEAN_CANVAS",
-            restored.findDocument(DocumentType.LEAN_CANVAS).get().checksum());
-        assertEquals("text/plain",
-            restored.findDocument(DocumentType.LEAN_CANVAS).get().mimeType());
+        assertEquals(
+                "checksum-LEAN_CANVAS",
+                restored.findDocument(DocumentType.LEAN_CANVAS).get().checksum());
+        assertEquals(
+                "text/plain",
+                restored.findDocument(DocumentType.LEAN_CANVAS).get().mimeType());
     }
 
     @Test
     void versionado_guardaVariasVersionesYRecuperaLaUltima() {
         var projectId = UUID.randomUUID();
+        seedParent(projectId);
         adapter.save(EnterprisePersistenceTestFixtures.completed(projectId, 1));
         adapter.save(EnterprisePersistenceTestFixtures.failed(projectId, 2));
 
@@ -90,6 +123,7 @@ class EnterpriseProjectJpaIntegrationTest {
     @Test
     void sobreescritura_deMismaVersion_actualizaLaFila() {
         var projectId = UUID.randomUUID();
+        seedParent(projectId);
         adapter.save(EnterprisePersistenceTestFixtures.completed(projectId, 1));
 
         var now = OffsetDateTime.now();
@@ -105,6 +139,7 @@ class EnterpriseProjectJpaIntegrationTest {
     @Test
     void findByVersion_devuelveLaVersionExacta() {
         var projectId = UUID.randomUUID();
+        seedParent(projectId);
         adapter.save(EnterprisePersistenceTestFixtures.completed(projectId, 1));
         adapter.save(EnterprisePersistenceTestFixtures.completed(projectId, 2));
 
@@ -119,6 +154,7 @@ class EnterpriseProjectJpaIntegrationTest {
     @Test
     void persistenciaDeScore_guardaYRecuperaElScore() {
         var projectId = UUID.randomUUID();
+        seedParent(projectId);
         var now = OffsetDateTime.now();
         var entity = new EnterpriseProjectEntity();
         entity.setProjectId(projectId);
@@ -147,13 +183,13 @@ class EnterpriseProjectJpaIntegrationTest {
         assertEquals(65, score.getOverall());
         assertEquals("FAIR", score.getGrade());
         assertEquals(0.82, score.getConfidence());
-        assertEquals(EnterprisePersistenceTestFixtures.score(),
-            new EnterpriseScoreMapper().toDomain(score));
+        assertEquals(EnterprisePersistenceTestFixtures.score(), new EnterpriseScoreMapper().toDomain(score));
     }
 
     @Test
     void persistenciaDeScore_sinScore_recuperaNulo() {
         var projectId = UUID.randomUUID();
+        seedParent(projectId);
         adapter.save(EnterprisePersistenceTestFixtures.completed(projectId, 1));
 
         var entity = jpaRepository.findByProjectIdAndVersion(projectId, 1).orElseThrow();
@@ -163,16 +199,19 @@ class EnterpriseProjectJpaIntegrationTest {
     @Test
     void metadatosDeDocumentos_roundTrip() {
         var projectId = UUID.randomUUID();
+        seedParent(projectId);
         adapter.save(EnterprisePersistenceTestFixtures.completed(projectId, 1));
 
         var restored = adapter.findLatestVersion(projectId).orElseThrow();
-        var metadata = restored.findDocument(DocumentType.LEAN_CANVAS).orElseThrow().metadata();
+        var metadata =
+                restored.findDocument(DocumentType.LEAN_CANVAS).orElseThrow().metadata();
         assertEquals("motor", metadata.get("origen"));
     }
 
     @Test
     void guardarProyectoRequested_sinDocumentos() {
         var projectId = UUID.randomUUID();
+        seedParent(projectId);
         adapter.save(EnterpriseProject.request(projectId, 1));
 
         var restored = adapter.findLatestVersion(projectId).orElseThrow();
@@ -183,12 +222,13 @@ class EnterpriseProjectJpaIntegrationTest {
     @Test
     void documentosConDistintosTipos_seConservanCompletos() {
         var projectId = UUID.randomUUID();
+        seedParent(projectId);
         adapter.save(EnterprisePersistenceTestFixtures.completed(projectId, 1));
 
         var restored = adapter.findLatestVersion(projectId).orElseThrow();
         var types = restored.documents().stream().map(d -> d.type()).toList();
-        assertTrue(types.containsAll(List.of(DocumentType.LEAN_CANVAS,
-            DocumentType.MARKET_PLAN, DocumentType.FINANCIAL_PLAN)));
+        assertTrue(types.containsAll(
+                List.of(DocumentType.LEAN_CANVAS, DocumentType.MARKET_PLAN, DocumentType.FINANCIAL_PLAN)));
         assertEquals(3, types.size());
     }
 
