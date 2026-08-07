@@ -7,11 +7,9 @@ import com.kinplatform.kin.engine.DomainEngine;
 import com.kinplatform.kin.engine.EngineMetadata;
 import com.kinplatform.kin.engine.EnginePhase;
 import com.kinplatform.kin.engine.EngineType;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Motor determinista de scoring de viabilidad. Evalúa el contexto del proyecto
@@ -35,8 +33,8 @@ public class ScoringEngine implements DomainEngine<ScoringInput, ScoreResult> {
 
     @Override
     public EngineMetadata metadata() {
-        return EngineMetadata.of(GENERATOR_NAME, model.version(), "KIN Architecture Team",
-            EnginePhase.SCORING, EngineType.DOMAIN, 30);
+        return EngineMetadata.of(
+                GENERATOR_NAME, model.version(), "KIN Architecture Team", EnginePhase.SCORING, EngineType.DOMAIN, 30);
     }
 
     @Override
@@ -56,7 +54,6 @@ public class ScoringEngine implements DomainEngine<ScoringInput, ScoreResult> {
 
         for (var entry : weights.entrySet()) {
             var dimension = entry.getKey();
-            var weight = entry.getValue();
             int score = scoreDimension(context, dimension, evaluation);
             categoryScores.put(dimension.displayName(), score);
             earned += score;
@@ -66,18 +63,16 @@ public class ScoringEngine implements DomainEngine<ScoringInput, ScoreResult> {
         String viability = determineViability(totalScore, evaluation);
 
         return new ScoreResult(
-            totalScore,
-            100,
-            categoryScores,
-            viability,
-            identifyStrengths(context, evaluation),
-            identifyWeaknesses(context, evaluation),
-            ""
-        );
+                totalScore,
+                100,
+                categoryScores,
+                viability,
+                identifyStrengths(context, evaluation),
+                identifyWeaknesses(context, evaluation),
+                "");
     }
 
-    private int scoreDimension(ProjectContext context, AnalyzedDimension dimension,
-                                CompletenessEvaluation evaluation) {
+    private int scoreDimension(ProjectContext context, AnalyzedDimension dimension, CompletenessEvaluation evaluation) {
         if (!context.isDimensionCovered(dimension)) return 0;
         String value = context.value(dimension);
         if (value == null || value.isBlank()) return 0;
