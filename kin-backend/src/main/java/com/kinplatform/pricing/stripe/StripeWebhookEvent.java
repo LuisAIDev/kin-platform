@@ -6,7 +6,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
 import java.time.Instant;
 
 /**
@@ -34,8 +33,7 @@ public class StripeWebhookEvent {
     @Column(name = "processed_at", nullable = false)
     private Instant processedAt;
 
-    protected StripeWebhookEvent() {
-    }
+    protected StripeWebhookEvent() {}
 
     public StripeWebhookEvent(String eventId, String eventType) {
         this.eventId = eventId;

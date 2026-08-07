@@ -7,6 +7,8 @@ import com.kinplatform.pricing.UserSubscription;
 import com.kinplatform.pricing.UserSubscriptionRepository;
 import com.kinplatform.project.ProjectRepository;
 import com.kinplatform.project.ProjectStatus;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -14,9 +16,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -51,9 +50,12 @@ public class SubscriptionValidatorService {
         long currentProjects = projectRepository.countByUserIdAndStatusNot(userId, ProjectStatus.ARCHIVED);
         boolean canCreate = currentProjects < plan.getMaxProjects();
 
-        log.debug("Usuario {}: proyectos {}/{} - {}",
-            userId, currentProjects, plan.getMaxProjects(),
-            canCreate ? "PERMITIDO" : "BLOQUEADO");
+        log.debug(
+                "Usuario {}: proyectos {}/{} - {}",
+                userId,
+                currentProjects,
+                plan.getMaxProjects(),
+                canCreate ? "PERMITIDO" : "BLOQUEADO");
 
         return canCreate;
     }
@@ -61,21 +63,22 @@ public class SubscriptionValidatorService {
     @Cacheable(value = "messageLimit", key = "#userId")
     public boolean canSendMessage(UUID userId) {
         UserSubscription subscription = getActiveSubscription(userId);
-        PricingPlan plan = subscription != null ?
-            subscription.getPlan() : getDefaultPlan();
+        PricingPlan plan = subscription != null ? subscription.getPlan() : getDefaultPlan();
 
         if (plan.getMessagesPerMonth() == null) {
             log.debug("Usuario {} tiene mensajes ilimitados", userId);
             return true;
         }
 
-        int messagesUsed = subscription != null ?
-            subscription.getMessagesUsed() : 0;
+        int messagesUsed = subscription != null ? subscription.getMessagesUsed() : 0;
         boolean canSend = messagesUsed < plan.getMessagesPerMonth();
 
-        log.debug("Usuario {}: mensajes {}/{} - {}",
-            userId, messagesUsed, plan.getMessagesPerMonth(),
-            canSend ? "PERMITIDO" : "BLOQUEADO");
+        log.debug(
+                "Usuario {}: mensajes {}/{} - {}",
+                userId,
+                messagesUsed,
+                plan.getMessagesPerMonth(),
+                canSend ? "PERMITIDO" : "BLOQUEADO");
 
         return canSend;
     }
@@ -86,8 +89,7 @@ public class SubscriptionValidatorService {
         if (subscription != null) {
             subscription.setMessagesUsed(subscription.getMessagesUsed() + 1);
             subscriptionRepository.save(subscription);
-            log.debug("Incrementado contador de mensajes para usuario {}: {}",
-                userId, subscription.getMessagesUsed());
+            log.debug("Incrementado contador de mensajes para usuario {}: {}", userId, subscription.getMessagesUsed());
 
             evictCache("messageLimit", userId);
         }
@@ -95,8 +97,7 @@ public class SubscriptionValidatorService {
 
     public int getRemainingMessages(UUID userId) {
         UserSubscription subscription = getActiveSubscription(userId);
-        PricingPlan plan = subscription != null ?
-            subscription.getPlan() : getDefaultPlan();
+        PricingPlan plan = subscription != null ? subscription.getPlan() : getDefaultPlan();
 
         if (plan.getMessagesPerMonth() == null) {
             return Integer.MAX_VALUE;
@@ -125,8 +126,8 @@ public class SubscriptionValidatorService {
             return false;
         }
         return subscription.getStatus() == SubscriptionStatus.ACTIVE
-               && subscription.getEndDate() != null
-               && subscription.getEndDate().isAfter(OffsetDateTime.now());
+                && subscription.getEndDate() != null
+                && subscription.getEndDate().isAfter(OffsetDateTime.now());
     }
 
     /**
@@ -138,17 +139,14 @@ public class SubscriptionValidatorService {
      */
     public UserSubscription getActiveSubscription(UUID userId) {
         return subscriptionRepository
-            .findByUserIdAndStatusAndEndDateAfter(
-                userId,
-                SubscriptionStatus.ACTIVE,
-                OffsetDateTime.now()
-            )
-            .orElse(null);
+                .findByUserIdAndStatusAndEndDateAfter(userId, SubscriptionStatus.ACTIVE, OffsetDateTime.now())
+                .orElse(null);
     }
 
     private PricingPlan getDefaultPlan() {
-        return planRepository.findFirstByIsActiveTrueOrderByPriceAsc()
-            .orElseThrow(() -> new RuntimeException("No active pricing plan found"));
+        return planRepository
+                .findFirstByIsActiveTrueOrderByPriceAsc()
+                .orElseThrow(() -> new RuntimeException("No active pricing plan found"));
     }
 
     public void evictProjectLimitCache(UUID userId) {

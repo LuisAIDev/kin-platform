@@ -2,12 +2,10 @@ package com.kinplatform.pricing.stripe;
 
 import com.stripe.model.Event;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.BufferedReader;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController

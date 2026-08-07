@@ -1,11 +1,9 @@
 package com.kinplatform.pricing.stripe;
 
-import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.PricingPlanRepository;
 import com.kinplatform.pricing.SubscriptionStatus;
 import com.kinplatform.pricing.UserSubscription;
 import com.kinplatform.pricing.UserSubscriptionRepository;
-import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
@@ -13,14 +11,13 @@ import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import com.stripe.param.checkout.SessionCreateParams;
 import jakarta.annotation.PostConstruct;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -34,10 +31,11 @@ public class StripeService {
     @Value("${stripe.webhook-secret}")
     private String webhookSecret;
 
-    public StripeService(PricingPlanRepository planRepository,
-                         UserRepository userRepository,
-                         UserSubscriptionRepository subscriptionRepository,
-                         StripeWebhookEventRepository webhookEventRepository) {
+    public StripeService(
+            PricingPlanRepository planRepository,
+            UserRepository userRepository,
+            UserSubscriptionRepository subscriptionRepository,
+            StripeWebhookEventRepository webhookEventRepository) {
         this.planRepository = planRepository;
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
@@ -51,12 +49,13 @@ public class StripeService {
         }
     }
 
-    public CheckoutResponse createCheckoutSession(UUID userId, UUID planId,
-                                                   String successUrl, String cancelUrl) {
-        var user = userRepository.findById(userId)
+    public CheckoutResponse createCheckoutSession(UUID userId, UUID planId, String successUrl, String cancelUrl) {
+        var user = userRepository
+                .findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
-        var plan = planRepository.findById(planId)
+        var plan = planRepository
+                .findById(planId)
                 .orElseThrow(() -> new IllegalArgumentException("Pricing plan not found: " + planId));
 
         if (!plan.getIsActive()) {
@@ -72,25 +71,19 @@ public class StripeService {
                     .setMode(SessionCreateParams.Mode.PAYMENT)
                     .setCustomerEmail(user.getEmail())
                     .setClientReferenceId(userId.toString())
-                    .addLineItem(
-                            SessionCreateParams.LineItem.builder()
-                                    .setQuantity(1L)
-                                    .setPriceData(
-                                            SessionCreateParams.LineItem.PriceData.builder()
-                                                    .setCurrency("usd")
-                                                    .setUnitAmount(plan.getPrice()
-                                                            .multiply(java.math.BigDecimal.valueOf(100))
-                                                            .longValue())
-                                                    .setProductData(
-                                                            SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                                                    .setName(plan.getName())
-                                                                    .setDescription(plan.getDescription())
-                                                                    .build()
-                                                    )
-                                                    .build()
-                                    )
-                                    .build()
-                    )
+                    .addLineItem(SessionCreateParams.LineItem.builder()
+                            .setQuantity(1L)
+                            .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                                    .setCurrency("usd")
+                                    .setUnitAmount(plan.getPrice()
+                                            .multiply(java.math.BigDecimal.valueOf(100))
+                                            .longValue())
+                                    .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                            .setName(plan.getName())
+                                            .setDescription(plan.getDescription())
+                                            .build())
+                                    .build())
+                            .build())
                     .putMetadata("plan_id", planId.toString())
                     .putMetadata("user_id", userId.toString());
 
@@ -103,8 +96,8 @@ public class StripeService {
 
             var session = Session.create(paramsBuilder.build());
 
-            log.info("Stripe checkout session created: {} for user {} plan {}",
-                    session.getId(), userId, plan.getName());
+            log.info(
+                    "Stripe checkout session created: {} for user {} plan {}", session.getId(), userId, plan.getName());
 
             return CheckoutResponse.builder()
                     .sessionId(session.getId())
@@ -124,12 +117,15 @@ public class StripeService {
             var userId = UUID.fromString(session.getClientReferenceId());
             var planId = UUID.fromString(session.getMetadata().get("plan_id"));
 
-            var user = userRepository.findById(userId)
+            var user = userRepository
+                    .findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-            var plan = planRepository.findById(planId)
+            var plan = planRepository
+                    .findById(planId)
                     .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
 
-            subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+            subscriptionRepository
+                    .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                     .ifPresent(s -> {
                         throw new IllegalArgumentException("User already has an active subscription");
                     });
@@ -153,8 +149,11 @@ public class StripeService {
             user.setSubscription(saved);
             userRepository.save(user);
 
-            log.info("Subscription activated after checkout: user {} plan {} session {}",
-                    userId, plan.getName(), sessionId);
+            log.info(
+                    "Subscription activated after checkout: user {} plan {} session {}",
+                    userId,
+                    plan.getName(),
+                    sessionId);
         } catch (Exception e) {
             log.error("Failed to process checkout completed event for session {}", sessionId, e);
             throw new RuntimeException("Failed to activate subscription", e);
@@ -173,8 +172,7 @@ public class StripeService {
     @Transactional
     public boolean processWebhookEvent(Event event) {
         try {
-            webhookEventRepository.saveAndFlush(
-                    new StripeWebhookEvent(event.getId(), event.getType()));
+            webhookEventRepository.saveAndFlush(new StripeWebhookEvent(event.getId(), event.getType()));
         } catch (DataIntegrityViolationException e) {
             log.info("Webhook event {} ({}), ya procesado - se omite", event.getId(), event.getType());
             return false;

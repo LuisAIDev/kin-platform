@@ -24,8 +24,7 @@ public class StripeController {
 
     @PostMapping("/create-checkout-session")
     public ResponseEntity<CheckoutResponse> createCheckoutSession(
-            Authentication auth,
-            @Valid @RequestBody CheckoutRequest request) {
+            Authentication auth, @Valid @RequestBody CheckoutRequest request) {
         var user = getCurrentUser(auth);
 
         var defaultSuccess = "http://localhost:3000/dashboard/subscription?success=true";
@@ -35,14 +34,12 @@ public class StripeController {
                 user.getId(),
                 request.getPlanId(),
                 request.getSuccessUrl() != null ? request.getSuccessUrl() : defaultSuccess,
-                request.getCancelUrl() != null ? request.getCancelUrl() : defaultCancel
-        );
+                request.getCancelUrl() != null ? request.getCancelUrl() : defaultCancel);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     private User getCurrentUser(Authentication auth) {
-        return userRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found"));
+        return com.kinplatform.common.security.AuthenticatedUsers.require(userRepository, auth);
     }
 }

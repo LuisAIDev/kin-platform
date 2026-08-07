@@ -1,5 +1,12 @@
 package com.kinplatform.pricing.stripe;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.kinplatform.pricing.PricingPlanRepository;
 import com.kinplatform.pricing.UserSubscriptionRepository;
 import com.kinplatform.user.UserRepository;
@@ -10,13 +17,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class StripeServiceWebhookIdempotencyTest {
@@ -40,16 +40,15 @@ class StripeServiceWebhookIdempotencyTest {
 
     @BeforeEach
     void setUp() {
-        stripeService = new StripeService(
-                planRepository, userRepository, subscriptionRepository, webhookEventRepository);
+        stripeService =
+                new StripeService(planRepository, userRepository, subscriptionRepository, webhookEventRepository);
     }
 
     @Test
     void eventoNuevo_deberiaProcesarse() {
         when(event.getId()).thenReturn("evt_new_1");
         when(event.getType()).thenReturn("unhandled.type");
-        when(webhookEventRepository.saveAndFlush(any(StripeWebhookEvent.class)))
-                .thenAnswer(i -> i.getArgument(0));
+        when(webhookEventRepository.saveAndFlush(any(StripeWebhookEvent.class))).thenAnswer(i -> i.getArgument(0));
 
         boolean processed = stripeService.processWebhookEvent(event);
 

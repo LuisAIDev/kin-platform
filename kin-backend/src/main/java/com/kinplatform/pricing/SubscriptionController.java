@@ -8,14 +8,13 @@ import com.kinplatform.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -49,8 +48,7 @@ public class SubscriptionController {
 
     @PostMapping
     public ResponseEntity<SubscriptionResponse> subscribe(
-            Authentication auth,
-            @Valid @RequestBody SubscriptionRequest request) {
+            Authentication auth, @Valid @RequestBody SubscriptionRequest request) {
         User user = getCurrentUser(auth);
         log.info("Usuario {} suscribiéndose al plan: {}", user.getId(), request.getPlanId());
 
@@ -79,18 +77,18 @@ public class SubscriptionController {
         String aiLevel = validatorService.getAvailableAILevel(userId);
 
         SubscriptionStatusResponse response = SubscriptionStatusResponse.builder()
-            .isActive(isActive)
-            .planName(plan.getName())
-            .planDescription(plan.getDescription())
-            .remainingMessages(remainingMessages)
-            .canCreateProject(canCreateProject)
-            .aiLevel(aiLevel)
-            .messagesPerMonth(plan.getMessagesPerMonth())
-            .maxProjects(plan.getMaxProjects())
-            .advancedAI(plan.getAdvancedAI())
-            .pdfExport(plan.getPdfExport())
-            .supportLevel(plan.getSupportLevel().name())
-            .build();
+                .isActive(isActive)
+                .planName(plan.getName())
+                .planDescription(plan.getDescription())
+                .remainingMessages(remainingMessages)
+                .canCreateProject(canCreateProject)
+                .aiLevel(aiLevel)
+                .messagesPerMonth(plan.getMessagesPerMonth())
+                .maxProjects(plan.getMaxProjects())
+                .advancedAI(plan.getAdvancedAI())
+                .pdfExport(plan.getPdfExport())
+                .supportLevel(plan.getSupportLevel().name())
+                .build();
 
         return ResponseEntity.ok(response);
     }
@@ -104,12 +102,11 @@ public class SubscriptionController {
         List<PricingPlan> allPlans = pricingPlanService.getActivePlans();
 
         List<PricingPlanDTO> upgrades = allPlans.stream()
-            .filter(plan -> plan.getPrice().compareTo(currentPlan.getPrice()) > 0)
-            .map(PricingPlanDTO::fromEntity)
-            .toList();
+                .filter(plan -> plan.getPrice().compareTo(currentPlan.getPrice()) > 0)
+                .map(PricingPlanDTO::fromEntity)
+                .toList();
 
-        log.info("Usuario {} tiene {} planes de upgrade disponibles",
-            userId, upgrades.size());
+        log.info("Usuario {} tiene {} planes de upgrade disponibles", userId, upgrades.size());
 
         return ResponseEntity.ok(upgrades);
     }
@@ -120,15 +117,15 @@ public class SubscriptionController {
         UUID userId = user.getId();
         log.info("Usuario {} iniciando período de prueba", userId);
 
-        PricingPlan premiumPlan = pricingPlanService.getPlanByName("Premium Pro")
-            .orElseThrow(() -> new PlanNotFoundException("Plan Premium Pro no encontrado"));
+        PricingPlan premiumPlan = pricingPlanService
+                .getPlanByName("Premium Pro")
+                .orElseThrow(() -> new PlanNotFoundException("Plan Premium Pro no encontrado"));
 
         SubscriptionResponse response = subscriptionService.startTrial(userId, premiumPlan.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     private User getCurrentUser(Authentication auth) {
-        return userRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found"));
+        return com.kinplatform.common.security.AuthenticatedUsers.require(userRepository, auth);
     }
 }
