@@ -6,10 +6,8 @@ import com.kinplatform.kin.enrichment.EnrichmentResult;
 import com.kinplatform.kin.enrichment.EvidenceCategory;
 import com.kinplatform.kin.enrichment.EvidenceRank;
 import com.kinplatform.kin.enrichment.KnowledgeEvidence;
-import com.kinplatform.kin.knowledge.KnowledgeFact;
 import com.kinplatform.kin.reporting.EffortLevel;
 import com.kinplatform.kin.reporting.ImpactLevel;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,40 +38,47 @@ public class FinancialOpportunityAnalyzer implements OpportunityAnalyzer {
 
         if (!project.isDimensionCovered(AnalyzedDimension.OBJECTIVES)) {
             opportunities.add(buildOpportunity(
-                "Definir objetivos financieros medibles",
-                "Objetivos claros permiten presupuestar, medir avance y atraer financiamiento.",
-                priorityFromScore, 0,
-                assembler.missingBonus(evaluation, AnalyzedDimension.OBJECTIVES),
-                ImpactLevel.HIGH, EffortLevel.LOW,
-                List.of("OBJECTIVES_NO_CUBIERTOS"),
-                AnalyzedDimension.OBJECTIVES,
-                "Dimensión OBJECTIVES no cubierta",
-                evaluation));
+                    "Definir objetivos financieros medibles",
+                    "Objetivos claros permiten presupuestar, medir avance y atraer financiamiento.",
+                    priorityFromScore,
+                    0,
+                    assembler.missingBonus(evaluation, AnalyzedDimension.OBJECTIVES),
+                    ImpactLevel.HIGH,
+                    EffortLevel.LOW,
+                    List.of("OBJECTIVES_NO_CUBIERTOS"),
+                    AnalyzedDimension.OBJECTIVES,
+                    "Dimensión OBJECTIVES no cubierta",
+                    evaluation));
         }
 
         if (!project.isDimensionCovered(AnalyzedDimension.RESOURCES)) {
             opportunities.add(buildOpportunity(
-                "Estructurar el plan de financiamiento",
-                "Definir fuentes y uso de recursos habilita la búsqueda de capital e inversión.",
-                priorityFromScore, 0,
-                assembler.missingBonus(evaluation, AnalyzedDimension.RESOURCES),
-                ImpactLevel.HIGH, EffortLevel.HIGH,
-                List.of("RESOURCES_FINANCIEROS_NO_CUBIERTOS"),
-                AnalyzedDimension.RESOURCES,
-                "Dimensión RESOURCES no cubierta",
-                evaluation));
+                    "Estructurar el plan de financiamiento",
+                    "Definir fuentes y uso de recursos habilita la búsqueda de capital e inversión.",
+                    priorityFromScore,
+                    0,
+                    assembler.missingBonus(evaluation, AnalyzedDimension.RESOURCES),
+                    ImpactLevel.HIGH,
+                    EffortLevel.HIGH,
+                    List.of("RESOURCES_FINANCIEROS_NO_CUBIERTOS"),
+                    AnalyzedDimension.RESOURCES,
+                    "Dimensión RESOURCES no cubierta",
+                    evaluation));
         }
 
         if (assembler.hasSignal(evaluation, "financi")) {
             opportunities.add(buildOpportunity(
-                "Capitalizar la oportunidad financiera detectada",
-                "La evaluación detectó una oportunidad financiera que conviene explotar.",
-                priorityFromScore, 2, 0,
-                ImpactLevel.HIGH, EffortLevel.MEDIUM,
-                List.of("SEÑAL_FINANCIERA_DETECTADA"),
-                AnalyzedDimension.OBJECTIVES,
-                "Señal detectada por la evaluación de completitud",
-                evaluation));
+                    "Capitalizar la oportunidad financiera detectada",
+                    "La evaluación detectó una oportunidad financiera que conviene explotar.",
+                    priorityFromScore,
+                    2,
+                    0,
+                    ImpactLevel.HIGH,
+                    EffortLevel.MEDIUM,
+                    List.of("SEÑAL_FINANCIERA_DETECTADA"),
+                    AnalyzedDimension.OBJECTIVES,
+                    "Señal detectada por la evaluación de completitud",
+                    evaluation));
         }
 
         var enrichment = input.enrichment();
@@ -89,41 +94,84 @@ public class FinancialOpportunityAnalyzer implements OpportunityAnalyzer {
         return VERSION;
     }
 
-    private Opportunity buildOpportunity(String title, String description, int priorityFromScore,
-                                         int detectedBonus, int missingBonus,
-                                         ImpactLevel impact, EffortLevel effort, List<String> rules,
-                                         AnalyzedDimension dimension, String evidence,
-                                         CompletenessEvaluation evaluation) {
-        var reason = "La dimensión " + dimension.displayName() + " o una señal detectada abren una oportunidad financiera.";
-        return assembler.build(category(), title, description,
-            priorityFromScore, missingBonus, detectedBonus,
-            impact, effort, rules, dimension, reason, evidence, evaluation, version());
+    private Opportunity buildOpportunity(
+            String title,
+            String description,
+            int priorityFromScore,
+            int detectedBonus,
+            int missingBonus,
+            ImpactLevel impact,
+            EffortLevel effort,
+            List<String> rules,
+            AnalyzedDimension dimension,
+            String evidence,
+            CompletenessEvaluation evaluation) {
+        var reason =
+                "La dimensión " + dimension.displayName() + " o una señal detectada abren una oportunidad financiera.";
+        return assembler.build(
+                category(),
+                title,
+                description,
+                priorityFromScore,
+                missingBonus,
+                detectedBonus,
+                impact,
+                effort,
+                rules,
+                dimension,
+                reason,
+                evidence,
+                evaluation,
+                version());
     }
 
-    private void addEnrichedOpportunities(EnrichmentResult enrichment, int priorityFromScore,
-                                          CompletenessEvaluation evaluation,
-                                          List<Opportunity> opportunities) {
-        enrichment.rankFor(EvidenceCategory.FINANCIAL)
-            .flatMap(EvidenceRank::top)
-            .ifPresent(ev -> opportunities.add(buildEnrichedOpportunity(
-                "Capitalizar la evidencia financiera externa",
-                "Un hecho verificado respalda una oportunidad financiera que conviene explotar.",
-                priorityFromScore, ImpactLevel.HIGH, EffortLevel.MEDIUM,
-                List.of("ENRIQUECIDO_FINANCIERO"),
-                AnalyzedDimension.OBJECTIVES,
-                evidenceOf(ev),
-                evaluation)));
+    private void addEnrichedOpportunities(
+            EnrichmentResult enrichment,
+            int priorityFromScore,
+            CompletenessEvaluation evaluation,
+            List<Opportunity> opportunities) {
+        enrichment
+                .rankFor(EvidenceCategory.FINANCIAL)
+                .flatMap(EvidenceRank::top)
+                .ifPresent(ev -> opportunities.add(buildEnrichedOpportunity(
+                        "Capitalizar la evidencia financiera externa",
+                        "Un hecho verificado respalda una oportunidad financiera que conviene explotar.",
+                        priorityFromScore,
+                        ImpactLevel.HIGH,
+                        EffortLevel.MEDIUM,
+                        List.of("ENRIQUECIDO_FINANCIERO"),
+                        AnalyzedDimension.OBJECTIVES,
+                        evidenceOf(ev),
+                        evaluation)));
     }
 
-    private Opportunity buildEnrichedOpportunity(String title, String description, int priorityFromScore,
-                                                 ImpactLevel impact, EffortLevel effort, List<String> rules,
-                                                 AnalyzedDimension dimension, String evidence,
-                                                 CompletenessEvaluation evaluation) {
+    private Opportunity buildEnrichedOpportunity(
+            String title,
+            String description,
+            int priorityFromScore,
+            ImpactLevel impact,
+            EffortLevel effort,
+            List<String> rules,
+            AnalyzedDimension dimension,
+            String evidence,
+            CompletenessEvaluation evaluation) {
         var reason = "La evidencia de conocimiento externo verificada sustenta una oportunidad de la categoría "
-            + category().displayName() + ".";
-        return assembler.build(category(), title, description,
-            priorityFromScore, 0, 2,
-            impact, effort, rules, dimension, reason, evidence, evaluation, version());
+                + category().displayName() + ".";
+        return assembler.build(
+                category(),
+                title,
+                description,
+                priorityFromScore,
+                0,
+                2,
+                impact,
+                effort,
+                rules,
+                dimension,
+                reason,
+                evidence,
+                evaluation,
+                version());
     }
 
     private static String evidenceOf(KnowledgeEvidence evidence) {

@@ -1,7 +1,6 @@
 package com.kinplatform.kin.reporting.report.model;
 
 import com.kinplatform.kin.engine.EngineResult;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -16,20 +15,20 @@ import java.util.UUID;
  * de reporte produce siempre el mismo identificador.</p>
  */
 public record ConsultingReport(
-    UUID id,
-    UUID projectId,
-    ExecutiveSummary executiveSummary,
-    ScoresSection scores,
-    RecommendationsSection recommendations,
-    RisksSection risks,
-    OpportunitiesSection opportunities,
-    FinancialSection financial,
-    MarketSection market,
-    InnovationSection innovation,
-    NextStepsSection nextSteps,
-    SourcesSection sources,
-    ReportMetadata metadata
-) implements EngineResult {
+        UUID id,
+        UUID projectId,
+        ExecutiveSummary executiveSummary,
+        ScoresSection scores,
+        RecommendationsSection recommendations,
+        RisksSection risks,
+        OpportunitiesSection opportunities,
+        FinancialSection financial,
+        MarketSection market,
+        InnovationSection innovation,
+        NextStepsSection nextSteps,
+        SourcesSection sources,
+        ReportMetadata metadata)
+        implements EngineResult {
 
     private static final UUID EMPTY_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
@@ -49,14 +48,33 @@ public record ConsultingReport(
         metadata = metadata == null ? ReportMetadata.empty() : metadata;
     }
 
-    public ConsultingReport(UUID id, UUID projectId, ExecutiveSummary executiveSummary,
-                            ScoresSection scores, RecommendationsSection recommendations,
-                            RisksSection risks, OpportunitiesSection opportunities,
-                            FinancialSection financial, MarketSection market,
-                            InnovationSection innovation, NextStepsSection nextSteps,
-                            ReportMetadata metadata) {
-        this(id, projectId, executiveSummary, scores, recommendations, risks, opportunities,
-            financial, market, innovation, nextSteps, SourcesSection.empty(), metadata);
+    public ConsultingReport(
+            UUID id,
+            UUID projectId,
+            ExecutiveSummary executiveSummary,
+            ScoresSection scores,
+            RecommendationsSection recommendations,
+            RisksSection risks,
+            OpportunitiesSection opportunities,
+            FinancialSection financial,
+            MarketSection market,
+            InnovationSection innovation,
+            NextStepsSection nextSteps,
+            ReportMetadata metadata) {
+        this(
+                id,
+                projectId,
+                executiveSummary,
+                scores,
+                recommendations,
+                risks,
+                opportunities,
+                financial,
+                market,
+                innovation,
+                nextSteps,
+                SourcesSection.empty(),
+                metadata);
     }
 
     @Override
@@ -81,10 +99,16 @@ public record ConsultingReport(
 
     @Override
     public boolean isEmpty() {
-        return executiveSummary.isEmpty() && scores.isEmpty() && recommendations.isEmpty()
-            && risks.isEmpty() && opportunities.isEmpty() && financial.isEmpty()
-            && market.isEmpty() && innovation.isEmpty() && nextSteps.isEmpty()
-            && sources.isEmpty();
+        return executiveSummary.isEmpty()
+                && scores.isEmpty()
+                && recommendations.isEmpty()
+                && risks.isEmpty()
+                && opportunities.isEmpty()
+                && financial.isEmpty()
+                && market.isEmpty()
+                && innovation.isEmpty()
+                && nextSteps.isEmpty()
+                && sources.isEmpty();
     }
 
     /**
@@ -108,14 +132,23 @@ public record ConsultingReport(
             sections.add(sources);
         }
         sections.add(metadata);
-        return java.util.List.copyOf(sections);
+        return List.copyOf(sections);
     }
 
     public static ConsultingReport empty() {
-        return new ConsultingReport(EMPTY_ID, EMPTY_ID,
-            ExecutiveSummary.empty(), ScoresSection.empty(), RecommendationsSection.empty(),
-            RisksSection.empty(), OpportunitiesSection.empty(), FinancialSection.empty(),
-            MarketSection.empty(), InnovationSection.empty(), NextStepsSection.empty(),
-            SourcesSection.empty(), ReportMetadata.empty());
+        return new ConsultingReport(
+                EMPTY_ID,
+                EMPTY_ID,
+                ExecutiveSummary.empty(),
+                ScoresSection.empty(),
+                RecommendationsSection.empty(),
+                RisksSection.empty(),
+                OpportunitiesSection.empty(),
+                FinancialSection.empty(),
+                MarketSection.empty(),
+                InnovationSection.empty(),
+                NextStepsSection.empty(),
+                SourcesSection.empty(),
+                ReportMetadata.empty());
     }
 }

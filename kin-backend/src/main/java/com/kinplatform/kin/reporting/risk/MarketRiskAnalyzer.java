@@ -6,8 +6,6 @@ import com.kinplatform.kin.enrichment.EnrichmentResult;
 import com.kinplatform.kin.enrichment.EvidenceCategory;
 import com.kinplatform.kin.enrichment.EvidenceRank;
 import com.kinplatform.kin.enrichment.KnowledgeEvidence;
-import com.kinplatform.kin.knowledge.KnowledgeFact;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,35 +34,41 @@ public class MarketRiskAnalyzer implements RiskAnalyzer {
 
         if (!project.isDimensionCovered(AnalyzedDimension.TARGET_CUSTOMER)) {
             risks.add(buildRisk(
-                "Cliente objetivo no identificado",
-                "Sin un cliente objetivo definido, la estrategia de mercado y comunicación carece de dirección.",
-                RiskLevel.HIGH, RiskLevel.HIGH, RiskLevel.HIGH,
-                List.of("TARGET_CUSTOMER_NO_IDENTIFICADO"),
-                AnalyzedDimension.TARGET_CUSTOMER,
-                "Dimensión TARGET_CUSTOMER no cubierta",
-                evaluation));
+                    "Cliente objetivo no identificado",
+                    "Sin un cliente objetivo definido, la estrategia de mercado y comunicación carece de dirección.",
+                    RiskLevel.HIGH,
+                    RiskLevel.HIGH,
+                    RiskLevel.HIGH,
+                    List.of("TARGET_CUSTOMER_NO_IDENTIFICADO"),
+                    AnalyzedDimension.TARGET_CUSTOMER,
+                    "Dimensión TARGET_CUSTOMER no cubierta",
+                    evaluation));
         }
 
         if (!project.isDimensionCovered(AnalyzedDimension.COMPETITION)) {
             risks.add(buildRisk(
-                "Competencia no analizada",
-                "Sin análisis competitivo, el proyecto asume supuestos de mercado que pueden ser falsos.",
-                RiskLevel.HIGH, RiskLevel.MEDIUM, RiskLevel.MEDIUM,
-                List.of("COMPETITION_NO_ANALIZADA"),
-                AnalyzedDimension.COMPETITION,
-                "Dimensión COMPETITION no cubierta",
-                evaluation));
+                    "Competencia no analizada",
+                    "Sin análisis competitivo, el proyecto asume supuestos de mercado que pueden ser falsos.",
+                    RiskLevel.HIGH,
+                    RiskLevel.MEDIUM,
+                    RiskLevel.MEDIUM,
+                    List.of("COMPETITION_NO_ANALIZADA"),
+                    AnalyzedDimension.COMPETITION,
+                    "Dimensión COMPETITION no cubierta",
+                    evaluation));
         }
 
         if (!project.isDimensionCovered(AnalyzedDimension.SECTOR)) {
             risks.add(buildRisk(
-                "Sector no caracterizado",
-                "Sin conocimiento del sector, es difícil dimensionar el mercado y sus tendencias.",
-                RiskLevel.MEDIUM, RiskLevel.MEDIUM, RiskLevel.MEDIUM,
-                List.of("SECTOR_NO_CARACTERIZADO"),
-                AnalyzedDimension.SECTOR,
-                "Dimensión SECTOR no cubierta",
-                evaluation));
+                    "Sector no caracterizado",
+                    "Sin conocimiento del sector, es difícil dimensionar el mercado y sus tendencias.",
+                    RiskLevel.MEDIUM,
+                    RiskLevel.MEDIUM,
+                    RiskLevel.MEDIUM,
+                    List.of("SECTOR_NO_CARACTERIZADO"),
+                    AnalyzedDimension.SECTOR,
+                    "Dimensión SECTOR no cubierta",
+                    evaluation));
         }
 
         var enrichment = input.enrichment();
@@ -80,36 +84,74 @@ public class MarketRiskAnalyzer implements RiskAnalyzer {
         return VERSION;
     }
 
-    private Risk buildRisk(String title, String description, RiskLevel severity, RiskLevel probability,
-                           RiskLevel impact, List<String> rules, AnalyzedDimension dimension,
-                           String evidence, CompletenessEvaluation evaluation) {
-        var reason = "La dimensión " + dimension.displayName() + " no está cubierta, lo que incrementa el riesgo de mercado.";
-        return assembler.build(category(), title, description, severity, probability, impact,
-            rules, dimension, reason, evidence, evaluation, version());
+    private Risk buildRisk(
+            String title,
+            String description,
+            RiskLevel severity,
+            RiskLevel probability,
+            RiskLevel impact,
+            List<String> rules,
+            AnalyzedDimension dimension,
+            String evidence,
+            CompletenessEvaluation evaluation) {
+        var reason = "La dimensión " + dimension.displayName()
+                + " no está cubierta, lo que incrementa el riesgo de mercado.";
+        return assembler.build(
+                category(),
+                title,
+                description,
+                severity,
+                probability,
+                impact,
+                rules,
+                dimension,
+                reason,
+                evidence,
+                evaluation,
+                version());
     }
 
-    private void addEnrichedRisks(EnrichmentResult enrichment, CompletenessEvaluation evaluation,
-                                  List<Risk> risks) {
-        enrichment.rankFor(EvidenceCategory.MARKET)
-            .flatMap(EvidenceRank::top)
-            .ifPresent(ev -> risks.add(buildEnrichedRisk(
-                "Riesgo de mercado señalado por evidencia externa",
-                "Un hecho verificado indica una condición de mercado que conviene mitigar.",
-                RiskLevel.MEDIUM, RiskLevel.MEDIUM, RiskLevel.MEDIUM,
-                List.of("ENRIQUECIDO_MERCADO"),
-                AnalyzedDimension.SECTOR,
-                evidenceOf(ev),
-                evaluation)));
+    private void addEnrichedRisks(EnrichmentResult enrichment, CompletenessEvaluation evaluation, List<Risk> risks) {
+        enrichment
+                .rankFor(EvidenceCategory.MARKET)
+                .flatMap(EvidenceRank::top)
+                .ifPresent(ev -> risks.add(buildEnrichedRisk(
+                        "Riesgo de mercado señalado por evidencia externa",
+                        "Un hecho verificado indica una condición de mercado que conviene mitigar.",
+                        RiskLevel.MEDIUM,
+                        RiskLevel.MEDIUM,
+                        RiskLevel.MEDIUM,
+                        List.of("ENRIQUECIDO_MERCADO"),
+                        AnalyzedDimension.SECTOR,
+                        evidenceOf(ev),
+                        evaluation)));
     }
 
-    private Risk buildEnrichedRisk(String title, String description, RiskLevel severity,
-                                   RiskLevel probability, RiskLevel impact, List<String> rules,
-                                   AnalyzedDimension dimension, String evidence,
-                                   CompletenessEvaluation evaluation) {
+    private Risk buildEnrichedRisk(
+            String title,
+            String description,
+            RiskLevel severity,
+            RiskLevel probability,
+            RiskLevel impact,
+            List<String> rules,
+            AnalyzedDimension dimension,
+            String evidence,
+            CompletenessEvaluation evaluation) {
         var reason = "La evidencia de conocimiento externo verificada sustenta un riesgo de la categoría "
-            + category().displayName() + ".";
-        return assembler.build(category(), title, description, severity, probability, impact,
-            rules, dimension, reason, evidence, evaluation, version());
+                + category().displayName() + ".";
+        return assembler.build(
+                category(),
+                title,
+                description,
+                severity,
+                probability,
+                impact,
+                rules,
+                dimension,
+                reason,
+                evidence,
+                evaluation,
+                version());
     }
 
     private static String evidenceOf(KnowledgeEvidence evidence) {

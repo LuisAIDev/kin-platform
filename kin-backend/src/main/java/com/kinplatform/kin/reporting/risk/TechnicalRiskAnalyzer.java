@@ -6,8 +6,6 @@ import com.kinplatform.kin.enrichment.EnrichmentResult;
 import com.kinplatform.kin.enrichment.EvidenceCategory;
 import com.kinplatform.kin.enrichment.EvidenceRank;
 import com.kinplatform.kin.enrichment.KnowledgeEvidence;
-import com.kinplatform.kin.knowledge.KnowledgeFact;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,35 +34,41 @@ public class TechnicalRiskAnalyzer implements RiskAnalyzer {
 
         if (!project.isDimensionCovered(AnalyzedDimension.MVP)) {
             risks.add(buildRisk(
-                "Sin plan de validación técnica (MVP)",
-                "No se ha definido un MVP para validar la solución, lo que incrementa el riesgo de construir algo no deseado.",
-                RiskLevel.HIGH, RiskLevel.MEDIUM, RiskLevel.HIGH,
-                List.of("MVP_NO_DEFINIDO"),
-                AnalyzedDimension.MVP,
-                "Dimensión MVP no cubierta",
-                evaluation));
+                    "Sin plan de validación técnica (MVP)",
+                    "No se ha definido un MVP para validar la solución, lo que incrementa el riesgo de construir algo no deseado.",
+                    RiskLevel.HIGH,
+                    RiskLevel.MEDIUM,
+                    RiskLevel.HIGH,
+                    List.of("MVP_NO_DEFINIDO"),
+                    AnalyzedDimension.MVP,
+                    "Dimensión MVP no cubierta",
+                    evaluation));
         }
 
         if (!project.isDimensionCovered(AnalyzedDimension.SCALABILITY)) {
             risks.add(buildRisk(
-                "Escalabilidad técnica sin evaluar",
-                "Sin un análisis de escalabilidad, el proyecto puede colapsar ante crecimiento o inversión.",
-                RiskLevel.MEDIUM, RiskLevel.MEDIUM, RiskLevel.HIGH,
-                List.of("SCALABILITY_NO_EVALUADA"),
-                AnalyzedDimension.SCALABILITY,
-                "Dimensión SCALABILITY no cubierta",
-                evaluation));
+                    "Escalabilidad técnica sin evaluar",
+                    "Sin un análisis de escalabilidad, el proyecto puede colapsar ante crecimiento o inversión.",
+                    RiskLevel.MEDIUM,
+                    RiskLevel.MEDIUM,
+                    RiskLevel.HIGH,
+                    List.of("SCALABILITY_NO_EVALUADA"),
+                    AnalyzedDimension.SCALABILITY,
+                    "Dimensión SCALABILITY no cubierta",
+                    evaluation));
         }
 
         if (!project.isDimensionCovered(AnalyzedDimension.SOLUTION)) {
             risks.add(buildRisk(
-                "Detalle técnico de la solución insuficiente",
-                "La solución no está descrita con el detalle necesario para evaluar su factibilidad técnica.",
-                RiskLevel.MEDIUM, RiskLevel.LOW, RiskLevel.MEDIUM,
-                List.of("SOLUTION_SIN_DETALLE"),
-                AnalyzedDimension.SOLUTION,
-                "Dimensión SOLUTION no cubierta",
-                evaluation));
+                    "Detalle técnico de la solución insuficiente",
+                    "La solución no está descrita con el detalle necesario para evaluar su factibilidad técnica.",
+                    RiskLevel.MEDIUM,
+                    RiskLevel.LOW,
+                    RiskLevel.MEDIUM,
+                    List.of("SOLUTION_SIN_DETALLE"),
+                    AnalyzedDimension.SOLUTION,
+                    "Dimensión SOLUTION no cubierta",
+                    evaluation));
         }
 
         var enrichment = input.enrichment();
@@ -80,36 +84,74 @@ public class TechnicalRiskAnalyzer implements RiskAnalyzer {
         return VERSION;
     }
 
-    private Risk buildRisk(String title, String description, RiskLevel severity, RiskLevel probability,
-                           RiskLevel impact, List<String> rules, AnalyzedDimension dimension,
-                           String evidence, CompletenessEvaluation evaluation) {
-        var reason = "La dimensión " + dimension.displayName() + " no está cubierta, lo que incrementa el riesgo técnico.";
-        return assembler.build(category(), title, description, severity, probability, impact,
-            rules, dimension, reason, evidence, evaluation, version());
+    private Risk buildRisk(
+            String title,
+            String description,
+            RiskLevel severity,
+            RiskLevel probability,
+            RiskLevel impact,
+            List<String> rules,
+            AnalyzedDimension dimension,
+            String evidence,
+            CompletenessEvaluation evaluation) {
+        var reason =
+                "La dimensión " + dimension.displayName() + " no está cubierta, lo que incrementa el riesgo técnico.";
+        return assembler.build(
+                category(),
+                title,
+                description,
+                severity,
+                probability,
+                impact,
+                rules,
+                dimension,
+                reason,
+                evidence,
+                evaluation,
+                version());
     }
 
-    private void addEnrichedRisks(EnrichmentResult enrichment, CompletenessEvaluation evaluation,
-                                  List<Risk> risks) {
-        enrichment.rankFor(EvidenceCategory.INNOVATION)
-            .flatMap(EvidenceRank::top)
-            .ifPresent(ev -> risks.add(buildEnrichedRisk(
-                "Riesgo técnico señalado por evidencia de innovación externa",
-                "Un hecho verificado señala una condición tecnológica que conviene mitigar.",
-                RiskLevel.MEDIUM, RiskLevel.MEDIUM, RiskLevel.MEDIUM,
-                List.of("ENRIQUECIDO_INNOVACION"),
-                AnalyzedDimension.SOLUTION,
-                evidenceOf(ev),
-                evaluation)));
+    private void addEnrichedRisks(EnrichmentResult enrichment, CompletenessEvaluation evaluation, List<Risk> risks) {
+        enrichment
+                .rankFor(EvidenceCategory.INNOVATION)
+                .flatMap(EvidenceRank::top)
+                .ifPresent(ev -> risks.add(buildEnrichedRisk(
+                        "Riesgo técnico señalado por evidencia de innovación externa",
+                        "Un hecho verificado señala una condición tecnológica que conviene mitigar.",
+                        RiskLevel.MEDIUM,
+                        RiskLevel.MEDIUM,
+                        RiskLevel.MEDIUM,
+                        List.of("ENRIQUECIDO_INNOVACION"),
+                        AnalyzedDimension.SOLUTION,
+                        evidenceOf(ev),
+                        evaluation)));
     }
 
-    private Risk buildEnrichedRisk(String title, String description, RiskLevel severity,
-                                   RiskLevel probability, RiskLevel impact, List<String> rules,
-                                   AnalyzedDimension dimension, String evidence,
-                                   CompletenessEvaluation evaluation) {
+    private Risk buildEnrichedRisk(
+            String title,
+            String description,
+            RiskLevel severity,
+            RiskLevel probability,
+            RiskLevel impact,
+            List<String> rules,
+            AnalyzedDimension dimension,
+            String evidence,
+            CompletenessEvaluation evaluation) {
         var reason = "La evidencia de conocimiento externo verificada sustenta un riesgo de la categoría "
-            + category().displayName() + ".";
-        return assembler.build(category(), title, description, severity, probability, impact,
-            rules, dimension, reason, evidence, evaluation, version());
+                + category().displayName() + ".";
+        return assembler.build(
+                category(),
+                title,
+                description,
+                severity,
+                probability,
+                impact,
+                rules,
+                dimension,
+                reason,
+                evidence,
+                evaluation,
+                version());
     }
 
     private static String evidenceOf(KnowledgeEvidence evidence) {
