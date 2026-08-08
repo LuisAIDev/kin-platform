@@ -23,7 +23,7 @@
         <java.version>17</java.version>
         <flyway.version>11.20.3</flyway.version>
         <testcontainers.version>1.21.4</testcontainers.version>
-        <jjwt.version>0.12.5</jjwt.version>
+        <jjwt.version>0.13.0</jjwt.version>
         <spring-ai.version>1.1.7</spring-ai.version>
     </properties>
 
