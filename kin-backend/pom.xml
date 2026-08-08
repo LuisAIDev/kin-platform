@@ -140,16 +140,20 @@
         <!-- Spring AI — proveedor DeepSeek (modelo OpenAI-compatible) sin los
              autoconfigs de OpenAI que exigen OPENAI_API_KEY en el arranque (C2).
              'spring-ai-openai' aporta las clases del modelo (DeepSeekConfig);
-             'spring-ai-autoconfigure-model-chat-client' aporta el ChatClient.Builder
-             que usa OpenAIProvider. Los autoconfigs OpenAI (chat/audio/imagen/emb) se
-             excluyen al no incluir 'spring-ai-starter-model-openai'. -->
+             DeepSeek es el único proveedor (sin fallback a OpenAI). Los
+             autoconfigs OpenAI (chat/audio/imagen/emb) se excluyen al no
+             incluir 'spring-ai-starter-model-openai'. -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-openai</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-autoconfigure-model-chat-client</artifactId>
+            <artifactId>spring-ai-client-chat</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-retry</artifactId>
         </dependency>
 
         <!-- Stripe — Payment processing -->

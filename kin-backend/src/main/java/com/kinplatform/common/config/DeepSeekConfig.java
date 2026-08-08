@@ -14,14 +14,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configuración del proveedor DeepSeek.
+ * Configuración del proveedor DeepSeek (único proveedor de IA).
  *
  * <p>Expone el {@link ChatModel} de DeepSeek como bean único (remediación C2):
  * al existir un {@code ChatModel}, el autoconfig de OpenAI de Spring AI se
  * retira ({@code @ConditionalOnMissingBean}) y el arranque deja de exigir
- * {@code OPENAI_API_KEY}. El {@code ChatClient} de DeepSeek y el
- * {@code ChatClient.Builder} (que usa {@code OpenAIProvider} como fallback)
- * se construyen sobre ese mismo modelo.</p>
+ * {@code OPENAI_API_KEY}. El {@code ChatClient} de DeepSeek se construye sobre
+ * ese mismo modelo. No existe fallback a OpenAI: {@code DeepSeekProvider} es el
+ * único {@code AIProvider} del runtime.</p>
  */
 @Configuration
 public class DeepSeekConfig {
