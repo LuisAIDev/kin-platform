@@ -3,6 +3,7 @@ package com.kinplatform.kin.conversation;
 import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.KinMethodCommand;
 import com.kinplatform.kin.KinMethodResult;
+import com.kinplatform.kin.StreamingMethodOutcome;
 import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.context.Message;
@@ -28,6 +29,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -451,5 +453,34 @@ class ConversationOrchestratorTest {
         assertThrows(IllegalArgumentException.class,
             () -> orchestrator().orchestrateStream(null));
         verify(kinMethod, never()).executeStream(any(KinMethodCommand.class));
+    }
+
+    @Test
+    void orchestrateStreamWithOutcome_deberiaEntregarDecisionYReporte() {
+        var contexto = contextoReporte();
+        stubContexto(contexto);
+        var report = ConsultingReport.empty();
+        var result = new KinMethodResult(contexto, null,
+            ConversationDecision.generateReport("informe"), null, null, List.of(), report);
+        when(kinMethod.executeStreamWithOutcome(any(KinMethodCommand.class)))
+            .thenReturn(new StreamingMethodOutcome(Flux.just("a"), result));
+
+        var outcome = orchestrator().orchestrateStreamWithOutcome(turn(List.of()));
+
+        assertNotNull(outcome);
+        assertEquals(ConversationDecision.Action.REPORT, outcome.decision().action());
+        assertSame(report, outcome.consultingReport());
+        StepVerifier.create(outcome.flux())
+            .expectNext("a")
+            .verifyComplete();
+    }
+
+    @Test
+    void orchestrateStreamWithOutcome_fluxNuloDeberiaDevolverNull() {
+        stubContextoExploracion();
+        when(kinMethod.executeStreamWithOutcome(any(KinMethodCommand.class)))
+            .thenReturn(null);
+
+        assertNull(orchestrator().orchestrateStreamWithOutcome(turn(List.of())));
     }
 }

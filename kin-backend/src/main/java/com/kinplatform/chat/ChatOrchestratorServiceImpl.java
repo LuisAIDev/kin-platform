@@ -9,6 +9,10 @@ import com.kinplatform.chat.dto.SaveMessageRequest;
 import com.kinplatform.kin.context.Message;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.ConversationTurn;
+import com.kinplatform.kin.conversation.StreamingTurnOutcome;
+import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.kin.reporting.report.ReportRepository;
+import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 import com.kinplatform.project.ProjectRepository;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
 
 /**
  * Orquestador de chat. Tras la consolidación del runtime (Fase 5.2.1) y del
@@ -43,6 +48,30 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
     private final ObjectMapper objectMapper;
     private final ConversationOrchestrator conversationOrchestrator;
     private final PromptGuardrail promptGuardrail;
+    private final ReportRepository reportRepository;
+
+    /** Sin repo de reportes: el runtime conserva el comportamiento previo. */
+    private static final ReportRepository NO_OP_REPORT_REPOSITORY = new ReportRepository() {
+        @Override
+        public int save(UUID projectId, ConsultingReport report) {
+            return 0;
+        }
+
+        @Override
+        public java.util.Optional<StoredReport> findLatest(UUID projectId) {
+            return java.util.Optional.empty();
+        }
+
+        @Override
+        public java.util.Optional<StoredReport> findByVersion(UUID projectId, int version) {
+            return java.util.Optional.empty();
+        }
+
+        @Override
+        public java.util.List<ReportVersionInfo> listVersions(UUID projectId) {
+            return java.util.List.of();
+        }
+    };
 
     @Autowired
     public ChatOrchestratorServiceImpl(
@@ -50,24 +79,28 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
             ProjectRepository projectRepository,
             ObjectMapper objectMapper,
             ConversationOrchestrator conversationOrchestrator,
-            PromptGuardrail promptGuardrail) {
+            PromptGuardrail promptGuardrail,
+            ReportRepository reportRepository) {
         this.chatService = chatService;
         this.projectRepository = projectRepository;
         this.objectMapper = objectMapper;
         this.conversationOrchestrator = conversationOrchestrator;
         this.promptGuardrail = promptGuardrail;
+        this.reportRepository = reportRepository == null ? NO_OP_REPORT_REPOSITORY : reportRepository;
     }
 
     /**
      * Constructor de compatibilidad (4 args): usaba la firma previa antes de la
-     * capa de guardrails (Fase 15). Activa los guardrails por defecto.
+     * capa de guardrails (Fase 15) y de la persistencia del reporte. Activa los
+     * guardrails por defecto y no persiste reportes.
      */
     public ChatOrchestratorServiceImpl(
             ChatService chatService,
             ProjectRepository projectRepository,
             ObjectMapper objectMapper,
             ConversationOrchestrator conversationOrchestrator) {
-        this(chatService, projectRepository, objectMapper, conversationOrchestrator, new PromptGuardrail());
+        this(chatService, projectRepository, objectMapper, conversationOrchestrator,
+                new PromptGuardrail(), NO_OP_REPORT_REPOSITORY);
     }
 
     /**
@@ -109,6 +142,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                 result.events().size(),
                 result.validation() != null ? result.validation().accepted() : null);
         var assistantMessage = saveAssistantMessage(userId, projectId, result.aiResponse());
+        persistReportIfGenerated(projectId, result.decision(), result.consultingReport());
         return ChatResponse.builder()
                 .userMessageId(userMessage.getId())
                 .assistantMessageId(assistantMessage.getId())
@@ -141,7 +175,10 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                 userId,
                 history.size());
 
-        var flux = conversationOrchestrator.orchestrateStream(turn);
+        StreamingTurnOutcome outcome = conversationOrchestrator.orchestrateStreamWithOutcome(turn);
+        Flux<String> flux = outcome == null
+                ? Flux.error(new IllegalStateException("No se obtuvo flujo de respuesta"))
+                : outcome.flux();
         var emitter = new SseEmitter(SSE_TIMEOUT);
         var fullContent = new StringBuilder();
 
@@ -173,6 +210,9 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                     log.info("=== AI RESPONSE RECEIVED === chars={}", finalContent.length());
                     try {
                         var assistantMessage = saveAssistantMessage(userId, projectId, finalContent);
+                        if (outcome != null) {
+                            persistReportIfGenerated(projectId, outcome.decision(), outcome.consultingReport());
+                        }
                         var donePayload = Map.of(
                                 "done", true,
                                 "userMessageId", userMessage.getId().toString(),
@@ -217,6 +257,18 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
             log.warn("=== GUARDRAIL BLOCKED === input contained prompt injection signals");
         }
         return blocked;
+    }
+
+    private void persistReportIfGenerated(UUID projectId, ConversationDecision decision,
+                                          ConsultingReport report) {
+        if (decision != null && decision.action() == ConversationDecision.Action.REPORT
+                && report != null) {
+            try {
+                reportRepository.save(projectId, report);
+            } catch (Exception e) {
+                log.error("Failed to persist consulting report for project={}", projectId, e);
+            }
+        }
     }
 
     private SseEmitter blockedEmitter() {

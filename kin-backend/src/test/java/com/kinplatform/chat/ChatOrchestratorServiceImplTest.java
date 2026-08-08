@@ -1,8 +1,21 @@
 package com.kinplatform.chat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kinplatform.ai.guardrails.PromptGuardrail;
+import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.kin.conversation.CommunicationMode;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
+import com.kinplatform.kin.conversation.ConversationPhase;
 import com.kinplatform.kin.conversation.ConversationTurn;
+import com.kinplatform.kin.conversation.ResponseValidation;
+import com.kinplatform.kin.conversation.StreamingTurnOutcome;
+import com.kinplatform.kin.conversation.TurnConstraints;
+import com.kinplatform.kin.conversation.TurnDirective;
+import com.kinplatform.kin.conversation.TurnResult;
+import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.kin.reporting.report.ReportRepository;
+import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.ChatRequest;
 import com.kinplatform.chat.dto.SaveMessageRequest;
@@ -42,6 +55,9 @@ class ChatOrchestratorServiceImplTest {
     @Mock
     private ConversationOrchestrator conversationOrchestrator;
 
+    @Mock
+    private ReportRepository reportRepository;
+
     private ObjectMapper objectMapper;
     private ChatOrchestratorServiceImpl orchestrator;
 
@@ -59,7 +75,8 @@ class ChatOrchestratorServiceImplTest {
         objectMapper = spy(new ObjectMapper());
 
         orchestrator = new ChatOrchestratorServiceImpl(
-                chatService, projectRepository, objectMapper, conversationOrchestrator);
+                chatService, projectRepository, objectMapper, conversationOrchestrator,
+                new PromptGuardrail(), reportRepository);
 
         request = new ChatRequest();
         request.setContent(CONTENT);
@@ -111,8 +128,35 @@ class ChatOrchestratorServiceImplTest {
     }
 
     private void stubStream(Flux<String> flux) {
-        when(conversationOrchestrator.orchestrateStream(any(ConversationTurn.class)))
-                .thenReturn(flux);
+        when(conversationOrchestrator.orchestrateStreamWithOutcome(any(ConversationTurn.class)))
+                .thenReturn(new StreamingTurnOutcome(
+                        flux,
+                        ConversationDecision.ask(AnalyzedDimension.SECTOR, 5, "pregunta"),
+                        null));
+    }
+
+    private TurnResult turnResultReporte(ConsultingReport report) {
+        var ctx = ProjectContext.fromProject("Proyecto Test", "Descripción", "Software");
+        var decision = ConversationDecision.generateReport("informe");
+        var directive = new TurnDirective(
+                ConversationPhase.REPORTING, ConversationDecision.Action.REPORT,
+                AnalyzedDimension.SECTOR, CommunicationMode.EXPLAIN_REPORT,
+                TurnConstraints.reportExplanation());
+        return new TurnResult(ctx, decision, directive, "respuesta", ResponseValidation.ok(), report, List.of());
+    }
+
+    private TurnResult turnResultAsk() {
+        var ctx = ProjectContext.fromProject("Proyecto Test", "Descripción", "Software");
+        var decision = ConversationDecision.ask(AnalyzedDimension.SECTOR, 5, "pregunta");
+        var directive = new TurnDirective(
+                ConversationPhase.EXPLORATION, ConversationDecision.Action.ASK,
+                AnalyzedDimension.SECTOR, CommunicationMode.QUESTION,
+                TurnConstraints.question());
+        return new TurnResult(ctx, decision, directive, "¿pregunta?", ResponseValidation.ok(), null, List.of());
+    }
+
+    private void stubOrchestrate(TurnResult result) {
+        when(conversationOrchestrator.orchestrate(any(ConversationTurn.class))).thenReturn(result);
     }
 
     // ---------------------------------------------------------------
@@ -322,5 +366,50 @@ class ChatOrchestratorServiceImplTest {
             var saveRequests = saveCaptor.getAllValues();
             assertEquals("", saveRequests.get(1).getContent());
         }
+    }
+
+    // ---------------------------------------------------------------
+    // Test 6 — persistencia del ConsultingReport (decisión REPORT)
+    // ---------------------------------------------------------------
+    @Test
+    void processMessage_deberiaPersistirReporte_cuandoDecideREPORT() {
+        stubCommonDependencies();
+        var report = ConsultingReport.empty();
+        stubOrchestrate(turnResultReporte(report));
+
+        var result = orchestrator.processMessage(USER_ID, PROJECT_ID, request);
+
+        assertNotNull(result);
+        verify(reportRepository).save(PROJECT_ID, report);
+    }
+
+    @Test
+    void processMessage_noDebePersistirReporte_cuandoNoDecideREPORT() {
+        stubCommonDependencies();
+        stubOrchestrate(turnResultAsk());
+
+        orchestrator.processMessage(USER_ID, PROJECT_ID, request);
+
+        verify(reportRepository, never()).save(any(), any());
+    }
+
+    @Test
+    void processMessageStream_deberiaPersistirReporte_cuandoOutcomeREPORT() {
+        stubCommonDependencies();
+        var report = ConsultingReport.empty();
+        when(conversationOrchestrator.orchestrateStreamWithOutcome(any(ConversationTurn.class)))
+                .thenReturn(new StreamingTurnOutcome(
+                        Flux.just("A"),
+                        ConversationDecision.generateReport("informe"),
+                        report));
+
+        try (var mocked = mockConstruction(SseEmitter.class)) {
+            SseEmitter result = orchestrator.processMessageStream(USER_ID, PROJECT_ID, request);
+            assertNotNull(result);
+            SseEmitter mockEmitter = mocked.constructed().get(0);
+            verify(mockEmitter).complete();
+        }
+
+        verify(reportRepository).save(PROJECT_ID, report);
     }
 }

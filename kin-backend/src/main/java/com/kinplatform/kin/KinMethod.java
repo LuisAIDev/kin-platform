@@ -148,6 +148,21 @@ public class KinMethod {
      * flux para que el orquestador SSE lo suscriba.
      */
     public Flux<String> executeStream(KinMethodCommand command) {
+        StreamingMethodOutcome outcome = executeStreamWithOutcome(command);
+        return outcome == null ? null : outcome.safeFlux();
+    }
+
+    /**
+     * Variante streaming que, además del {@link Flux} de tokens, entrega el
+     * {@link KinMethodResult} completo del turno (aditivo).
+     *
+     * <p>Igual que {@link #executeStream} pero devuelve el resultado del
+     * pipeline para que la capa de I/O persista el {@code ConsultingReport}
+     * cuando el turno completa {@code REPORT}, sin re-ejecutar ningún motor.
+     * El safety-net de respuesta segura se aplica exactamente igual que en
+     * {@link #executeStream}.</p>
+     */
+    public StreamingMethodOutcome executeStreamWithOutcome(KinMethodCommand command) {
         log.info("KinMethod streaming for project={}, userId={}", command.projectId(), command.userId());
 
         var ctx = prepare(command);
@@ -165,13 +180,22 @@ public class KinMethod {
         // streamed fue rechazada con un rechazo duro, anexa la respuesta segura
         // determinista. Un rechazo blando (response.too_long) NO anexa nada: los
         // tokens ya entregados son contenido útil y se conservan íntegros.
-        return flux.concatWith(Flux.defer(() -> {
+        Flux<String> safeFlux = flux.concatWith(Flux.defer(() -> {
             ResponseValidation validation = result.responseValidation();
             if (validation != null && ResponseGuard.requiresFallback(validation)) {
                 return Flux.just(responseFallback.cannedResponse(validation));
             }
             return Flux.empty();
         }));
+        return new StreamingMethodOutcome(safeFlux, new KinMethodResult(
+            result.projectContext(),
+            result.evaluation(),
+            result.decision(),
+            result.aiResponse(),
+            result.scoreResult(),
+            result.events(),
+            result.consultingReport()
+        ));
     }
 
     private PipelineContext prepare(KinMethodCommand command) {

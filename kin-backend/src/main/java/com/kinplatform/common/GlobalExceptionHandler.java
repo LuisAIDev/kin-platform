@@ -2,6 +2,7 @@ package com.kinplatform.common;
 
 import com.kinplatform.pricing.PlanNotFoundException;
 import com.kinplatform.project.ProjectLimitExceededException;
+import com.kinplatform.project.ReportNotFoundException;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -35,6 +36,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PlanNotFoundException.class)
     public ResponseEntity<Map<String, String>> handlePlanNotFound(PlanNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ReportNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleReportNotFound(ReportNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
     }
 

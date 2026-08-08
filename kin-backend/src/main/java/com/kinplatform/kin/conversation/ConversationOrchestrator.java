@@ -3,6 +3,7 @@ package com.kinplatform.kin.conversation;
 import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.KinMethodCommand;
 import com.kinplatform.kin.KinMethodResult;
+import com.kinplatform.kin.StreamingMethodOutcome;
 import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.context.Message;
 import com.kinplatform.kin.context.ProjectContext;
@@ -232,23 +233,55 @@ public class ConversationOrchestrator {
      *                                  devuelve {@code null}
      */
     public Flux<String> orchestrateStream(ConversationTurn turn) {
+        KinMethodCommand command = buildStreamCommand(turn);
+        Flux<String> flux = kinMethod.executeStream(command);
+        if (flux == null) {
+            throw new IllegalStateException("KinMethod.executeStream devolvió null");
+        }
+        return flux;
+    }
+
+    /**
+     * Ejecuta un turno de conversación en modo streaming entregando, además
+     * del {@link Flux} de tokens, la decisión del turno y el
+     * {@code ConsultingReport} generado (si el pipeline completó {@code REPORT}).
+     *
+     * <p>Aditivo: {@link #orchestrateStream} conserva su comportamiento
+     * (delega en {@link KinMethod#executeStream}); la capa de I/O usa este
+     * outcome para persistir el reporte sin re-ejecutar el pipeline (el
+     * reporte ya está calculado de forma síncrona al devolver el flujo).</p>
+     *
+     * @param turn input tipado del turno (obligatorio)
+     * @return outcome con el flujo, la decisión y el reporte (si aplica);
+     *         {@code null} si el pipeline no produjo flujo de respuesta
+     * @throws IllegalArgumentException si {@code turn} es {@code null}
+     */
+    public StreamingTurnOutcome orchestrateStreamWithOutcome(ConversationTurn turn) {
+        KinMethodCommand command = buildStreamCommand(turn);
+        StreamingMethodOutcome outcome = kinMethod.executeStreamWithOutcome(command);
+        if (outcome == null) {
+            return null;
+        }
+        return new StreamingTurnOutcome(
+                outcome.safeFlux(),
+                outcome.result().decision(),
+                outcome.result().consultingReport());
+    }
+
+    private KinMethodCommand buildStreamCommand(ConversationTurn turn) {
         if (turn == null) {
             throw new IllegalArgumentException("turn no puede ser null");
         }
-
         List<Message> windowedHistory = historyWindow.window(
                 turn.history(), HistoryWindow.DEFAULT_MAX_MESSAGES);
-
         ProjectContext projectContext = contextRepository.findOrCreate(
                 turn.projectId(),
                 turn.projectTitle(),
                 turn.projectDescription(),
                 turn.projectCategory());
-
         TurnDirective directive = turnPolicy.decide(
                 projectContext, previousDecision(projectContext));
-
-        KinMethodCommand command = new KinMethodCommand(
+        return new KinMethodCommand(
                 turn.projectId(),
                 turn.userId(),
                 turn.userMessage(),
@@ -257,13 +290,6 @@ public class ConversationOrchestrator {
                 turn.projectDescription(),
                 turn.projectCategory(),
                 directive);
-
-        Flux<String> flux = kinMethod.executeStream(command);
-        if (flux == null) {
-            throw new IllegalStateException("KinMethod.executeStream devolvió null");
-        }
-
-        return flux;
     }
 
     private ConversationDecision previousDecision(ProjectContext projectContext) {
