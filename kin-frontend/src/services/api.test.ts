@@ -72,4 +72,85 @@ describe("api", () => {
     await expect(api.get("/x")).rejects.toThrow("No authenticated user");
     expect(mockedForceLogout).toHaveBeenCalled();
   });
+
+  it("error 500 no fuerza logout", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ error: "boom" }, 500));
+
+    await expect(api.get("/x")).rejects.toThrow("boom");
+    expect(mockedForceLogout).not.toHaveBeenCalled();
+  });
+
+  it("error 503 no fuerza logout", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ error: "unavailable" }, 503));
+
+    await expect(api.get("/x")).rejects.toThrow("unavailable");
+    expect(mockedForceLogout).not.toHaveBeenCalled();
+  });
+
+  it("error 403 no fuerza logout", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ error: "Forbidden" }, 403));
+
+    await expect(api.get("/x")).rejects.toThrow("Forbidden");
+    expect(mockedForceLogout).not.toHaveBeenCalled();
+  });
+
+  it("401 con el token actual fuerza logout", async () => {
+    localStorage.setItem("kin_token_v2", "current-tok");
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ error: "x" }, 401));
+
+    await expect(api.get("/x")).rejects.toThrow("Unauthorized");
+    expect(mockedForceLogout).toHaveBeenCalled();
+  });
+
+  it("401 de una petición con token antiguo no fuerza logout ni borra el token nuevo", async () => {
+    localStorage.setItem("kin_token_v2", "old-tok");
+    let resolveFetch!: (r: Response) => void;
+    const pending = new Promise<Response>((r) => (resolveFetch = r));
+    vi.spyOn(globalThis, "fetch").mockReturnValue(pending as Promise<Response>);
+
+    const p = api.get("/x");
+    localStorage.setItem("kin_token_v2", "new-tok");
+    resolveFetch(jsonResponse({ error: "Token inválido" }, 401));
+
+    await expect(p).rejects.toThrow("Unauthorized");
+    expect(mockedForceLogout).not.toHaveBeenCalled();
+    expect(localStorage.getItem("kin_token_v2")).toBe("new-tok");
+  });
+
+  it("400 authenticated user de una petición con token antiguo no fuerza logout", async () => {
+    localStorage.setItem("kin_token_v2", "old-tok");
+    let resolveFetch!: (r: Response) => void;
+    const pending = new Promise<Response>((r) => (resolveFetch = r));
+    vi.spyOn(globalThis, "fetch").mockReturnValue(pending as Promise<Response>);
+
+    const p = api.get("/x");
+    localStorage.setItem("kin_token_v2", "new-tok");
+    resolveFetch(jsonResponse({ error: "No authenticated user" }, 400));
+
+    await expect(p).rejects.toThrow("No authenticated user");
+    expect(mockedForceLogout).not.toHaveBeenCalled();
+    expect(localStorage.getItem("kin_token_v2")).toBe("new-tok");
+  });
+
+  it("200 en /auth/me mantiene la sesión activa", async () => {
+    localStorage.setItem("kin_token_v2", "tok");
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ email: "a@b.c" }, 200));
+
+    const result = await api.get<{ email: string }>("/auth/me");
+
+    expect(result).toEqual({ email: "a@b.c" });
+    expect(mockedForceLogout).not.toHaveBeenCalled();
+    expect(localStorage.getItem("kin_token_v2")).toBe("tok");
+  });
+
+  it("200 en /subscriptions/status mantiene la sesión activa", async () => {
+    localStorage.setItem("kin_token_v2", "tok");
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ isActive: true }, 200));
+
+    const result = await api.get<{ isActive: boolean }>("/subscriptions/status");
+
+    expect(result).toEqual({ isActive: true });
+    expect(mockedForceLogout).not.toHaveBeenCalled();
+    expect(localStorage.getItem("kin_token_v2")).toBe("tok");
+  });
 });

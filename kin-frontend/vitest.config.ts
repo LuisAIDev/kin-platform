@@ -16,7 +16,7 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     css: false,
     // Los E2E de Playwright viven en tests/ y se ejecutan con `npx playwright test`.
-    exclude: ["tests/**", "node_modules/**", ".next/**", "dist/**"],
+    exclude: ["tests/**", "node_modules/**", ".next/**", "dist/**", ".probe-clean/**"],
     coverage: {
       provider: "v8",
       include: [

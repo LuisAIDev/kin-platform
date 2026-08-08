@@ -28,12 +28,16 @@ async function request<T>(
     const message = body?.error ?? `Request failed (${res.status})`;
 
     if (res.status === 401) {
-      forceLogout();
+      if (getToken() === token) {
+        forceLogout();
+      }
       throw new Error("Unauthorized");
     }
 
     if (res.status === 400 && message.toLowerCase().includes("authenticated user")) {
-      forceLogout();
+      if (getToken() === token) {
+        forceLogout();
+      }
     }
 
     throw new Error(message);
