@@ -22,7 +22,7 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push("/dashboard/projects");
+    router.push(`/verify-email?email=${encodeURIComponent(email)}`);
   };
 
   return (

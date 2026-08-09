@@ -40,10 +40,25 @@ function setCookie(name: string, value: string) {
   document.cookie = `${name}=${value}; ${COOKIE_OPTIONS}`;
 }
 
-export function storeSession(res: { token: string; email: string; fullName: string; role: string }) {
-  localStorage.setItem("kin_token_v2", res.token);
+export function storeSession(res: { token: string | null; email: string; fullName: string; role: string; emailVerified?: boolean }) {
+  if (res.token) {
+    localStorage.setItem("kin_token_v2", res.token);
+  }
   localStorage.setItem("kin_user_v2", JSON.stringify(res));
   setCookie("kin_session_v2", "active");
+}
+
+export function setPendingEmail(email: string) {
+  sessionStorage.setItem("kin_pending_email", email);
+}
+
+export function getPendingEmail(): string | null {
+  if (typeof sessionStorage === "undefined") return null;
+  return sessionStorage.getItem("kin_pending_email");
+}
+
+export function clearPendingEmail() {
+  sessionStorage.removeItem("kin_pending_email");
 }
 
 export function forceLogout() {

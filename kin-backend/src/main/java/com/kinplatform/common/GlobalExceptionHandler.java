@@ -1,5 +1,6 @@
 package com.kinplatform.common;
 
+import com.kinplatform.auth.EmailVerificationRequiredException;
 import com.kinplatform.pricing.PlanNotFoundException;
 import com.kinplatform.project.ProjectLimitExceededException;
 import com.kinplatform.project.ReportNotFoundException;
@@ -22,6 +23,24 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(EmailVerificationRequiredException.class)
+    public ResponseEntity<Map<String, String>> handleEmailVerificationRequired(
+            EmailVerificationRequiredException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", ex.getMessage(), "code", "EMAIL_VERIFICATION_REQUIRED"));
+    }
+
+    /**
+     * Violación de constraint de BD (p. ej. dos registros concurrentes con el
+     * mismo email). Respuesta genérica: no revela qué constraint se violó.
+     */
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleDataIntegrity(
+            org.springframework.dao.DataIntegrityViolationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", "No se pudo completar la solicitud. Intenta de nuevo."));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

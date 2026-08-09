@@ -35,3 +35,8 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+
+app:
+  mail:
+    # Dev: sin SMTP real, se usa LoggingEmailSender (el enlace se imprime en consola).
+    enabled: false

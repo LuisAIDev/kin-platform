@@ -1,5 +1,11 @@
 import { api } from "./api";
-import { API_URL, storeSession, clearSession, getToken } from "./session";
+import {
+  API_URL,
+  storeSession,
+  clearSession,
+  getToken,
+  setPendingEmail,
+} from "./session";
 
 export interface RegisterRequest {
   fullName: string;
@@ -13,17 +19,18 @@ export interface LoginRequest {
 }
 
 export interface AuthResponse {
-  token: string;
+  token: string | null;
   email: string;
   fullName: string;
   role: string;
+  emailVerified: boolean;
 }
 
 export const authService = {
   async register(data: RegisterRequest) {
     try {
       const res = await api.post<AuthResponse>("/auth/register", data);
-      storeSession(res);
+      setPendingEmail(res.email);
       return { data: res, error: null };
     } catch (err) {
       return { data: null, error: (err as Error).message };
@@ -34,6 +41,30 @@ export const authService = {
     try {
       const res = await api.post<AuthResponse>("/auth/login", data);
       storeSession(res);
+      return { data: res, error: null };
+    } catch (err) {
+      const e = err as Error & { code?: string };
+      return { data: null, error: e.message, code: e.code };
+    }
+  },
+
+  async verifyEmail(token: string) {
+    try {
+      const res = await api.get<{ message: string }>(
+        `/auth/verify-email?token=${encodeURIComponent(token)}`
+      );
+      return { data: res, error: null, code: null };
+    } catch (err) {
+      const e = err as Error & { code?: string };
+      return { data: null, error: e.message, code: e.code ?? null };
+    }
+  },
+
+  async resendVerification(email: string) {
+    try {
+      const res = await api.post<{ message: string }>("/auth/resend-verification", {
+        email,
+      });
       return { data: res, error: null };
     } catch (err) {
       return { data: null, error: (err as Error).message };

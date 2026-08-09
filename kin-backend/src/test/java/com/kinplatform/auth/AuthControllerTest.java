@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.kinplatform.auth.dto.AuthResponse;
 import com.kinplatform.auth.dto.UserDTO;
+import com.kinplatform.auth.verification.VerifyEmailOutcome;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,21 +37,38 @@ class AuthControllerTest {
     }
 
     @Test
-    void register_deberiaResponder201ConToken() throws Exception {
+    void register_deberiaResponder201SinTokenYNoVerificado() throws Exception {
         when(authService.register(any()))
                 .thenReturn(AuthResponse.builder()
-                        .token("t")
                         .email("a@kin.com")
                         .fullName("A")
                         .role("FREE")
+                        .emailVerified(false)
                         .build());
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"a@kin.com\",\"password\":\"KINpass123!a\",\"fullName\":\"Ana\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.token").value("t"))
-                .andExpect(jsonPath("$.role").value("FREE"));
+                .andExpect(jsonPath("$.role").value("FREE"))
+                .andExpect(jsonPath("$.emailVerified").value(false));
+    }
+
+    @Test
+    void register_noDeberiaEstablecerCookieDeSesion() throws Exception {
+        when(authService.register(any()))
+                .thenReturn(AuthResponse.builder()
+                        .email("a@kin.com")
+                        .fullName("A")
+                        .role("FREE")
+                        .emailVerified(false)
+                        .build());
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"a@kin.com\",\"password\":\"KINpass123!a\",\"fullName\":\"Ana\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(header().doesNotExist("Set-Cookie"));
     }
 
     @Test
@@ -61,6 +79,7 @@ class AuthControllerTest {
                         .email("a@kin.com")
                         .fullName("A")
                         .role("FREE")
+                        .emailVerified(true)
                         .build());
 
         mockMvc.perform(post("/auth/login")
@@ -68,6 +87,53 @@ class AuthControllerTest {
                         .content("{\"email\":\"a@kin.com\",\"password\":\"secret123\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("t"));
+    }
+
+    @Test
+    void verifyEmail_conTokenValido_deberiaResponder200YNoEstablecerCookie() throws Exception {
+        when(authService.verifyEmail("valid-token")).thenReturn(VerifyEmailOutcome.SUCCESS);
+
+        mockMvc.perform(get("/auth/verify-email").param("token", "valid-token"))
+                .andExpect(status().isOk())
+                .andExpect(header().doesNotExist("Set-Cookie"))
+                .andExpect(jsonPath("$.message").value("Correo verificado correctamente. Ya puedes iniciar sesión."));
+    }
+
+    @Test
+    void verifyEmail_conTokenExpirado_deberiaResponder400ConCodigo() throws Exception {
+        when(authService.verifyEmail("expired")).thenReturn(VerifyEmailOutcome.EXPIRED);
+
+        mockMvc.perform(get("/auth/verify-email").param("token", "expired"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("EXPIRED"));
+    }
+
+    @Test
+    void verifyEmail_conTokenInvalido_deberiaResponder400() throws Exception {
+        when(authService.verifyEmail("bad")).thenReturn(VerifyEmailOutcome.INVALID);
+
+        mockMvc.perform(get("/auth/verify-email").param("token", "bad"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID"));
+    }
+
+    @Test
+    void verifyEmail_conTokenYaUsado_deberiaResponder400() throws Exception {
+        when(authService.verifyEmail("used")).thenReturn(VerifyEmailOutcome.ALREADY_USED);
+
+        mockMvc.perform(get("/auth/verify-email").param("token", "used"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("ALREADY_USED"));
+    }
+
+    @Test
+    void resendVerification_deberiaResponder200Generico() throws Exception {
+        mockMvc.perform(post("/auth/resend-verification")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"a@kin.com\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value(
+                        "Si existe una cuenta asociada a este correo y necesita verificación, recibirás un nuevo mensaje."));
     }
 
     @Test

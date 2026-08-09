@@ -16,4 +16,5 @@ public class UserDTO {
     private String role;
     private String avatarUrl;
     private Integer credits;
+    private Boolean emailVerified;
 }

@@ -4,13 +4,13 @@ import type { NextRequest } from "next/server";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
 const ME_TTL_MS = 30_000;
 
-const meCache = new Map<string, { ok: boolean; expiresAt: number }>();
+const meCache = new Map<string, { ok: boolean; verified: boolean; expiresAt: number }>();
 
-async function checkSession(token: string): Promise<boolean> {
+async function checkSession(token: string): Promise<{ ok: boolean; verified: boolean }> {
   const cached = meCache.get(token);
   const now = Date.now();
   if (cached && cached.expiresAt > now) {
-    return cached.ok;
+    return cached;
   }
 
   try {
@@ -18,11 +18,18 @@ async function checkSession(token: string): Promise<boolean> {
       headers: { Authorization: `Bearer ${token}` },
     });
     const ok = res.ok;
-    meCache.set(token, { ok, expiresAt: now + ME_TTL_MS });
-    return ok;
+    let verified = true;
+    if (ok) {
+      const body = await res.json().catch(() => null);
+      verified = body?.emailVerified !== false;
+    }
+    const result = { ok, verified };
+    meCache.set(token, { ...result, expiresAt: now + ME_TTL_MS });
+    return result;
   } catch {
-    meCache.set(token, { ok: true, expiresAt: now + ME_TTL_MS });
-    return true;
+    const result = { ok: true, verified: true };
+    meCache.set(token, { ...result, expiresAt: now + ME_TTL_MS });
+    return result;
   }
 }
 
@@ -35,8 +42,9 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    const valid = await checkSession(token);
-    if (!valid) {
+    const { ok, verified } = await checkSession(token);
+
+    if (!ok) {
       const response = NextResponse.redirect(new URL("/login", request.url));
       response.cookies.delete("kin_session_v2");
       response.cookies.delete("kin_token_v2");
@@ -47,11 +55,15 @@ export default async function proxy(request: NextRequest) {
       });
       return response;
     }
+
+    if (!verified) {
+      return NextResponse.redirect(new URL("/verify-email", request.url));
+    }
   }
 
   if (pathname === "/login" && token) {
-    const valid = await checkSession(token);
-    if (valid) {
+    const { ok } = await checkSession(token);
+    if (ok) {
       return NextResponse.redirect(new URL("/dashboard/projects", request.url));
     }
   }

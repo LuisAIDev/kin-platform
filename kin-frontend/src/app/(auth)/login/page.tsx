@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authService } from "@/services/auth";
 import { api } from "@/services/api";
-import { checkForceLogout } from "@/services/session";
+import { checkForceLogout, setPendingEmail } from "@/services/session";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,6 +44,11 @@ export default function LoginPage() {
     try {
       const result = await authService.login({ email, password });
       if (result.error) {
+        if (result.code === "EMAIL_VERIFICATION_REQUIRED") {
+          setPendingEmail(email);
+          router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+          return;
+        }
         setError(result.error);
         return;
       }

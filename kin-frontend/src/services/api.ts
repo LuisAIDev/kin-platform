@@ -27,11 +27,15 @@ async function request<T>(
     const body = await res.json().catch(() => null);
     const message = body?.error ?? `Request failed (${res.status})`;
 
+    const error = new Error(message) as Error & { code?: string };
+    error.code = body?.code;
+
     if (res.status === 401) {
       if (getToken() === token) {
         forceLogout();
       }
-      throw new Error("Unauthorized");
+      error.message = "Unauthorized";
+      throw error;
     }
 
     if (res.status === 400 && message.toLowerCase().includes("authenticated user")) {
@@ -40,7 +44,7 @@ async function request<T>(
       }
     }
 
-    throw new Error(message);
+    throw error;
   }
 
   if (res.status === 204) return undefined as T;

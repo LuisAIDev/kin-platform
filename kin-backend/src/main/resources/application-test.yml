@@ -14,3 +14,6 @@ spring:
 app:
   rate-limit:
     enabled: false
+  mail:
+    # Tests: sin SMTP real, se usa LoggingEmailSender.
+    enabled: false

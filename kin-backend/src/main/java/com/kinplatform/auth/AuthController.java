@@ -4,8 +4,10 @@ import com.kinplatform.auth.dto.AuthResponse;
 import com.kinplatform.auth.dto.LoginRequest;
 import com.kinplatform.auth.dto.RegisterRequest;
 import com.kinplatform.auth.dto.UserDTO;
+import com.kinplatform.auth.verification.VerifyEmailOutcome;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -39,7 +42,6 @@ public class AuthController {
     public ResponseEntity<AuthResponse> register(
             @Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
         var authResponse = authService.register(request);
-        setTokenCookie(response, authResponse.getToken());
         return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
     }
 
@@ -60,6 +62,27 @@ public class AuthController {
         return ResponseEntity.ok(user);
     }
 
+    @GetMapping("/verify-email")
+    public ResponseEntity<Map<String, String>> verifyEmail(@RequestParam("token") String token) {
+        var outcome = authService.verifyEmail(token);
+        if (outcome == VerifyEmailOutcome.SUCCESS) {
+            return ResponseEntity.ok(Map.of(
+                    "message", "Correo verificado correctamente. Ya puedes iniciar sesión."));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "error", messageFor(outcome),
+                "code", outcome.name()));
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Map<String, String>> resendVerification(
+            @RequestBody Map<String, String> body) {
+        authService.resendVerification(body == null ? null : body.get("email"));
+        return ResponseEntity.ok(Map.of(
+                "message", "Si existe una cuenta asociada a este correo y necesita verificación, "
+                        + "recibirás un nuevo mensaje."));
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -74,6 +97,14 @@ public class AuthController {
         authService.logout(token);
         clearTokenCookie(response);
         return ResponseEntity.ok().build();
+    }
+
+    private static String messageFor(VerifyEmailOutcome outcome) {
+        return switch (outcome) {
+            case EXPIRED -> "El enlace de verificación ha expirado. Solicita uno nuevo.";
+            case ALREADY_USED -> "El enlace de verificación ya fue utilizado.";
+            default -> "El enlace de verificación no es válido.";
+        };
     }
 
     private void setTokenCookie(HttpServletResponse response, String token) {
