@@ -9,6 +9,10 @@
 --    ("Backfill en migración V13").
 -- 3) Tabla email_verification_tokens: solo se almacena el HASH del
 --    token (SHA-256), nunca el token en texto plano.
+--
+-- NOTA: se usa gen_random_uuid() (core de PostgreSQL 13+, sin la
+-- extensión uuid-ossp), igual que V12, para no depender de la
+-- extensión en Neon/producción.
 -- ============================================================
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;
@@ -16,8 +20,8 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAU
 -- Cuentas existentes quedan verificadas (transición reversible y auditable).
 UPDATE users SET email_verified = TRUE;
 
-CREATE TABLE email_verification_tokens (
-    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS email_verification_tokens (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID NOT NULL,
     token_hash  VARCHAR(64) NOT NULL,
     expires_at  TIMESTAMPTZ NOT NULL,
@@ -30,5 +34,5 @@ CREATE TABLE email_verification_tokens (
     CONSTRAINT uq_email_verification_tokens_hash UNIQUE (token_hash)
 );
 
-CREATE INDEX idx_email_verification_tokens_user ON email_verification_tokens (user_id);
-CREATE INDEX idx_email_verification_tokens_expires ON email_verification_tokens (expires_at);
+CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_user ON email_verification_tokens (user_id);
+CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_expires ON email_verification_tokens (expires_at);

@@ -34,7 +34,7 @@ class V13MigrationValidationTest {
 
     @Test
     void tablaDeTokensTieneLosCamposRequeridos() {
-        assertTrue(sql.contains("CREATE TABLE email_verification_tokens"));
+        assertTrue(sql.contains("CREATE TABLE IF NOT EXISTS email_verification_tokens"));
         assertTrue(sql.contains("token_hash  VARCHAR(64) NOT NULL"));
         assertTrue(sql.contains("expires_at  TIMESTAMPTZ NOT NULL"));
         assertTrue(sql.contains("used_at     TIMESTAMPTZ"));
@@ -53,7 +53,14 @@ class V13MigrationValidationTest {
 
     @Test
     void existenIndicesEsperados() {
-        assertTrue(sql.contains("CREATE INDEX idx_email_verification_tokens_user"));
-        assertTrue(sql.contains("CREATE INDEX idx_email_verification_tokens_expires"));
+        assertTrue(sql.contains("CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_user"));
+        assertTrue(sql.contains("CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_expires"));
+    }
+
+    @Test
+    void usaGenRandomUuidSinDependenciaDeUuidOssp() {
+        assertTrue(sql.contains("DEFAULT gen_random_uuid()"));
+        assertTrue(!sql.contains("uuid_generate_v4"));
+        assertTrue(!sql.contains("CREATE EXTENSION"));
     }
 }
