@@ -54,7 +54,7 @@ services:
           name: kin-db
           property: password
       - key: ALLOWED_ORIGINS
-        value: https://kin-frontend.onrender.com,https://kin-platform.vercel.app,https://kin-platform.com
+        value: https://kin-frontend.onrender.com,https://kin-platform.com
 
   # ---------------- Frontend (Next.js) ----------------
   - type: web

@@ -36,11 +36,10 @@ public class SecurityConfig {
 
     /**
      * Orígenes de frontend que nunca se pierden, incluso si ALLOWED_ORIGINS
-     * está definido sin incluirlos. Se mantiene el anterior (Vercel) durante
-     * la migración al dominio propio.
+     * está definido sin incluirlos. KIN Platform utiliza el dominio propio:
+     * https://kin-platform.com
      */
     private static final List<String> GUARANTEED_ORIGINS = List.of(
-            "https://kin-platform.vercel.app",
             "https://kin-platform.com");
 
     @Bean
