@@ -2,6 +2,7 @@ package com.kinplatform.auth.email;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
+import java.io.UnsupportedEncodingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +29,9 @@ public class SmtpEmailSender implements EmailSender {
 
     @Value("${app.mail.from:}")
     private String from;
+
+    @Value("${app.mail.from-name:KIN Platform}")
+    private String fromName;
 
     @Value("${spring.mail.host:}")
     private String mailHost;
@@ -63,7 +67,7 @@ public class SmtpEmailSender implements EmailSender {
         try {
             var message = mailSender.createMimeMessage();
             var helper = new MimeMessageHelper(message, false, "UTF-8");
-            helper.setFrom(from);
+            helper.setFrom(from, fromName);
             helper.setTo(to);
             helper.setSubject("Verifica tu correo electrónico en KIN");
             helper.setText("Hola " + fullName + ",\n\n"
@@ -73,7 +77,7 @@ public class SmtpEmailSender implements EmailSender {
                     + "Si no creaste esta cuenta, ignora este mensaje.", false);
             mailSender.send(message);
             log.info("Correo de verificación enviado a {}", to);
-        } catch (MessagingException e) {
+        } catch (MessagingException | UnsupportedEncodingException e) {
             throw new IllegalStateException("No se pudo enviar el correo de verificación", e);
         }
     }

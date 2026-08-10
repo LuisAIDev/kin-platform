@@ -34,7 +34,14 @@ public class SecurityConfig {
     @Value("${app.cors.allowed-origins:http://localhost:3000}")
     private String allowedOrigins;
 
-    private static final String PRODUCTION_ORIGIN = "https://kin-platform.vercel.app";
+    /**
+     * Orígenes de frontend que nunca se pierden, incluso si ALLOWED_ORIGINS
+     * está definido sin incluirlos. Se mantiene el anterior (Vercel) durante
+     * la migración al dominio propio.
+     */
+    private static final List<String> GUARANTEED_ORIGINS = List.of(
+            "https://kin-platform.vercel.app",
+            "https://kin-platform.com");
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -90,10 +97,12 @@ public class SecurityConfig {
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
                 .toList());
-        // Garantía de producción: el frontend de Vercel nunca se pierde,
-        // incluso si ALLOWED_ORIGINS está definido sin incluirlo.
-        if (!origins.contains(PRODUCTION_ORIGIN)) {
-            origins.add(PRODUCTION_ORIGIN);
+        // Garantía de producción: los orígenes del frontend nunca se pierden,
+        // incluso si ALLOWED_ORIGINS está definido sin incluirlos.
+        for (String origin : GUARANTEED_ORIGINS) {
+            if (!origins.contains(origin)) {
+                origins.add(origin);
+            }
         }
         var config = new CorsConfiguration();
         config.setAllowedOrigins(origins);
