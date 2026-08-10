@@ -3,10 +3,9 @@ package com.kinplatform.auth.email;
 import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -17,15 +16,25 @@ import org.springframework.stereotype.Component;
  * Si SMTP no está configurado correctamente, falla de forma explícita y
  * segura (arranque o envío) — nunca cae silenciosamente en el
  * {@link LoggingEmailSender}.
+ *
+ * <p>NO usa {@code @ConditionalOnBean(JavaMailSender.class)}: el
+ * {@code JavaMailSender} lo registra la auto-configuración de Spring Boot,
+ * que se procesa después del escaneo de componentes, por lo que la condición
+ * podría evaluarse como falsa y dejar a KIN sin ningún {@code EmailSender}.
+ * En su lugar se inyecta un {@link ObjectProvider} y se resuelve (fail-fast)
+ * en {@code @PostConstruct}.</p>
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 @ConditionalOnProperty(name = "app.mail.enabled", havingValue = "true")
-@ConditionalOnBean(JavaMailSender.class)
 public class SmtpEmailSender implements EmailSender {
 
-    private final JavaMailSender mailSender;
+    private final ObjectProvider<JavaMailSender> mailSenderProvider;
+    private JavaMailSender mailSender;
+
+    public SmtpEmailSender(ObjectProvider<JavaMailSender> mailSenderProvider) {
+        this.mailSenderProvider = mailSenderProvider;
+    }
 
     @Value("${app.mail.from:}")
     private String from;
@@ -47,6 +56,13 @@ public class SmtpEmailSender implements EmailSender {
 
     @PostConstruct
     public void validate() {
+        mailSender = mailSenderProvider.getIfAvailable();
+        if (mailSender == null) {
+            throw new IllegalStateException(
+                    "app.mail.enabled=true pero no hay un JavaMailSender disponible "
+                            + "(revisa spring.mail.host / MAIL_HOST). Si SMTP no está configurado, "
+                            + "la aplicación no puede enviar correos de verificación.");
+        }
         if (from == null || from.isBlank()) {
             throw new IllegalStateException(
                     "app.mail.enabled=true pero app.mail.from (MAIL_FROM) no está configurado");
