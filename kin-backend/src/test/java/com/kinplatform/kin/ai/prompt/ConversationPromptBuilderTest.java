@@ -26,6 +26,11 @@ class ConversationPromptBuilderTest {
         return ProjectContext.fromProject("Mi App", "App de gestión de tareas", "Software");
     }
 
+    /** Normaliza espacios y saltos de línea para comparar texto de prompts. */
+    private static String normalize(String text) {
+        return text.replaceAll("\\s+", " ").trim();
+    }
+
     @Test
     void build_deberiaExigirPromptRequestConversation() {
         var exception = assertThrows(IllegalArgumentException.class,
@@ -162,5 +167,169 @@ class ConversationPromptBuilderTest {
             () -> new PromptRequest(report, PromptType.CONVERSATION, ctx, decision));
 
         assertEquals("consultingReport debe ser null para CONVERSATION", exception.getMessage());
+    }
+
+    // ------------------------------------------------------------------
+    // AUTOCONOCIMIENTO (bloque de identidad, capacidades y límites)
+    // ------------------------------------------------------------------
+
+    @Test
+    void build_deberiaIncluirElBloqueDeAutoconocimiento() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = builder.build(request);
+
+        assertTrue(prompt.contains("QUIÉN SOS Y QUÉ PODÉS HACER"));
+        assertTrue(prompt.contains("IDENTIDAD"));
+        assertTrue(prompt.contains("QUÉ NO PODÉS HACER (LÍMITES)"));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaPresentarIdentidadEnPrimeraPersona() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("Soy KIN, una plataforma inteligente orientada a ayudarte a estructurar y analizar proyectos."));
+        assertTrue(prompt.contains("Knowledge, Innovation & Navigation"));
+    }
+
+    @Test
+    void build_autoconocimiento_noDeberiaAfirmarSuperioridadFrenteAOtrasIA() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertFalse(prompt.contains("soy mejor que ChatGPT"));
+        assertFalse(prompt.contains("soy superior a"));
+        assertFalse(prompt.contains("soy la única plataforma"));
+        assertFalse(prompt.contains("garantizo que tu proyecto será exitoso"));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaExpresarLosLimitesDeCapacidad() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("No podés garantizar que un proyecto tendrá éxito"));
+        assertTrue(prompt.contains("No reemplazás a contadores, abogados"));
+        assertTrue(prompt.contains("Actualmente no tengo esa capacidad."));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaDescribirElFlujoConversacional() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("idea → conversación guiada → estructuración de la información"));
+        assertTrue(prompt.contains("análisis cuando existen las condiciones necesarias"));
+        assertTrue(prompt.contains("apoyo a la toma de decisiones"));
+    }
+
+    @Test
+    void build_autoconocimiento_noDeberiaAfirmarAccesoExternoNoImplementado() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("No podés hacer estudios de mercado en tiempo real"));
+        assertFalse(prompt.contains("consulto Internet en tiempo real"));
+        assertFalse(prompt.contains("tengo acceso a datos bancarios"));
+    }
+
+    @Test
+    void build_deberiaConservarPersonalidadYConversacionExistentes() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("Sos KIN (Knowledge, Innovation & Navigation), un consultor senior"));
+        assertTrue(prompt.contains("NUNCA preguntes dos cosas al mismo tiempo"));
+        assertTrue(prompt.contains("Respondé SIEMPRE en español"));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaMantenerLaReglaDeNoInventarInformacion() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("nunca la inventes ni la completes silenciosamente"));
+        assertTrue(prompt.contains("No inventes nombres de empresas, clientes"));
+    }
+
+    // ------------------------------------------------------------------
+    // AUTOCONOCIMIENTO — RELACIÓN CON LLM / MOTOR DE IA
+    // ------------------------------------------------------------------
+
+    @Test
+    void build_autoconocimiento_deberiaDistinguirKINDeDeepSeek() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("KIN no es el modelo de lenguaje que utiliza"));
+        assertTrue(prompt.contains("DeepSeek es el modelo/proveedor de IA actualmente configurado"));
+        assertTrue(prompt.contains("KIN es la plataforma que usa ese motor"));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaMencionarDeepSeekComoComponenteDelMotor() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("El LLM es un componente tecnológico del motor de IA de KIN"));
+        assertTrue(prompt.contains("la configuración real actualmente implementada (DeepSeek)"));
+    }
+
+    @Test
+    void build_autoconocimiento_noDeberiaIdentificarKINConOtrosLLM() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("diferencia entre KIN y ChatGPT, Claude, Gemini u otros LLM"));
+        assertTrue(prompt.contains("propósito, especialización, flujo de trabajo"));
+        assertTrue(prompt.contains("estructuración del proyecto"));
+    }
+
+    @Test
+    void build_autoconocimiento_noDeberiaAfirmarSuperioridadFrenteALosLLM() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertFalse(prompt.contains("soy mejor que"));
+        assertFalse(prompt.contains("soy más inteligente"));
+        assertFalse(prompt.contains("soy superior a"));
+        assertFalse(prompt.contains("tengo mejor IA"));
+    }
+
+    @Test
+    void build_autoconocimiento_noDeberiaAfirmarCapacidadesAjenasNiRendimiento() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("No afirmes que esos sistemas \"no pueden\" hacer determinadas cosas"));
+        assertTrue(prompt.contains("No hagas comparaciones de rendimiento que no hayan sido medidas"));
+        assertTrue(prompt.contains("No inventes capacidades de otros modelos"));
+        assertTrue(prompt.contains("respondé con la configuración real actualmente implementada"));
     }
 }
