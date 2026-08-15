@@ -13,6 +13,7 @@ vi.mock("@/services/enterpriseApi", async () => {
     ...actual,
     enterpriseApi: {
       getDashboard: vi.fn(),
+      getInformation: vi.fn(),
       downloadDocument: vi.fn(),
       downloadBundle: vi.fn(),
       generate: vi.fn(),
@@ -102,6 +103,20 @@ const dashboardWithActiveVersion: Dashboard = {
 describe("EnterpriseDashboard", () => {
   beforeEach(() => {
     vi.mocked(enterpriseApi.getDashboard).mockResolvedValue(baseDashboard);
+    vi.mocked(enterpriseApi.getInformation).mockResolvedValue({
+      resolvedDimensions: [],
+      supplemental: {
+        financial: {},
+        market: {},
+        impact: {},
+        risk: {},
+        breakeven: { value: null, sourceType: null, state: "NOT_AVAILABLE", origin: null },
+        breakevenMissing: [],
+        breakevenCalculable: false,
+      },
+      documents: [],
+      conflicts: [],
+    });
     vi.mocked(enterpriseApi.downloadDocument).mockResolvedValue(
       new Blob(["pdf"]),
     );

@@ -76,3 +76,63 @@ export const TERMINAL_STATES: readonly EnterpriseProgressState[] = [
   "COMPLETED",
   "FAILED",
 ];
+
+export type InfoState =
+  | "CONFIRMED"
+  | "IMPORTED"
+  | "CALCULATED"
+  | "ESTIMATED"
+  | "AI_SUGGESTED"
+  | "PENDING"
+  | "NOT_AVAILABLE";
+
+export type InfoSourceType =
+  | "USER_INPUT"
+  | "IMPORTED_DOCUMENT"
+  | "CALCULATED"
+  | "ESTIMATED"
+  | "AI_SUGGESTED";
+
+export interface InfoValue {
+  value: string | null;
+  sourceType: InfoSourceType | null;
+  state: InfoState;
+  origin: string | null;
+}
+
+export interface ResolvedDimension {
+  dimension: string;
+  displayName: string;
+  value: string | null;
+  sourceType: InfoSourceType | null;
+  state: InfoState;
+  origin: string | null;
+}
+
+export interface InfoDocument {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  status: string;
+  createdAt: string | null;
+  summary: string | null;
+  relevantFacts: string[];
+}
+
+export interface SupplementalInfo {
+  financial: Record<string, InfoValue>;
+  market: Record<string, InfoValue>;
+  impact: Record<string, InfoValue>;
+  risk: Record<string, InfoValue>;
+  breakeven: InfoValue;
+  breakevenMissing: string[];
+  breakevenCalculable: boolean;
+}
+
+export interface EnterpriseInformation {
+  resolvedDimensions: ResolvedDimension[];
+  supplemental: SupplementalInfo;
+  documents: InfoDocument[];
+  conflicts: string[];
+}

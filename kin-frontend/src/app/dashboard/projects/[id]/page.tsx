@@ -10,7 +10,13 @@ import ViabilityScore from "@/components/ViabilityScore";
 import PdfReportButton from "@/components/PdfReportButton";
 import ProgressCircle from "@/components/ProgressCircle";
 import { GenerateEnterpriseButton } from "@/components/enterprise/GenerateEnterpriseButton";
+import { ProjectInfoSection } from "@/components/projectinfo/ProjectInfoSection";
 import { statusBadge } from "@/utils/badgeColors";
+import {
+  CHAT_LIMIT_WARNING_AT,
+  isChatMessageTooLong,
+  MAX_CHAT_MESSAGE_LENGTH,
+} from "@/utils/chatLimits";
 
 const STREAMING_ID_PREFIX = "streaming-";
 
@@ -32,6 +38,7 @@ export default function ProjectDetailPage({ params }: Props) {
   const [loading, setLoading] = useState(true);
   const [streamingId, setStreamingId] = useState<string | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [chatLimitError, setChatLimitError] = useState<string | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const sendingRef = useRef(false);
@@ -71,6 +78,14 @@ export default function ProjectDetailPage({ params }: Props) {
   const handleSend = (textOverride?: string) => {
     const text = (textOverride ?? input).trim();
     if (!text || sendingRef.current) return;
+    if (isChatMessageTooLong(text)) {
+      setChatLimitError(
+        `El mensaje supera el límite de ${MAX_CHAT_MESSAGE_LENGTH} caracteres (${text.length}). ` +
+          'Resúmelo o usa "Importar información" / "Agregar documento" para incorporar contenido extenso.',
+      );
+      return;
+    }
+    setChatLimitError(null);
     sendingRef.current = true;
     setSending(true);
     setInput("");
@@ -241,6 +256,8 @@ export default function ProjectDetailPage({ params }: Props) {
             Enterprise Dashboard
           </Link>
 
+          <ProjectInfoSection projectId={id} />
+
           {project.aiSummary && (
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-1">
@@ -325,23 +342,46 @@ export default function ProjectDetailPage({ params }: Props) {
         </div>
 
         <div className="border-t border-neutral-200 px-4 py-3 shrink-0 sticky bottom-0 bg-white z-10">
-          <div className="flex gap-2 max-w-4xl mx-auto">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Escribe tu mensaje..."
-              disabled={sending}
-              className="flex-1 rounded-xl border border-neutral-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 min-h-11"
-            />
-            <button
-              onClick={() => handleSend()}
-              disabled={sending || !input.trim()}
-              className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-50 min-h-11"
-            >
-              {sending ? "..." : "Enviar"}
-            </button>
+          <div className="max-w-4xl mx-auto">
+            {chatLimitError ? (
+              <p data-testid="chat-limit-error" className="text-xs text-red-600 mb-2">
+                {chatLimitError}
+              </p>
+            ) : null}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  if (chatLimitError) setChatLimitError(null);
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder="Escribe tu mensaje..."
+                disabled={sending}
+                maxLength={MAX_CHAT_MESSAGE_LENGTH}
+                className="flex-1 rounded-xl border border-neutral-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 min-h-11"
+              />
+              <button
+                onClick={() => handleSend()}
+                disabled={sending || !input.trim()}
+                className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-50 min-h-11"
+              >
+                {sending ? "..." : "Enviar"}
+              </button>
+            </div>
+            <div className="flex justify-end mt-1">
+              <span
+                data-testid="chat-char-counter"
+                className={`text-xs ${
+                  input.length >= CHAT_LIMIT_WARNING_AT
+                    ? "text-amber-600 font-medium"
+                    : "text-neutral-400"
+                }`}
+              >
+                {input.length.toLocaleString()} / {MAX_CHAT_MESSAGE_LENGTH.toLocaleString()}
+              </span>
+            </div>
           </div>
         </div>
       </section>

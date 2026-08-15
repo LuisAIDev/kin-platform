@@ -39,15 +39,17 @@ import com.kinplatform.kin.enterprise.engine.result.RoadmapResult;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectFailed;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectGenerated;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
+import com.kinplatform.kin.enterprise.integration.EnterpriseSupplementalInput;
+import com.kinplatform.kin.enterprise.integration.NumericPlanIntegrator;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
 import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
+import com.kinplatform.kin.enterprise.valueobjects.MarketPlan;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.reporting.RecommendationResult;
 import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
 import com.kinplatform.kin.reporting.risk.RiskResult;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -123,21 +125,32 @@ public final class EnterpriseGenerationService {
      * documentos deterministas.
      */
     public EnterpriseGenerationService(
-        BusinessModelEngine businessModelEngine,
-        MarketEngine marketEngine,
-        InnovationEngine innovationEngine,
-        FinancialPlanEngine financialPlanEngine,
-        RoadmapEngine roadmapEngine,
-        RiskPlanEngine riskPlanEngine,
-        KpiEngine kpiEngine,
-        EnterpriseScoreEngine enterpriseScoreEngine,
-        EnterpriseDocumentAssembler documentAssembler,
-        EnterpriseProjectRepository repository,
-        DomainEventBus eventBus,
-        Executor executor) {
-        this(businessModelEngine, marketEngine, innovationEngine, financialPlanEngine,
-            roadmapEngine, riskPlanEngine, kpiEngine, enterpriseScoreEngine,
-            documentAssembler, repository, eventBus, executor, null);
+            BusinessModelEngine businessModelEngine,
+            MarketEngine marketEngine,
+            InnovationEngine innovationEngine,
+            FinancialPlanEngine financialPlanEngine,
+            RoadmapEngine roadmapEngine,
+            RiskPlanEngine riskPlanEngine,
+            KpiEngine kpiEngine,
+            EnterpriseScoreEngine enterpriseScoreEngine,
+            EnterpriseDocumentAssembler documentAssembler,
+            EnterpriseProjectRepository repository,
+            DomainEventBus eventBus,
+            Executor executor) {
+        this(
+                businessModelEngine,
+                marketEngine,
+                innovationEngine,
+                financialPlanEngine,
+                roadmapEngine,
+                riskPlanEngine,
+                kpiEngine,
+                enterpriseScoreEngine,
+                documentAssembler,
+                repository,
+                eventBus,
+                executor,
+                null);
     }
 
     /**
@@ -147,19 +160,19 @@ public final class EnterpriseGenerationService {
      * deterministas.
      */
     public EnterpriseGenerationService(
-        BusinessModelEngine businessModelEngine,
-        MarketEngine marketEngine,
-        InnovationEngine innovationEngine,
-        FinancialPlanEngine financialPlanEngine,
-        RoadmapEngine roadmapEngine,
-        RiskPlanEngine riskPlanEngine,
-        KpiEngine kpiEngine,
-        EnterpriseScoreEngine enterpriseScoreEngine,
-        EnterpriseDocumentAssembler documentAssembler,
-        EnterpriseProjectRepository repository,
-        DomainEventBus eventBus,
-        Executor executor,
-        AIResponder aiResponder) {
+            BusinessModelEngine businessModelEngine,
+            MarketEngine marketEngine,
+            InnovationEngine innovationEngine,
+            FinancialPlanEngine financialPlanEngine,
+            RoadmapEngine roadmapEngine,
+            RiskPlanEngine riskPlanEngine,
+            KpiEngine kpiEngine,
+            EnterpriseScoreEngine enterpriseScoreEngine,
+            EnterpriseDocumentAssembler documentAssembler,
+            EnterpriseProjectRepository repository,
+            DomainEventBus eventBus,
+            Executor executor,
+            AIResponder aiResponder) {
         this.businessModelEngine = requireNonNull(businessModelEngine, "businessModelEngine");
         this.marketEngine = requireNonNull(marketEngine, "marketEngine");
         this.innovationEngine = requireNonNull(innovationEngine, "innovationEngine");
@@ -173,9 +186,9 @@ public final class EnterpriseGenerationService {
         this.eventBus = requireNonNull(eventBus, "eventBus");
         this.executor = requireNonNull(executor, "executor");
         this.narrativeGenerator = aiResponder == null
-            ? null
-            : new EnterpriseNarrativeGenerator(aiResponder, documentAssembler,
-                new EnterpriseNarrativePromptBuilder(documentAssembler));
+                ? null
+                : new EnterpriseNarrativeGenerator(
+                        aiResponder, documentAssembler, new EnterpriseNarrativePromptBuilder(documentAssembler));
     }
 
     /**
@@ -184,9 +197,9 @@ public final class EnterpriseGenerationService {
      * implementaciones concretas para orquestar el flujo de dominio.
      */
     public EnterpriseGenerationService(
-        EnterpriseDocumentAssembler documentAssembler,
-        EnterpriseProjectRepository repository,
-        DomainEventBus eventBus) {
+            EnterpriseDocumentAssembler documentAssembler,
+            EnterpriseProjectRepository repository,
+            DomainEventBus eventBus) {
         this(documentAssembler, repository, eventBus, null);
     }
 
@@ -196,15 +209,24 @@ public final class EnterpriseGenerationService {
      * narrativa.
      */
     public EnterpriseGenerationService(
-        EnterpriseDocumentAssembler documentAssembler,
-        EnterpriseProjectRepository repository,
-        DomainEventBus eventBus,
-        AIResponder aiResponder) {
-        this(new DefaultBusinessModelEngine(), new DefaultMarketEngine(),
-            new DefaultInnovationEngine(), new DefaultFinancialPlanEngine(),
-            new DefaultRoadmapEngine(), new DefaultRiskPlanEngine(),
-            new DefaultKpiEngine(), new DefaultEnterpriseScoreEngine(),
-            documentAssembler, repository, eventBus, ForkJoinPool.commonPool(), aiResponder);
+            EnterpriseDocumentAssembler documentAssembler,
+            EnterpriseProjectRepository repository,
+            DomainEventBus eventBus,
+            AIResponder aiResponder) {
+        this(
+                new DefaultBusinessModelEngine(),
+                new DefaultMarketEngine(),
+                new DefaultInnovationEngine(),
+                new DefaultFinancialPlanEngine(),
+                new DefaultRoadmapEngine(),
+                new DefaultRiskPlanEngine(),
+                new DefaultKpiEngine(),
+                new DefaultEnterpriseScoreEngine(),
+                documentAssembler,
+                repository,
+                eventBus,
+                ForkJoinPool.commonPool(),
+                aiResponder);
     }
 
     /**
@@ -216,6 +238,25 @@ public final class EnterpriseGenerationService {
      * @throws IllegalArgumentException si {@code request} es {@code null}
      */
     public EnterpriseProject generate(EnterpriseGenerationRequest request) {
+        return generateInternal(request, EnterpriseSupplementalInput.empty());
+    }
+
+    /**
+     * Genera el proyecto empresarial de forma bloqueante incorporando los datos
+     * numéricos estructurados del usuario (FASE 10B). Con entrada vacía se
+     * comporta exactamente igual que {@link #generate(EnterpriseGenerationRequest)}.
+     *
+     * @param request      solicitud de generación (obligatoria)
+     * @param supplemental datos numéricos estructurados (puede ser vacío)
+     * @return el aggregate persistido
+     */
+    public EnterpriseProject generateWithSupplemental(
+            EnterpriseGenerationRequest request, EnterpriseSupplementalInput supplemental) {
+        return generateInternal(request, supplemental);
+    }
+
+    private EnterpriseProject generateInternal(
+            EnterpriseGenerationRequest request, EnterpriseSupplementalInput supplemental) {
         if (request == null) {
             throw new IllegalArgumentException("La solicitud de generación no puede ser null.");
         }
@@ -231,7 +272,7 @@ public final class EnterpriseGenerationService {
         EnterpriseProject persistedRequested = repository.save(requested);
         eventBus.publish(new EnterpriseProjectRequested(projectId, persistedRequested.version()));
 
-        return generateFrom(request, persistedRequested);
+        return generateFrom(request, persistedRequested, supplemental);
     }
 
     /**
@@ -252,12 +293,21 @@ public final class EnterpriseGenerationService {
      *                                  versión es inválida
      */
     public EnterpriseProject generateRequested(EnterpriseGenerationRequest request, int version) {
+        return generateRequestedWithSupplemental(request, version, EnterpriseSupplementalInput.empty());
+    }
+
+    /**
+     * Genera una versión concreta sin volver a publicar {@code EnterpriseProjectRequested},
+     * incorporando los datos numéricos estructurados (FASE 10B).
+     */
+    public EnterpriseProject generateRequestedWithSupplemental(
+            EnterpriseGenerationRequest request, int version, EnterpriseSupplementalInput supplemental) {
         if (request == null) {
             throw new IllegalArgumentException("La solicitud de generación no puede ser null.");
         }
         if (version < 1) {
-            throw new IllegalArgumentException("La versión solicitada debe ser mayor o igual a 1 (recibida: "
-                + version + ").");
+            throw new IllegalArgumentException(
+                    "La versión solicitada debe ser mayor o igual a 1 (recibida: " + version + ").");
         }
         UUID projectId = request.projectId();
         Optional<EnterpriseProject> existing = repository.findByVersion(projectId, version);
@@ -265,7 +315,7 @@ public final class EnterpriseGenerationService {
             return existing.get();
         }
         EnterpriseProject requested = EnterpriseProject.request(projectId, version);
-        return generateFrom(request, repository.save(requested));
+        return generateFrom(request, repository.save(requested), supplemental);
     }
 
     /**
@@ -283,6 +333,18 @@ public final class EnterpriseGenerationService {
             throw new IllegalArgumentException("La solicitud de generación no puede ser null.");
         }
         return CompletableFuture.supplyAsync(() -> generate(request), executor);
+    }
+
+    /**
+     * Genera el proyecto empresarial de forma asíncrona incorporando los datos
+     * numéricos estructurados (FASE 10B).
+     */
+    public CompletableFuture<EnterpriseProject> generateAsyncWithSupplemental(
+            EnterpriseGenerationRequest request, EnterpriseSupplementalInput supplemental) {
+        if (request == null) {
+            throw new IllegalArgumentException("La solicitud de generación no puede ser null.");
+        }
+        return CompletableFuture.supplyAsync(() -> generateWithSupplemental(request, supplemental), executor);
     }
 
     // ------------------------------------------------------------------
@@ -315,18 +377,24 @@ public final class EnterpriseGenerationService {
      * {@code EnterpriseProjectFailed}.
      */
     private EnterpriseProject generateFrom(EnterpriseGenerationRequest request, EnterpriseProject requested) {
+        return generateFrom(request, requested, EnterpriseSupplementalInput.empty());
+    }
+
+    private EnterpriseProject generateFrom(
+            EnterpriseGenerationRequest request,
+            EnterpriseProject requested,
+            EnterpriseSupplementalInput supplemental) {
         UUID projectId = request.projectId();
         EnterpriseProject running = requested.startGeneration();
         repository.save(running);
         try {
-            GeneratedContent content = generateContent(request, running.version());
+            GeneratedContent content = generateContent(request, running.version(), supplemental);
             EnterpriseProject withDocuments = running;
             for (DocumentArtifact document : content.documents()) {
                 withDocuments = withDocuments.attachDocument(document);
             }
-            EnterpriseProject withScore = content.score() != null
-                ? withDocuments.withScore(content.score())
-                : withDocuments;
+            EnterpriseProject withScore =
+                    content.score() != null ? withDocuments.withScore(content.score()) : withDocuments;
             EnterpriseProject completed = withScore.completeGeneration();
             EnterpriseProject saved = repository.save(completed);
             eventBus.publish(new EnterpriseProjectGenerated(projectId, saved.version()));
@@ -343,45 +411,67 @@ public final class EnterpriseGenerationService {
      * (única fuente de verdad) y viaja con el contenido para adjuntarse al
      * aggregate.
      */
-    private GeneratedContent generateContent(EnterpriseGenerationRequest request, int version) {        ProjectContext context = request.context();
+    private GeneratedContent generateContent(EnterpriseGenerationRequest request, int version) {
+        return generateContent(request, version, EnterpriseSupplementalInput.empty());
+    }
+
+    private GeneratedContent generateContent(
+            EnterpriseGenerationRequest request, int version, EnterpriseSupplementalInput supplemental) {
+        ProjectContext context = request.context();
         RecommendationResult recommendations = request.recommendations();
         OpportunityResult opportunities = request.opportunities();
         KnowledgeResult knowledge = request.knowledge();
         RiskResult riskResult = request.riskResult();
 
-        BusinessModelResult businessModel = nonNull(businessModelEngine.evaluate(
-            new BusinessModelInput(context, recommendations, opportunities, knowledge)),
-            BusinessModelResult.empty());
-        MarketResult market = nonNull(marketEngine.evaluate(
-            new MarketInput(context, recommendations, opportunities, knowledge)),
-            MarketResult.empty());
-        InnovationResult innovation = nonNull(innovationEngine.evaluate(
-            new InnovationInput(context, opportunities, knowledge)),
-            InnovationResult.empty());
-        FinancialPlanResult financialPlan = nonNull(financialPlanEngine.evaluate(
-            new FinancialPlanInput(context, market.plan(), recommendations)),
-            FinancialPlanResult.empty());
-        RoadmapResult roadmap = nonNull(roadmapEngine.evaluate(
-            new RoadmapInput(context, recommendations, financialPlan.plan())),
-            RoadmapResult.empty());
-        RiskPlanResult riskPlan = nonNull(riskPlanEngine.evaluate(
-            new RiskPlanInput(riskResult, financialPlan.plan())),
-            RiskPlanResult.empty());
-        KpiResult kpi = nonNull(kpiEngine.evaluate(
-            new KpiInput(context, market.plan(), financialPlan.plan())),
-            KpiResult.empty());
-        EnterpriseScoreResult scoreResult = nonNull(enterpriseScoreEngine.evaluate(
-            new EnterpriseScoreInput(
-                context, businessModel.canvas(), market.plan(), innovation.plan(),
-                financialPlan.plan(), riskPlan.matrix(), roadmap.roadmap(), kpi.kpis(),
-                recommendations, opportunities, knowledge, riskResult)),
-            EnterpriseScoreResult.empty());
+        BusinessModelResult businessModel = nonNull(
+                businessModelEngine.evaluate(
+                        new BusinessModelInput(context, recommendations, opportunities, knowledge)),
+                BusinessModelResult.empty());
+        MarketResult market = nonNull(
+                marketEngine.evaluate(new MarketInput(context, recommendations, opportunities, knowledge)),
+                MarketResult.empty());
+        MarketPlan marketPlan = NumericPlanIntegrator.integrateMarketPlan(market.plan(), supplemental);
+        InnovationResult innovation = nonNull(
+                innovationEngine.evaluate(new InnovationInput(context, opportunities, knowledge)),
+                InnovationResult.empty());
+        FinancialPlanResult financialPlan = nonNull(
+                financialPlanEngine.evaluate(new FinancialPlanInput(context, marketPlan, recommendations)),
+                FinancialPlanResult.empty());
+        RoadmapResult roadmap = nonNull(
+                roadmapEngine.evaluate(new RoadmapInput(context, recommendations, financialPlan.plan())),
+                RoadmapResult.empty());
+        RiskPlanResult riskPlan = nonNull(
+                riskPlanEngine.evaluate(new RiskPlanInput(riskResult, financialPlan.plan())), RiskPlanResult.empty());
+        KpiResult kpi =
+                nonNull(kpiEngine.evaluate(new KpiInput(context, marketPlan, financialPlan.plan())), KpiResult.empty());
+        EnterpriseScoreResult scoreResult = nonNull(
+                enterpriseScoreEngine.evaluate(new EnterpriseScoreInput(
+                        context,
+                        businessModel.canvas(),
+                        marketPlan,
+                        innovation.plan(),
+                        financialPlan.plan(),
+                        riskPlan.matrix(),
+                        roadmap.roadmap(),
+                        kpi.kpis(),
+                        recommendations,
+                        opportunities,
+                        knowledge,
+                        riskResult)),
+                EnterpriseScoreResult.empty());
 
-        List<DocumentArtifact> documents = documentAssembler.assemble(version, businessModel,
-            market, innovation, financialPlan, roadmap, riskPlan, kpi);
+        List<DocumentArtifact> documents = documentAssembler.assemble(
+                version, businessModel, market, innovation, financialPlan, roadmap, riskPlan, kpi);
         if (narrativeGenerator != null && scoreResult.score() != null) {
-            documents = withNarrativeDocuments(version, context, recommendations, opportunities,
-                knowledge, riskResult, scoreResult.score(), documents);
+            documents = withNarrativeDocuments(
+                    version,
+                    context,
+                    recommendations,
+                    opportunities,
+                    knowledge,
+                    riskResult,
+                    scoreResult.score(),
+                    documents);
         }
         return new GeneratedContent(documents, scoreResult.score());
     }
@@ -391,16 +481,18 @@ public final class EnterpriseGenerationService {
      * la IA al final de la generación, sin modificar los documentos
      * deterministas (Fase 10, Milestone 3E).
      */
-    private List<DocumentArtifact> withNarrativeDocuments(int version, ProjectContext context,
-                                                          RecommendationResult recommendations,
-                                                          OpportunityResult opportunities,
-                                                          KnowledgeResult knowledge,
-                                                          RiskResult riskResult,
-                                                          EnterpriseScore score,
-                                                          List<DocumentArtifact> documents) {
+    private List<DocumentArtifact> withNarrativeDocuments(
+            int version,
+            ProjectContext context,
+            RecommendationResult recommendations,
+            OpportunityResult opportunities,
+            KnowledgeResult knowledge,
+            RiskResult riskResult,
+            EnterpriseScore score,
+            List<DocumentArtifact> documents) {
         var all = new ArrayList<>(documents);
-        all.addAll(narrativeGenerator.generate(version, context, recommendations, opportunities,
-            knowledge, riskResult, score, documents));
+        all.addAll(narrativeGenerator.generate(
+                version, context, recommendations, opportunities, knowledge, riskResult, score, documents));
         return List.copyOf(all);
     }
 
@@ -409,16 +501,15 @@ public final class EnterpriseGenerationService {
      * calculado por el motor (puede ser {@code null} si el motor no produjo
      * puntuación).
      */
-    private record GeneratedContent(List<DocumentArtifact> documents, EnterpriseScore score) {
-    }
+    private record GeneratedContent(List<DocumentArtifact> documents, EnterpriseScore score) {}
 
     /**
      * Persiste el estado {@code FAILED} y emite el evento de fallo.
      */
     private EnterpriseProject fail(UUID projectId, EnterpriseProject running, RuntimeException cause) {
         String reason = cause.getMessage() == null || cause.getMessage().isBlank()
-            ? cause.getClass().getSimpleName()
-            : cause.getMessage();
+                ? cause.getClass().getSimpleName()
+                : cause.getMessage();
         EnterpriseProject failed = running.failGeneration(reason);
         EnterpriseProject saved = repository.save(failed);
         eventBus.publish(new EnterpriseProjectFailed(projectId, saved.version(), reason));

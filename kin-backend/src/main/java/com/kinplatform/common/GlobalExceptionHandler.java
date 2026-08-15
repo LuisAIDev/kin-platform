@@ -14,6 +14,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -26,8 +27,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(EmailVerificationRequiredException.class)
-    public ResponseEntity<Map<String, String>> handleEmailVerificationRequired(
-            EmailVerificationRequiredException ex) {
+    public ResponseEntity<Map<String, String>> handleEmailVerificationRequired(EmailVerificationRequiredException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of("error", ex.getMessage(), "code", "EMAIL_VERIFICATION_REQUIRED"));
     }
@@ -61,6 +61,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ReportNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleReportNotFound(ReportNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, String>> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "El archivo supera el tamaño máximo permitido."));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

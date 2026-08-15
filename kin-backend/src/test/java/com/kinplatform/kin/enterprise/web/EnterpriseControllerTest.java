@@ -1,26 +1,5 @@
 package com.kinplatform.kin.enterprise.web;
 
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
-import com.kinplatform.kin.enterprise.application.EnterpriseExportOrchestrator;
-import com.kinplatform.kin.enterprise.application.EnterpriseGenerationOrchestrator;
-import com.kinplatform.kin.enterprise.application.EnterpriseGenerationRequest;
-import com.kinplatform.kin.enterprise.application.EnterpriseGenerationService;
-import com.kinplatform.kin.enterprise.application.InMemoryEnterpriseProjectRepository;
-import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
-import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
-import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
-import com.kinplatform.kin.enterprise.valueobjects.RenderFormat;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import java.util.Optional;
-import java.util.UUID;
-
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,6 +14,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
+import com.kinplatform.kin.enterprise.application.EnterpriseExportOrchestrator;
+import com.kinplatform.kin.enterprise.application.EnterpriseGenerationOrchestrator;
+import com.kinplatform.kin.enterprise.application.EnterpriseGenerationRequest;
+import com.kinplatform.kin.enterprise.application.EnterpriseGenerationService;
+import com.kinplatform.kin.enterprise.application.InMemoryEnterpriseProjectRepository;
+import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
+import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
+import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
+import com.kinplatform.kin.enterprise.valueobjects.RenderFormat;
+import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import java.util.Optional;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 class EnterpriseControllerTest {
 
     private static final UUID PROJECT_ID = UUID.randomUUID();
@@ -47,17 +46,39 @@ class EnterpriseControllerTest {
     void setUp() {
         repository = new InMemoryEnterpriseProjectRepository();
         contextRepository = mock(ContextRepository.class);
-        when(contextRepository.find(PROJECT_ID))
-            .thenReturn(Optional.of(EngineTestFixtures.contextWithAll()));
+        when(contextRepository.find(PROJECT_ID)).thenReturn(Optional.of(EngineTestFixtures.contextWithAll()));
         var generation = new EnterpriseGenerationService(
-            new EnterpriseDocumentAssembler(), repository, new InMemoryDomainEventBus());
-        var controller = new EnterpriseController(repository, contextRepository,
-            new EnterpriseExportOrchestrator(repository),
-            new EnterpriseGenerationOrchestrator(generation),
-            new EnterpriseWebMapper());
+                new EnterpriseDocumentAssembler(), repository, new InMemoryDomainEventBus());
+        var controller = new EnterpriseController(
+                repository,
+                contextRepository,
+                new EnterpriseExportOrchestrator(repository),
+                new EnterpriseGenerationOrchestrator(generation),
+                new EnterpriseWebMapper(),
+                enricher(),
+                dataProvider());
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-            .setControllerAdvice(new EnterpriseApiExceptionHandler())
-            .build();
+                .setControllerAdvice(new EnterpriseApiExceptionHandler())
+                .build();
+    }
+
+    /** Enricher que devuelve el contexto sin cambios (regresión: igual que sin integración). */
+    private com.kinplatform.kin.enterprise.integration.EnterpriseContextEnricher enricher() {
+        var enricher = mock(com.kinplatform.kin.enterprise.integration.EnterpriseContextEnricher.class);
+        when(enricher.enrich(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(inv -> inv.getArgument(1));
+        return enricher;
+    }
+
+    /** Proveedor sin datos adicionales: el suplemento queda vacío (no-op). */
+    private com.kinplatform.kin.enterprise.integration.EnterpriseDataProvider dataProvider() {
+        var provider = mock(com.kinplatform.kin.enterprise.integration.EnterpriseDataProvider.class);
+        when(provider.load(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new com.kinplatform.kin.enterprise.integration.EnterpriseIntegrationData(
+                        com.kinplatform.kin.enterprise.integration.ResolvedContext.resolve(null, java.util.List.of()),
+                        com.kinplatform.kin.enterprise.integration.SupplementalData.from(java.util.List.of()),
+                        java.util.List.of()));
+        return provider;
     }
 
     private void seedCompleted(int version, DocumentType... types) {
@@ -73,18 +94,18 @@ class EnterpriseControllerTest {
         seedCompleted(1, DocumentType.LEAN_CANVAS);
 
         mockMvc.perform(get("/enterprise/{projectId}", PROJECT_ID))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.projectId").value(PROJECT_ID.toString()))
-            .andExpect(jsonPath("$.version").value(1))
-            .andExpect(jsonPath("$.status").value("COMPLETED"))
-            .andExpect(jsonPath("$.documentCount").value(1));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.projectId").value(PROJECT_ID.toString()))
+                .andExpect(jsonPath("$.version").value(1))
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.documentCount").value(1));
     }
 
     @Test
     void getSummary_sinVersiones_deberiaDevolver404() throws Exception {
         mockMvc.perform(get("/enterprise/{projectId}", PROJECT_ID))
-            .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.status").value(404));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
@@ -92,16 +113,15 @@ class EnterpriseControllerTest {
         seedCompleted(1, DocumentType.LEAN_CANVAS, DocumentType.KPI);
 
         mockMvc.perform(get("/enterprise/{projectId}/latest", PROJECT_ID))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.version").value(1))
-            .andExpect(jsonPath("$.documents", hasSize(2)))
-            .andExpect(jsonPath("$.documents[0].type").value("LEAN_CANVAS"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(1))
+                .andExpect(jsonPath("$.documents", hasSize(2)))
+                .andExpect(jsonPath("$.documents[0].type").value("LEAN_CANVAS"));
     }
 
     @Test
     void getLatest_sinVersiones_deberiaDevolver404() throws Exception {
-        mockMvc.perform(get("/enterprise/{projectId}/latest", PROJECT_ID))
-            .andExpect(status().isNotFound());
+        mockMvc.perform(get("/enterprise/{projectId}/latest", PROJECT_ID)).andExpect(status().isNotFound());
     }
 
     @Test
@@ -110,17 +130,17 @@ class EnterpriseControllerTest {
         seedCompleted(2, DocumentType.KPI);
 
         mockMvc.perform(get("/enterprise/{projectId}/versions", PROJECT_ID))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$", hasSize(2)))
-            .andExpect(jsonPath("$[0].version").value(1))
-            .andExpect(jsonPath("$[1].version").value(2));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].version").value(1))
+                .andExpect(jsonPath("$[1].version").value(2));
     }
 
     @Test
     void getVersions_sinVersiones_deberiaDevolverListaVacia() throws Exception {
         mockMvc.perform(get("/enterprise/{projectId}/versions", PROJECT_ID))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$", hasSize(0)));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test
@@ -128,9 +148,9 @@ class EnterpriseControllerTest {
         seedCompleted(3, DocumentType.ROADMAP);
 
         mockMvc.perform(get("/enterprise/{projectId}/{version}", PROJECT_ID, 3))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.version").value(3))
-            .andExpect(jsonPath("$.status").value("COMPLETED"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(3))
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
     }
 
     @Test
@@ -138,14 +158,13 @@ class EnterpriseControllerTest {
         seedCompleted(1, DocumentType.LEAN_CANVAS);
 
         mockMvc.perform(get("/enterprise/{projectId}/{version}", PROJECT_ID, 99))
-            .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.status").value(404));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
     void getByVersion_invalida_deberiaDevolver400() throws Exception {
-        mockMvc.perform(get("/enterprise/{projectId}/{version}", PROJECT_ID, 0))
-            .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/enterprise/{projectId}/{version}", PROJECT_ID, 0)).andExpect(status().isBadRequest());
     }
 
     // ------------------------------------------------------------------
@@ -155,20 +174,20 @@ class EnterpriseControllerTest {
     @Test
     void generate_bloqueante_deberiaGenerarYDevolver201() throws Exception {
         mockMvc.perform(post("/enterprise/{projectId}/generate", PROJECT_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"async\":false}"))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.version").value(1))
-            .andExpect(jsonPath("$.status").value("COMPLETED"))
-            .andExpect(jsonPath("$.documents", hasSize(7)));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"async\":false}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.version").value(1))
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.documents", hasSize(7)));
     }
 
     @Test
     void generate_asincrono_deberiaDevolver202() throws Exception {
         mockMvc.perform(post("/enterprise/{projectId}/generate", PROJECT_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"async\":true}"))
-            .andExpect(status().isAccepted());
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"async\":true}"))
+                .andExpect(status().isAccepted());
     }
 
     @Test
@@ -176,10 +195,10 @@ class EnterpriseControllerTest {
         repository.save(EnterpriseProject.request(PROJECT_ID, 1));
 
         mockMvc.perform(post("/enterprise/{projectId}/generate", PROJECT_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"async\":false}"))
-            .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.status").value("REQUESTED"));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"async\":false}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value("REQUESTED"));
     }
 
     @Test
@@ -187,26 +206,26 @@ class EnterpriseControllerTest {
         when(contextRepository.find(PROJECT_ID)).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/enterprise/{projectId}/generate", PROJECT_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"async\":false}"))
-            .andExpect(status().isUnprocessableEntity());
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"async\":false}"))
+                .andExpect(status().isUnprocessableEntity());
     }
 
     @Test
     void generate_conSolicitudInvalida_deberiaDevolver400() throws Exception {
         mockMvc.perform(post("/enterprise/{projectId}/generate", PROJECT_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}"))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.fieldErrors.async").exists());
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.async").exists());
     }
 
     @Test
     void generate_conVersionInvalida_deberiaDevolver400() throws Exception {
         mockMvc.perform(post("/enterprise/{projectId}/generate", PROJECT_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"async\":false,\"requestedVersion\":0}"))
-            .andExpect(status().isBadRequest());
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"async\":false,\"requestedVersion\":0}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -214,33 +233,44 @@ class EnterpriseControllerTest {
         seedCompleted(1, DocumentType.LEAN_CANVAS);
 
         mockMvc.perform(post("/enterprise/{projectId}/generate", PROJECT_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"async\":false,\"requestedVersion\":2}"))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.version").value(2))
-            .andExpect(jsonPath("$.status").value("COMPLETED"));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"async\":false,\"requestedVersion\":2}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.version").value(2))
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
     }
 
     @Test
     void generate_generacionFallida_deberiaDevolver422() throws Exception {
-        var failed = EnterpriseProject.fail(PROJECT_ID, 1,
-            java.time.OffsetDateTime.now(), java.time.OffsetDateTime.now(),
-            "fallo del motor", java.util.List.of());
+        var failed = EnterpriseProject.fail(
+                PROJECT_ID,
+                1,
+                java.time.OffsetDateTime.now(),
+                java.time.OffsetDateTime.now(),
+                "fallo del motor",
+                java.util.List.of());
         var mockGeneration = mock(EnterpriseGenerationOrchestrator.class);
-        when(mockGeneration.generate(
-            org.mockito.ArgumentMatchers.any(EnterpriseGenerationRequest.class))).thenReturn(failed);
-        var controller = new EnterpriseController(repository, contextRepository,
-            new EnterpriseExportOrchestrator(repository), mockGeneration,
-            new EnterpriseWebMapper());
+        when(mockGeneration.generateWithSupplemental(
+                        org.mockito.ArgumentMatchers.any(EnterpriseGenerationRequest.class),
+                        org.mockito.ArgumentMatchers.any()))
+                .thenReturn(failed);
+        var controller = new EnterpriseController(
+                repository,
+                contextRepository,
+                new EnterpriseExportOrchestrator(repository),
+                mockGeneration,
+                new EnterpriseWebMapper(),
+                enricher(),
+                dataProvider());
         var mvc = MockMvcBuilders.standaloneSetup(controller)
-            .setControllerAdvice(new EnterpriseApiExceptionHandler())
-            .build();
+                .setControllerAdvice(new EnterpriseApiExceptionHandler())
+                .build();
 
         mvc.perform(post("/enterprise/{projectId}/generate", PROJECT_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"async\":false}"))
-            .andExpect(status().isUnprocessableEntity())
-            .andExpect(jsonPath("$.status").value("FAILED"));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"async\":false}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.status").value("FAILED"));
     }
 
     // ------------------------------------------------------------------
@@ -252,15 +282,15 @@ class EnterpriseControllerTest {
         seedCompleted(1, DocumentType.LEAN_CANVAS);
 
         mockMvc.perform(get("/enterprise/{projectId}/{version}/status", PROJECT_ID, 1))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("COMPLETED"))
-            .andExpect(jsonPath("$.projectId").value(PROJECT_ID.toString()));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.projectId").value(PROJECT_ID.toString()));
     }
 
     @Test
     void getStatus_inexistente_deberiaDevolver404() throws Exception {
         mockMvc.perform(get("/enterprise/{projectId}/{version}/status", PROJECT_ID, 1))
-            .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -268,45 +298,42 @@ class EnterpriseControllerTest {
         seedCompleted(1, DocumentType.LEAN_CANVAS, DocumentType.KPI);
 
         mockMvc.perform(get("/enterprise/{projectId}/{version}/documents", PROJECT_ID, 1))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$", hasSize(2)))
-            .andExpect(jsonPath("$[0].type").value("LEAN_CANVAS"))
-            .andExpect(jsonPath("$[0].size").isNumber());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].type").value("LEAN_CANVAS"))
+                .andExpect(jsonPath("$[0].size").isNumber());
     }
 
     @Test
     void getDocuments_inexistente_deberiaDevolver404() throws Exception {
         mockMvc.perform(get("/enterprise/{projectId}/{version}/documents", PROJECT_ID, 1))
-            .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void getDocument_deberiaDevolverLosMetadatos() throws Exception {
         seedCompleted(1, DocumentType.LEAN_CANVAS);
 
-        mockMvc.perform(get("/enterprise/{projectId}/{version}/documents/{type}",
-                PROJECT_ID, 1, "LEAN_CANVAS"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.type").value("LEAN_CANVAS"))
-            .andExpect(jsonPath("$.generatedBy").value("BusinessModelEngine"));
+        mockMvc.perform(get("/enterprise/{projectId}/{version}/documents/{type}", PROJECT_ID, 1, "LEAN_CANVAS"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type").value("LEAN_CANVAS"))
+                .andExpect(jsonPath("$.generatedBy").value("BusinessModelEngine"));
     }
 
     @Test
     void getDocument_tipoAusente_deberiaDevolver404() throws Exception {
         seedCompleted(1, DocumentType.LEAN_CANVAS);
 
-        mockMvc.perform(get("/enterprise/{projectId}/{version}/documents/{type}",
-                PROJECT_ID, 1, "KPI"))
-            .andExpect(status().isNotFound());
+        mockMvc.perform(get("/enterprise/{projectId}/{version}/documents/{type}", PROJECT_ID, 1, "KPI"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void getDocument_tipoInvalido_deberiaDevolver400() throws Exception {
         seedCompleted(1, DocumentType.LEAN_CANVAS);
 
-        mockMvc.perform(get("/enterprise/{projectId}/{version}/documents/{type}",
-                PROJECT_ID, 1, "NO_EXISTE"))
-            .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/enterprise/{projectId}/{version}/documents/{type}", PROJECT_ID, 1, "NO_EXISTE"))
+                .andExpect(status().isBadRequest());
     }
 
     // ------------------------------------------------------------------
@@ -318,30 +345,30 @@ class EnterpriseControllerTest {
         seedCompleted(1, DocumentType.LEAN_CANVAS);
 
         mockMvc.perform(get("/enterprise/{projectId}/{version}/export", PROJECT_ID, 1))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.projectId").value(PROJECT_ID.toString()))
-            .andExpect(jsonPath("$.version").value(1))
-            .andExpect(jsonPath("$.documents.LEAN_CANVAS.PDF").isNumber())
-            .andExpect(jsonPath("$.documents.LEAN_CANVAS.DOCX").isNumber())
-            .andExpect(jsonPath("$.documents.LEAN_CANVAS.PPTX").isNumber());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.projectId").value(PROJECT_ID.toString()))
+                .andExpect(jsonPath("$.version").value(1))
+                .andExpect(jsonPath("$.documents.LEAN_CANVAS.PDF").isNumber())
+                .andExpect(jsonPath("$.documents.LEAN_CANVAS.DOCX").isNumber())
+                .andExpect(jsonPath("$.documents.LEAN_CANVAS.PPTX").isNumber());
     }
 
     @Test
     void getExport_inexistente_deberiaDevolver404() throws Exception {
         mockMvc.perform(get("/enterprise/{projectId}/{version}/export", PROJECT_ID, 1))
-            .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void exportFormat_deberiaDevolverUnZip() throws Exception {
         seedCompleted(1, DocumentType.LEAN_CANVAS, DocumentType.KPI);
 
-        var response = mockMvc.perform(get("/enterprise/{projectId}/{version}/export/{format}",
-                PROJECT_ID, 1, "PDF"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType("application/zip"))
-            .andExpect(header().string("Content-Disposition", startsWith("attachment")))
-            .andReturn().getResponse();
+        var response = mockMvc.perform(get("/enterprise/{projectId}/{version}/export/{format}", PROJECT_ID, 1, "PDF"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/zip"))
+                .andExpect(header().string("Content-Disposition", startsWith("attachment")))
+                .andReturn()
+                .getResponse();
 
         byte[] bytes = response.getContentAsByteArray();
         assertTrue(bytes.length > 0);
@@ -353,93 +380,102 @@ class EnterpriseControllerTest {
     void exportFormat_formatoInvalido_deberiaDevolver400() throws Exception {
         seedCompleted(1, DocumentType.LEAN_CANVAS);
 
-        mockMvc.perform(get("/enterprise/{projectId}/{version}/export/{format}",
-                PROJECT_ID, 1, "HTML"))
-            .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/enterprise/{projectId}/{version}/export/{format}", PROJECT_ID, 1, "HTML"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void exportFormat_versionInexistente_deberiaDevolver404() throws Exception {
-        mockMvc.perform(get("/enterprise/{projectId}/{version}/export/{format}",
-                PROJECT_ID, 1, "PDF"))
-            .andExpect(status().isNotFound());
+        mockMvc.perform(get("/enterprise/{projectId}/{version}/export/{format}", PROJECT_ID, 1, "PDF"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void exportFormat_deberiaOmitirLosDocumentosSinElFormato() throws Exception {
         var bundle = com.kinplatform.kin.enterprise.application.EnterpriseDocumentBundle.of(
-            PROJECT_ID, 1, java.util.Map.of(
-                com.kinplatform.kin.enterprise.valueobjects.DocumentType.LEAN_CANVAS,
-                    java.util.Map.of(RenderFormat.DOCX, new byte[]{1}),
-                com.kinplatform.kin.enterprise.valueobjects.DocumentType.KPI,
-                    java.util.Map.of(RenderFormat.PDF, new byte[]{2})));
+                PROJECT_ID,
+                1,
+                java.util.Map.of(
+                        com.kinplatform.kin.enterprise.valueobjects.DocumentType.LEAN_CANVAS,
+                                java.util.Map.of(RenderFormat.DOCX, new byte[] {1}),
+                        com.kinplatform.kin.enterprise.valueobjects.DocumentType.KPI,
+                                java.util.Map.of(RenderFormat.PDF, new byte[] {2})));
         var mockExport = mock(EnterpriseExportOrchestrator.class);
         when(mockExport.export(PROJECT_ID, 1)).thenReturn(bundle);
-        var controller = new EnterpriseController(repository, contextRepository,
-            mockExport,
-            new EnterpriseGenerationOrchestrator(new EnterpriseGenerationService(
-                new EnterpriseDocumentAssembler(), repository, new InMemoryDomainEventBus())),
-            new EnterpriseWebMapper());
+        var controller = new EnterpriseController(
+                repository,
+                contextRepository,
+                mockExport,
+                new EnterpriseGenerationOrchestrator(new EnterpriseGenerationService(
+                        new EnterpriseDocumentAssembler(), repository, new InMemoryDomainEventBus())),
+                new EnterpriseWebMapper(),
+                enricher(),
+                dataProvider());
         var mvc = MockMvcBuilders.standaloneSetup(controller)
-            .setControllerAdvice(new EnterpriseApiExceptionHandler())
-            .build();
+                .setControllerAdvice(new EnterpriseApiExceptionHandler())
+                .build();
 
-        mvc.perform(get("/enterprise/{projectId}/{version}/export/{format}",
-                PROJECT_ID, 1, "PDF"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType("application/zip"));
+        mvc.perform(get("/enterprise/{projectId}/{version}/export/{format}", PROJECT_ID, 1, "PDF"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/zip"));
     }
 
     @Test
     void exportDocument_deberiaDevolverLosBytesPdf() throws Exception {
         seedCompleted(1, DocumentType.LEAN_CANVAS);
 
-        mockMvc.perform(get("/enterprise/{projectId}/{version}/export/{type}/{format}",
-                PROJECT_ID, 1, "LEAN_CANVAS", "PDF"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType("application/pdf"))
-            .andExpect(header().string("Content-Disposition",
-                "attachment; filename=\"lean_canvas.pdf\""));
+        mockMvc.perform(get(
+                        "/enterprise/{projectId}/{version}/export/{type}/{format}",
+                        PROJECT_ID,
+                        1,
+                        "LEAN_CANVAS",
+                        "PDF"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/pdf"))
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"lean_canvas.pdf\""));
     }
 
     @Test
     void exportDocument_deberiaDevolverLosBytesDocx() throws Exception {
         seedCompleted(1, DocumentType.FINANCIAL_PLAN);
 
-        mockMvc.perform(get("/enterprise/{projectId}/{version}/export/{type}/{format}",
-                PROJECT_ID, 1, "FINANCIAL_PLAN", "DOCX"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
+        mockMvc.perform(get(
+                        "/enterprise/{projectId}/{version}/export/{type}/{format}",
+                        PROJECT_ID,
+                        1,
+                        "FINANCIAL_PLAN",
+                        "DOCX"))
+                .andExpect(status().isOk())
+                .andExpect(content()
+                        .contentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
     }
 
     @Test
     void exportDocument_deberiaDevolverLosBytesPptx() throws Exception {
         seedCompleted(1, DocumentType.ROADMAP);
 
-        mockMvc.perform(get("/enterprise/{projectId}/{version}/export/{type}/{format}",
-                PROJECT_ID, 1, "ROADMAP", "PPTX"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(
-                "application/vnd.openxmlformats-officedocument.presentationml.presentation"));
+        mockMvc.perform(get(
+                        "/enterprise/{projectId}/{version}/export/{type}/{format}", PROJECT_ID, 1, "ROADMAP", "PPTX"))
+                .andExpect(status().isOk())
+                .andExpect(content()
+                        .contentType("application/vnd.openxmlformats-officedocument.presentationml.presentation"));
     }
 
     @Test
     void exportDocument_tipoAusente_deberiaDevolver404() throws Exception {
         seedCompleted(1, DocumentType.LEAN_CANVAS);
 
-        mockMvc.perform(get("/enterprise/{projectId}/{version}/export/{type}/{format}",
-                PROJECT_ID, 1, "KPI", "PDF"))
-            .andExpect(status().isNotFound());
+        mockMvc.perform(get("/enterprise/{projectId}/{version}/export/{type}/{format}", PROJECT_ID, 1, "KPI", "PDF"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void exportDocument_tipoInvalido_deberiaDevolver400() throws Exception {
         seedCompleted(1, DocumentType.LEAN_CANVAS);
 
-        mockMvc.perform(get("/enterprise/{projectId}/{version}/export/{type}/{format}",
-                PROJECT_ID, 1, "NO_EXISTE", "PDF"))
-            .andExpect(status().isBadRequest());
+        mockMvc.perform(get(
+                        "/enterprise/{projectId}/{version}/export/{type}/{format}", PROJECT_ID, 1, "NO_EXISTE", "PDF"))
+                .andExpect(status().isBadRequest());
     }
 
     // ------------------------------------------------------------------
@@ -448,12 +484,16 @@ class EnterpriseControllerTest {
 
     @Test
     void constructor_conDependenciaNula_deberiaLanzar() {
-        assertThrows(IllegalArgumentException.class,
-            () -> new EnterpriseController(null, contextRepository,
-                new EnterpriseExportOrchestrator(repository),
-                new EnterpriseGenerationOrchestrator(
-                    new EnterpriseGenerationService(new EnterpriseDocumentAssembler(),
-                        repository, new InMemoryDomainEventBus())),
-                new EnterpriseWebMapper()));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new EnterpriseController(
+                        null,
+                        contextRepository,
+                        new EnterpriseExportOrchestrator(repository),
+                        new EnterpriseGenerationOrchestrator(new EnterpriseGenerationService(
+                                new EnterpriseDocumentAssembler(), repository, new InMemoryDomainEventBus())),
+                        new EnterpriseWebMapper(),
+                        enricher(),
+                        dataProvider()));
     }
 }

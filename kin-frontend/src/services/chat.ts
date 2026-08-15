@@ -1,5 +1,6 @@
 import { api } from "./api";
 import { getToken } from "./session";
+import { isChatMessageTooLong, MAX_CHAT_MESSAGE_LENGTH } from "@/utils/chatLimits";
 
 export interface ChatMessage {
   id: string;
@@ -28,8 +29,16 @@ export interface StreamCallbacks {
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
 
 export const chatService = {
-  sendMessage: (projectId: string, content: string) =>
-    api.post<ChatResponse>(`/projects/${projectId}/chat`, { content }),
+  sendMessage: (projectId: string, content: string) => {
+    if (isChatMessageTooLong(content)) {
+      return Promise.reject(
+        new Error(
+          `El mensaje no puede superar ${MAX_CHAT_MESSAGE_LENGTH} caracteres (${content.length}).`,
+        ),
+      );
+    }
+    return api.post<ChatResponse>(`/projects/${projectId}/chat`, { content });
+  },
 
   sendMessageStream: (projectId: string, content: string, callbacks: StreamCallbacks): AbortController => {
     const controller = new AbortController();
@@ -39,6 +48,14 @@ export const chatService = {
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
     (async () => {
+      if (isChatMessageTooLong(content)) {
+        callbacks.onError(
+          new Error(
+            `El mensaje no puede superar ${MAX_CHAT_MESSAGE_LENGTH} caracteres (${content.length}).`,
+          ),
+        );
+        return;
+      }
       try {
         const url = `${API_URL}/projects/${projectId}/chat/stream`;
         console.log("=== CHAT SENDING REQUEST ===");

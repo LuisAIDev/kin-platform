@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enterprise.application;
 
 import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
-
+import com.kinplatform.kin.enterprise.integration.EnterpriseSupplementalInput;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -49,6 +49,16 @@ public final class EnterpriseGenerationOrchestrator {
     }
 
     /**
+     * Genera el proyecto empresarial de forma bloqueante incorporando los datos
+     * numéricos estructurados (FASE 10B). Con entrada vacía es idéntico a
+     * {@link #generate(EnterpriseGenerationRequest)}.
+     */
+    public EnterpriseProject generateWithSupplemental(
+            EnterpriseGenerationRequest request, EnterpriseSupplementalInput supplemental) {
+        return service.generateWithSupplemental(request, supplemental);
+    }
+
+    /**
      * Genera el proyecto empresarial de forma asíncrona.
      *
      * @param request solicitud de generación (obligatoria)
@@ -56,6 +66,12 @@ public final class EnterpriseGenerationOrchestrator {
      */
     public CompletableFuture<EnterpriseProject> generateAsync(EnterpriseGenerationRequest request) {
         return service.generateAsync(request);
+    }
+
+    /** Genera de forma asíncrona incorporando los datos numéricos estructurados (FASE 10B). */
+    public CompletableFuture<EnterpriseProject> generateAsyncWithSupplemental(
+            EnterpriseGenerationRequest request, EnterpriseSupplementalInput supplemental) {
+        return service.generateAsyncWithSupplemental(request, supplemental);
     }
 
     /**
@@ -75,6 +91,12 @@ public final class EnterpriseGenerationOrchestrator {
         return service.generateRequested(request, version);
     }
 
+    /** Genera una versión concreta incorporando los datos numéricos estructurados (FASE 10B). */
+    public EnterpriseProject generateRequestedWithSupplemental(
+            EnterpriseGenerationRequest request, int version, EnterpriseSupplementalInput supplemental) {
+        return service.generateRequestedWithSupplemental(request, version, supplemental);
+    }
+
     /**
      * Firma histórica del Milestone 1, conservada por compatibilidad binaria.
      *
@@ -89,7 +111,7 @@ public final class EnterpriseGenerationOrchestrator {
      */
     public EnterpriseProject generate(UUID projectId) {
         throw new UnsupportedOperationException(
-            "La generación requiere una EnterpriseGenerationRequest con los resultados "
-            + "del pipeline (Milestone 2E); utilice generate(EnterpriseGenerationRequest).");
+                "La generación requiere una EnterpriseGenerationRequest con los resultados "
+                        + "del pipeline (Milestone 2E); utilice generate(EnterpriseGenerationRequest).");
     }
 }

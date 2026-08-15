@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { EnterpriseScoreCard } from "@/components/enterprise/EnterpriseScoreCard";
 import { DocumentList } from "@/components/enterprise/DocumentList";
 import { ExportButtons, type ExportFormat } from "@/components/enterprise/ExportButtons";
+import { EnterpriseInformationPanel } from "@/components/enterprise/EnterpriseInformationPanel";
 import { LiveLog } from "@/components/enterprise/LiveLog";
 import { ProgressBar } from "@/components/enterprise/ProgressBar";
 import { StatusBadge } from "@/components/enterprise/StatusBadge";
@@ -303,6 +304,8 @@ export default function EnterpriseDashboard({
           <Timeline events={events} />
         </div>
       </div>
+
+      <EnterpriseInformationPanel projectId={projectId} />
 
       <div className="card">
         <LiveLog events={events} connected={connected} />

@@ -1,4 +1,7 @@
-import type { EnterpriseDashboard } from "@/types/enterprise";
+import type {
+  EnterpriseDashboard,
+  EnterpriseInformation,
+} from "@/types/enterprise";
 import { API_URL, getToken } from "@/services/session";
 
 /** URL base de la API del backend KIN (compartida con el resto de servicios). */
@@ -31,6 +34,7 @@ async function binaryRequest(endpoint: string): Promise<Blob> {
 
 export interface EnterpriseApi {
   getDashboard(projectId: string, version: number): Promise<EnterpriseDashboard>;
+  getInformation(projectId: string): Promise<EnterpriseInformation>;
   downloadDocument(
     projectId: string,
     version: number,
@@ -55,6 +59,8 @@ export const enterpriseApi: EnterpriseApi = {
     jsonRequest<EnterpriseDashboard>(
       `/enterprise/${projectId}/${version}/dashboard`,
     ),
+  getInformation: (projectId) =>
+    jsonRequest<EnterpriseInformation>(`/enterprise/${projectId}/information`),
   downloadDocument: (projectId, version, type, format) =>
     binaryRequest(`/enterprise/${projectId}/${version}/export/${type}/${format}`),
   downloadBundle: (projectId, version, format) =>
