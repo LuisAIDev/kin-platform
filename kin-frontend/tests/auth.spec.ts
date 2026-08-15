@@ -6,14 +6,30 @@ const TEST_PASSWORD = 'TestPass123!';
 
 test.describe('Login flow', () => {
   test.beforeAll(async ({ request }) => {
-    const res = await request.post(`${API_URL}/auth/register`, {
+    // 1) Registro (emailVerified=false; el correo lo captura LoggingEmailSender en test)
+    const reg = await request.post(`${API_URL}/auth/register`, {
       data: {
         email: TEST_EMAIL,
         password: TEST_PASSWORD,
         fullName: 'Test User',
       },
     });
-    expect(res.ok()).toBeTruthy();
+    expect(reg.ok()).toBeTruthy();
+
+    // 2) Recuperar el enlace de verificación capturado por el test hook (solo perfil test)
+    const linkRes = await request.get(
+      `${API_URL}/auth/test/verification-link?email=${encodeURIComponent(TEST_EMAIL)}`
+    );
+    expect(linkRes.ok()).toBeTruthy();
+    const { link } = await linkRes.json();
+
+    // 3) Ejercitar el endpoint REAL de verificación
+    const token = new URL(link).searchParams.get('token');
+    expect(token).toBeTruthy();
+    const verifyRes = await request.get(
+      `${API_URL}/auth/verify-email?token=${encodeURIComponent(token!)}`
+    );
+    expect(verifyRes.ok()).toBeTruthy();
   });
 
   test.beforeEach(async ({ page }) => {
@@ -43,7 +59,7 @@ test.describe('Login flow', () => {
     await expect(errorEl).toHaveText('Invalid email or password');
   });
 
-  test('debe loguear con credenciales validas y redirigir a /dashboard', async ({ page }) => {
+  test('debe loguear con credenciales validas (cuenta verificada) y redirigir a /dashboard', async ({ page }) => {
     await page.locator('input[type="email"]').fill(TEST_EMAIL);
     await page.locator('input[type="password"]').fill(TEST_PASSWORD);
     await page.getByRole('button', { name: 'Entrar' }).click();

@@ -1,9 +1,11 @@
 package com.kinplatform.auth.email;
 
+import com.kinplatform.auth.TestVerificationStore;
 import jakarta.annotation.PostConstruct;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -16,6 +18,11 @@ import org.springframework.stereotype.Component;
  * ({@code prod}, {@code render}, {@code enterprise}): si se intenta activar
  * (p. ej. {@code APP_MAIL_ENABLED=false}) en esos perfiles, la aplicación
  * falla al arrancar en lugar de registrar tokens de verificación.</p>
+ *
+ * <p>Adicionalmente, cuando el {@link TestVerificationStore} existe (perfil
+ * {@code test}), captura temporalmente {@code email → enlace} en memoria para
+ * que los E2E de Playwright puedan ejercitar el endpoint real de verificación.
+ * La captura es opcional (ObjectProvider) y nunca persiste nada.</p>
  */
 @Slf4j
 @Component
@@ -26,6 +33,7 @@ public class LoggingEmailSender implements EmailSender {
     private static final Set<String> PRODUCTION_PROFILES = Set.of("prod", "render", "enterprise");
 
     private final Environment environment;
+    private final ObjectProvider<TestVerificationStore> storeProvider;
 
     @PostConstruct
     public void validateNotInProduction() {
@@ -42,5 +50,6 @@ public class LoggingEmailSender implements EmailSender {
     @Override
     public void sendVerificationEmail(String to, String fullName, String verificationLink) {
         log.warn("[email-verification][dev/no-smtp] destinatario={} enlace={}", to, verificationLink);
+        storeProvider.ifAvailable(store -> store.put(to, verificationLink));
     }
 }
