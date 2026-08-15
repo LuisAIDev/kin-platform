@@ -618,9 +618,9 @@ bash scripts/reset-dev-db.sh
 ## Testing
 
 ```bash
-cd kin-backend && ./mvnw clean verify   # backend: 1.850+ tests, 0 fallos (última release)
+cd kin-backend && ./mvnw clean verify   # backend: 2.548+ tests, 0 fallos (última release)
 cd kin-frontend && npm test              # frontend: 66+ tests (Vitest)
-cd kin-frontend && npx playwright test   # E2E (requiere backend con perfil test)
+cd kin-frontend && npx playwright test   # E2E sobre el entorno aislado (frontend :3100, backend E2E :8081)
 ```
 
 Cobertura de dominio ≥ 90 % (JaCoCo) en `kin.engine`, `kin.ai`, `kin.conversation`,
