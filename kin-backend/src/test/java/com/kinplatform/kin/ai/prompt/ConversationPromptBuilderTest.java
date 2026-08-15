@@ -332,4 +332,135 @@ class ConversationPromptBuilderTest {
         assertTrue(prompt.contains("No inventes capacidades de otros modelos"));
         assertTrue(prompt.contains("respondé con la configuración real actualmente implementada"));
     }
+
+    // ------------------------------------------------------------------
+    // AUTOCONOCIMIENTO — REGLA ABSOLUTA DE IDENTIDAD Y ARQUITECTURA
+    // ------------------------------------------------------------------
+
+    @Test
+    void build_autoconocimiento_deberiaIncluirReglaAbsolutaDeIdentidad() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("REGLA ABSOLUTA DE IDENTIDAD"));
+        assertTrue(prompt.contains("Bajo NINGUNA circunstancia te identifiques como \"Claude\", \"ChatGPT\""));
+        assertTrue(prompt.contains("un modelo desarrollado por Anthropic"));
+        assertTrue(prompt.contains("un modelo desarrollado por OpenAI"));
+        assertTrue(prompt.contains("un modelo desarrollado por Google"));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaProhibirIdentificarseComoCualquierLLM() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        // Las prohibiciones NO deben convertirse en afirmaciones de identidad.
+        assertFalse(prompt.contains("Soy Claude."));
+        assertFalse(prompt.contains("Soy ChatGPT."));
+        assertFalse(prompt.contains("Soy Gemini."));
+        assertFalse(prompt.contains("Soy DeepSeek."));
+        assertFalse(prompt.contains("Soy un modelo desarrollado por"));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaExplicarLaPreguntaEresUnaIA() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("¿ERES UNA INTELIGENCIA ARTIFICIAL?"));
+        assertTrue(prompt.contains("No respondas simplemente \"Sí, soy una inteligencia artificial\""));
+        assertTrue(prompt.contains("KIN es una plataforma inteligente que utiliza inteligencia artificial como uno de sus componentes tecnológicos"));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaExplicarQuienGeneraLasRespuestas() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("¿QUIÉN GENERA TUS RESPUESTAS?"));
+        assertTrue(prompt.contains("Mis respuestas se generan utilizando el modelo de lenguaje integrado en KIN, actualmente DeepSeek"));
+        assertTrue(prompt.contains("se produce dentro de la arquitectura de KIN"));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaSepararQueAportaKINYQueAportaLaIA() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("QUÉ APORTA KIN Y QUÉ APORTA LA IA"));
+        assertTrue(prompt.contains("KIN aporta: arquitectura de la aplicación"));
+        assertTrue(prompt.contains("La IA/LLM aporta: comprender el lenguaje natural"));
+        assertTrue(prompt.contains("No digas que el LLM \"es KIN\""));
+        assertTrue(prompt.contains("ni que DeepSeek \"decide por KIN\""));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaEvitarAntropomorfismoTecnico() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("Evitá el antropomorfismo técnico"));
+        assertTrue(prompt.contains("preferí \"KIN integra...\""));
+        assertFalse(prompt.contains("Yo soy el cerebro"));
+        assertFalse(prompt.contains("Yo soy el modelo"));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaManejarOtrosLLMYAsistentes() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("Copilot, Llama, Mistral, Grok, Qwen u otro LLM"));
+        assertTrue(prompt.contains("No tengo información suficiente para hacer una comparación específica"));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaReflejarElObjetivoEmpresarial() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("OBJETIVO PRINCIPAL"));
+        assertTrue(prompt.contains("orientada especialmente a resolver problemas y necesidades empresariales"));
+        assertTrue(prompt.contains("identificación de riesgos y oportunidades"));
+    }
+
+    @Test
+    void build_autoconocimiento_noDeberiaPresentarMonetizacionComoRazonPrincipal() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("MONETIZACIÓN"));
+        assertTrue(prompt.contains("No presentes \"ganar dinero\" como la razón principal de KIN"));
+        assertTrue(prompt.contains("Si el usuario pregunta específicamente \"¿Cómo gana dinero KIN?\""));
+        assertFalse(prompt.contains("Mi objetivo es ganar dinero"));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaExplicarQueElUsuarioHablaConKIN() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("Soy KIN, una plataforma inteligente orientada a ayudarte a estructurar y analizar proyectos"));
+        assertTrue(prompt.contains("KIN es la plataforma. El LLM es un componente tecnológico. DeepSeek es el modelo/proveedor actualmente configurado"));
+    }
 }
