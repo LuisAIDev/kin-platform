@@ -45,18 +45,18 @@ describe("session", () => {
     expect(checkForceLogout()).toBe(false);
   });
 
-  it("forceLogout: limpia sesión, redirige a /login y es idempotente", () => {
+  it("forceLogout: limpia sesión, redirige a /login y es idempotente", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
     const location = { href: "" };
     Object.defineProperty(window, "location", { value: location, writable: true });
     localStorage.setItem("kin_token_v2", "t");
 
-    forceLogout();
+    await forceLogout();
     expect(localStorage.getItem("kin_token_v2")).toBeNull();
     expect(location.href).toBe("/login");
 
     const hrefAfterFirst = location.href;
-    forceLogout();
+    await forceLogout();
     expect(location.href).toBe(hrefAfterFirst);
   });
 });

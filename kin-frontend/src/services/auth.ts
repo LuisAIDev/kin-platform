@@ -71,14 +71,21 @@ export const authService = {
     }
   },
 
-  logout() {
+  async logout(): Promise<void> {
     const token = getToken();
-    if (token) {
-      fetch(`${API_URL}/auth/logout`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        credentials: "include",
-      }).catch(() => {});
+    try {
+      if (token) {
+        // Esperar a que el backend invalide la cookie HttpOnly (Set-Cookie Max-Age=0)
+        // antes de limpiar la sesión y navegar, para que el middleware /login no
+        // vuelva a redirigir al dashboard.
+        await fetch(`${API_URL}/auth/logout`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
+        });
+      }
+    } catch {
+      // best-effort: aunque el POST falle, continuar limpiando la sesión local
     }
     clearSession();
   },

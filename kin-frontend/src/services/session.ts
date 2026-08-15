@@ -61,17 +61,22 @@ export function clearPendingEmail() {
   sessionStorage.removeItem("kin_pending_email");
 }
 
-export function forceLogout() {
+export async function forceLogout() {
   if (_forceLogoutInProgress) return;
   _forceLogoutInProgress = true;
 
   const token = getToken();
-  if (token) {
-    fetch(`${API_URL}/auth/logout`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      credentials: "include",
-    }).catch(() => {});
+  try {
+    if (token) {
+      // Esperar a que el backend invalide la cookie HttpOnly antes de navegar.
+      await fetch(`${API_URL}/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+      });
+    }
+  } catch {
+    // best-effort
   }
 
   clearSession();

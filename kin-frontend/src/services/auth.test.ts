@@ -144,7 +144,7 @@ describe("authService", () => {
   it("logout: limpia sesión (sin token no llama a la API)", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch");
 
-    authService.logout();
+    await authService.logout();
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(localStorage.getItem("kin_token_v2")).toBeNull();
@@ -154,7 +154,7 @@ describe("authService", () => {
     localStorage.setItem("kin_token_v2", "t");
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
 
-    authService.logout();
+    await authService.logout();
 
     expect(String(fetchMock.mock.calls[0][0])).toContain("/auth/logout");
     expect(localStorage.getItem("kin_token_v2")).toBeNull();

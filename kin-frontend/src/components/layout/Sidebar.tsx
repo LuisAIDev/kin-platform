@@ -26,8 +26,8 @@ export default function Sidebar() {
   const isAdmin = user?.role === "ADMIN";
   const allItems = isAdmin ? [...NAV_ITEMS, ADMIN_ITEM] : NAV_ITEMS;
 
-  const handleLogout = () => {
-    authService.logout();
+  const handleLogout = async () => {
+    await authService.logout();
     router.push("/login");
   };
 
