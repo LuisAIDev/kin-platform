@@ -46,6 +46,18 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      # Email verification (SMTP/Brevo). Credenciales SOLO en .env local (gitignored).
+      APP_MAIL_ENABLED: ${APP_MAIL_ENABLED}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
+      # Sonda de salud de correo del Actuator desactivada SOLO en el entorno local
+      # (intercepción TLS de la máquina hacia Brevo); el envío SMTP no se ve afectado.
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
