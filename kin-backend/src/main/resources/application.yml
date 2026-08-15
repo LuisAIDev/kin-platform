@@ -19,6 +19,18 @@ spring:
     name: kin-backend
 
   # -----------------------------------------------------------
+  # Multipart — subida de documentos del proyecto (POST /documents).
+  # El límite real de la aplicación es 10 MB (validado en el servicio);
+  # los límites de Tomcat se dejan algo por encima para que el archivo
+  # llegue al controller y se devuelva un error controlado (400) y no un
+  # fallo de infraestructura.
+  # -----------------------------------------------------------
+  servlet:
+    multipart:
+      max-file-size: 12MB
+      max-request-size: 15MB
+
+  # -----------------------------------------------------------
   # JPA / Hibernate — el datasource lo aporta cada perfil
   # (dev / prod / test); no hay base por defecto ni H2.
   # -----------------------------------------------------------
