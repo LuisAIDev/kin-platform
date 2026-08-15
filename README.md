@@ -6,6 +6,8 @@
 
 **Plataforma SaaS de inteligencia y estructuración estratégica para empresas, consultorías, emprendedores, dueños de empresa y profesionales.**
 
+**Plataforma en producción:** [https://kin-platform.com](https://kin-platform.com)
+
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?style=flat&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-6DB33F?style=flat&logo=spring&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
@@ -343,6 +345,7 @@ Scoring → Recomendaciones → Riesgos → Oportunidades → Reporte → Consul
 - **Headers HTTP** de seguridad (CSP/HSTS)
 - **Guardrails de IA** deterministas (inyección de prompts, jailbreak)
 - Gestión de secretos por variables de entorno (`.env` gitignored)
+- **Correo transaccional** con **Brevo SMTP**: las credenciales se administran únicamente mediante variables de entorno/secrets (`MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `.env` gitignored) y nunca se almacenan en el repositorio
 - Mitigación SSRF en adaptadores de conocimiento (`allowlist` de hosts)
 
 ---
