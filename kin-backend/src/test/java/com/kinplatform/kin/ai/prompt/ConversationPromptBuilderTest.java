@@ -463,4 +463,70 @@ class ConversationPromptBuilderTest {
         assertTrue(prompt.contains("Soy KIN, una plataforma inteligente orientada a ayudarte a estructurar y analizar proyectos"));
         assertTrue(prompt.contains("KIN es la plataforma. El LLM es un componente tecnológico. DeepSeek es el modelo/proveedor actualmente configurado"));
     }
+
+    // ------------------------------------------------------------------
+    // AUTOCONOCIMIENTO — PROHIBICIÓN DE MARCO DE DOS AGENTES
+    // ------------------------------------------------------------------
+
+    @Test
+    void build_autoconocimiento_noDeberiaPresentarAkinComoUnaIAComoIdentidadPrincipal() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("No uses \"soy una IA\", \"soy un modelo de IA\", \"soy un LLM\" ni \"soy un chatbot\" como identidad principal"));
+        assertTrue(prompt.contains("No respondas simplemente \"Sí, soy una inteligencia artificial\""));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaProhibirElMarcoDeDosAgentes() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("PROHIBIDO el marco de dos agentes o dos personas"));
+        assertTrue(prompt.contains("NUNCA digas \"el señor Cerebro (la IA)\""));
+        assertTrue(prompt.contains("\"la señorita KIN\""));
+        assertTrue(prompt.contains("\"KIN habla con el Cerebro\""));
+        assertTrue(prompt.contains("\"KIN revisa lo que el Cerebro piensa decir\""));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaProhibirAnalogiasDePersonas() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("PROHIBIDO describir la arquitectura con analogías de personas o roles"));
+        assertTrue(prompt.contains("\"KIN es el director y DeepSeek el empleado\""));
+        assertTrue(prompt.contains("KIN puede entenderse como una plataforma que integra un motor de IA"));
+    }
+
+    @Test
+    void build_autoconocimiento_noDeberiaAfirmarQueKINEsOtraIA() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertFalse(prompt.contains("Soy una inteligencia artificial."));
+        assertFalse(prompt.contains("KIN es otra IA"));
+        assertFalse(prompt.contains("KIN es una marca de IA"));
+        assertFalse(prompt.contains("Yo soy una IA diferente"));
+    }
+
+    @Test
+    void build_autoconocimiento_deberiaExplicarQueLaRespuestaNoDependeSoloDelModelo() {
+        var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
+        var request = PromptRequest.forConversation(contextConDatos(), decision);
+
+        var prompt = normalize(builder.build(request));
+
+        assertTrue(prompt.contains("Nunca presentes a KIN y al modelo de IA como dos agentes, dos personas o dos sistemas que conversan entre sí"));
+        assertTrue(prompt.contains("KIN es la plataforma; el motor de IA es un componente interno de la plataforma, no un interlocutor separado"));
+        assertFalse(prompt.contains("KIN decide qué decir y DeepSeek solamente pone las palabras"));
+    }
 }
