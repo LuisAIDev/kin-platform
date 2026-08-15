@@ -56,6 +56,9 @@ import com.kinplatform.kin.knowledge.engine.SourceRegistry;
 import com.kinplatform.kin.knowledge.engine.SourceValidator;
 import com.kinplatform.kin.knowledge.stage.KnowledgeStage;
 import com.kinplatform.kin.pipeline.Pipeline;
+import com.kinplatform.kin.pipeline.resilience.StagePolicy;
+import com.kinplatform.kin.pipeline.resilience.StageRetryPolicy;
+import com.kinplatform.kin.pipeline.resilience.StageTimeoutConfig;
 import com.kinplatform.kin.pipeline.stage.AnalyzerStage;
 import com.kinplatform.kin.pipeline.stage.ConsultorStage;
 import com.kinplatform.kin.pipeline.stage.EvaluatorStage;
@@ -102,6 +105,7 @@ import com.kinplatform.kin.reporting.risk.TechnicalRiskAnalyzer;
 import com.kinplatform.kin.scoring.ScoringEngine;
 import com.kinplatform.kin.scoring.ScoringModel;
 import java.util.List;
+import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -545,20 +549,27 @@ public class KinConfig {
             OpportunityStage opportunity,
             ReportStage report,
             EventStage eventStage) {
-        return new Pipeline(List.of(
-                analyzer,
-                evaluator,
-                strategist,
-                interview,
-                knowledge,
-                enrichment,
-                scoring,
-                recommendation,
-                risk,
-                opportunity,
-                report,
-                consultor,
-                eventStage));
+        return new Pipeline(
+                List.of(
+                        analyzer,
+                        evaluator,
+                        strategist,
+                        interview,
+                        knowledge,
+                        enrichment,
+                        scoring,
+                        recommendation,
+                        risk,
+                        opportunity,
+                        report,
+                        consultor,
+                        eventStage),
+                null,
+                StageRetryPolicy.none(),
+                new StageTimeoutConfig(
+                        Map.of(consultor.name(), 60_000L),
+                        StagePolicy.DEFAULT_TIMEOUT_MILLIS,
+                        StageTimeoutConfig.TimeoutAction.FAIL));
     }
 
     @Bean
