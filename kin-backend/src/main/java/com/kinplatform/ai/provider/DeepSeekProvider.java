@@ -157,10 +157,125 @@ public class DeepSeekProvider implements AIProvider {
         return false;
     }
 
+    /**
+     * Marcador neutral con el que se sustituye un mensaje {@code ASSISTANT} histórico
+     * que contenga afirmaciones de identidad o arquitectura de KIN contaminadas
+     * (p. ej. "Soy Claude", "KIN es un personaje", "KIN utiliza Anthropic").
+     *
+     * <p>El historial se conserva para continuidad conversacional, pero un mensaje
+     * histórico del asistente que intente redefinir la identidad, proveedor o
+     * arquitectura de KIN NO debe llegar al modelo como contexto autoritativo. La
+     * sanitización es una segunda capa arquitectónica junto al system prompt.</p>
+     */
+    private static final String NEUTRAL_IDENTITY_MARKER =
+            "Las respuestas anteriores sobre la identidad o arquitectura de KIN fueron corregidas "
+                    + "por la plataforma. KIN es una plataforma y actualmente utiliza DeepSeek como "
+                    + "proveedor de IA.";
+
+    /**
+     * Lista de frases de contaminación de identidad/arquitectura de KIN para mensajes
+     * {@code ASSISTANT} históricos. Detección específica y semánticamente orientada:
+     * no filtra palabras aisladas (Claude, OpenAI, Gemini, etc.), solo afirmaciones que
+     * pretendan redefinir la identidad o arquitectura de KIN.
+     */
+    private static final List<String> IDENTITY_CONTAMINATION_PATTERNS = List.of(
+            // Identidad directa del asistente
+            "soy claude",
+            "yo soy claude",
+            "soy chatgpt",
+            "soy gemini",
+            "soy deepseek",
+            "soy un modelo de anthropic",
+            "soy un modelo de openai",
+            "soy un modelo de google",
+            // KIN como Claude / personaje / rol / máscara
+            "kin es claude",
+            "kin es un personaje",
+            "kin es un rol",
+            "kin es una máscara",
+            "kin es interpretado por claude",
+            "kin es una instancia de claude",
+            "kin está interpretado por claude",
+            "claude está detrás de kin",
+            "el verdadero modelo detrás de kin es claude",
+            "kin realmente es claude",
+            "kin es claude de anthropic",
+            "kin es chatgpt",
+            "kin es gemini",
+            // Proveedor incorrecto
+            "kin utiliza claude",
+            "kin usa claude",
+            "kin utiliza anthropic",
+            "kin usa anthropic",
+            "kin utiliza openai",
+            "kin usa openai",
+            "kin utiliza gemini",
+            "kin usa gemini",
+            "el proveedor real de kin es openai",
+            "el proveedor real de kin es anthropic",
+            "el proveedor real de kin es gemini",
+            // Negación de la plataforma
+            "kin no es una plataforma",
+            "kin no tiene backend",
+            "kin no tiene motores",
+            "kin es solamente un personaje",
+            "kin es solamente un rol",
+            "kin es ficción",
+            "kin es una ficción conversacional",
+            "kin no existe como plataforma");
+
+    /**
+     * Determina si un contenido de mensaje {@code ASSISTANT} contiene una afirmación
+     * de contaminación de identidad/arquitectura de KIN (comparación en minúsculas y
+     * sin tildes para robustez).
+     */
+    private static boolean isIdentityContamination(String content) {
+        if (content == null) {
+            return false;
+        }
+        String normalized = normalize(content);
+        for (String pattern : IDENTITY_CONTAMINATION_PATTERNS) {
+            if (normalized.contains(pattern)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String normalize(String text) {
+        String lower = text.toLowerCase();
+        return lower
+                .replace('á', 'a').replace('é', 'e').replace('í', 'i')
+                .replace('ó', 'o').replace('ú', 'u')
+                .replace('¿', ' ').replace('¡', ' ');
+    }
+
+    /**
+     * Sanitiza el historial antes de enviarlo a DeepSeek: solo los mensajes
+     * {@code ASSISTANT} que contengan afirmaciones de identidad/arquitectura de KIN
+     * contaminadas se reemplazan por el marcador neutral (se mantiene el rol
+     * {@code ASSISTANT} para no romper la alternancia USER/ASSISTANT). Los mensajes
+     * {@code USER} y {@code SYSTEM}, y los {@code ASSISTANT} legítimos, se conservan.
+     */
+    private List<Message> sanitizeHistory(List<Message> history) {
+        if (history == null || history.isEmpty()) {
+            return history;
+        }
+        var sanitized = new ArrayList<Message>(history.size());
+        for (var msg : history) {
+            if (msg.role().equals("ASSISTANT") && isIdentityContamination(msg.content())) {
+                sanitized.add(new Message("ASSISTANT", NEUTRAL_IDENTITY_MARKER));
+            } else {
+                sanitized.add(msg);
+            }
+        }
+        return sanitized;
+    }
+
     private List<org.springframework.ai.chat.messages.Message> buildMessages(String systemPrompt, List<Message> history) {
         var messages = new ArrayList<org.springframework.ai.chat.messages.Message>();
         messages.add(new SystemMessage(systemPrompt));
-        for (var msg : history) {
+        for (var msg : sanitizeHistory(history)) {
             messages.add(switch (msg.role()) {
                 case "USER" -> new UserMessage(msg.content());
                 case "ASSISTANT" -> new AssistantMessage(msg.content());
