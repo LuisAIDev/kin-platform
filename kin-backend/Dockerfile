@@ -19,8 +19,15 @@ USER app
 
 EXPOSE 8080
 
-# Healthcheck de producción (Actuator health permitAll)
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-  CMD wget -qO- http://localhost:8080/api/v1/actuator/health || exit 1
+# Límites JVM explícitos para instancias de 512 MiB (Render starter / Docker):
+# heap, metaspace, direct buffers, code cache y nº de procesadores activos se
+# acotan para que el proceso no supere el límite del contenedor en el arranque.
+ENV JAVA_OPTS="-Xms64m -Xmx256m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=48m -XX:ReservedCodeCacheSize=48m -XX:ActiveProcessorCount=2"
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Healthcheck de producción (Actuator health permitAll).
+# Usa ${PORT:-8080} porque Render inyecta PORT=10000 (el perfil render bindea
+# a server.port=${PORT:8080}); sin PORT el fallback es 8080 (docker compose).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD sh -c "wget -qO- http://localhost:${PORT:-8080}/api/v1/actuator/health || exit 1"
+
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

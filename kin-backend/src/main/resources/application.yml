@@ -83,6 +83,20 @@ spring:
     type: simple
 
   # -----------------------------------------------------------
+  # Spring Data Redis — SOLO repositories scanning deshabilitado (Fase 14/OOM).
+  # No elimina funcionalidad Redis: RedisKnowledgeRepository (clase plana detrás
+  # de RedisCacheConfig, opt-in con kin.cache.redis.enabled=true) y el
+  # RedisTemplate/StringRedisTemplate siguen funcionando. No existe ninguna
+  # interfaz RedisRepository en el código; todos los repositorios son JPA.
+  # Evita "Multiple Spring Data modules found, entering strict repository
+  # configuration mode" y su sobrecarga de escaneo en el arranque.
+  # -----------------------------------------------------------
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+  # -----------------------------------------------------------
   # Jackson
   # -----------------------------------------------------------
   jackson:
