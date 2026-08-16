@@ -2,12 +2,14 @@ import { api } from "./api";
 
 export interface PricingPlan {
   id: string;
+  code: string | null;
   name: string;
   description: string;
   price: number;
   features: string[];
   maxProjects: number | null;
   messagesPerMonth: number | null;
+  aiBudgetUsd: number | null;
   advancedAI: boolean;
   pdfExport: boolean;
   supportLevel: "BASIC" | "PREMIUM" | "SUPPORT_24_7";

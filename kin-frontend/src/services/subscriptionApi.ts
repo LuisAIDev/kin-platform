@@ -4,6 +4,7 @@ import type { PricingPlan } from "./pricing";
 export interface SubscriptionStatus {
   isActive: boolean;
   planName: string;
+  planCode: string | null;
   planDescription: string;
   remainingMessages: number;
   canCreateProject: boolean;
@@ -13,6 +14,16 @@ export interface SubscriptionStatus {
   advancedAI: boolean;
   pdfExport: boolean;
   supportLevel: string;
+  completedProjects: number;
+  completedProjectsLimit: number;
+  canCompleteProject: boolean;
+  aiCostControlEnabled: boolean;
+  aiBudgetUsed: number;
+  aiBudgetReserved: number;
+  aiBudgetLimit: number;
+  aiBudgetRemaining: number;
+  aiUsagePeriodStart: string | null;
+  aiUsagePeriodEnd: string | null;
 }
 
 export interface SubscriptionResponse {

@@ -79,21 +79,46 @@ export default function PricingPage() {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {plans.map((plan) => {
-          const isPremium = plan.advancedAI;
+          const code = plan.code ?? "";
+          const isStandard = code === "STANDARD";
+          const isPremium = code === "PREMIUM";
+          const highlighted = isStandard;
+          const badge = isStandard
+            ? "Más elegido"
+            : isPremium
+              ? "Máximo rendimiento"
+              : null;
+          const buttonLabel =
+            code === "FREE"
+              ? "Comenzar gratis"
+              : isStandard
+                ? "Elegir Standard"
+                : isPremium
+                  ? "Elegir Premium"
+                  : plan.price === 0
+                    ? "Comenzar gratis"
+                    : "Suscribirse";
           return (
             <div
               key={plan.id}
               className={
-                isPremium
+                highlighted
                   ? "relative rounded-2xl border-2 border-primary-500 bg-gradient-to-b from-white to-primary-50/40 p-8 shadow-lg shadow-primary-500/10"
                   : "relative rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm"
               }
             >
-              {isPremium && (
-                <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-4 py-1 text-xs font-semibold text-white shadow-sm">
-                  Recomendado
+              {badge && (
+                <span
+                  className={
+                    "absolute -top-3 left-6 rounded-full px-4 py-1 text-xs font-semibold text-white shadow-sm " +
+                    (isPremium
+                      ? "bg-gradient-to-r from-primary-600 to-primary-500"
+                      : "bg-gradient-to-r from-primary-600 to-primary-500")
+                  }
+                >
+                  {badge}
                 </span>
               )}
 
@@ -124,12 +149,12 @@ export default function PricingPage() {
                 onClick={() => handleSubscribe(plan.id, plan.price)}
                 disabled={subscribing === plan.id}
                 className={
-                  isPremium
+                  highlighted
                     ? "mt-8 flex w-full items-center justify-center rounded-xl bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-primary-600/20 hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-11"
                     : "mt-8 flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-6 py-3 text-sm font-semibold text-neutral-700 shadow-sm hover:bg-neutral-50 hover:border-neutral-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-11"
                 }
               >
-                {subscribing === plan.id ? "Procesando..." : plan.price === 0 ? "Seleccionar plan gratuito" : "Suscribirse"}
+                {subscribing === plan.id ? "Procesando..." : buttonLabel}
               </button>
             </div>
           );

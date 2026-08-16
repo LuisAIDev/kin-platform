@@ -1,15 +1,25 @@
 package com.kinplatform.pricing;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.util.List;
-
+/**
+ * Seed de planes comerciales (Fase 1): GRATIS/STANDARD/PREMIUM.
+ *
+ * <p>Opera por {@code code} (no por {@code name}): actualiza los planes
+ * canónicos si existen (preservando el id y las FKs de suscripciones) y crea
+ * los que falten. Los presupuestos de IA provienen de configuración
+ * (env {@code KIN_*_AI_BUDGET_USD}) como fuente inicial; el valor operativo
+ * vive en {@code PricingPlan.aiBudgetUsd}.</p>
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -18,60 +28,127 @@ public class DataInitializer implements CommandLineRunner {
     private final PricingPlanRepository repository;
     private final ObjectMapper objectMapper;
 
+    @Value("${kin.ai.free.budget-usd:0.50}")
+    private BigDecimal freeAiBudget;
+
+    @Value("${kin.ai.standard.budget-usd:6.25}")
+    private BigDecimal standardAiBudget;
+
+    @Value("${kin.ai.premium.budget-usd:8.75}")
+    private BigDecimal premiumAiBudget;
+
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        if (repository.count() > 0) {
-            log.info("Pricing plans already seeded, skipping.");
-            return;
+        upsert(
+                "FREE",
+                "GRATIS",
+                "Plan gratuito para empezar a evaluar tus ideas de negocio",
+                BigDecimal.ZERO,
+                List.of(
+                        "3 proyectos completados por período",
+                        "Asistente de IA incluido",
+                        "Scoring de viabilidad",
+                        "Exportación a PDF"),
+                3,
+                100,
+                false,
+                true,
+                SupportLevel.BASIC,
+                ViabilityScoringDetail.BASIC,
+                freeAiBudget);
+
+        upsert(
+                "STANDARD",
+                "STANDARD",
+                "Plan ideal para emprendedores en crecimiento",
+                new BigDecimal("25.00"),
+                List.of(
+                        "5 proyectos completados por período",
+                        "IA avanzada",
+                        "Scoring detallado",
+                        "Exportación a PDF",
+                        "Soporte prioritario"),
+                5,
+                500,
+                true,
+                true,
+                SupportLevel.PREMIUM,
+                ViabilityScoringDetail.DETAILED,
+                standardAiBudget);
+
+        upsert(
+                "PREMIUM",
+                "PREMIUM",
+                "Plan completo: proyectos ilimitados y la mayor cuota de IA",
+                new BigDecimal("35.00"),
+                List.of(
+                        "Proyectos ilimitados",
+                        "IA avanzada",
+                        "Scoring completo",
+                        "Exportación a PDF",
+                        "Soporte prioritario"),
+                null,
+                2000,
+                true,
+                true,
+                SupportLevel.SUPPORT_24_7,
+                ViabilityScoringDetail.DETAILED,
+                premiumAiBudget);
+
+        log.info("Planes comerciales sincronizados: FREE/STANDARD/PREMIUM");
+    }
+
+    private void upsert(
+            String code,
+            String name,
+            String description,
+            BigDecimal price,
+            List<String> features,
+            Integer maxProjects,
+            Integer messagesPerMonth,
+            boolean advancedAI,
+            boolean pdfExport,
+            SupportLevel supportLevel,
+            ViabilityScoringDetail detail,
+            BigDecimal aiBudget)
+            throws Exception {
+        Optional<PricingPlan> existing = repository.findByCode(code);
+        PricingPlan plan;
+        if (existing.isPresent()) {
+            plan = existing.get();
+            plan.setName(name);
+            plan.setDescription(description);
+            plan.setPrice(price);
+            plan.setFeatures(objectMapper.writeValueAsString(features));
+            plan.setMaxProjects(maxProjects);
+            plan.setMessagesPerMonth(messagesPerMonth);
+            plan.setAdvancedAI(advancedAI);
+            plan.setPdfExport(pdfExport);
+            plan.setSupportLevel(supportLevel);
+            plan.setViabilityScoringDetail(detail);
+            plan.setIsActive(true);
+            plan.setAiBudgetUsd(aiBudget);
+            repository.save(plan);
+            log.info("Plan {} actualizado (id={})", code, plan.getId());
+        } else {
+            plan = PricingPlan.builder()
+                    .code(code)
+                    .name(name)
+                    .description(description)
+                    .price(price)
+                    .features(objectMapper.writeValueAsString(features))
+                    .maxProjects(maxProjects)
+                    .messagesPerMonth(messagesPerMonth)
+                    .advancedAI(advancedAI)
+                    .pdfExport(pdfExport)
+                    .supportLevel(supportLevel)
+                    .viabilityScoringDetail(detail)
+                    .isActive(true)
+                    .aiBudgetUsd(aiBudget)
+                    .build();
+            repository.save(plan);
+            log.info("Plan {} creado (id={})", code, plan.getId());
         }
-
-        var basicFeatures = List.of(
-                "Hasta 3 proyectos",
-                "Asistente de IA básico (DeepSeek V4 Flash)",
-                "Scoring de viabilidad básico",
-                "100 mensajes de IA por mes",
-                "Exportación a PDF"
-        );
-
-        var premiumFeatures = List.of(
-                "Proyectos ilimitados",
-                "IA avanzada (DeepSeek V4 Pro)",
-                "Scoring detallado con métricas avanzadas",
-                "500 mensajes de IA por mes",
-                "Exportación a PDF premium",
-                "Soporte prioritario 24/7"
-        );
-
-        var basic = PricingPlan.builder()
-                .name("Básico Gratis")
-                .description("Plan gratuito para empezar a evaluar tus ideas de negocio")
-                .price(BigDecimal.ZERO)
-                .features(objectMapper.writeValueAsString(basicFeatures))
-                .maxProjects(3)
-                .messagesPerMonth(100)
-                .advancedAI(false)
-                .pdfExport(true)
-                .supportLevel(SupportLevel.BASIC)
-                .viabilityScoringDetail(ViabilityScoringDetail.BASIC)
-                .isActive(true)
-                .build();
-
-        var premium = PricingPlan.builder()
-                .name("Premium Pro")
-                .description("Plan completo para emprendedores que buscan análisis profundo")
-                .price(new BigDecimal("19.99"))
-                .features(objectMapper.writeValueAsString(premiumFeatures))
-                .maxProjects(null)
-                .messagesPerMonth(500)
-                .advancedAI(true)
-                .pdfExport(true)
-                .supportLevel(SupportLevel.SUPPORT_24_7)
-                .viabilityScoringDetail(ViabilityScoringDetail.DETAILED)
-                .isActive(true)
-                .build();
-
-        repository.saveAll(List.of(basic, premium));
-        log.info("Seeded {} pricing plans", 2);
     }
 }

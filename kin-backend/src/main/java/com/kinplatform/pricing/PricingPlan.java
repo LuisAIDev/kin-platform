@@ -1,16 +1,15 @@
 package com.kinplatform.pricing;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -23,6 +22,13 @@ public class PricingPlan {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    /**
+     * Identificador comercial estable del plan: {@code FREE}, {@code STANDARD}
+     * o {@code PREMIUM}. No depende del nombre (que es solo cosmético).
+     */
+    @Column(length = 20, unique = true)
+    private String code;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -37,11 +43,20 @@ public class PricingPlan {
     @Column(nullable = false, columnDefinition = "json")
     private String features;
 
+    /**
+     * Máximo de proyectos COMPLETADOS por período (mensual). {@code null} =
+     * ilimitado (PREMIUM). En esta arquitectura la semántica es
+     * "proyectos completados por período", no proyectos existentes.
+     */
     @Column(name = "max_projects")
     private Integer maxProjects;
 
     @Column(name = "messages_per_month")
     private Integer messagesPerMonth;
+
+    /** Presupuesto de IA (USD) por período. Fuente de verdad del gate de costo. */
+    @Column(name = "ai_budget_usd", precision = 10, scale = 2)
+    private BigDecimal aiBudgetUsd;
 
     @Column(name = "advanced_ai", nullable = false)
     @Builder.Default

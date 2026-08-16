@@ -8,12 +8,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.kinplatform.ai.usage.AiBudgetControlService;
+import com.kinplatform.kin.usage.ProjectQuotaPort;
 import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.PricingPlanRepository;
 import com.kinplatform.pricing.SubscriptionStatus;
 import com.kinplatform.pricing.UserSubscription;
 import com.kinplatform.pricing.UserSubscriptionRepository;
-import com.kinplatform.project.ProjectRepository;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Optional;
@@ -38,20 +39,23 @@ class SubscriptionValidatorServiceTest {
     private PricingPlanRepository planRepository;
 
     @Mock
-    private ProjectRepository projectRepository;
-
-    @Mock
     private CacheManager cacheManager;
 
     @Mock
     private Cache cache;
+
+    @Mock
+    private ProjectQuotaPort projectQuotaPort;
+
+    @Mock
+    private AiBudgetControlService budgetControlService;
 
     private SubscriptionValidatorService service;
 
     @BeforeEach
     void setUp() {
         service = new SubscriptionValidatorService(
-                subscriptionRepository, planRepository, projectRepository, cacheManager);
+                subscriptionRepository, planRepository, cacheManager, projectQuotaPort, budgetControlService);
     }
 
     private PricingPlan plan(Integer maxProjects, Integer messagesPerMonth, boolean advancedAI) {
@@ -85,7 +89,7 @@ class SubscriptionValidatorServiceTest {
     void canCreateProject_proyectosIlimitados_deberiaPermitir() {
         when(subscriptionRepository.findByUserIdAndStatusAndEndDateAfter(any(), any(), any()))
                 .thenReturn(Optional.empty());
-        when(planRepository.findFirstByIsActiveTrueOrderByPriceAsc()).thenReturn(Optional.of(plan(1, null, false)));
+        when(planRepository.findFirstByIsActiveTrueOrderByPriceAsc()).thenReturn(Optional.of(plan(null, null, false)));
 
         assertTrue(service.canCreateProject(USER_ID));
     }
@@ -93,7 +97,7 @@ class SubscriptionValidatorServiceTest {
     @Test
     void canCreateProject_bajoLimite_deberiaPermitir() {
         stubNoSubscription();
-        when(projectRepository.countByUserIdAndStatusNot(any(), any())).thenReturn(2L);
+        when(projectQuotaPort.canComplete(USER_ID, 3)).thenReturn(true);
 
         assertTrue(service.canCreateProject(USER_ID));
     }
@@ -101,7 +105,7 @@ class SubscriptionValidatorServiceTest {
     @Test
     void canCreateProject_enLimite_deberiaBloquear() {
         stubNoSubscription();
-        when(projectRepository.countByUserIdAndStatusNot(any(), any())).thenReturn(3L);
+        when(projectQuotaPort.canComplete(USER_ID, 3)).thenReturn(false);
 
         assertFalse(service.canCreateProject(USER_ID));
     }

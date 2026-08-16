@@ -44,17 +44,23 @@ class PricingPlanFeaturesJpaTest extends PostgresTestSupport {
         var initializer = new DataInitializer(repository, new ObjectMapper());
         initializer.run();
 
-        assertEquals(2, repository.count());
+        assertEquals(3, repository.count());
 
-        var basic = repository.findByName("Básico Gratis").orElseThrow();
-        var basicFeatures = MAPPER.readValue(basic.getFeatures(), new TypeReference<List<String>>() {});
-        assertEquals(5, basicFeatures.size());
-        assertTrue(basicFeatures.contains("Scoring de viabilidad básico"));
+        var free = repository.findByCode("FREE").orElseThrow();
+        var freeFeatures = MAPPER.readValue(free.getFeatures(), new TypeReference<List<String>>() {});
+        assertEquals(4, freeFeatures.size());
+        assertTrue(freeFeatures.contains("Scoring de viabilidad"));
 
-        var premium = repository.findByName("Premium Pro").orElseThrow();
+        var standard = repository.findByCode("STANDARD").orElseThrow();
+        assertEquals(new BigDecimal("25.00"), standard.getPrice());
+        assertEquals(5, standard.getMaxProjects());
+        assertTrue(standard.getAdvancedAI());
+
+        var premium = repository.findByCode("PREMIUM").orElseThrow();
+        assertEquals(new BigDecimal("35.00"), premium.getPrice());
+        assertEquals(null, premium.getMaxProjects());
         var premiumFeatures = MAPPER.readValue(premium.getFeatures(), new TypeReference<List<String>>() {});
-        assertEquals(6, premiumFeatures.size());
-        assertTrue(premiumFeatures.contains("Soporte prioritario 24/7"));
+        assertTrue(premiumFeatures.contains("Proyectos ilimitados"));
     }
 
     @Test

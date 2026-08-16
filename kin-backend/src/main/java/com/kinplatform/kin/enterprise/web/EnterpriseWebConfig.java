@@ -3,6 +3,7 @@ package com.kinplatform.kin.enterprise.web;
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.enterprise.application.DefaultEnterpriseProjectTrigger;
+import com.kinplatform.kin.enterprise.application.EnterpriseAiBudgetGate;
 import com.kinplatform.kin.enterprise.application.EnterpriseExportOrchestrator;
 import com.kinplatform.kin.enterprise.application.EnterpriseExportService;
 import com.kinplatform.kin.enterprise.application.EnterpriseGenerationOrchestrator;
@@ -18,15 +19,14 @@ import com.kinplatform.kin.enterprise.ports.EnterpriseProjectAccessControl;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
 import com.kinplatform.kin.enterprise.progress.EnterpriseProgressPublisher;
 import com.kinplatform.kin.event.DomainEventBus;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 /**
  * Cableado Spring de la capa de aplicación del módulo Enterprise (Fase 10,
@@ -63,8 +63,7 @@ public class EnterpriseWebConfig {
      */
     @Bean
     public EnterpriseExportOrchestrator enterpriseExportOrchestrator(
-            EnterpriseProjectRepository repository,
-            EnterpriseExportService exportService) {
+            EnterpriseProjectRepository repository, EnterpriseExportService exportService) {
         return new EnterpriseExportOrchestrator(repository, exportService);
     }
 
@@ -77,11 +76,8 @@ public class EnterpriseWebConfig {
      */
     @Bean
     public EnterpriseGenerationService enterpriseGenerationService(
-            EnterpriseProjectRepository repository,
-            DomainEventBus eventBus,
-            AIResponder aiResponder) {
-        return new EnterpriseGenerationService(
-            new EnterpriseDocumentAssembler(), repository, eventBus, aiResponder);
+            EnterpriseProjectRepository repository, DomainEventBus eventBus, AIResponder aiResponder) {
+        return new EnterpriseGenerationService(new EnterpriseDocumentAssembler(), repository, eventBus, aiResponder);
     }
 
     /**
@@ -113,8 +109,7 @@ public class EnterpriseWebConfig {
      * Publicador de progreso (traduce el estado del aggregate a eventos SSE).
      */
     @Bean
-    public EnterpriseProgressPublisher enterpriseProgressPublisher(
-            EnterpriseProgressService progressService) {
+    public EnterpriseProgressPublisher enterpriseProgressPublisher(EnterpriseProgressService progressService) {
         return new EnterpriseProgressPublisher(progressService);
     }
 
@@ -130,7 +125,7 @@ public class EnterpriseWebConfig {
             EnterpriseProjectRepository enterpriseProjectRepository,
             EnterpriseProgressPublisher enterpriseProgressPublisher) {
         return new ProgressPublishingEnterpriseProjectRepository(
-            enterpriseProjectRepository, enterpriseProgressPublisher);
+                enterpriseProjectRepository, enterpriseProgressPublisher);
     }
 
     /**
@@ -156,8 +151,7 @@ public class EnterpriseWebConfig {
      */
     @Bean
     public EnterpriseProjectTrigger enterpriseProjectTrigger(
-            EnterpriseProjectRepository repository,
-            DomainEventBus eventBus) {
+            EnterpriseProjectRepository repository, DomainEventBus eventBus) {
         return new DefaultEnterpriseProjectTrigger(repository, eventBus);
     }
 
@@ -174,10 +168,15 @@ public class EnterpriseWebConfig {
             ContextRepository contextRepository,
             DomainEventBus eventBus,
             Executor enterpriseGenerationExecutor,
-            EnterprisePipelineResultStore enterprisePipelineResultStore) {
+            EnterprisePipelineResultStore enterprisePipelineResultStore,
+            EnterpriseAiBudgetGate enterpriseAiBudgetGate) {
         return new EnterpriseProjectRequestedListener(
-            enterpriseGenerationOrchestrator, contextRepository, eventBus,
-            enterpriseGenerationExecutor, enterprisePipelineResultStore);
+                enterpriseGenerationOrchestrator,
+                contextRepository,
+                eventBus,
+                enterpriseGenerationExecutor,
+                enterprisePipelineResultStore,
+                enterpriseAiBudgetGate);
     }
 
     /**
@@ -216,8 +215,7 @@ public class EnterpriseWebConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addInterceptors(InterceptorRegistry registry) {
-                registry.addInterceptor(enterpriseOwnershipInterceptor)
-                    .addPathPatterns("/enterprise/**");
+                registry.addInterceptor(enterpriseOwnershipInterceptor).addPathPatterns("/enterprise/**");
             }
         };
     }

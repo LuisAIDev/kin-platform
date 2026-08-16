@@ -75,10 +75,13 @@ public class SubscriptionController {
         int remainingMessages = validatorService.getRemainingMessages(userId);
         boolean canCreateProject = validatorService.canCreateProject(userId);
         String aiLevel = validatorService.getAvailableAILevel(userId);
+        int completedProjects = validatorService.getCompletedProjectsUsed(userId);
+        var aiUsage = validatorService.getAiUsage(userId);
 
         SubscriptionStatusResponse response = SubscriptionStatusResponse.builder()
                 .isActive(isActive)
                 .planName(plan.getName())
+                .planCode(plan.getCode())
                 .planDescription(plan.getDescription())
                 .remainingMessages(remainingMessages)
                 .canCreateProject(canCreateProject)
@@ -88,6 +91,16 @@ public class SubscriptionController {
                 .advancedAI(plan.getAdvancedAI())
                 .pdfExport(plan.getPdfExport())
                 .supportLevel(plan.getSupportLevel().name())
+                .completedProjects(completedProjects)
+                .completedProjectsLimit(plan.getMaxProjects() == null ? -1 : plan.getMaxProjects())
+                .canCompleteProject(plan.getMaxProjects() == null || completedProjects < plan.getMaxProjects())
+                .aiCostControlEnabled(aiUsage.costControlEnabled())
+                .aiBudgetUsed(aiUsage.budgetUsed())
+                .aiBudgetReserved(aiUsage.budgetReserved())
+                .aiBudgetLimit(aiUsage.budgetLimit())
+                .aiBudgetRemaining(aiUsage.budgetRemaining())
+                .aiUsagePeriodStart(aiUsage.periodStart())
+                .aiUsagePeriodEnd(aiUsage.periodEnd())
                 .build();
 
         return ResponseEntity.ok(response);
@@ -118,8 +131,8 @@ public class SubscriptionController {
         log.info("Usuario {} iniciando período de prueba", userId);
 
         PricingPlan premiumPlan = pricingPlanService
-                .getPlanByName("Premium Pro")
-                .orElseThrow(() -> new PlanNotFoundException("Plan Premium Pro no encontrado"));
+                .getPlanByCode("PREMIUM")
+                .orElseThrow(() -> new PlanNotFoundException("Plan Premium no encontrado"));
 
         SubscriptionResponse response = subscriptionService.startTrial(userId, premiumPlan.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

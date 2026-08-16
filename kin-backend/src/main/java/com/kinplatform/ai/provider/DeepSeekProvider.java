@@ -1,6 +1,13 @@
 package com.kinplatform.ai.provider;
 
+import com.kinplatform.ai.usage.AiUsageRecorder;
+import com.kinplatform.ai.usage.ReservationContext;
 import com.kinplatform.kin.context.Message;
+import com.kinplatform.kin.usage.AiReservation;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -19,11 +26,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.util.retry.Retry;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
-
 /**
  * Proveedor único de IA (DeepSeek). Implementa {@link AIProvider} y reemplaza
  * por completo al alias {@code OpenAIProvider} (que reutilizaba el mismo
@@ -37,6 +39,10 @@ import java.util.concurrent.TimeoutException;
  * indisponibilidad ("Estoy teniendo dificultades temporales..."). Las
  * respuestas vacías (200 con contenido nulo) NO se reintentan: se devuelven
  * tal cual.</p>
+ *
+ * <p>Captura de uso real (Fase 1): lee {@code ChatResponse.metadata.usage}
+ * (input/output tokens) y lo reporta a {@link AiUsageRecorder}, que reconcilia
+ * la reserva de presupuesto hecha antes de la llamada.</p>
  */
 @Component
 public class DeepSeekProvider implements AIProvider {
@@ -50,20 +56,41 @@ public class DeepSeekProvider implements AIProvider {
     private final String model;
     private final int maxRetries;
     private final Duration baseBackoff;
+    private final AiUsageRecorder usageRecorder;
+    private final ReservationContext reservationContext;
 
     @Autowired
     public DeepSeekProvider(
             @Qualifier("deepseekChatClient") ChatClient chatClient,
-            @Value("${deepseek.model}") String model) {
-        this(chatClient, model, MAX_RETRIES, BASE_BACKOFF);
+            @Value("${deepseek.model}") String model,
+            AiUsageRecorder usageRecorder,
+            ReservationContext reservationContext) {
+        this(chatClient, model, MAX_RETRIES, BASE_BACKOFF, usageRecorder, reservationContext);
+    }
+
+    /** Constructor de test: sin captura de uso (recorder/context nulos). */
+    DeepSeekProvider(ChatClient chatClient, String model) {
+        this(chatClient, model, MAX_RETRIES, BASE_BACKOFF, null, null);
     }
 
     /** Constructor de test: permite acotar reintentos y backoff. */
     DeepSeekProvider(ChatClient chatClient, String model, int maxRetries, Duration baseBackoff) {
+        this(chatClient, model, maxRetries, baseBackoff, null, null);
+    }
+
+    private DeepSeekProvider(
+            ChatClient chatClient,
+            String model,
+            int maxRetries,
+            Duration baseBackoff,
+            AiUsageRecorder usageRecorder,
+            ReservationContext reservationContext) {
         this.chatClient = chatClient;
         this.model = model;
         this.maxRetries = Math.max(0, maxRetries);
         this.baseBackoff = baseBackoff == null ? BASE_BACKOFF : baseBackoff;
+        this.usageRecorder = usageRecorder;
+        this.reservationContext = reservationContext;
     }
 
     @Override
@@ -74,28 +101,34 @@ public class DeepSeekProvider implements AIProvider {
     @Override
     public String generateBlocking(List<Message> history, String userMessage, String systemPrompt) {
         var messages = buildMessages(systemPrompt, history);
+        AiReservation reservation = currentReservation();
         log.info("===== DEEPSEEK REQUEST =====");
         log.info("Model: {}", model);
         log.info("Messages count: {}", messages.size());
         long start = System.currentTimeMillis();
-        Mono<String> call = Mono.fromCallable(() ->
-                chatClient.prompt()
+        Mono<org.springframework.ai.chat.model.ChatResponse> call = Mono.fromCallable(() -> chatClient
+                        .prompt()
                         .messages(messages.toArray(new org.springframework.ai.chat.messages.Message[0]))
                         .user(userMessage)
                         .call()
-                        .content())
+                        .chatResponse())
                 .subscribeOn(Schedulers.boundedElastic())
                 .timeout(Duration.ofSeconds(TIMEOUT_SECONDS));
         try {
-            String response = call.retryWhen(backoffRetry()).block();
+            var chatResponse = call.retryWhen(backoffRetry()).block();
             long elapsed = System.currentTimeMillis() - start;
             log.info("===== DEEPSEEK RESPONSE =====");
             log.info("Time elapsed: {}ms", elapsed);
-            if (response != null) {
-                log.info("Response length: {} chars", response.length());
+            if (chatResponse != null) {
+                String response = contentOf(chatResponse);
+                reconcileUsage(reservation, chatResponse);
+                log.info("Response length: {} chars", response != null ? response.length() : 0);
+                return response;
             }
-            return response;
+            releaseReservation(reservation);
+            return null;
         } catch (Exception e) {
+            releaseReservation(reservation);
             log.error("DeepSeek error tras agotar los reintentos", e);
             return null;
         }
@@ -104,16 +137,108 @@ public class DeepSeekProvider implements AIProvider {
     @Override
     public Flux<String> generateStream(List<Message> history, String userMessage, String systemPrompt) {
         var messages = buildMessages(systemPrompt, history);
+        AiReservation reservation = currentReservation();
         log.info("===== DEEPSEEK STREAM REQUEST =====");
         log.info("Model: {}", model);
         log.info("Messages count: {}", messages.size());
-        return Flux.defer(() -> chatClient.prompt()
-                .messages(messages.toArray(new org.springframework.ai.chat.messages.Message[0]))
-                .user(userMessage)
-                .stream()
-                .content())
+        long[] usageTokens = new long[2];
+        java.util.concurrent.atomic.AtomicBoolean hasUsage = new java.util.concurrent.atomic.AtomicBoolean(false);
+        java.util.concurrent.atomic.AtomicBoolean reconciled = new java.util.concurrent.atomic.AtomicBoolean(false);
+        return Flux.defer(() -> chatClient
+                        .prompt()
+                        .messages(messages.toArray(new org.springframework.ai.chat.messages.Message[0]))
+                        .user(userMessage)
+                        .stream()
+                        .chatResponse())
                 .retryWhen(backoffRetry())
-                .doOnComplete(() -> log.info("===== DEEPSEEK STREAM COMPLETE ====="));
+                .map(chatResponse -> {
+                    captureUsage(chatResponse, usageTokens, hasUsage);
+                    return contentOf(chatResponse);
+                })
+                .doOnComplete(() -> {
+                    if (reconciled.compareAndSet(false, true)) {
+                        if (hasUsage.get()) {
+                            reconcileReservation(reservation, usageTokens[0], usageTokens[1]);
+                        } else {
+                            releaseReservation(reservation);
+                        }
+                    }
+                    log.info("===== DEEPSEEK STREAM COMPLETE =====");
+                })
+                .doOnError(t -> {
+                    if (reconciled.compareAndSet(false, true)) {
+                        releaseReservation(reservation);
+                    }
+                    log.error("DeepSeek stream error: {}", t != null ? t.getMessage() : "null");
+                });
+    }
+
+    private AiReservation currentReservation() {
+        return reservationContext != null ? reservationContext.current() : null;
+    }
+
+    private String contentOf(org.springframework.ai.chat.model.ChatResponse chatResponse) {
+        var generation = chatResponse.getResult();
+        if (generation == null || generation.getOutput() == null) {
+            return null;
+        }
+        return generation.getOutput().getText();
+    }
+
+    /**
+     * Extrae el uso real de tokens de una respuesta (si lo trae). En streaming
+     * solo la última respuesta del agregado incluye {@code usage}; cada chunk
+     * sobrescribe el holder, conservando el último usage no nulo.
+     */
+    private void captureUsage(
+            org.springframework.ai.chat.model.ChatResponse chatResponse,
+            long[] out,
+            java.util.concurrent.atomic.AtomicBoolean hasUsage) {
+        if (chatResponse == null || chatResponse.getMetadata() == null) {
+            return;
+        }
+        var usage = chatResponse.getMetadata().getUsage();
+        if (usage == null) {
+            return;
+        }
+        Integer prompt = usage.getPromptTokens();
+        Integer completion = usage.getCompletionTokens();
+        if ((prompt == null || prompt <= 0) && (completion == null || completion <= 0)) {
+            return;
+        }
+        out[0] = prompt != null && prompt > 0 ? prompt.longValue() : 0L;
+        out[1] = completion != null && completion > 0 ? completion.longValue() : 0L;
+        hasUsage.set(true);
+    }
+
+    /**
+     * Reconciliación bloqueante: si la respuesta trae uso real lo registra
+     * (liberando la reserva); si no trae usage, libera la reserva sin consumir
+     * tokens inventados.
+     */
+    private void reconcileUsage(
+            AiReservation reservation, org.springframework.ai.chat.model.ChatResponse chatResponse) {
+        long[] tokens = new long[2];
+        java.util.concurrent.atomic.AtomicBoolean has = new java.util.concurrent.atomic.AtomicBoolean(false);
+        captureUsage(chatResponse, tokens, has);
+        if (has.get()) {
+            reconcileReservation(reservation, tokens[0], tokens[1]);
+        } else {
+            releaseReservation(reservation);
+        }
+    }
+
+    private void reconcileReservation(AiReservation reservation, long inputTokens, long outputTokens) {
+        if (usageRecorder == null || reservation == null) {
+            return;
+        }
+        usageRecorder.recordActual(reservation, inputTokens, outputTokens);
+        log.debug("Uso real de IA reconciliado: input={}, output={}", inputTokens, outputTokens);
+    }
+
+    /** Libera la reserva sin consumo (error o respuesta sin usage). */
+    private void releaseReservation(AiReservation reservation) {
+        reconcileReservation(reservation, 0L, 0L);
     }
 
     /**
@@ -127,7 +252,9 @@ public class DeepSeekProvider implements AIProvider {
                 .filter(this::isTransient)
                 .doBeforeRetry(rs -> log.warn(
                         "DeepSeek call falló (intento {}/{}): {} — reintentando con backoff",
-                        rs.totalRetries() + 1, maxRetries + 1, rs.failure().getMessage()));
+                        rs.totalRetries() + 1,
+                        maxRetries + 1,
+                        rs.failure().getMessage()));
     }
 
     /**
@@ -244,10 +371,13 @@ public class DeepSeekProvider implements AIProvider {
 
     private static String normalize(String text) {
         String lower = text.toLowerCase();
-        return lower
-                .replace('á', 'a').replace('é', 'e').replace('í', 'i')
-                .replace('ó', 'o').replace('ú', 'u')
-                .replace('¿', ' ').replace('¡', ' ');
+        return lower.replace('á', 'a')
+                .replace('é', 'e')
+                .replace('í', 'i')
+                .replace('ó', 'o')
+                .replace('ú', 'u')
+                .replace('¿', ' ')
+                .replace('¡', ' ');
     }
 
     /**
@@ -272,16 +402,18 @@ public class DeepSeekProvider implements AIProvider {
         return sanitized;
     }
 
-    private List<org.springframework.ai.chat.messages.Message> buildMessages(String systemPrompt, List<Message> history) {
+    private List<org.springframework.ai.chat.messages.Message> buildMessages(
+            String systemPrompt, List<Message> history) {
         var messages = new ArrayList<org.springframework.ai.chat.messages.Message>();
         messages.add(new SystemMessage(systemPrompt));
         for (var msg : sanitizeHistory(history)) {
-            messages.add(switch (msg.role()) {
-                case "USER" -> new UserMessage(msg.content());
-                case "ASSISTANT" -> new AssistantMessage(msg.content());
-                case "SYSTEM" -> new SystemMessage(msg.content());
-                default -> new UserMessage(msg.content());
-            });
+            messages.add(
+                    switch (msg.role()) {
+                        case "USER" -> new UserMessage(msg.content());
+                        case "ASSISTANT" -> new AssistantMessage(msg.content());
+                        case "SYSTEM" -> new SystemMessage(msg.content());
+                        default -> new UserMessage(msg.content());
+                    });
         }
         return messages;
     }

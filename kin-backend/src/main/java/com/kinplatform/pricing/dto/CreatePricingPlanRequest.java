@@ -5,16 +5,17 @@ import com.kinplatform.pricing.ViabilityScoringDetail;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
-import lombok.Data;
-
 import java.math.BigDecimal;
 import java.util.List;
+import lombok.Data;
 
 @Data
 public class CreatePricingPlanRequest {
 
     @NotBlank(message = "Name is required")
     private String name;
+
+    private String code;
 
     private String description;
 
@@ -28,6 +29,8 @@ public class CreatePricingPlanRequest {
     private Integer maxProjects;
 
     private Integer messagesPerMonth;
+
+    private BigDecimal aiBudgetUsd;
 
     private Boolean advancedAI;
 

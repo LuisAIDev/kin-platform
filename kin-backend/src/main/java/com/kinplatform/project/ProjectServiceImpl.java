@@ -82,7 +82,16 @@ public class ProjectServiceImpl implements ProjectService {
             project.setCategory(categoryService.requireByCode(request.getCategory()));
         }
         if (request.getStatus() != null) {
-            project.setStatus(request.getStatus());
+            boolean wasCompleted = project.getStatus() == ProjectStatus.COMPLETED;
+            ProjectStatus newStatus = request.getStatus();
+            if (newStatus == ProjectStatus.COMPLETED && !wasCompleted) {
+                if (!subscriptionValidator.tryCompleteProject(userId)) {
+                    throw new ProjectLimitExceededException(
+                            "Has alcanzado el límite de proyectos completados de tu plan. "
+                                    + "Debes pasar a STANDARD o PREMIUM para continuar.");
+                }
+            }
+            project.setStatus(newStatus);
         }
 
         project = projectRepository.save(project);

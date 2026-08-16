@@ -1,12 +1,13 @@
 package com.kinplatform.pricing.service;
 
+import com.kinplatform.ai.usage.AiBudgetControlService;
+import com.kinplatform.ai.usage.AiUsageSummary;
+import com.kinplatform.kin.usage.ProjectQuotaPort;
 import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.PricingPlanRepository;
 import com.kinplatform.pricing.SubscriptionStatus;
 import com.kinplatform.pricing.UserSubscription;
 import com.kinplatform.pricing.UserSubscriptionRepository;
-import com.kinplatform.project.ProjectRepository;
-import com.kinplatform.project.ProjectStatus;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -23,21 +24,29 @@ public class SubscriptionValidatorService {
 
     private final UserSubscriptionRepository subscriptionRepository;
     private final PricingPlanRepository planRepository;
-    private final ProjectRepository projectRepository;
     private final CacheManager cacheManager;
+    private final ProjectQuotaPort projectQuotaPort;
+    private final AiBudgetControlService budgetControlService;
 
     @Autowired
     public SubscriptionValidatorService(
             UserSubscriptionRepository subscriptionRepository,
             PricingPlanRepository planRepository,
-            ProjectRepository projectRepository,
-            CacheManager cacheManager) {
+            CacheManager cacheManager,
+            ProjectQuotaPort projectQuotaPort,
+            AiBudgetControlService budgetControlService) {
         this.subscriptionRepository = subscriptionRepository;
         this.planRepository = planRepository;
-        this.projectRepository = projectRepository;
         this.cacheManager = cacheManager;
+        this.projectQuotaPort = projectQuotaPort;
+        this.budgetControlService = budgetControlService;
     }
 
+    /**
+     * ¿Puede el usuario crear/completar más proyectos? La cuota se mide sobre
+     * proyectos COMPLETADOS por período (contador persistente, no decrece al
+     * eliminar). PREMIUM (maxProjects {@code null}) es ilimitado.
+     */
     @Cacheable(value = "projectLimit", key = "#userId")
     public boolean canCreateProject(UUID userId) {
         PricingPlan plan = getCurrentPlan(userId);
@@ -47,17 +56,42 @@ public class SubscriptionValidatorService {
             return true;
         }
 
-        long currentProjects = projectRepository.countByUserIdAndStatusNot(userId, ProjectStatus.ARCHIVED);
-        boolean canCreate = currentProjects < plan.getMaxProjects();
-
+        boolean canCreate = projectQuotaPort.canComplete(userId, plan.getMaxProjects());
         log.debug(
-                "Usuario {}: proyectos {}/{} - {}",
+                "Usuario {}: completados {}/{} - {}",
                 userId,
-                currentProjects,
+                projectQuotaPort.completedProjects(userId),
                 plan.getMaxProjects(),
                 canCreate ? "PERMITIDO" : "BLOQUEADO");
-
         return canCreate;
+    }
+
+    /** Proyectos completados por el usuario en el período vigente. */
+    public int getCompletedProjectsUsed(UUID userId) {
+        projectQuotaPort.rolloverIfNeeded(userId);
+        return projectQuotaPort.completedProjects(userId);
+    }
+
+    /**
+     * Consume atómicamente una unidad de la cuota de proyectos completados.
+     * Devuelve {@code true} si el cupo se aplicó (límite respetado); {@code
+     * false} si el usuario ya alcanzó el límite del plan. Dos transiciones a
+     * COMPLETED concurrentes no pueden superar el límite (UPDATE condicional).
+     */
+    @Transactional
+    public boolean tryCompleteProject(UUID userId) {
+        PricingPlan plan = getCurrentPlan(userId);
+        boolean ok = projectQuotaPort.tryIncrementCompleted(userId, plan.getMaxProjects());
+        if (ok) {
+            evictCache("projectLimit", userId);
+        }
+        log.debug("Usuario {}: consume cupo de proyecto completado -> {}", userId, ok ? "OK" : "LÍMITE");
+        return ok;
+    }
+
+    /** Resumen de uso de IA del usuario (para el frontend; solo representación). */
+    public AiUsageSummary getAiUsage(UUID userId) {
+        return budgetControlService.summary(userId, getCurrentPlan(userId));
     }
 
     @Cacheable(value = "messageLimit", key = "#userId")

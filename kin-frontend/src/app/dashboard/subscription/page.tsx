@@ -125,12 +125,12 @@ export default function SubscriptionPage() {
                 </p>
               </div>
               <div>
-                <p className="text-neutral-500">Proyectos</p>
+                <p className="text-neutral-500">Proyectos completados</p>
                 <p className="font-medium">
                   {status.maxProjects === null
                     ? "Ilimitados"
-                    : `Máx. ${status.maxProjects}`}
-                  {!status.canCreateProject && (
+                    : `${status.completedProjects} / ${status.completedProjectsLimit}`}
+                  {status.maxProjects !== null && !status.canCompleteProject && (
                     <span className="text-red-500 ml-1">(límite alcanzado)</span>
                   )}
                 </p>
@@ -166,6 +166,49 @@ export default function SubscriptionPage() {
                   <p className="font-medium">{subscription.messagesUsed}</p>
                 </div>
               </div>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold">Uso de IA</h2>
+              {status.aiUsagePeriodStart && status.aiUsagePeriodEnd && (
+                <span className="text-xs text-neutral-500">
+                  {new Date(status.aiUsagePeriodStart).toLocaleDateString()} →{" "}
+                  {new Date(status.aiUsagePeriodEnd).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+
+            {status.aiCostControlEnabled ? (
+              <>
+                <p className="text-sm text-neutral-600">
+                  <span className="font-semibold text-neutral-900">
+                    ${status.aiBudgetUsed.toFixed(2)}
+                  </span>{" "}
+                  / ${status.aiBudgetLimit.toFixed(2)}
+                </p>
+                <div className="mt-2 h-2 rounded-full bg-neutral-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary-500"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        status.aiBudgetLimit > 0
+                          ? (status.aiBudgetUsed / status.aiBudgetLimit) * 100
+                          : 0,
+                      )}%`,
+                    }}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-neutral-500">
+                  Disponible: ${status.aiBudgetRemaining.toFixed(2)}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-neutral-500">
+                El control de consumo de IA está configurándose. Tu asistente sigue disponible.
+              </p>
             )}
           </div>
 

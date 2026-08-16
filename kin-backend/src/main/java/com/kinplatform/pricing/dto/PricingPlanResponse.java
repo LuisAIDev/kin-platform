@@ -5,16 +5,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.SupportLevel;
 import com.kinplatform.pricing.ViabilityScoringDetail;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -23,12 +22,14 @@ import java.util.UUID;
 public class PricingPlanResponse {
 
     private UUID id;
+    private String code;
     private String name;
     private String description;
     private BigDecimal price;
     private List<String> features;
     private Integer maxProjects;
     private Integer messagesPerMonth;
+    private BigDecimal aiBudgetUsd;
     private Boolean advancedAI;
     private Boolean pdfExport;
     private SupportLevel supportLevel;
@@ -49,12 +50,14 @@ public class PricingPlanResponse {
 
         return PricingPlanResponse.builder()
                 .id(plan.getId())
+                .code(plan.getCode())
                 .name(plan.getName())
                 .description(plan.getDescription())
                 .price(plan.getPrice())
                 .features(featureList)
                 .maxProjects(plan.getMaxProjects())
                 .messagesPerMonth(plan.getMessagesPerMonth())
+                .aiBudgetUsd(plan.getAiBudgetUsd())
                 .advancedAI(plan.getAdvancedAI())
                 .pdfExport(plan.getPdfExport())
                 .supportLevel(plan.getSupportLevel())

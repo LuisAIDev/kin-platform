@@ -2,6 +2,8 @@ package com.kinplatform.chat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.ai.guardrails.PromptGuardrail;
+import com.kinplatform.ai.usage.AiBudgetControlService;
+import com.kinplatform.ai.usage.ReservationContext;
 import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.ChatRequest;
 import com.kinplatform.chat.dto.ChatResponse;
@@ -13,6 +15,9 @@ import com.kinplatform.kin.conversation.StreamingTurnOutcome;
 import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.reporting.report.ReportRepository;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
+import com.kinplatform.kin.usage.AiBudgetExceededException;
+import com.kinplatform.kin.usage.AiReservation;
+import com.kinplatform.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.project.ProjectRepository;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,6 +54,9 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
     private final ConversationOrchestrator conversationOrchestrator;
     private final PromptGuardrail promptGuardrail;
     private final ReportRepository reportRepository;
+    private final SubscriptionValidatorService subscriptionValidator;
+    private final AiBudgetControlService budgetControlService;
+    private final ReservationContext reservationContext;
 
     /** Sin repo de reportes: el runtime conserva el comportamiento previo. */
     private static final ReportRepository NO_OP_REPORT_REPOSITORY = new ReportRepository() {
@@ -80,13 +88,43 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
             ObjectMapper objectMapper,
             ConversationOrchestrator conversationOrchestrator,
             PromptGuardrail promptGuardrail,
-            ReportRepository reportRepository) {
+            ReportRepository reportRepository,
+            SubscriptionValidatorService subscriptionValidator,
+            AiBudgetControlService budgetControlService,
+            ReservationContext reservationContext) {
         this.chatService = chatService;
         this.projectRepository = projectRepository;
         this.objectMapper = objectMapper;
         this.conversationOrchestrator = conversationOrchestrator;
         this.promptGuardrail = promptGuardrail;
         this.reportRepository = reportRepository == null ? NO_OP_REPORT_REPOSITORY : reportRepository;
+        this.subscriptionValidator = subscriptionValidator;
+        this.budgetControlService = budgetControlService;
+        this.reservationContext = reservationContext;
+    }
+
+    /**
+     * Constructor de compatibilidad (6 args): usado antes de la capa de
+     * presupuesto de IA (Fase 1). Sin gate de presupuesto y sin contexto de
+     * reserva (el proveedor no atribuye uso).
+     */
+    public ChatOrchestratorServiceImpl(
+            ChatService chatService,
+            ProjectRepository projectRepository,
+            ObjectMapper objectMapper,
+            ConversationOrchestrator conversationOrchestrator,
+            PromptGuardrail promptGuardrail,
+            ReportRepository reportRepository) {
+        this(
+                chatService,
+                projectRepository,
+                objectMapper,
+                conversationOrchestrator,
+                promptGuardrail,
+                reportRepository,
+                null,
+                null,
+                null);
     }
 
     /**
@@ -99,8 +137,16 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
             ProjectRepository projectRepository,
             ObjectMapper objectMapper,
             ConversationOrchestrator conversationOrchestrator) {
-        this(chatService, projectRepository, objectMapper, conversationOrchestrator,
-                new PromptGuardrail(), NO_OP_REPORT_REPOSITORY);
+        this(
+                chatService,
+                projectRepository,
+                objectMapper,
+                conversationOrchestrator,
+                new PromptGuardrail(),
+                NO_OP_REPORT_REPOSITORY,
+                null,
+                null,
+                null);
     }
 
     /**
@@ -125,6 +171,8 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         }
         var userMessage = saveUserMessage(userId, projectId, request.getContent());
         var history = loadHistoryForContext(userId, projectId);
+        var reservation = reserveBudget(userId, request, history);
+        setReservation(reservation);
         var turn = new ConversationTurn(
                 projectId,
                 userId,
@@ -133,22 +181,26 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                 project.getTitle(),
                 project.getDescription(),
                 project.getCategory() != null ? project.getCategory().getName() : null);
-        var result = conversationOrchestrator.orchestrate(turn);
-        log.info(
-                "=== KIN METHOD RESULT === action={}, phase={}, chars={}, events={}, validationAccepted={}",
-                result.decision() != null ? result.decision().action() : null,
-                result.directive() != null ? result.directive().phase() : null,
-                result.aiResponse() != null ? result.aiResponse().length() : 0,
-                result.events().size(),
-                result.validation() != null ? result.validation().accepted() : null);
-        var assistantMessage = saveAssistantMessage(userId, projectId, result.aiResponse());
-        persistReportIfGenerated(projectId, result.decision(), result.consultingReport());
-        return ChatResponse.builder()
-                .userMessageId(userMessage.getId())
-                .assistantMessageId(assistantMessage.getId())
-                .content(result.aiResponse())
-                .tokensUsed(assistantMessage.getTokensUsed())
-                .build();
+        try {
+            var result = conversationOrchestrator.orchestrate(turn);
+            log.info(
+                    "=== KIN METHOD RESULT === action={}, phase={}, chars={}, events={}, validationAccepted={}",
+                    result.decision() != null ? result.decision().action() : null,
+                    result.directive() != null ? result.directive().phase() : null,
+                    result.aiResponse() != null ? result.aiResponse().length() : 0,
+                    result.events().size(),
+                    result.validation() != null ? result.validation().accepted() : null);
+            var assistantMessage = saveAssistantMessage(userId, projectId, result.aiResponse());
+            persistReportIfGenerated(projectId, result.decision(), result.consultingReport());
+            return ChatResponse.builder()
+                    .userMessageId(userMessage.getId())
+                    .assistantMessageId(assistantMessage.getId())
+                    .content(result.aiResponse())
+                    .tokensUsed(assistantMessage.getTokensUsed())
+                    .build();
+        } finally {
+            clearReservation();
+        }
     }
 
     @Override
@@ -160,6 +212,13 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         }
         var userMessage = saveUserMessage(userId, projectId, request.getContent());
         var history = loadHistoryForContext(userId, projectId);
+        AiReservation reservation;
+        try {
+            reservation = reserveBudget(userId, request, history);
+        } catch (AiBudgetExceededException e) {
+            return budgetExceededEmitter(e.getMessage());
+        }
+        setReservation(reservation);
         var turn = new ConversationTurn(
                 projectId,
                 userId,
@@ -175,144 +234,169 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                 userId,
                 history.size());
 
-        StreamingTurnOutcome outcome = conversationOrchestrator.orchestrateStreamWithOutcome(turn);
-        Flux<String> flux = outcome == null
-                ? Flux.error(new IllegalStateException("No se obtuvo flujo de respuesta"))
-                : outcome.flux();
-        var emitter = new SseEmitter(SSE_TIMEOUT);
-        var fullContent = new StringBuilder();
+        try {
+            StreamingTurnOutcome outcome = conversationOrchestrator.orchestrateStreamWithOutcome(turn);
+            Flux<String> flux = outcome == null
+                    ? Flux.error(new IllegalStateException("No se obtuvo flujo de respuesta"))
+                    : outcome.flux();
+            var emitter = new SseEmitter(SSE_TIMEOUT);
+            var fullContent = new StringBuilder();
 
-        // Observabilidad del ciclo de vida del SseEmitter. Estos callbacks son
-        // SOLO de logging: no alteran el comportamiento del emitter ni el del flux.
-        emitter.onCompletion(() ->
-                log.info("=== SSE EMITTER COMPLETED CALLBACK === projectId={}", projectId));
-        emitter.onTimeout(() ->
-                log.warn("=== SSE EMITTER TIMEOUT === projectId={}, timeoutMillis={}", projectId, SSE_TIMEOUT));
-        emitter.onError(t ->
-                log.warn("=== SSE EMITTER ERROR CALLBACK === projectId={}, errorType={}, message={}",
-                        projectId,
-                        t != null ? t.getClass().getSimpleName() : "null",
-                        t != null ? t.getMessage() : "null"));
+            // Observabilidad del ciclo de vida del SseEmitter. Estos callbacks son
+            // SOLO de logging: no alteran el comportamiento del emitter ni el del flux.
+            emitter.onCompletion(() -> log.info("=== SSE EMITTER COMPLETED CALLBACK === projectId={}", projectId));
+            emitter.onTimeout(() ->
+                    log.warn("=== SSE EMITTER TIMEOUT === projectId={}, timeoutMillis={}", projectId, SSE_TIMEOUT));
+            emitter.onError(t -> log.warn(
+                    "=== SSE EMITTER ERROR CALLBACK === projectId={}, errorType={}, message={}",
+                    projectId,
+                    t != null ? t.getClass().getSimpleName() : "null",
+                    t != null ? t.getMessage() : "null"));
 
-        flux.subscribe(
-                token -> {
-                    fullContent.append(token);
-                    try {
-                        emitter.send(SseEmitter.event()
-                                .name("token")
-                                .data(objectMapper.writeValueAsString(Map.of("token", token))));
-                    } catch (IOException e) {
-                        log.error("Failed to send SSE event, client may have disconnected. projectId={}",
-                                projectId, e);
-                        emitter.completeWithError(e);
-                    }
-                },
-                error -> {
-                    log.error("=== SSE STREAM ERROR === projectId={}, errorType={}, message={}",
-                            projectId,
-                            error != null ? error.getClass().getSimpleName() : "null",
-                            error != null ? error.getMessage() : "null");
-                    try {
-                        emitter.send(SseEmitter.event()
-                                .name("error")
-                                .data(objectMapper.writeValueAsString(Map.of(
-                                        "error",
-                                        error != null ? error.getMessage() : "Unknown stream error"))));
-                    } catch (IOException e) {
-                        log.error("Failed to send SSE error event. projectId={}", projectId, e);
-                    }
-                    emitter.complete();
-                },
-                () -> {
-                    var finalContent = fullContent.toString();
-                    String assistantMessageId = null;
-                    int tokensUsed = 0;
-                    log.info("=== AI RESPONSE RECEIVED === chars={}", finalContent.length());
+            flux.subscribe(
+                    token -> {
+                        fullContent.append(token);
+                        try {
+                            emitter.send(SseEmitter.event()
+                                    .name("token")
+                                    .data(objectMapper.writeValueAsString(Map.of("token", token))));
+                        } catch (IOException e) {
+                            log.error(
+                                    "Failed to send SSE event, client may have disconnected. projectId={}",
+                                    projectId,
+                                    e);
+                            emitter.completeWithError(e);
+                        }
+                    },
+                    error -> {
+                        log.error(
+                                "=== SSE STREAM ERROR === projectId={}, errorType={}, message={}",
+                                projectId,
+                                error != null ? error.getClass().getSimpleName() : "null",
+                                error != null ? error.getMessage() : "null");
+                        try {
+                            emitter.send(SseEmitter.event()
+                                    .name("error")
+                                    .data(objectMapper.writeValueAsString(Map.of(
+                                            "error", error != null ? error.getMessage() : "Unknown stream error"))));
+                        } catch (IOException e) {
+                            log.error("Failed to send SSE error event. projectId={}", projectId, e);
+                        }
+                        emitter.complete();
+                    },
+                    () -> {
+                        var finalContent = fullContent.toString();
+                        String assistantMessageId = null;
+                        int tokensUsed = 0;
+                        log.info("=== AI RESPONSE RECEIVED === chars={}", finalContent.length());
 
-                    // 1) Persistencia del mensaje del asistente: si falla, se registra
-                    //    claramente pero NUNCA se impide enviar el evento done con el
-                    //    contenido real al cliente.
-                    try {
-                        var assistantMessage = saveAssistantMessage(userId, projectId, finalContent);
-                        assistantMessageId = assistantMessage.getId().toString();
-                        tokensUsed = assistantMessage.getTokensUsed();
-                    } catch (Exception e) {
-                        log.error("=== SSE SAVE ASSISTANT FAILED === projectId={}, contentChars={}, errorType={}, message={}",
+                        // 1) Persistencia del mensaje del asistente: si falla, se registra
+                        //    claramente pero NUNCA se impide enviar el evento done con el
+                        //    contenido real al cliente.
+                        try {
+                            var assistantMessage = saveAssistantMessage(userId, projectId, finalContent);
+                            assistantMessageId = assistantMessage.getId().toString();
+                            tokensUsed = assistantMessage.getTokensUsed();
+                        } catch (Exception e) {
+                            log.error(
+                                    "=== SSE SAVE ASSISTANT FAILED === projectId={}, contentChars={}, errorType={}, message={}",
+                                    projectId,
+                                    finalContent.length(),
+                                    e.getClass().getSimpleName(),
+                                    e.getMessage());
+                        }
+
+                        // 2) Persistencia del reporte: nunca interrumpe el envío de done.
+                        if (outcome != null) {
+                            try {
+                                persistReportIfGenerated(projectId, outcome.decision(), outcome.consultingReport());
+                            } catch (Exception e) {
+                                log.error(
+                                        "=== SSE PERSIST REPORT FAILED === projectId={}, errorType={}, message={}",
+                                        projectId,
+                                        e.getClass().getSimpleName(),
+                                        e.getMessage());
+                            }
+                        }
+
+                        // 3) Construcción y envío del evento done. Si la persistencia
+                        //    falló, done llega igualmente con content=finalContent y
+                        //    assistantMessageId vacío.
+                        log.info(
+                                "=== SSE DONE SEND START === projectId={}, contentChars={}, assistantMessageId={}",
                                 projectId,
                                 finalContent.length(),
-                                e.getClass().getSimpleName(),
-                                e.getMessage());
-                    }
-
-                    // 2) Persistencia del reporte: nunca interrumpe el envío de done.
-                    if (outcome != null) {
+                                assistantMessageId);
+                        boolean doneSent = false;
                         try {
-                            persistReportIfGenerated(projectId, outcome.decision(), outcome.consultingReport());
-                        } catch (Exception e) {
-                            log.error("=== SSE PERSIST REPORT FAILED === projectId={}, errorType={}, message={}",
-                                    projectId,
-                                    e.getClass().getSimpleName(),
-                                    e.getMessage());
-                        }
-                    }
-
-                    // 3) Construcción y envío del evento done. Si la persistencia
-                    //    falló, done llega igualmente con content=finalContent y
-                    //    assistantMessageId vacío.
-                    log.info("=== SSE DONE SEND START === projectId={}, contentChars={}, assistantMessageId={}",
-                            projectId, finalContent.length(), assistantMessageId);
-                    boolean doneSent = false;
-                    try {
-                        var donePayload = Map.of(
-                                "done", true,
-                                "userMessageId", userMessage.getId().toString(),
-                                "assistantMessageId", assistantMessageId != null ? assistantMessageId : "",
-                                "content", finalContent,
-                                "tokensUsed", tokensUsed);
-                        emitter.send(SseEmitter.event()
-                                .name("done")
-                                .data(objectMapper.writeValueAsString(donePayload)));
-                        doneSent = true;
-                    } catch (Exception e) {
-                        log.error("=== SSE DONE SEND FAILED === projectId={}, errorType={}, message={}",
-                                projectId,
-                                e.getClass().getSimpleName(),
-                                e.getMessage());
-                    }
-
-                    // 4) Intento de respaldo del done si el primero falló: conserva
-                    //    siempre el contenido real, aunque sea sin id de asistente.
-                    if (!doneSent) {
-                        try {
-                            var fallbackPayload = Map.of(
-                                    "done", true,
-                                    "content", finalContent,
-                                    "userMessageId", userMessage.getId().toString(),
-                                    "assistantMessageId", assistantMessageId != null ? assistantMessageId : "",
-                                    "tokensUsed", tokensUsed);
-                            emitter.send(SseEmitter.event()
-                                    .name("done")
-                                    .data(objectMapper.writeValueAsString(fallbackPayload)));
+                            var donePayload = Map.of(
+                                    "done",
+                                    true,
+                                    "userMessageId",
+                                    userMessage.getId().toString(),
+                                    "assistantMessageId",
+                                    assistantMessageId != null ? assistantMessageId : "",
+                                    "content",
+                                    finalContent,
+                                    "tokensUsed",
+                                    tokensUsed);
+                            emitter.send(
+                                    SseEmitter.event().name("done").data(objectMapper.writeValueAsString(donePayload)));
                             doneSent = true;
                         } catch (Exception e) {
-                            log.error("=== SSE DONE SEND FALLBACK FAILED === projectId={}, errorType={}, message={}",
+                            log.error(
+                                    "=== SSE DONE SEND FAILED === projectId={}, errorType={}, message={}",
                                     projectId,
                                     e.getClass().getSimpleName(),
                                     e.getMessage());
                         }
-                    }
 
-                    log.info("=== SSE DONE SEND SUCCESS === projectId={}, contentChars={}, assistantMessageId={}, sent={}",
-                            projectId, finalContent.length(), assistantMessageId, doneSent);
+                        // 4) Intento de respaldo del done si el primero falló: conserva
+                        //    siempre el contenido real, aunque sea sin id de asistente.
+                        if (!doneSent) {
+                            try {
+                                var fallbackPayload = Map.of(
+                                        "done",
+                                        true,
+                                        "content",
+                                        finalContent,
+                                        "userMessageId",
+                                        userMessage.getId().toString(),
+                                        "assistantMessageId",
+                                        assistantMessageId != null ? assistantMessageId : "",
+                                        "tokensUsed",
+                                        tokensUsed);
+                                emitter.send(SseEmitter.event()
+                                        .name("done")
+                                        .data(objectMapper.writeValueAsString(fallbackPayload)));
+                                doneSent = true;
+                            } catch (Exception e) {
+                                log.error(
+                                        "=== SSE DONE SEND FALLBACK FAILED === projectId={}, errorType={}, message={}",
+                                        projectId,
+                                        e.getClass().getSimpleName(),
+                                        e.getMessage());
+                            }
+                        }
 
-                    try {
-                        emitter.complete();
-                    } finally {
-                        log.info("=== SSE EMITTER COMPLETE === projectId={}", projectId);
-                    }
-                });
+                        log.info(
+                                "=== SSE DONE SEND SUCCESS === projectId={}, contentChars={}, assistantMessageId={}, sent={}",
+                                projectId,
+                                finalContent.length(),
+                                assistantMessageId,
+                                doneSent);
 
-        return emitter;
+                        try {
+                            emitter.complete();
+                        } finally {
+                            log.info("=== SSE EMITTER COMPLETE === projectId={}", projectId);
+                        }
+                    });
+
+            return emitter;
+        } finally {
+            clearReservation();
+        }
     }
 
     private boolean isBlocked(String content) {
@@ -326,10 +410,64 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         return blocked;
     }
 
-    private void persistReportIfGenerated(UUID projectId, ConversationDecision decision,
-                                          ConsultingReport report) {
-        if (decision != null && decision.action() == ConversationDecision.Action.REPORT
-                && report != null) {
+    /**
+     * Reserva atómicamente el presupuesto de IA estimado para el turno ANTES
+     * de ejecutar el pipeline (y por tanto antes de llamar a DeepSeek). Si el
+     * control de costo está desactivado o no hay precios configurados devuelve
+     * {@code null} (sin gate). Si el presupuesto es insuficiente lanza
+     * {@link AiBudgetExceededException} (HTTP 403).
+     */
+    private AiReservation reserveBudget(UUID userId, ChatRequest request, List<Message> history) {
+        if (budgetControlService == null || subscriptionValidator == null) {
+            return null;
+        }
+        var plan = subscriptionValidator.getCurrentPlan(userId);
+        return budgetControlService.reserve(userId, plan, request.getContent(), history);
+    }
+
+    private void clearReservation() {
+        if (reservationContext != null) {
+            reservationContext.clear();
+        }
+    }
+
+    private void setReservation(AiReservation reservation) {
+        if (reservationContext != null && reservation != null) {
+            reservationContext.set(reservation);
+        }
+    }
+
+    /** Emitter SSE que muestra el mensaje amigable de límite de IA alcanzado. */
+    private SseEmitter budgetExceededEmitter(String message) {
+        var emitter = new SseEmitter(SSE_TIMEOUT);
+        String friendly =
+                message == null || message.isBlank() ? AiBudgetControlService.BUDGET_EXCEEDED_MESSAGE : message;
+        try {
+            emitter.send(
+                    SseEmitter.event().name("token").data(objectMapper.writeValueAsString(Map.of("token", friendly))));
+            emitter.send(SseEmitter.event()
+                    .name("done")
+                    .data(objectMapper.writeValueAsString(Map.of(
+                            "done",
+                            true,
+                            "userMessageId",
+                            "",
+                            "assistantMessageId",
+                            "",
+                            "content",
+                            friendly,
+                            "tokensUsed",
+                            0))));
+        } catch (IOException e) {
+            log.error("Failed to emit AI budget exceeded event", e);
+        } finally {
+            emitter.complete();
+        }
+        return emitter;
+    }
+
+    private void persistReportIfGenerated(UUID projectId, ConversationDecision decision, ConsultingReport report) {
+        if (decision != null && decision.action() == ConversationDecision.Action.REPORT && report != null) {
             try {
                 reportRepository.save(projectId, report);
             } catch (Exception e) {

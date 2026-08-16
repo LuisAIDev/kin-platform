@@ -1,9 +1,12 @@
 package com.kinplatform.kin.enterprise.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.enterprise.ports.EnterpriseProjectAccessControl;
 import com.kinplatform.kin.enterprise.application.DefaultEnterpriseProjectTrigger;
+import com.kinplatform.kin.enterprise.application.EnterpriseAiBudgetGate;
 import com.kinplatform.kin.enterprise.application.EnterpriseExportOrchestrator;
 import com.kinplatform.kin.enterprise.application.EnterpriseExportService;
 import com.kinplatform.kin.enterprise.application.EnterpriseGenerationOrchestrator;
@@ -12,18 +15,15 @@ import com.kinplatform.kin.enterprise.application.EnterpriseProjectRequestedList
 import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
 import com.kinplatform.kin.enterprise.application.EnterpriseRendererFactory;
 import com.kinplatform.kin.enterprise.application.InMemoryEnterpriseProjectRepository;
+import com.kinplatform.kin.enterprise.ports.EnterpriseProjectAccessControl;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import java.util.concurrent.Executor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.concurrent.Executor;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 /**
  * Test del cableado Spring de la capa de aplicación del módulo Enterprise
@@ -33,8 +33,8 @@ import static org.mockito.Mockito.mock;
  */
 class EnterpriseWebConfigTest {
 
-    private final ApplicationContextRunner runner = new ApplicationContextRunner()
-        .withUserConfiguration(EnterpriseWebConfig.class, SupportBeans.class);
+    private final ApplicationContextRunner runner =
+            new ApplicationContextRunner().withUserConfiguration(EnterpriseWebConfig.class, SupportBeans.class);
 
     @Test
     void config_deberiaCablearLosBeansDeAplicacion() {
@@ -83,6 +83,11 @@ class EnterpriseWebConfigTest {
         @Bean
         ContextRepository contextRepository() {
             return mock(ContextRepository.class);
+        }
+
+        @Bean
+        EnterpriseAiBudgetGate enterpriseAiBudgetGate() {
+            return mock(EnterpriseAiBudgetGate.class);
         }
 
         @Bean

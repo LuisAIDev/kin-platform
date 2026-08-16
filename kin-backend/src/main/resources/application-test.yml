@@ -17,3 +17,11 @@ app:
   mail:
     # Tests: sin SMTP real, se usa LoggingEmailSender.
     enabled: false
+
+kin:
+  ai:
+    # Tests: sin precios de DeepSeek configurados; el control de costo queda
+    # desactivado (el fail-fast no aplica) y los tests ejercitan el gate a
+    # nivel de servicio con mocks.
+    cost-control:
+      enabled: false

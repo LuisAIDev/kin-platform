@@ -7,6 +7,8 @@ import com.kinplatform.kin.event.DomainEventBus;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Listener de aplicación del evento {@code EnterpriseProjectRequested}
@@ -29,13 +31,21 @@ import java.util.concurrent.Executor;
  * construcción equivale al cableado (composition root). La generación nunca
  * lanza fuera del ejecutor: cualquier fallo queda registrado por el propio
  * {@code EnterpriseGenerationService} como {@code EnterpriseProjectFailed}.</p>
+ *
+ * <p>Control de presupuesto de IA (Fase 1): si se inyecta un
+ * {@link EnterpriseAiBudgetGate}, la generación pasa por la misma autoridad de
+ * presupuesto de Fase 1 antes de invocar al LLM; sin presupuesto suficiente la
+ * generación se omite (no se llama a DeepSeek).</p>
  */
 public final class EnterpriseProjectRequestedListener {
+
+    private static final Logger log = LoggerFactory.getLogger(EnterpriseProjectRequestedListener.class);
 
     private final EnterpriseGenerationOrchestrator orchestrator;
     private final ContextRepository contextRepository;
     private final Executor executor;
     private final EnterprisePipelineResultStore pipelineResultStore;
+    private final EnterpriseAiBudgetGate aiBudgetGate;
 
     /** Store no operativo (sin resultados del pipeline → offline-first). */
     private static final EnterprisePipelineResultStore NO_OP_RESULT_STORE = new EnterprisePipelineResultStore() {
@@ -61,7 +71,7 @@ public final class EnterpriseProjectRequestedListener {
             ContextRepository contextRepository,
             DomainEventBus eventBus,
             Executor executor) {
-        this(orchestrator, contextRepository, eventBus, executor, NO_OP_RESULT_STORE);
+        this(orchestrator, contextRepository, eventBus, executor, NO_OP_RESULT_STORE, null);
     }
 
     /**
@@ -83,10 +93,27 @@ public final class EnterpriseProjectRequestedListener {
             DomainEventBus eventBus,
             Executor executor,
             EnterprisePipelineResultStore pipelineResultStore) {
+        this(orchestrator, contextRepository, eventBus, executor, pipelineResultStore, null);
+    }
+
+    /**
+     * Constructor con gate de presupuesto de IA (Fase 1): la generación
+     * Enterprise (que ejecuta llamadas al LLM) pasa por la misma autoridad de
+     * presupuesto; sin presupuesto NO se invoca a DeepSeek. {@code null} =
+     * sin gate (comportamiento previo).
+     */
+    public EnterpriseProjectRequestedListener(
+            EnterpriseGenerationOrchestrator orchestrator,
+            ContextRepository contextRepository,
+            DomainEventBus eventBus,
+            Executor executor,
+            EnterprisePipelineResultStore pipelineResultStore,
+            EnterpriseAiBudgetGate aiBudgetGate) {
         this.orchestrator = requireNonNull(orchestrator, "orchestrator");
         this.contextRepository = requireNonNull(contextRepository, "contextRepository");
         this.executor = requireNonNull(executor, "executor");
         this.pipelineResultStore = requireNonNull(pipelineResultStore, "pipelineResultStore");
+        this.aiBudgetGate = aiBudgetGate;
         requireNonNull(eventBus, "eventBus").subscribe(EnterpriseProjectRequested.class, this::onRequested);
     }
 
@@ -103,6 +130,13 @@ public final class EnterpriseProjectRequestedListener {
         }
         executor.execute(() -> {
             try {
+                boolean proceed = aiBudgetGate == null || aiBudgetGate.reserve(event.projectId());
+                if (!proceed) {
+                    log.warn(
+                            "Generación Enterprise omitida: presupuesto de IA insuficiente (projectId={})",
+                            event.projectId());
+                    return;
+                }
                 Optional<ProjectContext> context = contextRepository.find(event.projectId());
                 if (context.isEmpty()) {
                     return;
@@ -110,12 +144,19 @@ public final class EnterpriseProjectRequestedListener {
                 EnterpriseTurnResults turnResults =
                         pipelineResultStore.consume(event.projectId()).orElse(EnterpriseTurnResults.empty());
                 EnterpriseGenerationRequest request = new EnterpriseGenerationRequest(
-                        event.projectId(), context.get(),
-                        turnResults.recommendations(), turnResults.opportunities(),
-                        turnResults.knowledge(), turnResults.riskResult());
+                        event.projectId(),
+                        context.get(),
+                        turnResults.recommendations(),
+                        turnResults.opportunities(),
+                        turnResults.knowledge(),
+                        turnResults.riskResult());
                 orchestrator.generateRequested(request, event.version());
             } catch (RuntimeException ex) {
                 // La generación registra su propio EnterpriseProjectFailed; no se propaga.
+            } finally {
+                if (aiBudgetGate != null) {
+                    aiBudgetGate.clear();
+                }
             }
         });
     }

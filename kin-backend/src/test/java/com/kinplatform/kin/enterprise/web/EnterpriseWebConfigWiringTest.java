@@ -1,22 +1,5 @@
 package com.kinplatform.kin.enterprise.web;
 
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.enterprise.application.EnterpriseGenerationOrchestrator;
-import com.kinplatform.kin.enterprise.application.EnterpriseGenerationRequest;
-import com.kinplatform.kin.enterprise.application.EnterpriseProjectRequestedListener;
-import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
-import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
-import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
-import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
-import org.junit.jupiter.api.Test;
-
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,6 +10,22 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.kin.enterprise.application.EnterpriseGenerationOrchestrator;
+import com.kinplatform.kin.enterprise.application.EnterpriseGenerationRequest;
+import com.kinplatform.kin.enterprise.application.EnterpriseProjectRequestedListener;
+import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
+import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
+import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
+import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
+import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests de wiring del ciclo automático Enterprise (Fase 10, M3B): verifica que
@@ -63,7 +62,8 @@ class EnterpriseWebConfigWiringTest {
         var events = eventBus.publishedEvents();
         assertEquals(1, events.size());
         assertTrue(events.get(0) instanceof EnterpriseProjectRequested requested
-            && requested.projectId().equals(projectId) && requested.version() == 1);
+                && requested.projectId().equals(projectId)
+                && requested.version() == 1);
     }
 
     @Test
@@ -74,14 +74,20 @@ class EnterpriseWebConfigWiringTest {
         when(contextRepository.find(projectId)).thenReturn(Optional.of(EngineTestFixtures.contextWithAll()));
         var latch = new CountDownLatch(1);
         doAnswer(inv -> {
-            latch.countDown();
-            return null;
-        }).when(orchestrator).generateRequested(any(), anyInt());
+                    latch.countDown();
+                    return null;
+                })
+                .when(orchestrator)
+                .generateRequested(any(), anyInt());
         var eventBus = new InMemoryDomainEventBus();
 
         EnterpriseProjectRequestedListener listener = config.enterpriseProjectRequestedListener(
-            orchestrator, contextRepository, eventBus, config.enterpriseGenerationExecutor(),
-            config.enterprisePipelineResultStore());
+                orchestrator,
+                contextRepository,
+                eventBus,
+                config.enterpriseGenerationExecutor(),
+                config.enterprisePipelineResultStore(),
+                null);
 
         assertNotNull(listener);
         eventBus.publish(new EnterpriseProjectRequested(projectId, 1));

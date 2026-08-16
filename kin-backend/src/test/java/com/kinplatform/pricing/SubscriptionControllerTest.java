@@ -6,7 +6,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.kinplatform.ai.usage.AiUsageSummary;
 import com.kinplatform.common.GlobalExceptionHandler;
+import com.kinplatform.kin.usage.UsagePeriod;
 import com.kinplatform.pricing.dto.SubscriptionResponse;
 import com.kinplatform.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.user.User;
@@ -82,6 +84,22 @@ class SubscriptionControllerTest {
                 .build();
     }
 
+    private AiUsageSummary aiUsage() {
+        var period = UsagePeriod.current();
+        return new AiUsageSummary(
+                true,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                0L,
+                0L,
+                0L,
+                0,
+                period.start(),
+                period.end());
+    }
+
     private SubscriptionResponse subscriptionResponse() {
         return SubscriptionResponse.builder()
                 .id(UUID.randomUUID())
@@ -130,6 +148,8 @@ class SubscriptionControllerTest {
         when(validatorService.getRemainingMessages(USER_ID)).thenReturn(100);
         when(validatorService.canCreateProject(USER_ID)).thenReturn(true);
         when(validatorService.getAvailableAILevel(USER_ID)).thenReturn("PRO");
+        when(validatorService.getCompletedProjectsUsed(USER_ID)).thenReturn(2);
+        when(validatorService.getAiUsage(USER_ID)).thenReturn(aiUsage());
 
         mockMvc.perform(get("/subscriptions/status").principal(principal()))
                 .andExpect(status().isOk())
@@ -166,7 +186,7 @@ class SubscriptionControllerTest {
     @Test
     void startTrial_deberiaResponder201() throws Exception {
         stubUser();
-        when(pricingPlanService.getPlanByName("Premium Pro")).thenReturn(Optional.of(plan()));
+        when(pricingPlanService.getPlanByCode("PREMIUM")).thenReturn(Optional.of(plan()));
         when(subscriptionService.startTrial(USER_ID, PLAN_ID)).thenReturn(subscriptionResponse());
 
         mockMvc.perform(post("/subscriptions/trial").principal(principal())).andExpect(status().isCreated());
@@ -175,7 +195,7 @@ class SubscriptionControllerTest {
     @Test
     void startTrial_planNoEncontrado_deberiaFallar() throws Exception {
         stubUser();
-        when(pricingPlanService.getPlanByName("Premium Pro")).thenReturn(Optional.empty());
+        when(pricingPlanService.getPlanByCode("PREMIUM")).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/subscriptions/trial").principal(principal())).andExpect(status().isNotFound());
     }

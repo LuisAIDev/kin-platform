@@ -125,6 +125,36 @@ deepseek:
   # 2026-07-30: Migrated from deepseek-v3-flash (invalid) to deepseek-v4-flash.
   # deepseek-chat and deepseek-reasoner were deprecated on 2026-07-24.
   model: deepseek-v4-flash
+  # Costo por millón de tokens (Fase 1 — control de consumo de IA).
+  # Precios REALES de deepseek-v4-flash: PENDIENTES DE CONFIRMAR. Si quedan
+  # en 0, el gate de costo se desactiva con log explícito (no se inventa el
+  # precio). Configurar ANTES de habilitar KIN_AI_COST_CONTROL_ENABLED=true
+  # en producción.
+  cost:
+    input-per-1m: ${DEEPSEEK_INPUT_COST_PER_1M:0}
+    output-per-1m: ${DEEPSEEK_OUTPUT_COST_PER_1M:0}
+
+# -----------------------------------------------------------
+# Control de consumo de IA (Fase 1)
+# -----------------------------------------------------------
+kin:
+  ai:
+    # Gate de costo antes de llamar a DeepSeek (reserva atómica por período).
+    cost-control:
+      enabled: ${KIN_AI_COST_CONTROL_ENABLED:true}
+    # Límite máximo estimado (USD) por solicitud: impide que una única
+    # petición consuma una proporción excesiva del presupuesto.
+    max-request-estimate-usd: ${KIN_AI_MAX_REQUEST_ESTIMATE_USD:1.00}
+    # Tope de salida usado por el estimador heurístico (tokens).
+    max-output-tokens: ${KIN_AI_MAX_OUTPUT_TOKENS:4096}
+    # Presupuestos de IA por plan y período (fuente inicial del seed; el
+    # valor operativo vive en PricingPlan.aiBudgetUsd).
+    free:
+      budget-usd: ${KIN_FREE_AI_BUDGET_USD:0.50}
+    standard:
+      budget-usd: ${KIN_STANDARD_AI_BUDGET_USD:6.25}
+    premium:
+      budget-usd: ${KIN_PREMIUM_AI_BUDGET_USD:8.75}
 
 # -----------------------------------------------------------
 # Actuator — health check + metrics (Fase 7 observabilidad:

@@ -79,6 +79,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
     }
 
+    @ExceptionHandler(com.kinplatform.kin.usage.AiBudgetExceededException.class)
+    public ResponseEntity<Map<String, String>> handleAiBudgetExceeded(
+            com.kinplatform.kin.usage.AiBudgetExceededException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntime(RuntimeException ex) {
         String errorId = UUID.randomUUID().toString().substring(0, 8);
