@@ -9,6 +9,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -53,6 +55,7 @@ public class ProjectReportEntity {
     @Column(name = "generated_at", nullable = false)
     private OffsetDateTime generatedAt;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "report_json", nullable = false, columnDefinition = "jsonb")
     private String reportJson;
 }
