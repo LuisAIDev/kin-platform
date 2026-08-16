@@ -26,6 +26,16 @@ export interface StreamCallbacks {
   onError: (error: Error) => void;
 }
 
+export interface ChatStreamError extends Error {
+  hadTokens: boolean;
+}
+
+function streamError(message: string, hadTokens: boolean): ChatStreamError {
+  const err = new Error(message) as ChatStreamError;
+  err.hadTokens = hadTokens;
+  return err;
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
 
 export const chatService = {
@@ -56,6 +66,7 @@ export const chatService = {
         );
         return;
       }
+      let receivedTokens = false;
       try {
         const url = `${API_URL}/projects/${projectId}/chat/stream`;
         console.log("=== CHAT SENDING REQUEST ===");
@@ -114,6 +125,7 @@ export const chatService = {
               try {
                 const parsed = JSON.parse(data);
                 if (eventType === "token" && parsed.token) {
+                  receivedTokens = true;
                   callbacks.onToken(parsed.token);
                 } else if (eventType === "done") {
                   receivedDone = true;
@@ -126,7 +138,9 @@ export const chatService = {
                   break;
                 } else if (eventType === "error") {
                   console.error("=== CHAT STREAM ERROR EVENT ===", parsed);
-                  callbacks.onError(new Error(parsed.error ?? "Unknown server error"));
+                  callbacks.onError(
+                    streamError(parsed.error ?? "Unknown server error", receivedTokens),
+                  );
                 }
               } catch {
                 // ignore parse errors for individual tokens
@@ -138,11 +152,13 @@ export const chatService = {
         }
 
         if (!receivedDone) {
-          callbacks.onError(new Error("Stream ended without completion"));
+          callbacks.onError(streamError("Stream ended without completion", receivedTokens));
         }
       } catch (err: unknown) {
         if (err instanceof DOMException && err.name === "AbortError") return;
-        callbacks.onError(err instanceof Error ? err : new Error(String(err)));
+        callbacks.onError(
+          streamError(err instanceof Error ? err.message : String(err), receivedTokens),
+        );
       }
     })();
 

@@ -182,6 +182,18 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         var emitter = new SseEmitter(SSE_TIMEOUT);
         var fullContent = new StringBuilder();
 
+        // Observabilidad del ciclo de vida del SseEmitter. Estos callbacks son
+        // SOLO de logging: no alteran el comportamiento del emitter ni el del flux.
+        emitter.onCompletion(() ->
+                log.info("=== SSE EMITTER COMPLETED CALLBACK === projectId={}", projectId));
+        emitter.onTimeout(() ->
+                log.warn("=== SSE EMITTER TIMEOUT === projectId={}, timeoutMillis={}", projectId, SSE_TIMEOUT));
+        emitter.onError(t ->
+                log.warn("=== SSE EMITTER ERROR CALLBACK === projectId={}, errorType={}, message={}",
+                        projectId,
+                        t != null ? t.getClass().getSimpleName() : "null",
+                        t != null ? t.getMessage() : "null"));
+
         flux.subscribe(
                 token -> {
                     fullContent.append(token);
@@ -190,58 +202,113 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                                 .name("token")
                                 .data(objectMapper.writeValueAsString(Map.of("token", token))));
                     } catch (IOException e) {
-                        log.error("Failed to send SSE event", e);
+                        log.error("Failed to send SSE event, client may have disconnected. projectId={}",
+                                projectId, e);
                         emitter.completeWithError(e);
                     }
                 },
                 error -> {
-                    log.error("Stream error, sending failure notification", error);
+                    log.error("=== SSE STREAM ERROR === projectId={}, errorType={}, message={}",
+                            projectId,
+                            error != null ? error.getClass().getSimpleName() : "null",
+                            error != null ? error.getMessage() : "null");
                     try {
                         emitter.send(SseEmitter.event()
                                 .name("error")
-                                .data(objectMapper.writeValueAsString(Map.of("error", error.getMessage()))));
+                                .data(objectMapper.writeValueAsString(Map.of(
+                                        "error",
+                                        error != null ? error.getMessage() : "Unknown stream error"))));
                     } catch (IOException e) {
-                        // ignore
+                        log.error("Failed to send SSE error event. projectId={}", projectId, e);
                     }
                     emitter.complete();
                 },
                 () -> {
                     var finalContent = fullContent.toString();
+                    String assistantMessageId = null;
+                    int tokensUsed = 0;
                     log.info("=== AI RESPONSE RECEIVED === chars={}", finalContent.length());
+
+                    // 1) Persistencia del mensaje del asistente: si falla, se registra
+                    //    claramente pero NUNCA se impide enviar el evento done con el
+                    //    contenido real al cliente.
                     try {
                         var assistantMessage = saveAssistantMessage(userId, projectId, finalContent);
-                        if (outcome != null) {
+                        assistantMessageId = assistantMessage.getId().toString();
+                        tokensUsed = assistantMessage.getTokensUsed();
+                    } catch (Exception e) {
+                        log.error("=== SSE SAVE ASSISTANT FAILED === projectId={}, contentChars={}, errorType={}, message={}",
+                                projectId,
+                                finalContent.length(),
+                                e.getClass().getSimpleName(),
+                                e.getMessage());
+                    }
+
+                    // 2) Persistencia del reporte: nunca interrumpe el envío de done.
+                    if (outcome != null) {
+                        try {
                             persistReportIfGenerated(projectId, outcome.decision(), outcome.consultingReport());
+                        } catch (Exception e) {
+                            log.error("=== SSE PERSIST REPORT FAILED === projectId={}, errorType={}, message={}",
+                                    projectId,
+                                    e.getClass().getSimpleName(),
+                                    e.getMessage());
                         }
+                    }
+
+                    // 3) Construcción y envío del evento done. Si la persistencia
+                    //    falló, done llega igualmente con content=finalContent y
+                    //    assistantMessageId vacío.
+                    log.info("=== SSE DONE SEND START === projectId={}, contentChars={}, assistantMessageId={}",
+                            projectId, finalContent.length(), assistantMessageId);
+                    boolean doneSent = false;
+                    try {
                         var donePayload = Map.of(
                                 "done", true,
                                 "userMessageId", userMessage.getId().toString(),
-                                "assistantMessageId", assistantMessage.getId().toString(),
+                                "assistantMessageId", assistantMessageId != null ? assistantMessageId : "",
                                 "content", finalContent,
-                                "tokensUsed", assistantMessage.getTokensUsed());
-                        emitter.send(
-                                SseEmitter.event().name("done").data(objectMapper.writeValueAsString(donePayload)));
+                                "tokensUsed", tokensUsed);
+                        emitter.send(SseEmitter.event()
+                                .name("done")
+                                .data(objectMapper.writeValueAsString(donePayload)));
+                        doneSent = true;
                     } catch (Exception e) {
-                        log.error("Failed to save assistant message or send done event", e);
+                        log.error("=== SSE DONE SEND FAILED === projectId={}, errorType={}, message={}",
+                                projectId,
+                                e.getClass().getSimpleName(),
+                                e.getMessage());
+                    }
+
+                    // 4) Intento de respaldo del done si el primero falló: conserva
+                    //    siempre el contenido real, aunque sea sin id de asistente.
+                    if (!doneSent) {
                         try {
+                            var fallbackPayload = Map.of(
+                                    "done", true,
+                                    "content", finalContent,
+                                    "userMessageId", userMessage.getId().toString(),
+                                    "assistantMessageId", assistantMessageId != null ? assistantMessageId : "",
+                                    "tokensUsed", tokensUsed);
                             emitter.send(SseEmitter.event()
                                     .name("done")
-                                    .data(objectMapper.writeValueAsString(Map.of(
-                                            "done",
-                                            true,
-                                            "content",
-                                            finalContent,
-                                            "userMessageId",
-                                            userMessage.getId().toString(),
-                                            "assistantMessageId",
-                                            "",
-                                            "tokensUsed",
-                                            0))));
-                        } catch (IOException ex) {
-                            // ignore
+                                    .data(objectMapper.writeValueAsString(fallbackPayload)));
+                            doneSent = true;
+                        } catch (Exception e) {
+                            log.error("=== SSE DONE SEND FALLBACK FAILED === projectId={}, errorType={}, message={}",
+                                    projectId,
+                                    e.getClass().getSimpleName(),
+                                    e.getMessage());
                         }
-                    } finally {
+                    }
+
+                    log.info("=== SSE DONE SEND SUCCESS === projectId={}, contentChars={}, assistantMessageId={}, sent={}",
+                            projectId, finalContent.length(), assistantMessageId, doneSent);
+
+                    try {
                         emitter.complete();
+                    } finally {
+                        log.info("=== SSE EMITTER COMPLETE === projectId={}", projectId);
                     }
                 });
 

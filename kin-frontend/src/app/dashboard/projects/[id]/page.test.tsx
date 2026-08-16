@@ -10,9 +10,10 @@ import type { Project } from "@/services/projects";
 import { MAX_CHAT_MESSAGE_LENGTH } from "@/utils/chatLimits";
 
 const mockPush = vi.fn();
+const mockRouter = { push: mockPush };
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => mockRouter,
 }));
 
 vi.mock("@/services/projects", async () => {
@@ -151,5 +152,97 @@ describe("ProjectDetailPage — protección del chat (10.000 caracteres)", () =>
       /supera el límite de 10000 caracteres/,
     );
     expect(input.value).toHaveLength(MAX_CHAT_MESSAGE_LENGTH + 1);
+  });
+
+  it("error después de tokens conserva el contenido parcial (no muestra el mensaje fijo)", async () => {
+    let onToken: ((token: string) => void) | undefined;
+    let onError: ((error: Error) => void) | undefined;
+    vi.mocked(chatService.sendMessageStream).mockImplementation((_p, _c, callbacks) => {
+      onToken = callbacks.onToken;
+      onError = callbacks.onError;
+      return new AbortController();
+    });
+
+    const user = userEvent.setup();
+    await loadPage();
+
+    await user.type(screen.getByPlaceholderText("Escribe tu mensaje..."), "hola KIN");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+    await waitFor(() => expect(onToken).toBeDefined());
+    act(() => {
+      onToken!("respuesta parcial ");
+      onToken!("de DeepSeek");
+    });
+
+    const err = new Error("Stream ended without completion") as Error & { hadTokens: boolean };
+    err.hadTokens = true;
+    act(() => onError!(err));
+
+    await waitFor(() =>
+      expect(screen.getByText(/respuesta parcial de DeepSeek/)).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("(error al generar respuesta)")).not.toBeInTheDocument();
+  });
+
+  it("error sin tokens muestra el mensaje de error", async () => {
+    let onError: ((error: Error) => void) | undefined;
+    vi.mocked(chatService.sendMessageStream).mockImplementation((_p, _c, callbacks) => {
+      onError = callbacks.onError;
+      return new AbortController();
+    });
+
+    const user = userEvent.setup();
+    await loadPage();
+
+    await user.type(screen.getByPlaceholderText("Escribe tu mensaje..."), "hola KIN");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+    await waitFor(() => expect(onError).toBeDefined());
+    const err = new Error("boom") as Error & { hadTokens: boolean };
+    err.hadTokens = false;
+    act(() => onError!(err));
+
+    await waitFor(() =>
+      expect(screen.getByText("(error al generar respuesta)")).toBeInTheDocument(),
+    );
+  });
+
+  it("done con content vacío conserva los tokens acumulados", async () => {
+    let onToken: ((token: string) => void) | undefined;
+    let onDone: ((response: {
+      userMessageId: string;
+      assistantMessageId: string;
+      content: string;
+      tokensUsed: number;
+    }) => void) | undefined;
+    vi.mocked(chatService.sendMessageStream).mockImplementation((_p, _c, callbacks) => {
+      onToken = callbacks.onToken;
+      onDone = callbacks.onDone;
+      return new AbortController();
+    });
+
+    const user = userEvent.setup();
+    await loadPage();
+
+    await user.type(screen.getByPlaceholderText("Escribe tu mensaje..."), "hola KIN");
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+    await waitFor(() => expect(onToken).toBeDefined());
+    act(() => onToken!("contenido acumulado"));
+
+    act(() =>
+      onDone!({
+        userMessageId: "u1",
+        assistantMessageId: "a1",
+        content: "",
+        tokensUsed: 0,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("contenido acumulado")).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("(error al generar respuesta)")).not.toBeInTheDocument();
   });
 });

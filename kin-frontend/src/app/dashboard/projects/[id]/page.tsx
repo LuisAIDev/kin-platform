@@ -4,7 +4,7 @@ import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { projectsService, type Project } from "@/services/projects";
-import { chatService, type ChatMessage, type ChatResponse } from "@/services/chat";
+import { chatService, type ChatMessage, type ChatResponse, type ChatStreamError } from "@/services/chat";
 import { authService } from "@/services/auth";
 import ViabilityScore from "@/components/ViabilityScore";
 import PdfReportButton from "@/components/PdfReportButton";
@@ -149,14 +149,18 @@ export default function ProjectDetailPage({ params }: Props) {
         console.error("=== CHAT ERROR ===", err);
         console.error("Request URL:", `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"}/projects/${id}/chat/stream`);
         console.error("Token present:", !!authService.getToken());
+        const hadTokens = (err as ChatStreamError | undefined)?.hadTokens ?? false;
         setMessages((prev) =>
-          prev.map((m) =>
-            m.id === aiId
-              ? { ...m, content: "(error al generar respuesta)" }
-              : m.id === optimisticUser.id
-                ? m
-                : m
-          )
+          prev.map((m) => {
+            if (m.id !== aiId) return m;
+            // Reglas 2-4: si ya llegaron tokens (o el error lo indica), conservar
+            // el contenido parcial real y NO destruirlo con el mensaje de error.
+            if (hadTokens || m.content.length > 0) {
+              return { ...m, content: m.content };
+            }
+            // Regla 5: error sin ningún token recibido → mostrar el mensaje de error.
+            return { ...m, content: "(error al generar respuesta)" };
+          })
         );
         done();
       },

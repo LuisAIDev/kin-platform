@@ -135,4 +135,115 @@ describe("chatService", () => {
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  // ------------------------------------------------------------------
+  // Robustez del parser SSE: conservación de contenido parcial
+  // ------------------------------------------------------------------
+
+  it("sendMessageStream: token + done con content vacío → onDone con content vacío y tokens acumulados", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(sseResponse([
+      'event: token\ndata: {"token":"parcial"}\n\n',
+      'event: done\ndata: {"done":true,"content":"","assistantMessageId":"a1","tokensUsed":0}\n\n',
+    ]));
+    const onToken = vi.fn();
+    const onDone = vi.fn();
+    const onError = vi.fn();
+
+    chatService.sendMessageStream("p1", "hola", { onToken, onDone, onError });
+    await vi.waitFor(() => expect(onDone).toHaveBeenCalled());
+
+    expect(onToken.mock.calls.map((c) => c[0]).join("")).toBe("parcial");
+    expect(onDone).toHaveBeenCalledWith(
+      expect.objectContaining({ content: "", assistantMessageId: "a1" }),
+    );
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("sendMessageStream: event:error después de tokens → onError con hadTokens=true", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(sseResponse([
+      'event: token\ndata: {"token":"parcial"}\n\n',
+      'event: error\ndata: {"error":"stream broke"}\n\n',
+    ]));
+    const onError = vi.fn();
+
+    chatService.sendMessageStream("p1", "hola", {
+      onToken: vi.fn(),
+      onDone: vi.fn(),
+      onError,
+    });
+    await vi.waitFor(() => expect(onError).toHaveBeenCalled());
+
+    const err = onError.mock.calls[0][0] as { hadTokens?: boolean; message?: string };
+    expect(err.hadTokens).toBe(true);
+    expect(err.message).toBe("stream broke");
+  });
+
+  it("sendMessageStream: EOF sin done después de tokens → onError con hadTokens=true", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(sseResponse([
+      'event: token\ndata: {"token":"parcial"}\n\n',
+    ]));
+    const onError = vi.fn();
+
+    chatService.sendMessageStream("p1", "hola", {
+      onToken: vi.fn(),
+      onDone: vi.fn(),
+      onError,
+    });
+    await vi.waitFor(() => expect(onError).toHaveBeenCalled());
+
+    const err = onError.mock.calls[0][0] as { hadTokens?: boolean; message?: string };
+    expect(err.hadTokens).toBe(true);
+    expect(err.message).toBe("Stream ended without completion");
+  });
+
+  it("sendMessageStream: error sin tokens → onError con hadTokens=false", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ error: "boom" }, 500));
+    const onError = vi.fn();
+
+    chatService.sendMessageStream("p1", "hola", {
+      onToken: vi.fn(),
+      onDone: vi.fn(),
+      onError,
+    });
+    await vi.waitFor(() => expect(onError).toHaveBeenCalled());
+
+    const err = onError.mock.calls[0][0] as { hadTokens?: boolean };
+    expect(err.hadTokens).toBe(false);
+  });
+
+  it("sendMessageStream: JSON SSE inválido en data se ignora sin romper el parser", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(sseResponse([
+      'event: token\ndata: {invalid json}\n\n',
+      'event: token\ndata: {"token":"ok"}\n\n',
+      'event: done\ndata: {"done":true,"content":"ok","tokensUsed":1}\n\n',
+    ]));
+    const onToken = vi.fn();
+    const onDone = vi.fn();
+    const onError = vi.fn();
+
+    chatService.sendMessageStream("p1", "hola", { onToken, onDone, onError });
+    await vi.waitFor(() => expect(onDone).toHaveBeenCalled());
+
+    expect(onToken.mock.calls.map((c) => c[0]).join("")).toBe("ok");
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("sendMessageStream: múltiples tokens se concatenan en orden", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(sseResponse([
+      'event: token\ndata: {"token":"a"}\n\n',
+      'event: token\ndata: {"token":"b"}\n\n',
+      'event: token\ndata: {"token":"c"}\n\n',
+      'event: done\ndata: {"done":true,"content":"abc","tokensUsed":3}\n\n',
+    ]));
+    const onToken = vi.fn();
+    const onDone = vi.fn();
+
+    chatService.sendMessageStream("p1", "hola", { onToken, onDone, onError: vi.fn() });
+    await vi.waitFor(() => expect(onDone).toHaveBeenCalled());
+
+    expect(onToken.mock.calls.map((c) => c[0]).join("")).toBe("abc");
+    expect(onDone).toHaveBeenCalledWith(
+      expect.objectContaining({ content: "abc", tokensUsed: 3 }),
+    );
+  });
 });
