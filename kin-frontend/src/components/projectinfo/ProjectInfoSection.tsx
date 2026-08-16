@@ -207,6 +207,22 @@ export function ProjectInfoSection({ projectId }: ProjectInfoSectionProps) {
     }
   };
 
+  const resetUploadState = () => {
+    setSelectedFile(null);
+    setFileError(null);
+    setUploadResult(null);
+  };
+
+  const openUploadModal = () => {
+    resetUploadState();
+    setUploadOpen(true);
+  };
+
+  const closeUploadModal = () => {
+    setUploadOpen(false);
+    resetUploadState();
+  };
+
   const handleUpload = async () => {
     if (!selectedFile) return;
     setUploading(true);
@@ -245,7 +261,7 @@ export function ProjectInfoSection({ projectId }: ProjectInfoSectionProps) {
         </button>
         <button
           type="button"
-          onClick={() => setUploadOpen(true)}
+          onClick={openUploadModal}
           className="block w-full rounded-xl bg-white border border-neutral-300 px-4 py-2.5 text-sm font-medium text-neutral-800 text-center hover:bg-neutral-50 transition"
         >
           📎 Agregar documento
@@ -347,7 +363,7 @@ export function ProjectInfoSection({ projectId }: ProjectInfoSectionProps) {
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold">📎 Agregar documento</h3>
-              <button type="button" onClick={() => setUploadOpen(false)} className="text-neutral-400 hover:text-neutral-700" aria-label="Cerrar">
+              <button type="button" onClick={closeUploadModal} className="text-neutral-400 hover:text-neutral-700" aria-label="Cerrar">
                 ✕
               </button>
             </div>
@@ -355,19 +371,32 @@ export function ProjectInfoSection({ projectId }: ProjectInfoSectionProps) {
               El documento se procesa como información del proyecto, no se envía como mensaje de chat.
             </p>
 
-            <input
-              type="file"
-              accept=".pdf,.docx,.xlsx,.txt,.csv"
-              data-testid="document-file-input"
-              onChange={(e) => handleSelectFile(e.target.files?.[0] ?? null)}
-              className="text-sm text-neutral-600"
-            />
+            <label
+              htmlFor="document-file-input"
+              className="block w-full border-2 border-dashed border-neutral-300 rounded-xl px-4 py-5 text-center text-sm text-neutral-600 hover:border-primary-400 hover:text-primary-600 transition cursor-pointer"
+            >
+              {selectedFile ? (
+                <span className="font-medium text-neutral-800">📄 {selectedFile.name}</span>
+              ) : (
+                "Seleccionar archivo"
+              )}
+              <input
+                id="document-file-input"
+                type="file"
+                accept=".pdf,.docx,.xlsx,.txt,.csv"
+                data-testid="document-file-input"
+                onChange={(e) => {
+                  handleSelectFile(e.target.files?.[0] ?? null);
+                  e.target.value = "";
+                }}
+                className="sr-only"
+              />
+            </label>
 
             {selectedFile && (
-              <div className="mt-3 text-xs text-neutral-700 border border-neutral-200 rounded-lg p-2">
-                📄 {selectedFile.name}
-                <span className="text-neutral-400"> · {formatBytes(selectedFile.size)}</span>
-              </div>
+              <p className="mt-2 text-xs text-neutral-500" data-testid="selected-file-name">
+                Archivo seleccionado: {selectedFile.name} · {formatBytes(selectedFile.size)}
+              </p>
             )}
             {fileError && <p className="text-xs text-red-600 mt-2">{fileError}</p>}
             {uploadResult && <p className="text-xs text-emerald-600 mt-2">{uploadResult}</p>}
@@ -375,7 +404,7 @@ export function ProjectInfoSection({ projectId }: ProjectInfoSectionProps) {
             <div className="flex justify-end gap-2 mt-5">
               <button
                 type="button"
-                onClick={() => setUploadOpen(false)}
+                onClick={closeUploadModal}
                 className="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition"
               >
                 Cancelar

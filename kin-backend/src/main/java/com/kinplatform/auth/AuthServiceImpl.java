@@ -176,8 +176,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private static void validatePasswordStrength(String password) {
-        if (password == null || password.length() < 12) {
-            throw new IllegalArgumentException("La contraseña debe tener al menos 12 caracteres");
+        if (password == null || password.length() < 8) {
+            throw new IllegalArgumentException("La contraseña debe tener al menos 8 caracteres");
         }
 
         long classes = java.util.stream.Stream.of(

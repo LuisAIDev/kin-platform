@@ -6,6 +6,7 @@ import Link from "next/link";
 import { authService } from "@/services/auth";
 import { api } from "@/services/api";
 import { checkForceLogout, setPendingEmail } from "@/services/session";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -89,14 +90,22 @@ export default function LoginPage() {
           className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
         />
 
-        <input
-          type="password"
-          placeholder="Contrasena"
+        <PasswordInput
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+          onChange={setPassword}
+          placeholder="Contraseña"
+          autoComplete="current-password"
+          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11 w-full pr-10"
         />
+
+        <div className="flex justify-end -mt-1">
+          <Link
+            href="/forgot-password"
+            className="text-xs text-primary-600 underline hover:text-primary-700"
+          >
+            ¿Olvidaste tu contraseña? Recupérala aquí
+          </Link>
+        </div>
 
         <button
           type="submit"

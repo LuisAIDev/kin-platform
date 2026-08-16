@@ -52,4 +52,9 @@ public class LoggingEmailSender implements EmailSender {
         log.warn("[email-verification][dev/no-smtp] destinatario={} enlace={}", to, verificationLink);
         storeProvider.ifAvailable(store -> store.put(to, verificationLink));
     }
+
+    @Override
+    public void sendPasswordResetEmail(String to, String fullName, String resetLink) {
+        log.warn("[password-reset][dev/no-smtp] destinatario={} enlace={}", to, resetLink);
+    }
 }

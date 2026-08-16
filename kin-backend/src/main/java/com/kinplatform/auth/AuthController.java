@@ -1,9 +1,12 @@
 package com.kinplatform.auth;
 
 import com.kinplatform.auth.dto.AuthResponse;
+import com.kinplatform.auth.dto.ForgotPasswordRequest;
 import com.kinplatform.auth.dto.LoginRequest;
 import com.kinplatform.auth.dto.RegisterRequest;
+import com.kinplatform.auth.dto.ResetPasswordRequest;
 import com.kinplatform.auth.dto.UserDTO;
+import com.kinplatform.auth.password.PasswordResetService;
 import com.kinplatform.auth.verification.VerifyEmailOutcome;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -31,6 +34,7 @@ public class AuthController {
     private static final String TOKEN_COOKIE = "kin_token_v2";
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     @Value("${app.session.cookie-secure:false}")
     private boolean cookieSecure;
@@ -81,6 +85,27 @@ public class AuthController {
         return ResponseEntity.ok(Map.of(
                 "message", "Si existe una cuenta asociada a este correo y necesita verificación, "
                         + "recibirás un nuevo mensaje."));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestReset(request.getEmail());
+        return ResponseEntity.ok(Map.of(
+                "message", "Si existe una cuenta asociada a este correo, recibirás un enlace "
+                        + "para restablecer tu contraseña."));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        boolean applied = passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+        if (applied) {
+            return ResponseEntity.ok(Map.of(
+                    "message", "Tu contraseña fue actualizada. Ya puedes iniciar sesión."));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "error", "El enlace de recuperación no es válido o ya fue utilizado."));
     }
 
     @PostMapping("/logout")

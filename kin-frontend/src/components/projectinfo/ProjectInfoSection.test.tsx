@@ -89,6 +89,47 @@ describe("ProjectInfoSection", () => {
     expect(projectInfoService.uploadDocument).not.toHaveBeenCalled();
   });
 
+  it("muestra el nombre del archivo seleccionado y habilita el botón de subida", async () => {
+    const user = userEvent.setup();
+    render(<ProjectInfoSection projectId="p1" />);
+
+    await user.click(await screen.findByRole("button", { name: "📎 Agregar documento" }));
+    const input = screen.getByTestId("document-file-input");
+    const file = new File(["contenido"], "notas.txt", { type: "text/plain" });
+
+    await user.upload(input, file);
+
+    expect(
+      await screen.findByText(/Archivo seleccionado: notas\.txt/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Subir y procesar" })).toBeEnabled();
+  });
+
+  it("deshabilita el botón de subida cuando no hay archivo", async () => {
+    const user = userEvent.setup();
+    render(<ProjectInfoSection projectId="p1" />);
+
+    await user.click(await screen.findByRole("button", { name: "📎 Agregar documento" }));
+
+    expect(screen.getByRole("button", { name: "Subir y procesar" })).toBeDisabled();
+  });
+
+  it("resetea el estado al reabrir el modal", async () => {
+    const user = userEvent.setup();
+    render(<ProjectInfoSection projectId="p1" />);
+
+    await user.click(await screen.findByRole("button", { name: "📎 Agregar documento" }));
+    const input = screen.getByTestId("document-file-input");
+    await user.upload(input, new File(["x"], "a.txt", { type: "text/plain" }));
+    expect(await screen.findByText(/Archivo seleccionado: a\.txt/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    await user.click(screen.getByRole("button", { name: "📎 Agregar documento" }));
+
+    expect(screen.getByRole("button", { name: "Subir y procesar" })).toBeDisabled();
+    expect(screen.queryByText(/Archivo seleccionado:/)).not.toBeInTheDocument();
+  });
+
   it("sube un archivo válido y muestra el documento procesado", async () => {
     const user = userEvent.setup();
     vi.mocked(projectInfoService.uploadDocument).mockResolvedValue(DOCUMENTO_PROCESADO);

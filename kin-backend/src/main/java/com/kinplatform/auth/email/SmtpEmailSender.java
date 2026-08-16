@@ -97,4 +97,24 @@ public class SmtpEmailSender implements EmailSender {
             throw new IllegalStateException("No se pudo enviar el correo de verificación", e);
         }
     }
+
+    @Override
+    public void sendPasswordResetEmail(String to, String fullName, String resetLink) {
+        try {
+            var message = mailSender.createMimeMessage();
+            var helper = new MimeMessageHelper(message, false, "UTF-8");
+            helper.setFrom(from, fromName);
+            helper.setTo(to);
+            helper.setSubject("Recupera tu contraseña de KIN");
+            helper.setText("Hola " + fullName + ",\n\n"
+                    + "Para restablecer tu contraseña de KIN, abre este enlace:\n\n"
+                    + resetLink + "\n\n"
+                    + "El enlace es de un solo uso y expira en 24 horas.\n\n"
+                    + "Si no solicitaste este cambio, ignora este mensaje.", false);
+            mailSender.send(message);
+            log.info("Correo de recuperación de contraseña enviado a {}", to);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new IllegalStateException("No se pudo enviar el correo de recuperación de contraseña", e);
+        }
+    }
 }

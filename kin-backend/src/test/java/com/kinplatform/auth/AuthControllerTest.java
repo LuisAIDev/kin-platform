@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.kinplatform.auth.dto.AuthResponse;
 import com.kinplatform.auth.dto.UserDTO;
+import com.kinplatform.auth.password.PasswordResetService;
 import com.kinplatform.auth.verification.VerifyEmailOutcome;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,10 +31,14 @@ class AuthControllerTest {
     @Mock
     private AuthService authService;
 
+    @Mock
+    private PasswordResetService passwordResetService;
+
     @BeforeEach
     void setUp() {
         mockMvc =
-                MockMvcBuilders.standaloneSetup(new AuthController(authService)).build();
+                MockMvcBuilders.standaloneSetup(new AuthController(authService, passwordResetService))
+                        .build();
     }
 
     @Test
@@ -203,5 +208,54 @@ class AuthControllerTest {
                 .andExpect(status().isOk());
 
         verify(authService).logout("ct");
+    }
+
+    @Test
+    void forgotPassword_correoValido_deberiaResponder200MensajeGenerico() throws Exception {
+        mockMvc.perform(post("/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"a@kin.com\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").exists());
+
+        verify(passwordResetService).requestReset("a@kin.com");
+    }
+
+    @Test
+    void forgotPassword_sinCorreo_deberiaResponder400() throws Exception {
+        mockMvc.perform(post("/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void resetPassword_conExito_deberiaResponder200() throws Exception {
+        when(passwordResetService.resetPassword("tok", "NuevaPass1!")).thenReturn(true);
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"tok\",\"newPassword\":\"NuevaPass1!\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void resetPassword_tokenInvalido_deberiaResponder400() throws Exception {
+        when(passwordResetService.resetPassword("tok", "NuevaPass1!")).thenReturn(false);
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"tok\",\"newPassword\":\"NuevaPass1!\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void resetPassword_contrasenaCorta_deberiaResponder400() throws Exception {
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"tok\",\"newPassword\":\"corta\"}"))
+                .andExpect(status().isBadRequest());
     }
 }

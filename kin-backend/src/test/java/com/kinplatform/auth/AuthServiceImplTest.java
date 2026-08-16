@@ -129,6 +129,29 @@ class AuthServiceImplTest {
     }
 
     @Test
+    void register_passwordDe7Caracteres_deberiaFallar() {
+        var req = registerRequest();
+        req.setPassword("Ab1!234");
+
+        assertThrows(IllegalArgumentException.class, () -> authService.register(req));
+    }
+
+    @Test
+    void register_passwordDe8CaracteresConVariacion_deberiaSerAceptada() {
+        var req = registerRequest();
+        req.setPassword("Passw0rd!");
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(false);
+        when(passwordEncoder.encode("Passw0rd!")).thenReturn("hashed");
+        var user = unverifiedUser();
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(tokenService.createForUser(user)).thenReturn("verify-token");
+
+        authService.register(req);
+
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
     void register_passwordSinVariacion_deberiaFallar() {
         var req = registerRequest();
         req.setPassword("abcdefghijklmn");

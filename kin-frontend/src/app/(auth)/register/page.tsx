@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authService } from "@/services/auth";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -59,14 +60,13 @@ export default function RegisterPage() {
           className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
         />
 
-        <input
-          type="password"
-          placeholder="Contraseña (mín. 12 caracteres)"
+        <PasswordInput
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={12}
-          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+          onChange={setPassword}
+          placeholder="Contraseña (mín. 8 caracteres)"
+          minLength={8}
+          autoComplete="new-password"
+          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11 w-full pr-10"
         />
 
         <button
