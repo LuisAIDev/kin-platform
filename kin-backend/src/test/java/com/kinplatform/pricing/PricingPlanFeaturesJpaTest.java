@@ -1,6 +1,7 @@
 package com.kinplatform.pricing;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -61,6 +62,22 @@ class PricingPlanFeaturesJpaTest extends PostgresTestSupport {
         assertEquals(null, premium.getMaxProjects());
         var premiumFeatures = MAPPER.readValue(premium.getFeatures(), new TypeReference<List<String>>() {});
         assertTrue(premiumFeatures.contains("Proyectos ilimitados"));
+    }
+
+    @Test
+    void planesTienenBillingPeriodValido() throws Exception {
+        var initializer = new DataInitializer(repository, new ObjectMapper());
+        initializer.run();
+
+        List<String> billingPeriods = entityManager
+                .createNativeQuery(
+                        "SELECT DISTINCT billing_period FROM pricing_plans WHERE code IN ('FREE','STANDARD','PREMIUM')")
+                .getResultList();
+
+        assertFalse(billingPeriods.isEmpty());
+        for (Object bp : billingPeriods) {
+            assertEquals("monthly", bp);
+        }
     }
 
     @Test
