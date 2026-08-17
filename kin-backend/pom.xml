@@ -185,6 +185,17 @@
             <artifactId>spring-ai-retry</artifactId>
         </dependency>
 
+        <!-- Conector HTTP reactivo de WebClient (Reactor Netty). Spring AI usa
+             WebClient para el streaming SSE de DeepSeek; sin reactor-netty el
+             conector cae al JDK HttpClient, que bufferiza el body SSE y no
+             emite los chunks de forma incremental (cero tokens + timeout).
+             Con reactor-netty, WebClient.builder() selecciona
+             ReactorClientHttpConnector y el streaming llega por chunks. -->
+        <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty-http</artifactId>
+        </dependency>
+
         <!-- Stripe — Payment processing -->
         <dependency>
             <groupId>com.stripe</groupId>
