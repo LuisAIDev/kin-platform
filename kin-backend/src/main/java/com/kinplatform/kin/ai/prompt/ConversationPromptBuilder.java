@@ -454,19 +454,23 @@ public class ConversationPromptBuilder {
             ==============================
             Título: %s
             Descripción: %s
-            Categoría: %s
+            Categoria indicada por el usuario: %s
             Cobertura: %.1f%%
             """,
                 context.value(com.kinplatform.kin.context.AnalyzedDimension.PROJECT_NAME) != null
                         ? context.value(com.kinplatform.kin.context.AnalyzedDimension.PROJECT_NAME)
-                        : "Sin título",
+                        : "Sin t\u00edtulo",
                 context.value(com.kinplatform.kin.context.AnalyzedDimension.SOLUTION) != null
                         ? context.value(com.kinplatform.kin.context.AnalyzedDimension.SOLUTION)
-                        : "Sin descripción",
+                        : "Sin descripci\u00f3n",
                 context.value(com.kinplatform.kin.context.AnalyzedDimension.SECTOR) != null
                         ? context.value(com.kinplatform.kin.context.AnalyzedDimension.SECTOR)
-                        : "Sin categoría",
+                        : "Sin categoria",
                 context.coverageRatio() * 100));
+
+        sb.append("\nLa categoria fue indicada por el usuario como referencia inicial de clasificacion, ");
+        sb.append("pero NO es una verdad absoluta. Si contradice la descripcion, los mensajes o la intencion ");
+        sb.append("del usuario, prioriza SIEMPRE la informacion proporcionada por el usuario.\n");
 
         if (context.hasKnownDimensions()) {
             sb.append("\n\n## INFORMACIÓN CONOCIDA DEL PROYECTO\n");

@@ -50,11 +50,13 @@ public class CategoryDataInitializer implements ApplicationRunner {
             category("FINTECH", "Fintech", 10, "#06b6d4"),
             category("COMERCIO", "Comercio", 11, "#f97316"),
             category("TURISMO", "Turismo", 12, "#14b8a6"),
-            category("GASTRONOMIA", "Gastronomía", 13, "#e11d48"),
+            category("GASTRONOMIA", "Gastronomía y Alimentos", 13, "#e11d48"),
             category("LOGISTICA", "Logística", 14, "#78716c"),
             category("CREATIVIDAD", "Creatividad", 15, "#a855f7"),
             category("MARKETING_DIGITAL", "Marketing Digital", 16, "#ec4899"),
-            category("INVESTIGACION", "Investigación", 17, "#3b82f6")
+            category("INVESTIGACION", "Investigación", 17, "#3b82f6"),
+            category("SERVICIOS", "Servicios", 18, "#64748b"),
+            category("OTRO", "Otro / Sin clasificar", 19, "#94a3b8")
         ));
     }
 

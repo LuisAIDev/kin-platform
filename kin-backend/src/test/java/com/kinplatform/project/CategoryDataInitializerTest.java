@@ -21,7 +21,7 @@ class CategoryDataInitializerTest {
     private CategoryRepository categoryRepository;
 
     @Test
-    void run_deberiaSembrarLas17Categorias_cuandoLaTablaEstaVacia() {
+    void run_deberiaSembrarLas19Categorias_cuandoLaTablaEstaVacia() {
         when(categoryRepository.count()).thenReturn(0L);
 
         new CategoryDataInitializer(categoryRepository).run(null);
@@ -29,7 +29,7 @@ class CategoryDataInitializerTest {
         @SuppressWarnings("rawtypes")
         var captor = ArgumentCaptor.forClass(Iterable.class);
         verify(categoryRepository).saveAll(captor.capture());
-        assertEquals(17, ((List<?>) captor.getValue()).size());
+        assertEquals(19, ((List<?>) captor.getValue()).size());
     }
 
     @Test

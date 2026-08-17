@@ -66,7 +66,9 @@ class ConversationPromptBuilderTest {
 
         assertTrue(prompt.contains("KIN"));
         assertTrue(prompt.contains("Título: Mi App"));
-        assertTrue(prompt.contains("Categoría: Software"));
+        assertTrue(prompt.contains("Categoria indicada por el usuario: Software"));
+        assertTrue(prompt.contains("NO es una verdad absoluta"));
+        assertTrue(prompt.contains("prioriza SIEMPRE la informacion proporcionada por el usuario"));
         assertTrue(prompt.contains("Cobertura: 14.3%"));
         assertTrue(prompt.contains("## INSTRUCCIÓN ESTRATÉGICA"));
         assertTrue(prompt.contains("Dimensión prioritaria: Problema que resuelve"));
@@ -108,7 +110,7 @@ class ConversationPromptBuilderTest {
 
         assertFalse(prompt.contains("## INFORMACIÓN CONOCIDA DEL PROYECTO"));
         assertTrue(prompt.contains("Título: Sin título"));
-        assertTrue(prompt.contains("Categoría: Sin categoría"));
+        assertTrue(prompt.contains("Categoria indicada por el usuario: Sin categoria"));
         assertTrue(prompt.contains("Cobertura: 0.0%"));
     }
 
@@ -150,7 +152,7 @@ class ConversationPromptBuilderTest {
         var prompt = builder.build(request);
 
         assertTrue(prompt.contains("Título:"));
-        assertTrue(prompt.contains("Categoría:"));
+        assertTrue(prompt.contains("Categoria indicada por el usuario:"));
         assertTrue(prompt.contains("Cobertura:"));
         assertTrue(prompt.contains("## INSTRUCCIÓN ESTRATÉGICA"));
         assertFalse(prompt.contains("Project: "));
