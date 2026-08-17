@@ -51,11 +51,13 @@ public class DeepSeekProvider implements AIProvider {
     private static final int TIMEOUT_SECONDS = 120;
     private static final int MAX_RETRIES = 3;
     private static final Duration BASE_BACKOFF = Duration.ofSeconds(1);
+    private static final long STREAM_INACTIVITY_TIMEOUT_SECONDS = 90;
 
     private final ChatClient chatClient;
     private final String model;
     private final int maxRetries;
     private final Duration baseBackoff;
+    private final long streamInactivityTimeoutSeconds;
     private final AiUsageRecorder usageRecorder;
     private final ReservationContext reservationContext;
 
@@ -65,17 +67,34 @@ public class DeepSeekProvider implements AIProvider {
             @Value("${deepseek.model}") String model,
             AiUsageRecorder usageRecorder,
             ReservationContext reservationContext) {
-        this(chatClient, model, MAX_RETRIES, BASE_BACKOFF, usageRecorder, reservationContext);
+        this(
+                chatClient,
+                model,
+                MAX_RETRIES,
+                BASE_BACKOFF,
+                usageRecorder,
+                reservationContext,
+                STREAM_INACTIVITY_TIMEOUT_SECONDS);
     }
 
     /** Constructor de test: sin captura de uso (recorder/context nulos). */
     DeepSeekProvider(ChatClient chatClient, String model) {
-        this(chatClient, model, MAX_RETRIES, BASE_BACKOFF, null, null);
+        this(chatClient, model, MAX_RETRIES, BASE_BACKOFF, null, null, STREAM_INACTIVITY_TIMEOUT_SECONDS);
     }
 
     /** Constructor de test: permite acotar reintentos y backoff. */
     DeepSeekProvider(ChatClient chatClient, String model, int maxRetries, Duration baseBackoff) {
-        this(chatClient, model, maxRetries, baseBackoff, null, null);
+        this(chatClient, model, maxRetries, baseBackoff, null, null, STREAM_INACTIVITY_TIMEOUT_SECONDS);
+    }
+
+    /** Constructor de test: permite acotar el timeout de inactividad del streaming. */
+    DeepSeekProvider(
+            ChatClient chatClient,
+            String model,
+            int maxRetries,
+            Duration baseBackoff,
+            long streamInactivityTimeoutSeconds) {
+        this(chatClient, model, maxRetries, baseBackoff, null, null, streamInactivityTimeoutSeconds);
     }
 
     private DeepSeekProvider(
@@ -84,11 +103,15 @@ public class DeepSeekProvider implements AIProvider {
             int maxRetries,
             Duration baseBackoff,
             AiUsageRecorder usageRecorder,
-            ReservationContext reservationContext) {
+            ReservationContext reservationContext,
+            long streamInactivityTimeoutSeconds) {
         this.chatClient = chatClient;
         this.model = model;
         this.maxRetries = Math.max(0, maxRetries);
         this.baseBackoff = baseBackoff == null ? BASE_BACKOFF : baseBackoff;
+        this.streamInactivityTimeoutSeconds = streamInactivityTimeoutSeconds <= 0
+                ? STREAM_INACTIVITY_TIMEOUT_SECONDS
+                : streamInactivityTimeoutSeconds;
         this.usageRecorder = usageRecorder;
         this.reservationContext = reservationContext;
     }
@@ -138,20 +161,36 @@ public class DeepSeekProvider implements AIProvider {
     public Flux<String> generateStream(List<Message> history, String userMessage, String systemPrompt) {
         var messages = buildMessages(systemPrompt, history);
         AiReservation reservation = currentReservation();
-        log.info("===== DEEPSEEK STREAM REQUEST =====");
-        log.info("Model: {}", model);
-        log.info("Messages count: {}", messages.size());
         long[] usageTokens = new long[2];
         java.util.concurrent.atomic.AtomicBoolean hasUsage = new java.util.concurrent.atomic.AtomicBoolean(false);
         java.util.concurrent.atomic.AtomicBoolean reconciled = new java.util.concurrent.atomic.AtomicBoolean(false);
-        return Flux.defer(() -> chatClient
-                        .prompt()
-                        .messages(messages.toArray(new org.springframework.ai.chat.messages.Message[0]))
-                        .user(userMessage)
-                        .stream()
-                        .chatResponse())
+        java.util.concurrent.atomic.AtomicBoolean firstChunk = new java.util.concurrent.atomic.AtomicBoolean(false);
+        log.info("===== DEEPSEEK STREAM REQUEST =====");
+        log.info("Model: {}", model);
+        log.info("Messages count: {}", messages.size());
+        return Flux.defer(() -> {
+                    // Esta línea solo se alcanza cuando el flujo se SUSCRIBE: confirma
+                    // que la petición HTTP a DeepSeek se está emitiendo realmente.
+                    log.info("===== DEEPSEEK HTTP REQUEST START =====");
+                    return chatClient
+                            .prompt()
+                            .messages(messages.toArray(new org.springframework.ai.chat.messages.Message[0]))
+                            .user(userMessage)
+                            .stream()
+                            .chatResponse();
+                })
                 .retryWhen(backoffRetry())
+                // Inactividad: si DeepSeek no entrega NADA durante
+                // `streamInactivityTimeoutSeconds`, el stream falla de forma
+                // controlada (TimeoutException) en vez de colgar hasta el timeout
+                // SSE (180 s). Cada chunk recibido reinicia el contador.
+                .timeout(Duration.ofSeconds(streamInactivityTimeoutSeconds))
                 .map(chatResponse -> {
+                    if (firstChunk.compareAndSet(false, true)) {
+                        log.info("===== DEEPSEEK HTTP RESPONSE RECEIVED =====");
+                        log.info("===== DEEPSEEK FIRST CHUNK RECEIVED =====");
+                    }
+                    log.info("===== DEEPSEEK CHUNK RECEIVED =====");
                     captureUsage(chatResponse, usageTokens, hasUsage);
                     return contentOf(chatResponse);
                 })
@@ -169,8 +208,9 @@ public class DeepSeekProvider implements AIProvider {
                     if (reconciled.compareAndSet(false, true)) {
                         releaseReservation(reservation);
                     }
-                    log.error("DeepSeek stream error: {}", t != null ? t.getMessage() : "null");
-                });
+                    log.error("===== DEEPSEEK STREAM ERROR =====", t);
+                })
+                .doOnCancel(() -> log.info("===== DEEPSEEK STREAM CANCEL ====="));
     }
 
     private AiReservation currentReservation() {

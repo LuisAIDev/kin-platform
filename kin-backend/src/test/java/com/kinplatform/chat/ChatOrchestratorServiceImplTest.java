@@ -305,7 +305,7 @@ class ChatOrchestratorServiceImplTest {
     // Test 4 — IOException al enviar token SSE
     // ---------------------------------------------------------------
     @Test
-    void processMessageStream_deberiaCompletarConError_cuandoSendLanzaIOException() throws Exception {
+    void processMessageStream_cuandoSendLanzaIOException_marcaCompletadoSinCompleteWithError() throws Exception {
         stubCommonDependencies();
         stubStream(Flux.just("A"));
 
@@ -323,7 +323,10 @@ class ChatOrchestratorServiceImplTest {
 
             verify(mockEmitter, atLeastOnce())
                     .send(any(SseEmitter.SseEventBuilder.class));
-            verify(mockEmitter).completeWithError(any(IOException.class));
+            // El nuevo comportamiento no ejecuta completeWithError (evita el
+            // "ResponseBodyEmitter has already completed"): el emitter queda
+            // marcado como completado y la suscripción se cancela.
+            verify(mockEmitter, never()).completeWithError(any());
         }
     }
 

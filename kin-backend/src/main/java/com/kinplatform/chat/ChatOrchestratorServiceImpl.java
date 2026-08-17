@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
 /**
@@ -241,20 +242,40 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                     : outcome.flux();
             var emitter = new SseEmitter(SSE_TIMEOUT);
             var fullContent = new StringBuilder();
+            // Guard de completado: garantiza que send() no se ejecute después de
+            // complete() y que complete() se llame una sola vez, incluso si el
+            // contenedor dispara el timeout (180 s) antes de que el flux termine.
+            var emitterCompleted = new java.util.concurrent.atomic.AtomicBoolean(false);
+            // Referencia a la suscripción para cancelarla cuando el emitter
+            // completa/timeout/errores (deja de consumir a DeepSeek).
+            Disposable[] subscriptionHolder = new Disposable[1];
 
-            // Observabilidad del ciclo de vida del SseEmitter. Estos callbacks son
-            // SOLO de logging: no alteran el comportamiento del emitter ni el del flux.
-            emitter.onCompletion(() -> log.info("=== SSE EMITTER COMPLETED CALLBACK === projectId={}", projectId));
-            emitter.onTimeout(() ->
-                    log.warn("=== SSE EMITTER TIMEOUT === projectId={}, timeoutMillis={}", projectId, SSE_TIMEOUT));
-            emitter.onError(t -> log.warn(
-                    "=== SSE EMITTER ERROR CALLBACK === projectId={}, errorType={}, message={}",
-                    projectId,
-                    t != null ? t.getClass().getSimpleName() : "null",
-                    t != null ? t.getMessage() : "null"));
+            // Observabilidad del ciclo de vida del SseEmitter. Estos callbacks
+            // cancelan la suscripción al stream cuando el emitter ya terminó para
+            // no seguir consumiendo chunks ni intentar enviar después de complete().
+            emitter.onCompletion(() -> {
+                log.info("=== SSE EMITTER COMPLETED CALLBACK === projectId={}", projectId);
+                cancelSubscription(subscriptionHolder, projectId);
+            });
+            emitter.onTimeout(() -> {
+                log.warn("=== SSE EMITTER TIMEOUT === projectId={}, timeoutMillis={}", projectId, SSE_TIMEOUT);
+                cancelSubscription(subscriptionHolder, projectId);
+            });
+            emitter.onError(t -> {
+                log.warn(
+                        "=== SSE EMITTER ERROR CALLBACK === projectId={}, errorType={}, message={}",
+                        projectId,
+                        t != null ? t.getClass().getSimpleName() : "null",
+                        t != null ? t.getMessage() : "null");
+                cancelSubscription(subscriptionHolder, projectId);
+            });
 
-            flux.subscribe(
+            subscriptionHolder[0] = flux.subscribe(
                     token -> {
+                        if (emitterCompleted.get()) {
+                            log.debug("SSE token ignorado: emitter ya completado. projectId={}", projectId);
+                            return;
+                        }
                         fullContent.append(token);
                         try {
                             emitter.send(SseEmitter.event()
@@ -265,7 +286,8 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                                     "Failed to send SSE event, client may have disconnected. projectId={}",
                                     projectId,
                                     e);
-                            emitter.completeWithError(e);
+                            emitterCompleted.set(true);
+                            cancelSubscription(subscriptionHolder, projectId);
                         }
                     },
                     error -> {
@@ -274,6 +296,9 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                                 projectId,
                                 error != null ? error.getClass().getSimpleName() : "null",
                                 error != null ? error.getMessage() : "null");
+                        if (!emitterCompleted.compareAndSet(false, true)) {
+                            return;
+                        }
                         try {
                             emitter.send(SseEmitter.event()
                                     .name("error")
@@ -319,7 +344,14 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                             }
                         }
 
-                        // 3) Construcción y envío del evento done. Si la persistencia
+                        // 3) Si el emitter ya fue completado por el contenedor (timeout) o por
+                        //    otro terminal, no se envían más eventos ni se llama complete().
+                        if (!emitterCompleted.compareAndSet(false, true)) {
+                            log.warn("=== SSE EMITTER ALREADY COMPLETED — se omite done === projectId={}", projectId);
+                            return;
+                        }
+
+                        // 4) Construcción y envío del evento done. Si la persistencia
                         //    falló, done llega igualmente con content=finalContent y
                         //    assistantMessageId vacío.
                         log.info(
@@ -408,6 +440,18 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
             log.warn("=== GUARDRAIL BLOCKED === input contained prompt injection signals");
         }
         return blocked;
+    }
+
+    /** Cancela la suscripción al flux cuando el emitter ya terminó (timeout/complete/error). */
+    private void cancelSubscription(Disposable[] subscriptionHolder, UUID projectId) {
+        if (subscriptionHolder == null || subscriptionHolder[0] == null) {
+            return;
+        }
+        Disposable disposable = subscriptionHolder[0];
+        if (!disposable.isDisposed()) {
+            disposable.dispose();
+            log.info("=== SSE SUBSCRIPTION CANCELLED === projectId={}", projectId);
+        }
     }
 
     /**

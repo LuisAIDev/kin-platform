@@ -133,6 +133,12 @@ deepseek:
   cost:
     input-per-1m: ${DEEPSEEK_INPUT_COST_PER_1M:0}
     output-per-1m: ${DEEPSEEK_OUTPUT_COST_PER_1M:0}
+  stream:
+    # Timeout de inactividad del streaming SSE: si DeepSeek no entrega NINGÚN
+    # chunk durante estos segundos, el stream falla de forma controlada
+    # (TimeoutException -> evento SSE de error) en vez de colgar hasta el
+    # timeout del SseEmitter (180 s). Cada chunk recibido reinicia el contador.
+    inactivity-timeout-seconds: ${DEEPSEEK_STREAM_INACTIVITY_TIMEOUT_SECONDS:90}
 
 # -----------------------------------------------------------
 # Control de consumo de IA (Fase 1)
