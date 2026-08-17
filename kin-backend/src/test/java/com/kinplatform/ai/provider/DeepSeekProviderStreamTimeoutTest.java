@@ -55,6 +55,34 @@ class DeepSeekProviderStreamTimeoutTest {
                 .build();
     }
 
+    /** Chunk de metadata/cierre sin resultado (getResult() null). */
+    private static ChatResponse emptyChunk() {
+        return ChatResponse.builder().generations(List.of()).build();
+    }
+
+    @Test
+    void generateStream_conChunksNulosYValidos_entregaSoloTextosYCompleta() {
+        when(spec.stream()).thenReturn(streamSpec);
+        when(streamSpec.chatResponse())
+                .thenReturn(Flux.just(chunk("hola "), emptyChunk(), chunk("mundo"), emptyChunk()));
+        DeepSeekProvider provider =
+                new DeepSeekProvider(chatClient, "deepseek-v4-flash", 1, Duration.ofMillis(10), 1);
+
+        StepVerifier.create(provider.generateStream(history, "hi", "sys"))
+                .expectNext("hola ", "mundo")
+                .verifyComplete();
+    }
+
+    @Test
+    void generateStream_soloChunksNulos_completaSinEmitir() {
+        when(spec.stream()).thenReturn(streamSpec);
+        when(streamSpec.chatResponse()).thenReturn(Flux.just(emptyChunk(), emptyChunk()));
+        DeepSeekProvider provider =
+                new DeepSeekProvider(chatClient, "deepseek-v4-flash", 1, Duration.ofMillis(10), 1);
+
+        StepVerifier.create(provider.generateStream(history, "hi", "sys")).verifyComplete();
+    }
+
     @Test
     void generateStream_conChunks_entregaYCompleta() {
         when(spec.stream()).thenReturn(streamSpec);

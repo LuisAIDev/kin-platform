@@ -185,14 +185,17 @@ public class DeepSeekProvider implements AIProvider {
                 // controlada (TimeoutException) en vez de colgar hasta el timeout
                 // SSE (180 s). Cada chunk recibido reinicia el contador.
                 .timeout(Duration.ofSeconds(streamInactivityTimeoutSeconds))
-                .map(chatResponse -> {
+                .flatMap(chatResponse -> {
                     if (firstChunk.compareAndSet(false, true)) {
                         log.info("===== DEEPSEEK HTTP RESPONSE RECEIVED =====");
                         log.info("===== DEEPSEEK FIRST CHUNK RECEIVED =====");
                     }
                     log.info("===== DEEPSEEK CHUNK RECEIVED =====");
                     captureUsage(chatResponse, usageTokens, hasUsage);
-                    return contentOf(chatResponse);
+                    String text = contentOf(chatResponse);
+                    // Los chunks de metadata/cierre no traen contenido: no deben
+                    // emitirse (Flux.map lanzaría NPE con null) ni romper el stream.
+                    return (text == null || text.isBlank()) ? Flux.empty() : Flux.just(text);
                 })
                 .doOnComplete(() -> {
                     if (reconciled.compareAndSet(false, true)) {

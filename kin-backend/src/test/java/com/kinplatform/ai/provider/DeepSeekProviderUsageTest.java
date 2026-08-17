@@ -146,6 +146,24 @@ class DeepSeekProviderUsageTest {
     }
 
     @Test
+    void generateStream_chunkSoloUso_sinContenido_igualmenteReportaUso() {
+        stubPrompt();
+        when(spec.stream()).thenReturn(streamSpec);
+        // Chunk final/metadata: trae usage pero sin resultado (getResult() null).
+        when(streamSpec.chatResponse()).thenReturn(Flux.just(ChatResponse.builder()
+                .generations(List.of())
+                .metadata(ChatResponseMetadata.builder()
+                        .usage(new DefaultUsage(50, 7, 57))
+                        .build())
+                .build()));
+
+        StepVerifier.create(provider.generateStream(List.of(), "hi", "sys"))
+                .verifyComplete();
+
+        verify(recorder).recordActual(reservation, 50L, 7L);
+    }
+
+    @Test
     void generateStream_error_liberaReserva() {
         stubPrompt();
         when(spec.stream()).thenReturn(streamSpec);
