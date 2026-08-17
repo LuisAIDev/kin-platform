@@ -21,32 +21,37 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_pricing_plans_code
     ON pricing_plans (code);
 
 -- Compatibilidad: bases históricas pueden carecer de los DEFAULT de
--- billing_period/currency (creadas por un init.sql previo a Flyway). Se
--- garantiza el default 'monthly'/'USD' (misma convención de V1 y init.sql)
--- para que cualquier INSERT (migración o Hibernate, que no mapea estas
--- columnas) nunca introduzca NULL en columnas NOT NULL. Idempotente.
+-- billing_period/currency/display_order/is_popular (creadas por un init.sql
+-- previo a Flyway). Se garantizan los defaults (misma convención de V1 e
+-- init.sql) para que cualquier INSERT (migración o Hibernate, que no mapea
+-- estas columnas) nunca introduzca NULL en columnas NOT NULL. Idempotente.
 ALTER TABLE pricing_plans
     ALTER COLUMN billing_period SET DEFAULT 'monthly';
 ALTER TABLE pricing_plans
     ALTER COLUMN currency SET DEFAULT 'USD';
+ALTER TABLE pricing_plans
+    ALTER COLUMN display_order SET DEFAULT 0;
+ALTER TABLE pricing_plans
+    ALTER COLUMN is_popular SET DEFAULT FALSE;
 
 -- Backfill de planes existentes (preserva FKs por id; el nombre es
 -- solo cosmético y el frontend ya consume la lista por precio).
+-- Re-secuenciación de display_order por precio: FREE=1, STANDARD=2, PREMIUM=3.
 UPDATE pricing_plans
 SET code = 'FREE', ai_budget_usd = 0.50
 WHERE name = 'Básico Gratis' AND code IS NULL;
 
 UPDATE pricing_plans
-SET code = 'PREMIUM', ai_budget_usd = 8.75, max_projects = NULL
+SET code = 'PREMIUM', ai_budget_usd = 8.75, max_projects = NULL, display_order = 3
 WHERE name = 'Premium Pro' AND code IS NULL;
 
 -- Alta del plan STANDARD si no existe (idempotente por code). Se incluyen
--- explícitamente currency/billing_period ('USD'/'monthly') para no depender
--- del DEFAULT en bases históricas.
+-- explícitamente currency/billing_period/display_order/is_popular para no
+-- depender del DEFAULT en bases históricas.
 INSERT INTO pricing_plans (
     id, name, description, price, currency, billing_period, features,
-    max_projects, messages_per_month, advanced_ai, pdf_export,
-    support_level, viability_scoring_detail, is_active, code,
+    display_order, is_popular, max_projects, messages_per_month, advanced_ai,
+    pdf_export, support_level, viability_scoring_detail, is_active, code,
     ai_budget_usd, created_at, updated_at
 )
 SELECT gen_random_uuid(),
@@ -56,6 +61,8 @@ SELECT gen_random_uuid(),
        'USD',
        'monthly',
        '["5 proyectos completados por periodo","IA avanzada","Scoring detallado","Exportacion a PDF","Soporte prioritario"]'::json,
+       2,
+       FALSE,
        5,
        500,
        TRUE,
