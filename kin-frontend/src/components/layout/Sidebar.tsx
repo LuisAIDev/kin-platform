@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { label: "Planes", href: "/dashboard/pricing" },
   { label: "Suscripción", href: "/dashboard/subscription" },
   { label: "Configuración", href: "/dashboard/settings" },
+  { label: "Sobre KIN", href: "/sobre-kin" },
 ];
 
 const ADMIN_ITEM = { label: "Administración", href: "/dashboard/admin/pricing" };
@@ -45,6 +46,9 @@ export default function Sidebar() {
     }
     if (href === "/dashboard/subscription") {
       return pathname === "/dashboard/subscription";
+    }
+    if (href === "/sobre-kin") {
+      return pathname === "/sobre-kin";
     }
     return pathname.startsWith("/dashboard/projects") && pathname !== "/dashboard/projects/new";
   };

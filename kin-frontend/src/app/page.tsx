@@ -358,6 +358,11 @@ export default function Home() {
                     Precios
                   </a>
                 </li>
+                <li>
+                  <Link href="/sobre-kin" className="text-sm text-neutral-500 hover:text-primary-600 transition-colors">
+                    Sobre KIN
+                  </Link>
+                </li>
               </ul>
             </div>
             <div className="sm:text-right">

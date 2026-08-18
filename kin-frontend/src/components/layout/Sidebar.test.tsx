@@ -36,6 +36,20 @@ describe("Sidebar", () => {
     expect(screen.queryByText("Administración")).toBeNull();
   });
 
+  it("incluye el ítem 'Sobre KIN' enlazando a /sobre-kin", () => {
+    render(<Sidebar />);
+    const links = screen.getAllByText("Sobre KIN");
+    expect(links.length).toBeGreaterThan(0);
+    expect(links[0].closest("a")).toHaveAttribute("href", "/sobre-kin");
+  });
+
+  it("marca activo 'Sobre KIN' cuando el pathname es /sobre-kin", () => {
+    pathname = "/sobre-kin";
+    render(<Sidebar />);
+    const link = screen.getAllByText("Sobre KIN")[0].closest("a");
+    expect(link?.className).toContain("bg-primary-600");
+  });
+
   it("muestra el ítem de administración para ADMIN", () => {
     getUser.mockReturnValue({ token: "t", email: "a@b.c", fullName: "Admin", role: "ADMIN" });
 

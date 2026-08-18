@@ -3,7 +3,18 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-export default function Navbar() {
+interface NavbarProps {
+  /**
+   * "landing": navegación del sitio público con anclas de la portada.
+   * "about": navegación de la página "Sobre KIN" (sin anclas de la portada).
+   */
+  variant?: "landing" | "about";
+}
+
+const NAV_LINK_CLASS =
+  "text-sm font-medium text-neutral-500 hover:text-primary-600 transition-colors duration-200";
+
+export default function Navbar({ variant = "landing" }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -30,24 +41,35 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
-            <a
-              href="#caracteristicas"
-              className="text-sm font-medium text-neutral-500 hover:text-primary-600 transition-colors duration-200"
-            >
-              Características
-            </a>
-            <a
-              href="#precios"
-              className="text-sm font-medium text-neutral-500 hover:text-primary-600 transition-colors duration-200"
-            >
-              Precios
-            </a>
-            <a
-              href="#contacto"
-              className="text-sm font-medium text-neutral-500 hover:text-primary-600 transition-colors duration-200"
-            >
-              Contacto
-            </a>
+            {variant === "about" ? (
+              <>
+                <Link href="/" className={NAV_LINK_CLASS}>
+                  Plataforma
+                </Link>
+                <Link
+                  href="/sobre-kin"
+                  aria-current="page"
+                  className="text-sm font-medium text-primary-600 transition-colors duration-200"
+                >
+                  Sobre KIN
+                </Link>
+              </>
+            ) : (
+              <>
+                <a href="#caracteristicas" className={NAV_LINK_CLASS}>
+                  Características
+                </a>
+                <a href="#precios" className={NAV_LINK_CLASS}>
+                  Precios
+                </a>
+                <a href="#contacto" className={NAV_LINK_CLASS}>
+                  Contacto
+                </a>
+                <Link href="/sobre-kin" className={NAV_LINK_CLASS}>
+                  Sobre KIN
+                </Link>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
