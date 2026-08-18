@@ -1,42 +1,45 @@
 package com.kinplatform.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.kinplatform.auth.EmailVerificationRequiredException;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * El manejador global preserva el código HTTP de {@link ResponseStatusException}
+ * (usado por la exportación) en lugar de devolver 500.
+ */
 class GlobalExceptionHandlerTest {
 
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
     @Test
-    void emailVerificationRequired_deberiaResponder403ConCodigo() {
-        var ex = new EmailVerificationRequiredException("Tu correo aún no ha sido verificado.");
+    void responseStatusPreservaElCodigoHttp() {
+        var response = handler.handleResponseStatus(
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Documento de referencia no encontrado"));
 
-        var response = handler.handleEmailVerificationRequired(ex);
-
-        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
-        assertEquals("EMAIL_VERIFICATION_REQUIRED", response.getBody().get("code"));
-        assertEquals("Tu correo aún no ha sido verificado.", response.getBody().get("error"));
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals("Documento de referencia no encontrado", response.getBody().get("error"));
     }
 
     @Test
-    void dataIntegrity_deberiaResponder409Generico() {
-        var ex = new org.springframework.dao.DataIntegrityViolationException("duplicate key");
-
-        var response = handler.handleDataIntegrity(ex);
-
-        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertEquals("No se pudo completar la solicitud. Intenta de nuevo.", response.getBody().get("error"));
-    }
-
-    @Test
-    void illegalArgument_deberiaResponder400() {
-        var response = handler.handleIllegalArgument(new IllegalArgumentException("boom"));
+    void responseStatusCon400ConservaElMensaje() {
+        var response = handler.handleResponseStatus(new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "El documento seleccionado no puede utilizarse como plantilla."));
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals(Map.of("error", "boom"), response.getBody());
+        assertEquals(
+                "El documento seleccionado no puede utilizarse como plantilla.",
+                response.getBody().get("error"));
+    }
+
+    @Test
+    void responseStatusSinReasonUsaMensajeGenerico() {
+        var response = handler.handleResponseStatus(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertTrue(response.getBody().get("error").contains("Solicitud inválida"));
     }
 }

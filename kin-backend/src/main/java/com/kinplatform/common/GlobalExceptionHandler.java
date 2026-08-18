@@ -15,6 +15,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -24,6 +25,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+    }
+
+    /**
+     * Preserva el código HTTP de los errores lanzados con
+     * {@link ResponseStatusException} (p. ej. exportación: 404/400) en lugar de
+     * que caigan en el manejador genérico de RuntimeException (500).
+     */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> handleResponseStatus(ResponseStatusException ex) {
+        String reason = ex.getReason() == null || ex.getReason().isBlank() ? "Solicitud inválida" : ex.getReason();
+        return ResponseEntity.status(ex.getStatusCode()).body(Map.of("error", reason));
     }
 
     @ExceptionHandler(EmailVerificationRequiredException.class)
