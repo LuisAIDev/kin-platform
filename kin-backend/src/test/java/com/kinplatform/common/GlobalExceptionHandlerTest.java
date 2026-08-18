@@ -42,4 +42,14 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertTrue(response.getBody().get("error").contains("Solicitud inválida"));
     }
+
+    @Test
+    void tipoDeParametroInvalidoDevuelve400() {
+        var response = handler.handleTypeMismatch(
+                new org.springframework.web.method.annotation.MethodArgumentTypeMismatchException(
+                        "no-es-uuid", java.util.UUID.class, "templateDocumentId", null, null));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(response.getBody().get("error").contains("templateDocumentId"));
+    }
 }

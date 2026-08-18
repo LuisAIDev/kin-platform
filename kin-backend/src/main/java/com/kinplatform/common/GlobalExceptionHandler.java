@@ -38,6 +38,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(Map.of("error", reason));
     }
 
+    /**
+     * Parámetros de ruta/query con tipo inválido (p. ej. un UUID malformado)
+     * son un error del cliente: 400, no 500.
+     */
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, String>> handleTypeMismatch(
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "Parámetro inválido: " + ex.getName()));
+    }
+
     @ExceptionHandler(EmailVerificationRequiredException.class)
     public ResponseEntity<Map<String, String>> handleEmailVerificationRequired(EmailVerificationRequiredException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
