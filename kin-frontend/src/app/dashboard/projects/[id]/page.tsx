@@ -5,9 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { projectsService, type Project } from "@/services/projects";
 import { chatService, type ChatMessage, type ChatResponse, type ChatStreamError } from "@/services/chat";
+import type { ExportAction } from "@/services/exportProject";
 import { authService } from "@/services/auth";
 import ViabilityScore from "@/components/ViabilityScore";
 import PdfReportButton from "@/components/PdfReportButton";
+import ExportProjectButton from "@/components/export/ExportProjectButton";
+import ExportChatActionCard from "@/components/export/ExportChatActionCard";
 import ProgressCircle from "@/components/ProgressCircle";
 import { GenerateEnterpriseButton } from "@/components/enterprise/GenerateEnterpriseButton";
 import { ProjectInfoSection } from "@/components/projectinfo/ProjectInfoSection";
@@ -33,6 +36,7 @@ export default function ProjectDetailPage({ params }: Props) {
 
   const [project, setProject] = useState<Project | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+const [lastAction, setLastAction] = useState<ExportAction | null>(null);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -89,6 +93,7 @@ export default function ProjectDetailPage({ params }: Props) {
     sendingRef.current = true;
     setSending(true);
     setInput("");
+    setLastAction(null);
 
     const optimisticUser: ChatMessage = {
       id: crypto.randomUUID(),
@@ -131,6 +136,9 @@ export default function ProjectDetailPage({ params }: Props) {
         );
       },
       onDone: (res: ChatResponse) => {
+        if (res.action) {
+          setLastAction(res.action);
+        }
         setMessages((prev) =>
           prev.map((m) =>
             m.id === aiId
@@ -251,6 +259,8 @@ export default function ProjectDetailPage({ params }: Props) {
 
           <PdfReportButton project={project} messages={messages} />
 
+          <ExportProjectButton project={project} />
+
           <GenerateEnterpriseButton projectId={id} />
 
           <Link
@@ -344,6 +354,16 @@ export default function ProjectDetailPage({ params }: Props) {
           })}
           <div ref={chatEndRef} />
         </div>
+
+        {lastAction && (
+          <div className="px-4">
+            <ExportChatActionCard
+              action={lastAction}
+              projectId={id}
+              projectTitle={project.title}
+            />
+          </div>
+        )}
 
         <div className="border-t border-neutral-200 px-4 py-3 shrink-0 sticky bottom-0 bg-white z-10">
           <div className="max-w-4xl mx-auto">

@@ -13,6 +13,8 @@ import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.ConversationTurn;
 import com.kinplatform.kin.conversation.StreamingTurnOutcome;
 import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.kin.export.intent.ExportAction;
+import com.kinplatform.kin.export.intent.ExportChatIntentService;
 import com.kinplatform.kin.reporting.report.ReportRepository;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 import com.kinplatform.kin.usage.AiBudgetExceededException;
@@ -58,6 +60,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
     private final SubscriptionValidatorService subscriptionValidator;
     private final AiBudgetControlService budgetControlService;
     private final ReservationContext reservationContext;
+    private final ExportChatIntentService exportChatIntentService;
 
     /** Sin repo de reportes: el runtime conserva el comportamiento previo. */
     private static final ReportRepository NO_OP_REPORT_REPOSITORY = new ReportRepository() {
@@ -92,7 +95,8 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
             ReportRepository reportRepository,
             SubscriptionValidatorService subscriptionValidator,
             AiBudgetControlService budgetControlService,
-            ReservationContext reservationContext) {
+            ReservationContext reservationContext,
+            ExportChatIntentService exportChatIntentService) {
         this.chatService = chatService;
         this.projectRepository = projectRepository;
         this.objectMapper = objectMapper;
@@ -102,6 +106,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         this.subscriptionValidator = subscriptionValidator;
         this.budgetControlService = budgetControlService;
         this.reservationContext = reservationContext;
+        this.exportChatIntentService = exportChatIntentService;
     }
 
     /**
@@ -125,6 +130,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                 reportRepository,
                 null,
                 null,
+                null,
                 null);
     }
 
@@ -145,6 +151,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                 conversationOrchestrator,
                 new PromptGuardrail(),
                 NO_OP_REPORT_REPOSITORY,
+                null,
                 null,
                 null,
                 null);
@@ -198,6 +205,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                     .assistantMessageId(assistantMessage.getId())
                     .content(result.aiResponse())
                     .tokensUsed(assistantMessage.getTokensUsed())
+                    .action(detectAction(userId, projectId, request.getContent()))
                     .build();
         } finally {
             clearReservation();
@@ -213,6 +221,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         }
         var userMessage = saveUserMessage(userId, projectId, request.getContent());
         var history = loadHistoryForContext(userId, projectId);
+        var streamAction = detectAction(userId, projectId, request.getContent());
         AiReservation reservation;
         try {
             reservation = reserveBudget(userId, request, history);
@@ -361,17 +370,26 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                                 assistantMessageId);
                         boolean doneSent = false;
                         try {
-                            var donePayload = Map.of(
-                                    "done",
-                                    true,
-                                    "userMessageId",
-                                    userMessage.getId().toString(),
-                                    "assistantMessageId",
-                                    assistantMessageId != null ? assistantMessageId : "",
-                                    "content",
-                                    finalContent,
-                                    "tokensUsed",
-                                    tokensUsed);
+                            var donePayload = new java.util.LinkedHashMap<String, Object>();
+                            donePayload.put("done", true);
+                            donePayload.put("userMessageId", userMessage.getId().toString());
+                            donePayload.put("assistantMessageId", assistantMessageId != null ? assistantMessageId : "");
+                            donePayload.put("content", finalContent);
+                            donePayload.put("tokensUsed", tokensUsed);
+                            if (streamAction != null) {
+                                donePayload.put(
+                                        "action",
+                                        Map.of(
+                                                "type", streamAction.type(),
+                                                "format", streamAction.format().name(),
+                                                "templateDocumentId",
+                                                        streamAction.templateDocumentId() == null
+                                                                ? null
+                                                                : streamAction
+                                                                        .templateDocumentId()
+                                                                        .toString(),
+                                                "templateDocumentName", streamAction.templateDocumentName()));
+                            }
                             emitter.send(
                                     SseEmitter.event().name("done").data(objectMapper.writeValueAsString(donePayload)));
                             doneSent = true;
@@ -387,17 +405,31 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                         //    siempre el contenido real, aunque sea sin id de asistente.
                         if (!doneSent) {
                             try {
-                                var fallbackPayload = Map.of(
-                                        "done",
-                                        true,
-                                        "content",
-                                        finalContent,
-                                        "userMessageId",
-                                        userMessage.getId().toString(),
-                                        "assistantMessageId",
-                                        assistantMessageId != null ? assistantMessageId : "",
-                                        "tokensUsed",
-                                        tokensUsed);
+                                var fallbackPayload = new java.util.LinkedHashMap<String, Object>();
+                                fallbackPayload.put("done", true);
+                                fallbackPayload.put("content", finalContent);
+                                fallbackPayload.put(
+                                        "userMessageId", userMessage.getId().toString());
+                                fallbackPayload.put(
+                                        "assistantMessageId", assistantMessageId != null ? assistantMessageId : "");
+                                fallbackPayload.put("tokensUsed", tokensUsed);
+                                if (streamAction != null) {
+                                    fallbackPayload.put(
+                                            "action",
+                                            Map.of(
+                                                    "type",
+                                                    streamAction.type(),
+                                                    "format",
+                                                    streamAction.format().name(),
+                                                    "templateDocumentId",
+                                                    streamAction.templateDocumentId() == null
+                                                            ? null
+                                                            : streamAction
+                                                                    .templateDocumentId()
+                                                                    .toString(),
+                                                    "templateDocumentName",
+                                                    streamAction.templateDocumentName()));
+                                }
                                 emitter.send(SseEmitter.event()
                                         .name("done")
                                         .data(objectMapper.writeValueAsString(fallbackPayload)));
@@ -555,6 +587,13 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
             throw new IllegalArgumentException("Project does not belong to this user");
         }
         return project;
+    }
+
+    private ExportAction detectAction(UUID userId, UUID projectId, String message) {
+        if (exportChatIntentService == null) {
+            return null;
+        }
+        return exportChatIntentService.detect(userId, projectId, message);
     }
 
     private ChatMessageResponse saveUserMessage(UUID userId, UUID projectId, String content) {

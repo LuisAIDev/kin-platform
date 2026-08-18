@@ -91,7 +91,8 @@ class ChatOrchestratorBudgetGateTest {
                 reportRepositoryNoOp(),
                 subscriptionValidator,
                 budgetControlService,
-                reservationContext);
+                reservationContext,
+                null);
 
         request = new ChatRequest();
         request.setContent("hola");

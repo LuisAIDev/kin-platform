@@ -11,4 +11,11 @@ public interface ProjectDocumentService {
     DocumentResponse upload(UUID userId, UUID projectId, MultipartFile file);
 
     List<DocumentResponse> listByProject(UUID userId, UUID projectId);
+
+    /**
+     * Devuelve el documento del proyecto verificando ownership (proyecto y
+     * documento pertenecientes al usuario). Expone el {@code extractedText}
+     * sin revelar documentos de otros proyectos.
+     */
+    java.util.Optional<ProjectDocument> findOwned(UUID userId, UUID projectId, UUID documentId);
 }

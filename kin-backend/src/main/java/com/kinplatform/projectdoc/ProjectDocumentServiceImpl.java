@@ -86,6 +86,14 @@ public class ProjectDocumentServiceImpl implements ProjectDocumentService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.Optional<ProjectDocument> findOwned(UUID userId, UUID projectId, UUID documentId) {
+        requireOwnedProject(userId, projectId);
+        return repository.findById(documentId).filter(document -> document.getProjectId()
+                .equals(projectId));
+    }
+
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("El archivo está vacío");

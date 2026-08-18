@@ -1,6 +1,7 @@
 import { api } from "./api";
 import { getToken } from "./session";
 import { isChatMessageTooLong, MAX_CHAT_MESSAGE_LENGTH } from "@/utils/chatLimits";
+import type { ExportAction } from "@/services/exportProject";
 
 export interface ChatMessage {
   id: string;
@@ -18,6 +19,7 @@ export interface ChatResponse {
   assistantMessageId: string;
   content: string;
   tokensUsed: number;
+  action?: ExportAction | null;
 }
 
 export interface StreamCallbacks {

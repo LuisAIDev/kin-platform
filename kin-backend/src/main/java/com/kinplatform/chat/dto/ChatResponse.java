@@ -1,10 +1,10 @@
 package com.kinplatform.chat.dto;
 
+import com.kinplatform.kin.export.intent.ExportAction;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -15,4 +15,7 @@ public class ChatResponse {
     private UUID assistantMessageId;
     private String content;
     private Integer tokensUsed;
+
+    /** Acción aditiva de exportación (opcional, {@code null} por defecto). */
+    private ExportAction action;
 }
