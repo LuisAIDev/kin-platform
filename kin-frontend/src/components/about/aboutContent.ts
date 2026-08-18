@@ -355,7 +355,7 @@ export const ABOUT_CONTENT = {
     title: "Creado por",
     name: "Luis Orlando Guerra González",
     paragraphs: [
-      "KIN fue concebida y desarrollada por Luis Orlando Guerra González, desarrollador de software en formación y estudiante de tecnología, con interés en el desarrollo full-stack, la calidad del software y la inteligencia artificial.",
+      "KIN fue concebida y desarrollada por Luis Orlando Guerra González, desarrollador de software en formación y Tecnólogo de Análisis y Desarrollo de Software, con interés en el desarrollo full-stack, la calidad del software y la inteligencia artificial.",
       "Es un proyecto construido de forma autodidacta y disciplinada: cada módulo, integración y prueba representa práctica real sobre problemas concretos, no solo teoría.",
       "Su objetivo es continuar creciendo dentro de la ingeniería de software, trabajar junto a equipos de desarrollo, recibir code reviews y críticas constructivas, aprender de profesionales con más experiencia y aportar lo aprendido durante la construcción de KIN.",
     ],
