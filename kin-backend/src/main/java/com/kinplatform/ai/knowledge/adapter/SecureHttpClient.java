@@ -33,6 +33,8 @@ import java.util.Set;
  */
 public class SecureHttpClient implements HttpKnowledgeSourceAdapter.HttpClient {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SecureHttpClient.class);
+
     private final HttpClient client;
     private final SourceConnectionGuard guard;
     private final String sourceId;
@@ -160,6 +162,14 @@ public class SecureHttpClient implements HttpKnowledgeSourceAdapter.HttpClient {
                 throw ex;
             }
             int status = raw.statusCode();
+            if (status == 429) {
+                // Rate limit de la fuente (p. ej. throttling anónimo por IP de
+                // datos.gov.co): métrica dedicada + WARN para la observación.
+                metrics.rateLimited(sourceId);
+                if (log.isWarnEnabled()) {
+                    log.warn("Source '{}' responded HTTP 429 (rate limit) for URI={}", sourceId, current);
+                }
+            }
             if (status >= 300 && status <= 399) {
                 String location = raw.headers().firstValue("Location").orElse(null);
                 if (location == null) {

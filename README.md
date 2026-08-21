@@ -177,7 +177,7 @@ KIN permite evaluar capacidades prácticas en:
 | Seguridad | JWT stateless, BCrypt, CORS de origen único, headers HTTP, rate limiting |
 | Bases de datos | PostgreSQL, Flyway V1…V18, JPA/Hibernate, contextos durables |
 | IA aplicada | DeepSeek vía Spring AI, pipeline determinista, guardrails, fallback en español |
-| Testing | 2.827 tests backend (2.847 descubiertos; 20 gated de red real) + 316 tests frontend + E2E Playwright |
+| Testing | 2.830 tests backend (2.850 descubiertos; 20 gated de red real) + 316 tests frontend + E2E Playwright |
 | Automatización E2E | Playwright sobre flujos de login, dashboard y Sobre KIN |
 | CI/CD | 5 workflows GitHub Actions con lint, tests, build, E2E, calidad y seguridad |
 | Docker | PostgreSQL + backend + frontend con HEALTHCHECK y usuario no-root |
@@ -535,6 +535,12 @@ con valores = específica de esas categorías. El `KnowledgeStage` lee la catego
 (campo dedicado en `ProjectContext`, que sobrevive al Analizador) y `Java` selecciona solo las
 fuentes pertinentes — el LLM nunca elige ni ejecuta peticiones.
 
+**Modo sombra (ADR-025, Fase 1 del plan de activación):** `KNOWLEDGE_SHADOW_ENABLED=true` hace que
+el Knowledge Engine ejecute el motor completo (consulta real, validación, caché y métricas
+`kin.knowledge.adapter.*`, con latencia **p50/p95/p99** y contador **429 rate-limited**) pero
+**sin propagar el resultado** al enriquecimiento/reporte — invisible para el usuario, con un log
+resumen `[shadow]` por turno. Ideal para observar antes de activar fuentes visibles.
+
 | Categoría | Fuentes específicas | Estado |
 |---|---|---|
 | Agroindustria | insumos agrícolas · exportaciones de café · Finagro desembolsos | ✅ **POC probado** |
@@ -675,7 +681,7 @@ CI/CD                 ✓  5 workflows GitHub Actions (push/PR/etiquetas/schedul
 
 | Ámbito | Resultado |
 |---|---|
-| Backend | **2.827 tests** (2.847 descubiertos; 20 gated de red real) · 0 fallos / 0 errores · BUILD SUCCESS (`./mvnw clean verify`) |
+| Backend | **2.830 tests** (2.850 descubiertos; 20 gated de red real) · 0 fallos / 0 errores · BUILD SUCCESS (`./mvnw clean verify`) |
 | Frontend | **58 archivos** · **316 tests** · **PASS** (`npm test`, ejecutado) |
 | E2E (Sobre KIN) | **4/4 PASS** (`npx playwright test tests/sobre-kin.spec.ts`, ejecutado) |
 | E2E completo | 8 escenarios (login 3 + dashboard 1 + sobre-kin 4) en entorno aislado (`:3100` / `:8081`) |
@@ -791,7 +797,7 @@ Información comprobada contra el código y la configuración del repositorio:
 - 🟢 **Project Export** — DOCX/PDF/Markdown (módulo `kin.export`)
 - 🟢 **Product Intelligence** — analítica de uso offline
 - 🟢 **AI Guardrails** — `PromptGuardrail`, `ResponseGuard`, `ResponseFallback`
-- 🟢 **Automated Testing** — 2.827 backend (2.847 descubiertos) + 316 frontend + E2E Playwright
+- 🟢 **Automated Testing** — 2.830 backend (2.850 descubiertos) + 316 frontend + E2E Playwright
 - 🟢 **CI/CD** — 5 workflows GitHub Actions + SonarQube + CodeQL + Gitleaks + OWASP
 - 🟢 **Cloud deployment** — Docker, Render, Neon/PostgreSQL, dominio propio
 - 🟢 **Security controls** — JWT, BCrypt, CORS, rate limiting, headers, ownership, SSRF-safe

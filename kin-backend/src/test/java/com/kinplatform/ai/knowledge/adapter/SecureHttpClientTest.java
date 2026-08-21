@@ -120,6 +120,18 @@ class SecureHttpClientTest {
     }
 
     @Test
+    void http429_rateLimit_deberiaRegistrarMetricaDedicada() throws Exception {
+        handle(429, "application/json", "{}");
+
+        HttpKnowledgeSourceAdapter.HttpResponse response =
+                client(loopbackGuard(), 1024, 0).fetch(request());
+
+        assertEquals(429, response.statusCode());
+        assertEquals(1.0, metrics.count("kin.knowledge.adapter.rate_limited", "src-http"));
+        assertEquals(1.0, metrics.count("kin.knowledge.adapter.failure", "src-http"));
+    }
+
+    @Test
     void http404_noDeberiaReintentarse() throws Exception {
         AtomicInteger calls = new AtomicInteger();
         server.createContext("/search", exchange -> {

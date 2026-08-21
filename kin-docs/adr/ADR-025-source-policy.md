@@ -129,6 +129,22 @@ consulta fija), `fact-columns` (SODA), `landing-page` (URL de los hechos), `max-
   TTL en vez de una ventana uniforme. Si ningún hecho declara `maxAge`, se usa la ventana de la
   solicitud (comportamiento previo).
 
+### P11. Modo sombra (Fase 1 del plan de activación)
+
+- `kin.knowledge.shadow-enabled` (env `KNOWLEDGE_SHADOW_ENABLED`, default `false`). Con `true`, el
+  `KnowledgeStage` **ejecuta el motor completo** (consulta real, validación, caché y métricas
+  `kin.knowledge.adapter.*`) pero **suprime `knowledgeResult`** del contexto → el
+  `EnrichmentStage` recibe vacío (`EnrichmentEngine` tolera `knowledge == null`) y **el usuario
+  no ve ningún cambio**. Un log resumen por turno (`[shadow] ... sin propagacion`) permite
+  revisar sin depender del endpoint de métricas.
+- **Observabilidad (ADR-025, Fase 1)**: el timer de latencia expone **p50/p95/p99**
+  (`kin_knowledge_adapter_latency_seconds{quantile=...}`) y se añadió el contador
+  **`kin_knowledge_adapter_rate_limited_total`** para detectar respuestas **HTTP 429** (throttling
+  anónimo por IP de datos.gov.co) + WARN por fuente.
+- Activación en producción: **invisible para el usuario**; requiere aprobación explícita y un
+  periodo de observación (métricas por fuente, latencia, caché hit/miss y 429). No sustituye a
+  `KNOWLEDGE_EXTERNAL_ENABLED` (sombra consulta fuentes reales; la fase visible usa ese switch).
+
 ---
 
 ## Alternativas consideradas

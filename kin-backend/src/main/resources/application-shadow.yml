@@ -1,0 +1,246 @@
+# ============================================================
+# KIN Platform — SHADOW profile (Fase 1 del plan de activación)
+# ============================================================
+# Modo sombra (ADR-025): el Knowledge Engine ejecuta el motor completo
+# (consulta real de las fuentes autorizadas, validación, caché y métricas
+# kin.knowledge.adapter.* con latencia p50/p95/p99 y contador 429) pero NO
+# propaga knowledgeResult al enriquecimiento -> el usuario NO ve cambios.
+#
+# ACTIVACIÓN en producción (Render):
+#   SPRING_PROFILES_ACTIVE=render,shadow   (el perfil render incluye prod)
+# ROLLBACK inmediato:
+#   SPRING_PROFILES_ACTIVE=render          (quitar ",shadow")
+#
+# La caché Redis es OPCIONAL y CONDICIONAL (por defecto OFF): solo se activa si
+# se provisiona un Redis y se define STAGING_REDIS_CACHE_ENABLED=true (más
+# STAGING_REDIS_HOST/PORT). Sin Redis, el engine sigue funcionando (caché en
+# memoria del orquestador) y las métricas de fuente/latencia/429 se generan;
+# el ratio hit/miss se observa una vez haya Redis (Fase 2).
+# ============================================================
+
+kin:
+  knowledge:
+    external-enabled: true
+    shadow-enabled: true
+    allowed-domains: ${KNOWLEDGE_ALLOWED_DOMAINS:api.worldbank.org,data-api.ecb.europa.eu,www.datos.gov.co,servicios.ine.es}
+    http:
+      connect-timeout: 1s
+      request-timeout: 15s
+      max-response-bytes: 262144
+      max-redirects: 3
+      allowed-content-types: application/json
+      retries: 1
+      retry-backoff: 250ms
+      allow-loopback: false
+    sources:
+      # ---------- Nivel 1 — global ----------
+      - id: worldbank-pib
+        name: Banco Mundial — PIB (COL y ALC)
+        base-url: "https://api.worldbank.org/v2/country/COL;LAC/indicator/NY.GDP.MKTP.CD?format=json&per_page=100&date=2019:2025"
+        format: WORLD_BANK_V2
+        query-param: ""
+        max-age: 30d
+        level: 1
+        region: GLOBAL
+        categories: []
+      - id: worldbank-inflacion
+        name: Banco Mundial — Inflación al consumidor (COL y ALC)
+        base-url: "https://api.worldbank.org/v2/country/COL;LAC/indicator/FP.CPI.TOTL.ZG?format=json&per_page=100&date=2019:2025"
+        format: WORLD_BANK_V2
+        query-param: ""
+        max-age: 30d
+        level: 1
+        region: GLOBAL
+        categories: []
+      - id: worldbank-desempleo
+        name: Banco Mundial — Desempleo total (COL y ALC)
+        base-url: "https://api.worldbank.org/v2/country/COL;LAC/indicator/SL.UEM.TOTL.ZS?format=json&per_page=100&date=2019:2025"
+        format: WORLD_BANK_V2
+        query-param: ""
+        max-age: 30d
+        level: 1
+        region: GLOBAL
+        categories: []
+      - id: ecb-usdeur
+        name: ECB — Tipo de cambio USD/EUR (global)
+        base-url: "https://data-api.ecb.europa.eu/service/data/EXR/D.USD.EUR.SP00.A?format=jsondata&startPeriod=2025"
+        format: SDMX_JSON
+        query-param: ""
+        landing-page: "https://data-api.ecb.europa.eu/"
+        max-age: 24h
+        level: 1
+        region: GLOBAL
+        categories: []
+      # ---------- Nivel 2 — Colombia ----------
+      - id: trm-col
+        name: Datos Abiertos Colombia — TRM (tasa de cambio COP/USD)
+        base-url: "https://www.datos.gov.co/resource/32sa-8pi3.json?$limit=5&$order=vigenciadesde%20DESC"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [valor, unidad, vigenciadesde]
+        landing-page: "https://www.datos.gov.co/d/32sa-8pi3"
+        max-age: 12h
+        level: 2
+        region: COL
+        categories: []
+      - id: pib-departamental
+        name: Datos Abiertos Colombia — PIB departamental por actividad (DANE)
+        base-url: "https://www.datos.gov.co/resource/kgyi-qc7j.json?$limit=100"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [a_o, departamento, actividad, valor_miles_de_millones_de]
+        landing-page: "https://www.datos.gov.co/d/kgyi-qc7j"
+        max-age: 30d
+        level: 2
+        region: COL
+        categories: []
+      - id: insumos-agricolas
+        name: Datos Abiertos Colombia — Índice de precios de insumos agrícolas (DANE)
+        base-url: "https://www.datos.gov.co/resource/gwbi-fnzs.json?$limit=5&$order=fecha%20DESC"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [fecha, indice_total, total_fertilizantes, total_plaguicidas]
+        landing-page: "https://www.datos.gov.co/d/gwbi-fnzs"
+        max-age: 30d
+        level: 2
+        region: COL
+        categories: [AGROINDUSTRIA]
+      # ---------- Nivel 2 — España ----------
+      - id: ine-ipc
+        name: INE España — IPC nacional
+        base-url: "https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/24077?nult=3"
+        format: INE_JSON
+        query-param: ""
+        landing-page: "https://servicios.ine.es/"
+        max-age: 30d
+        level: 2
+        region: ESP
+        categories: []
+      # ---------- Nivel 2 — Colombia ampliada ----------
+      - id: confecamaras-empresas
+        name: Confecámaras — Empresas creadas
+        base-url: "https://www.datos.gov.co/resource/8rxi-7swc.json?$limit=20"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [razon_social, mun_comercial, fec_matricula, ult_ano_ren]
+        landing-page: "https://www.datos.gov.co/d/8rxi-7swc"
+        max-age: 30d
+        level: 2
+        region: COL
+        categories: [EMPRESARIAL, COMERCIO]
+      - id: dane-exportaciones-cafe
+        name: DANE — Exportaciones de café (comercio exterior)
+        base-url: "https://www.datos.gov.co/resource/5fct-ib9u.json?$limit=20&$where=descripcion_partida10_dig%20like%20%27%25caf%25%27"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [descripcion_partida10_dig, departamento, pais, a_o, mes, exportaciones_en_valor_miles]
+        landing-page: "https://www.datos.gov.co/d/5fct-ib9u"
+        max-age: 30d
+        level: 2
+        region: COL
+        categories: [AGROINDUSTRIA, COMERCIO, LOGISTICA]
+      - id: superfinanciera-cartera
+        name: Superfinanciera — Comportamiento de cartera y crédito
+        base-url: "https://www.datos.gov.co/resource/dugh-vkir.json?$limit=10"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [fecha_corte, deptoresidencia, total_creditos, saldo_total]
+        landing-page: "https://www.datos.gov.co/d/dugh-vkir"
+        max-age: 30d
+        level: 2
+        region: COL
+        categories: [FINTECH, EMPRESARIAL]
+      - id: superfinanciera-tasas
+        name: Superfinanciera — Tasas de interés de captación
+        base-url: "https://www.datos.gov.co/resource/axk9-g2nh.json?$limit=10"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [nombreentidad, descripcion, tasa, fechacorte]
+        landing-page: "https://www.datos.gov.co/d/axk9-g2nh"
+        max-age: 7d
+        level: 2
+        region: COL
+        categories: [FINTECH, EMPRESARIAL]
+      - id: finagro-desembolsos
+        name: Finagro — Desembolsos de redescuento y crédito directo
+        base-url: "https://www.datos.gov.co/resource/bu9y-ytgi.json?$limit=10"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [ano, departamento, sector, valor_desembolsado]
+        landing-page: "https://www.datos.gov.co/d/bu9y-ytgi"
+        max-age: 60d
+        level: 2
+        region: COL
+        categories: [AGROINDUSTRIA, EMPRESARIAL]
+      - id: saludatos-ths
+        name: MinSalud — Saludatos, talento humano en salud (THS)
+        base-url: "https://www.datos.gov.co/resource/5atd-7cac.json?$limit=20"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [grupo, indicadoresths, categorias, variables]
+        landing-page: "https://www.datos.gov.co/d/5atd-7cac"
+        max-age: 30d
+        level: 2
+        region: COL
+        categories: [SALUD]
+      - id: calidad-aire-colombia
+        name: IDEAM — Calidad del aire en Colombia
+        base-url: "https://www.datos.gov.co/resource/g4t8-zkc3.json?$limit=10"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [nombre_est, nombre_fgda, med_concentracion_estandar, med_fecha_inicio]
+        landing-page: "https://www.datos.gov.co/d/g4t8-zkc3"
+        max-age: 24h
+        level: 2
+        region: COL
+        categories: [MEDIO_AMBIENTE]
+      - id: transporte-aereo-colombia
+        name: Aerocivil — Transporte aéreo de pasajeros/carga (Colombia)
+        base-url: "https://www.datos.gov.co/resource/djjf-g4q4.json?$limit=10"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [nombre, a_o, mes, nombre_origen, ciudad_origen]
+        landing-page: "https://www.datos.gov.co/d/djjf-g4q4"
+        max-age: 30d
+        level: 2
+        region: COL
+        categories: [LOGISTICA]
+      - id: mintic-internet-fijo
+        name: MinTIC — Accesos a Internet fijo por tecnología
+        base-url: "https://www.datos.gov.co/resource/n48w-gutb.json?$limit=10"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [anno, trimestre, departamento, segmento, proveedor]
+        landing-page: "https://www.datos.gov.co/d/n48w-gutb"
+        max-age: 30d
+        level: 2
+        region: COL
+        categories: [TECNOLOGIA]
+      - id: mintic-internet-movil
+        name: MinTIC — Tráfico de Internet móvil por proveedor
+        base-url: "https://www.datos.gov.co/resource/4z5v-cr6b.json?$limit=10"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [a_o, trimestre, proveedor, segmento, tr_fico]
+        landing-page: "https://www.datos.gov.co/d/4z5v-cr6b"
+        max-age: 30d
+        level: 2
+        region: COL
+        categories: [TECNOLOGIA]
+      - id: minciencias-proyectos
+        name: MinCiencias — Proyectos de investigación e innovación evaluados
+        base-url: "https://www.datos.gov.co/resource/6hgx-q9pi.json?$limit=10"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [ano_convocatoria, desc_convocatoria, codigo_proyecto]
+        landing-page: "https://www.datos.gov.co/d/6hgx-q9pi"
+        max-age: 60d
+        level: 2
+        region: COL
+        categories: [INVESTIGACION]
+
+  cache:
+    redis:
+      # Caché Redis OPCIONAL (por defecto OFF): para activarla, provisionar Redis
+      # y definir STAGING_REDIS_CACHE_ENABLED=true + STAGING_REDIS_HOST/PORT.
+      enabled: ${STAGING_REDIS_CACHE_ENABLED:false}

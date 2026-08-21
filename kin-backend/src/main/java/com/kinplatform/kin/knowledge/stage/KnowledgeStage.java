@@ -22,21 +22,37 @@ import java.util.List;
  * en {@code PipelineContext.knowledgeResult} (campo aditivo sancionado por
  * ADR-014).</p>
  *
+ * <p><strong>Modo sombra</strong> (ADR-025, Fase 1): con {@code shadow=true} se
+ * ejecuta el motor completo (red real, validación, caché, métricas
+ * {@code kin.knowledge.adapter.*}) pero se **suprime** el resultado del contexto
+ * antes de la siguiente etapa; el {@code EnrichmentStage} recibe vacío
+ * ({@code EnrichmentEngine} tolera {@code knowledgeResult == null} → resultado
+ * vacío) y el usuario no ve ningún cambio. El motor se conserva con un log
+ * resumen por turno para observabilidad.</p>
+ *
  * <p>El stage nunca habla con APIs, Internet, HTTP, Spring, el LLM ni ningún
  * adaptador: la adquisición, validación y selección son decisiones deterministas
  * de Java dentro del motor.</p>
  */
 public class KnowledgeStage implements PipelineStage {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(KnowledgeStage.class);
+
     private final EngineStage<KnowledgeInput, KnowledgeResult> delegate;
+    private final boolean shadow;
 
     public KnowledgeStage(KnowledgeEngine knowledgeEngine) {
+        this(knowledgeEngine, false);
+    }
+
+    public KnowledgeStage(KnowledgeEngine knowledgeEngine, boolean shadow) {
         this.delegate = new EngineStage<>(
                 "Conocimiento",
                 knowledgeEngine,
                 context -> context != null && context.projectContext() != null,
                 context -> new KnowledgeInput(buildRequest(context.projectContext())),
                 PipelineContext::knowledgeResult);
+        this.shadow = shadow;
     }
 
     private KnowledgeRequest buildRequest(ProjectContext projectContext) {
@@ -98,6 +114,22 @@ public class KnowledgeStage implements PipelineStage {
 
     @Override
     public PipelineContext execute(PipelineContext context) {
-        return delegate.execute(context);
+        long start = System.nanoTime();
+        PipelineContext executed = delegate.execute(context);
+        long elapsedMs = (System.nanoTime() - start) / 1_000_000L;
+        KnowledgeResult result = executed.knowledgeResult();
+        if (shadow) {
+            // Modo sombra (ADR-025): el motor corrió (métricas/caché) pero no se
+            // propaga el resultado → el enriquecimiento recibe vacío (invisible).
+            executed.knowledgeResult(null);
+            log.info(
+                    "[shadow] KnowledgeStage ejecutado: duracionMs={}, facts={}, fuentes={}, sin propagacion",
+                    elapsedMs,
+                    result == null ? 0 : result.factCount(),
+                    result == null ? List.of() : result.sourcesUsed());
+        } else {
+            log.debug("KnowledgeStage: duracionMs={}, facts={}", elapsedMs, result == null ? 0 : result.factCount());
+        }
+        return executed;
     }
 }

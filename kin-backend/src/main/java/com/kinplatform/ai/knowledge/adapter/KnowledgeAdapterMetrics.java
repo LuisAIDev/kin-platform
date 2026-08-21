@@ -60,9 +60,17 @@ public final class KnowledgeAdapterMetrics {
         counter("kin.knowledge.adapter.cache.miss").increment();
     }
 
-    /** Latencia de una consulta HTTP exitosa hacia una fuente. */
+    /** Latencia de una consulta HTTP exitosa hacia una fuente (expone p50/p95/p99). */
     public void latency(String source, long durationMs) {
         timer("kin.knowledge.adapter.latency", source).record(durationMs, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Respuesta HTTP 429 (rate limit) de una fuente — señal clave para observar
+     * el throttling de datos.gov.co (ADR-025, Fase 1).
+     */
+    public void rateLimited(String source) {
+        counter("kin.knowledge.adapter.rate_limited", source).increment();
     }
 
     /** Lectura de diagnóstico/tests del valor actual de un contador. */
@@ -89,6 +97,9 @@ public final class KnowledgeAdapterMetrics {
     }
 
     private Timer timer(String name, String source) {
-        return Timer.builder(name).tag("source", source).register(registry());
+        return Timer.builder(name)
+                .tag("source", source)
+                .publishPercentiles(0.5, 0.95, 0.99)
+                .register(registry());
     }
 }

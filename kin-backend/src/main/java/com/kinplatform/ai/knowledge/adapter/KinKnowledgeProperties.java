@@ -30,6 +30,15 @@ public class KinKnowledgeProperties {
     /** Master switch del adapter HTTP real. */
     private boolean externalEnabled;
 
+    /**
+     * Modo sombra (ADR-025, Fase 1 del plan de activación): con {@code true} el
+     * {@code KnowledgeStage} ejecuta el motor completo (consulta real, validación,
+     * caché y métricas {@code kin.knowledge.adapter.*}) pero **no** escribe
+     * {@code knowledgeResult} en el contexto → el {@code EnrichmentStage} recibe
+     * vacío y el usuario no ve cambios. Default {@code false} (modo normal).
+     */
+    private boolean shadowEnabled;
+
     /** Configuración del adapter HTTP seguro (fuente única, formato items). */
     private Http http = new Http();
 

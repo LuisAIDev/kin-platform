@@ -496,8 +496,9 @@ public class KinConfig {
     }
 
     @Bean
-    public KnowledgeStage knowledgeStage(KnowledgeEngine knowledgeEngine) {
-        return new KnowledgeStage(knowledgeEngine);
+    public KnowledgeStage knowledgeStage(
+            KnowledgeEngine knowledgeEngine, KinKnowledgeProperties kinKnowledgeProperties) {
+        return new KnowledgeStage(knowledgeEngine, kinKnowledgeProperties.isShadowEnabled());
     }
 
     @Bean

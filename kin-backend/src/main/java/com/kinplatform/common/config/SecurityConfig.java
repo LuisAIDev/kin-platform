@@ -39,8 +39,7 @@ public class SecurityConfig {
      * está definido sin incluirlos. KIN Platform utiliza el dominio propio:
      * https://kin-platform.com
      */
-    private static final List<String> GUARANTEED_ORIGINS = List.of(
-            "https://kin-platform.com");
+    private static final List<String> GUARANTEED_ORIGINS = List.of("https://kin-platform.com");
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -56,6 +55,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info")
                         .permitAll()
                         .requestMatchers("/actuator/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers("/knowledge/**")
                         .hasRole("ADMIN")
                         .requestMatchers("/error")
                         .permitAll()
