@@ -28,7 +28,6 @@ public final class ExportIntentDetector {
             "documento cargado",
             "documento que cargue",
             "documento de referencia");
-    private static final List<String> WORD_WORDS = List.of("word", "docx");
     private static final List<String> PDF_WORDS = List.of("pdf");
     private static final List<String> MARKDOWN_WORDS = List.of("markdown", " .md", " md");
 

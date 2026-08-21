@@ -166,7 +166,7 @@ public final class PdfExportRenderer implements ExportRenderer {
             if (parts[i].isEmpty()) {
                 continue;
             }
-            boolean bold = i % 2 == 1;
+            boolean bold = i % 2 != 0;
             Font f = font(size, bold ? Font.BOLD : style, color);
             phrases.add(new Phrase(new Chunk(parts[i], f)));
         }

@@ -1,6 +1,7 @@
 package com.kinplatform.common.config;
 
 import com.kinplatform.ai.interview.adapter.JpaInterviewRepository;
+import com.kinplatform.ai.knowledge.adapter.KinKnowledgeProperties;
 import com.kinplatform.ai.provider.AIProvider;
 import com.kinplatform.ai.provider.ProviderRouter;
 import com.kinplatform.kin.KinMethod;
@@ -49,6 +50,7 @@ import com.kinplatform.kin.interview.engine.AnswerValidator;
 import com.kinplatform.kin.interview.engine.InterviewBlueprint;
 import com.kinplatform.kin.interview.engine.InterviewEngine;
 import com.kinplatform.kin.interview.stage.InterviewStage;
+import com.kinplatform.kin.knowledge.KnowledgeRepository;
 import com.kinplatform.kin.knowledge.KnowledgeSource;
 import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
 import com.kinplatform.kin.knowledge.engine.KnowledgeGateway;
@@ -106,6 +108,7 @@ import com.kinplatform.kin.scoring.ScoringEngine;
 import com.kinplatform.kin.scoring.ScoringModel;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -465,8 +468,12 @@ public class KinConfig {
     }
 
     @Bean
-    public SourceValidator sourceValidator() {
-        return SourceValidator.strict();
+    public SourceValidator sourceValidator(KinKnowledgeProperties kinKnowledgeProperties) {
+        if (kinKnowledgeProperties.getAllowedDomains() == null
+                || kinKnowledgeProperties.getAllowedDomains().isEmpty()) {
+            return SourceValidator.strict();
+        }
+        return new SourceValidator(Set.copyOf(kinKnowledgeProperties.getAllowedDomains()), null, Set.of());
     }
 
     @Bean
@@ -475,8 +482,12 @@ public class KinConfig {
     }
 
     @Bean
-    public KnowledgeGateway knowledgeGateway(SourceRegistry sourceRegistry, SourceValidator sourceValidator) {
-        return new KnowledgeGateway(sourceRegistry, sourceValidator);
+    public KnowledgeGateway knowledgeGateway(
+            SourceRegistry sourceRegistry,
+            SourceValidator sourceValidator,
+            org.springframework.beans.factory.ObjectProvider<KnowledgeRepository> knowledgeRepositoryProvider) {
+        KnowledgeRepository repository = knowledgeRepositoryProvider.getIfAvailable();
+        return new KnowledgeGateway(sourceRegistry, sourceValidator, repository);
     }
 
     @Bean
@@ -567,7 +578,12 @@ public class KinConfig {
                 null,
                 StageRetryPolicy.none(),
                 new StageTimeoutConfig(
-                        Map.of(consultor.name(), 60_000L),
+                        Map.of(
+                                consultor.name(), 60_000L,
+                                // Adquisición de conocimiento externo (ADR-021): 6 fuentes
+                                // secuenciales con red real; el default de 5 s es insuficiente
+                                // (cold start de World Bank/datos.gov.co entre 1 y 20 s por fuente).
+                                knowledge.name(), 120_000L),
                         StagePolicy.DEFAULT_TIMEOUT_MILLIS,
                         StageTimeoutConfig.TimeoutAction.FAIL));
     }

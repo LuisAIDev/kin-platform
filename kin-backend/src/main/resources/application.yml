@@ -161,6 +161,36 @@ kin:
       budget-usd: ${KIN_STANDARD_AI_BUDGET_USD:6.25}
     premium:
       budget-usd: ${KIN_PREMIUM_AI_BUDGET_USD:8.75}
+  # -----------------------------------------------------------
+  # Adquisición de conocimiento externo (ADR-021)
+  # Defaults offline-first: allowlist vacía + master switch deshabilitado.
+  # El adaptador HTTP seguro (SecureHttpClient + SourceConnectionGuard) se
+  # registra solo con KNOWLEDGE_EXTERNAL_ENABLED=true y exige una allowlist
+  # explícita (KNOWLEDGE_ALLOWED_DOMAINS) en producción.
+  # -----------------------------------------------------------
+  knowledge:
+    # Dominios de conexión permitidos (comma-separated). Vacío = offline-first
+    # (SourceValidator.strict()): ningún candidato externo entra al análisis.
+    allowed-domains: ${KNOWLEDGE_ALLOWED_DOMAINS:}
+    # Master switch del adapter HTTP real.
+    external-enabled: ${KNOWLEDGE_EXTERNAL_ENABLED:false}
+    http:
+      source-id: ${KNOWLEDGE_HTTP_SOURCE_ID:external-http}
+      source-name: ${KNOWLEDGE_HTTP_SOURCE_NAME:External Knowledge}
+      # URL base de la fuente autorizada (requerida cuando está habilitado).
+      base-url: ${KNOWLEDGE_HTTP_BASE_URL:}
+      connect-timeout: 1s
+      request-timeout: 3s
+      max-response-bytes: 262144
+      max-redirects: 3
+      allowed-content-types: ${KNOWLEDGE_HTTP_CONTENT_TYPES:application/json}
+      retries: 1
+      retry-backoff: 250ms
+      # Solo dev/test: permite hosts loopback explícitos (nunca en prod).
+      allow-loopback: false
+    test-source:
+      # Fuente controlada determinista para dev/test/E2E (sin red).
+      enabled: ${KNOWLEDGE_TEST_SOURCE_ENABLED:false}
 
 # -----------------------------------------------------------
 # Actuator — health check + metrics (Fase 7 observabilidad:
@@ -192,6 +222,18 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+  # OpenTelemetry tracing distribuido (ADR-022). Deshabilitado por defecto:
+  # sin tracer activo el comportamiento observable no cambia (logs JSON usan
+  # CorrelationContext). Para habilitarlo: management.tracing.enabled=true y,
+  # opcionalmente, OTEL_EXPORTER_OTLP_ENDPOINT para exportar vía OTLP. Sin
+  # endpoint no hay exportación: KIN no exige un collector externo.
+  tracing:
+    enabled: false
+    sampling:
+      probability: 0.0
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:}
 
 # -----------------------------------------------------------
 # Stripe

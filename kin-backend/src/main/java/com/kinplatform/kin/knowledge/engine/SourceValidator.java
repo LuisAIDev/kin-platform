@@ -4,7 +4,6 @@ import com.kinplatform.kin.knowledge.KnowledgeCandidate;
 import com.kinplatform.kin.knowledge.KnowledgeRequest;
 import com.kinplatform.kin.knowledge.SourceTrust;
 import com.kinplatform.kin.knowledge.SourceValidation;
-
 import java.net.URI;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -157,9 +156,17 @@ public class SourceValidator {
             return;
         }
         String normalized = contentType.toLowerCase(Locale.ROOT).split(";")[0].trim();
-        if (!allowedContentTypes.isEmpty() && !allowedContentTypes.contains(normalized)) {
-            reasons.add(REASON_CONTENT_TYPE);
+        if (allowedContentTypes.isEmpty() || allowedContentTypes.contains(normalized)) {
+            return;
         }
+        // Sub-tipos +json (p. ej. "application/vnd.sdmx.data+json", "application/problem+json")
+        // se aceptan cuando "application/json" está permitido (ADR-023).
+        if (allowedContentTypes.contains("application/json")
+                && normalized.startsWith("application/")
+                && normalized.endsWith("+json")) {
+            return;
+        }
+        reasons.add(REASON_CONTENT_TYPE);
     }
 
     private void validateContent(String content, List<String> reasons) {

@@ -34,7 +34,10 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, String>> handleResponseStatus(ResponseStatusException ex) {
-        String reason = ex.getReason() == null || ex.getReason().isBlank() ? "Solicitud inválida" : ex.getReason();
+        String reason = ex.getReason();
+        if (reason == null || reason.isBlank()) {
+            reason = "Solicitud inválida";
+        }
         return ResponseEntity.status(ex.getStatusCode()).body(Map.of("error", reason));
     }
 

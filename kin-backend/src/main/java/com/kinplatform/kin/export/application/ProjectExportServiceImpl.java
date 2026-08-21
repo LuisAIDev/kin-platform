@@ -170,7 +170,7 @@ public class ProjectExportServiceImpl implements ProjectExportService {
                 .replaceAll("[^a-z0-9._-]", "_")
                 .replaceAll("_+", "_")
                 .replaceAll("^_|_$", "");
-        if (sanitized.isBlank() || sanitized.equals(".") || sanitized.equals("..")) {
+        if (sanitized.isBlank() || ".".equals(sanitized) || "..".equals(sanitized)) {
             sanitized = "proyecto";
         }
         if (sanitized.length() > 60) {

@@ -80,8 +80,8 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         }
 
         @Override
-        public java.util.List<ReportVersionInfo> listVersions(UUID projectId) {
-            return java.util.List.of();
+        public List<ReportVersionInfo> listVersions(UUID projectId) {
+            return List.of();
         }
     };
 
@@ -188,7 +188,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                 history,
                 project.getTitle(),
                 project.getDescription(),
-                project.getCategory() != null ? project.getCategory().getName() : null);
+                project.getCategory() != null ? project.getCategory().getCode() : null);
         try {
             var result = conversationOrchestrator.orchestrate(turn);
             log.info(
@@ -236,7 +236,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                 history,
                 project.getTitle(),
                 project.getDescription(),
-                project.getCategory() != null ? project.getCategory().getName() : null);
+                project.getCategory() != null ? project.getCategory().getCode() : null);
 
         log.info(
                 "=== STREAMING AI RESPONSE === project={}, userId={}, historySize={}",

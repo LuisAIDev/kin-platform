@@ -1,7 +1,6 @@
 package com.kinplatform.kin.context;
 
 import com.kinplatform.kin.decision.ConversationDecision;
-
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -16,6 +15,8 @@ public class ProjectContext {
     private ConversationDecision currentDecision;
     private int exchangeCount;
     private boolean reportGenerated;
+    /** Categoría del proyecto (código, ADR-024): no la sobrescribe el analizador. */
+    private String projectCategory = "";
 
     public static ProjectContext fromProject(String title, String description, String category) {
         var ctx = new ProjectContext();
@@ -26,6 +27,10 @@ public class ProjectContext {
         if (category != null && !category.isBlank()) {
             ctx.data.put(AnalyzedDimension.SECTOR, category.trim());
             ctx.dimensionsCovered.add(AnalyzedDimension.SECTOR);
+            // Categoría del proyecto en campo dedicado (ADR-024): el analizador
+            // puede sobrescribir SECTOR con el giro detectado en la conversación,
+            // pero la categoría debe sobrevivir para seleccionar fuentes.
+            ctx.projectCategory = category.trim();
         }
         if (description != null && !description.isBlank()) {
             ctx.data.put(AnalyzedDimension.SOLUTION, description.trim());
@@ -41,11 +46,26 @@ public class ProjectContext {
      * pasar por {@link #update(AnalysisResult)} (que incrementa el contador de
      * intercambios) ni por {@code fromProject} (que siembra datos).</p>
      */
-    public static ProjectContext restore(Map<AnalyzedDimension, String> data,
-                                         Set<AnalyzedDimension> dimensionsCovered,
-                                         ConversationDecision decision,
-                                         int exchangeCount,
-                                         boolean reportGenerated) {
+    public static ProjectContext restore(
+            Map<AnalyzedDimension, String> data,
+            Set<AnalyzedDimension> dimensionsCovered,
+            ConversationDecision decision,
+            int exchangeCount,
+            boolean reportGenerated) {
+        return restore(data, dimensionsCovered, decision, exchangeCount, reportGenerated, "");
+    }
+
+    /**
+     * Restaura un contexto persistido incluida la categoría del proyecto
+     * (ADR-024), que se serializa aparte de las dimensiones.
+     */
+    public static ProjectContext restore(
+            Map<AnalyzedDimension, String> data,
+            Set<AnalyzedDimension> dimensionsCovered,
+            ConversationDecision decision,
+            int exchangeCount,
+            boolean reportGenerated,
+            String projectCategory) {
         var ctx = new ProjectContext();
         if (data != null) {
             ctx.data.putAll(data);
@@ -56,7 +76,13 @@ public class ProjectContext {
         ctx.currentDecision = decision;
         ctx.exchangeCount = exchangeCount;
         ctx.reportGenerated = reportGenerated;
+        ctx.projectCategory = projectCategory == null ? "" : projectCategory;
         return ctx;
+    }
+
+    /** Categoría del proyecto (código, ADR-024); vacío si no se declaró. */
+    public String projectCategory() {
+        return projectCategory;
     }
 
     public void update(AnalysisResult result) {
@@ -124,8 +150,11 @@ public class ProjectContext {
         if (data.isEmpty()) return "";
         var sb = new StringBuilder();
         for (var entry : data.entrySet()) {
-            sb.append("- ").append(entry.getKey().displayName())
-              .append(": ").append(entry.getValue()).append("\n");
+            sb.append("- ")
+                    .append(entry.getKey().displayName())
+                    .append(": ")
+                    .append(entry.getValue())
+                    .append("\n");
         }
         return sb.toString();
     }

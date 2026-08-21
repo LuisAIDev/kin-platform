@@ -46,7 +46,7 @@ test.describe('Login flow', () => {
     await expect(submitButton).toBeVisible();
 
     await expect(emailInput).toHaveAttribute('placeholder', 'Email');
-    await expect(passwordInput).toHaveAttribute('placeholder', 'Contrasena');
+    await expect(passwordInput).toHaveAttribute('placeholder', 'Contraseña');
   });
 
   test('debe mostrar "Invalid email or password" al intentar login con credenciales invalidas', async ({ page }) => {

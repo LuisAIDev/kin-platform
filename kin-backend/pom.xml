@@ -128,6 +128,20 @@
             <version>7.4</version>
         </dependency>
 
+        <!-- OpenTelemetry tracing distribuido (ADR-022): Micrometer Tracing con
+             bridge OTel. Deshabilitado por defecto (management.tracing.enabled=false,
+             sampling.probability=0). El exporter OTLP es opcional y se configura por
+             variable de entorno (OTEL_EXPORTER_OTLP_ENDPOINT); sin endpoint no hay
+             exportación, por lo que KIN no exige un collector externo. -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-otel</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-exporter-otlp</artifactId>
+        </dependency>
+
         <!-- SpotBugs annotations (@SuppressFBWarnings) para supresiones justificadas (FASE 9) -->
         <dependency>
             <groupId>com.github.spotbugs</groupId>

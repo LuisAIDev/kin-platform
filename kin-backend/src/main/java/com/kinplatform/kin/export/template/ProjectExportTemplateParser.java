@@ -124,7 +124,7 @@ public final class ProjectExportTemplateParser {
         if (list != null && !list.isEmpty()) {
             hints.add(ExportBlock.list(list));
         }
-        return null;
+        return new ArrayList<>();
     }
 
     private static String listItem(String line) {

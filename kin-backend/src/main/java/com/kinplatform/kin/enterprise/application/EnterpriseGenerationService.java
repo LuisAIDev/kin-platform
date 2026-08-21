@@ -376,10 +376,6 @@ public final class EnterpriseGenerationService {
      * {@link RuntimeException} persiste {@code FAILED} y emite
      * {@code EnterpriseProjectFailed}.
      */
-    private EnterpriseProject generateFrom(EnterpriseGenerationRequest request, EnterpriseProject requested) {
-        return generateFrom(request, requested, EnterpriseSupplementalInput.empty());
-    }
-
     private EnterpriseProject generateFrom(
             EnterpriseGenerationRequest request,
             EnterpriseProject requested,
@@ -411,10 +407,6 @@ public final class EnterpriseGenerationService {
      * (única fuente de verdad) y viaja con el contenido para adjuntarse al
      * aggregate.
      */
-    private GeneratedContent generateContent(EnterpriseGenerationRequest request, int version) {
-        return generateContent(request, version, EnterpriseSupplementalInput.empty());
-    }
-
     private GeneratedContent generateContent(
             EnterpriseGenerationRequest request, int version, EnterpriseSupplementalInput supplemental) {
         ProjectContext context = request.context();

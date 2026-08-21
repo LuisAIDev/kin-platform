@@ -189,7 +189,7 @@ public final class DocxExportRenderer implements ExportRenderer {
             if (parts[i].isEmpty()) {
                 continue;
             }
-            boolean bold = i % 2 == 1;
+            boolean bold = i % 2 != 0;
             segments.add(new Segment(parts[i], bold, false));
         }
         if (segments.isEmpty()) {

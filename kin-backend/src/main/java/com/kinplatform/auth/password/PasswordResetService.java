@@ -54,12 +54,11 @@ public class PasswordResetService {
             return;
         }
         var user = userRepository.findByEmail(email.toLowerCase().trim()).orElse(null);
-        if (user == null || user.getIsActive() == Boolean.FALSE) {
+        if (user == null || Boolean.FALSE.equals(user.getIsActive())) {
             return;
         }
         String token = createForUser(user);
-        String link = (frontendBaseUrl == null || frontendBaseUrl.isBlank()
-                ? "http://localhost:3000" : frontendBaseUrl)
+        String link = (frontendBaseUrl == null || frontendBaseUrl.isBlank() ? "http://localhost:3000" : frontendBaseUrl)
                 + "/reset-password?token=" + token;
         emailSender.sendPasswordResetEmail(user.getEmail(), user.getFullName(), link);
         log.info("Enlace de recuperación de contraseña enviado a {}", user.getEmail());
@@ -76,7 +75,8 @@ public class PasswordResetService {
             return false;
         }
         var entity = tokenRepository.findByTokenHash(hash(token)).orElse(null);
-        if (entity == null || entity.getUsedAt() != null
+        if (entity == null
+                || entity.getUsedAt() != null
                 || entity.getExpiresAt().isBefore(OffsetDateTime.now())) {
             return false;
         }
@@ -112,8 +112,7 @@ public class PasswordResetService {
 
     private static String hash(String token) {
         try {
-            byte[] digest = MessageDigest.getInstance("SHA-256")
-                    .digest(token.getBytes(StandardCharsets.UTF_8));
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 no disponible", e);

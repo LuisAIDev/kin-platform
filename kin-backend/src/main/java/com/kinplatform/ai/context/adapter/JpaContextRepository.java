@@ -6,11 +6,6 @@ import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.kin.decision.ConversationDecision;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -18,6 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Adaptador JPA del puerto {@link ContextRepository}.
@@ -42,16 +41,14 @@ public class JpaContextRepository implements ContextRepository {
 
     @Override
     @Transactional
-    public ProjectContext findOrCreate(UUID projectId, String projectTitle,
-                                       String projectDescription, String projectCategory) {
-        return repository.findById(projectId)
-            .map(this::fromEntity)
-            .orElseGet(() -> {
-                log.info("Initialized context for project {} from Project entity", projectId);
-                var created = ProjectContext.fromProject(projectTitle, projectDescription, projectCategory);
-                save(projectId, created);
-                return created;
-            });
+    public ProjectContext findOrCreate(
+            UUID projectId, String projectTitle, String projectDescription, String projectCategory) {
+        return repository.findById(projectId).map(this::fromEntity).orElseGet(() -> {
+            log.info("Initialized context for project {} from Project entity", projectId);
+            var created = ProjectContext.fromProject(projectTitle, projectDescription, projectCategory);
+            save(projectId, created);
+            return created;
+        });
     }
 
     @Override
@@ -89,8 +86,12 @@ public class JpaContextRepository implements ContextRepository {
         }
         var covered = context.coveredDimensions().stream().map(Enum::name).toList();
         return new ProjectContextData(
-            data, covered, context.currentDecision(),
-            context.exchangeCount(), context.reportGenerated());
+                data,
+                covered,
+                context.currentDecision(),
+                context.exchangeCount(),
+                context.reportGenerated(),
+                context.projectCategory());
     }
 
     private ProjectContext toDomain(ProjectContextData dto) {
@@ -102,8 +103,8 @@ public class JpaContextRepository implements ContextRepository {
         for (var name : dto.dimensionsCovered()) {
             covered.add(AnalyzedDimension.valueOf(name));
         }
-        return ProjectContext.restore(data, covered, dto.decision(),
-            dto.exchangeCount(), dto.reportGenerated());
+        return ProjectContext.restore(
+                data, covered, dto.decision(), dto.exchangeCount(), dto.reportGenerated(), dto.projectCategory());
     }
 
     private String toJson(ProjectContextData dto) {
@@ -123,10 +124,10 @@ public class JpaContextRepository implements ContextRepository {
     }
 
     private record ProjectContextData(
-        Map<String, String> data,
-        List<String> dimensionsCovered,
-        ConversationDecision decision,
-        int exchangeCount,
-        boolean reportGenerated
-    ) {}
+            Map<String, String> data,
+            List<String> dimensionsCovered,
+            ConversationDecision decision,
+            int exchangeCount,
+            boolean reportGenerated,
+            String projectCategory) {}
 }

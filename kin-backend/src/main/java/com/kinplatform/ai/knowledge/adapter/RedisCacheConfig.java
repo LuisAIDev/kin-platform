@@ -18,8 +18,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 public class RedisCacheConfig {
 
     @Bean
-    public RedisKnowledgeRepository redisKnowledgeRepository(StringRedisTemplate redis,
-                                                             ObjectMapper mapper) {
-        return new RedisKnowledgeRepository(redis, mapper);
+    public RedisKnowledgeRepository redisKnowledgeRepository(
+            StringRedisTemplate redis, ObjectMapper mapper, KnowledgeAdapterMetrics metrics) {
+        return new RedisKnowledgeRepository(redis, mapper, metrics);
     }
 }

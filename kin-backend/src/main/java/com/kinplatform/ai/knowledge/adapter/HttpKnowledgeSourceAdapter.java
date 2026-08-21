@@ -4,7 +4,6 @@ import com.kinplatform.kin.knowledge.KnowledgeCandidate;
 import com.kinplatform.kin.knowledge.KnowledgeQuery;
 import com.kinplatform.kin.knowledge.KnowledgeSource;
 import com.kinplatform.kin.knowledge.engine.SourceValidator;
-
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,15 +62,36 @@ public class HttpKnowledgeSourceAdapter implements KnowledgeSource {
     private final String baseUrl;
     private final HttpClient client;
     private final Function<HttpResponse, List<HttpItem>> decoder;
+    /** Parámetro de consulta anexado con el tema (p. ej. {@code q}); vacío = sin sufijo. */
+    private final String queryParam;
 
-    public HttpKnowledgeSourceAdapter(String sourceId, String sourceName, String baseUrl,
-                                      HttpClient client,
-                                      Function<HttpResponse, List<HttpItem>> decoder) {
+    public HttpKnowledgeSourceAdapter(
+            String sourceId,
+            String sourceName,
+            String baseUrl,
+            HttpClient client,
+            Function<HttpResponse, List<HttpItem>> decoder) {
+        this(sourceId, sourceName, baseUrl, client, decoder, "q");
+    }
+
+    /**
+     * @param queryParam nombre del parámetro que transporta el tema; {@code null}
+     *                   o vacío omite el sufijo (fuentes con consulta fija, p. ej.
+     *                   SODA/Socrata que rechazan argumentos desconocidos).
+     */
+    public HttpKnowledgeSourceAdapter(
+            String sourceId,
+            String sourceName,
+            String baseUrl,
+            HttpClient client,
+            Function<HttpResponse, List<HttpItem>> decoder,
+            String queryParam) {
         this.sourceId = sourceId == null ? "" : sourceId;
         this.sourceName = sourceName == null ? "" : sourceName;
         this.baseUrl = baseUrl == null ? "" : baseUrl;
         this.client = client;
         this.decoder = decoder;
+        this.queryParam = queryParam == null ? "" : queryParam.trim();
     }
 
     @Override
@@ -94,9 +114,13 @@ public class HttpKnowledgeSourceAdapter implements KnowledgeSource {
                     continue;
                 }
                 candidates.add(new KnowledgeCandidate(
-                    item.content(), sourceId, sourceName, item.url(), item.publishedAt(),
-                    response.contentType(),
-                    Map.of(SourceValidator.META_HTTP_STATUS, String.valueOf(response.statusCode()))));
+                        item.content(),
+                        sourceId,
+                        sourceName,
+                        item.url(),
+                        item.publishedAt(),
+                        response.contentType(),
+                        Map.of(SourceValidator.META_HTTP_STATUS, String.valueOf(response.statusCode()))));
             }
             return List.copyOf(candidates);
         } catch (RuntimeException ex) {
@@ -105,8 +129,11 @@ public class HttpKnowledgeSourceAdapter implements KnowledgeSource {
     }
 
     private HttpRequest buildRequest(KnowledgeQuery query) {
+        if (queryParam.isEmpty()) {
+            return new HttpRequest(baseUrl, Map.of("Accept", "application/json"));
+        }
         String separator = baseUrl.indexOf('?') >= 0 ? "&" : "?";
-        return new HttpRequest(baseUrl + separator + "q=" + query.topic(),
-            Map.of("Accept", "application/json"));
+        return new HttpRequest(
+                baseUrl + separator + queryParam + "=" + query.topic(), Map.of("Accept", "application/json"));
     }
 }

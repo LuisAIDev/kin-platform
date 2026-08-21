@@ -9,7 +9,6 @@ import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
 import com.kinplatform.kin.pipeline.stage.EngineStage;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,21 +32,36 @@ public class KnowledgeStage implements PipelineStage {
 
     public KnowledgeStage(KnowledgeEngine knowledgeEngine) {
         this.delegate = new EngineStage<>(
-            "Conocimiento",
-            knowledgeEngine,
-            context -> context != null && context.projectContext() != null,
-            context -> new KnowledgeInput(buildRequest(context.projectContext())),
-            PipelineContext::knowledgeResult
-        );
+                "Conocimiento",
+                knowledgeEngine,
+                context -> context != null && context.projectContext() != null,
+                context -> new KnowledgeInput(buildRequest(context.projectContext())),
+                PipelineContext::knowledgeResult);
     }
 
     private KnowledgeRequest buildRequest(ProjectContext projectContext) {
         return new KnowledgeRequest(
-            topic(projectContext),
-            projectContext.coveredDimensions(),
-            keywords(projectContext),
-            KnowledgeRequest.DEFAULT_LIMIT,
-            KnowledgeRequest.DEFAULT_TIME_WINDOW);
+                topic(projectContext),
+                projectContext.coveredDimensions(),
+                keywords(projectContext),
+                KnowledgeRequest.DEFAULT_LIMIT,
+                KnowledgeRequest.DEFAULT_TIME_WINDOW,
+                category(projectContext));
+    }
+
+    /**
+     * Categoría del proyecto (ADR-024): se almacena en un campo dedicado de
+     * {@link ProjectContext} al crear el contexto (no la sobrescribe el
+     * analizador). Permite que el {@code CategoryAwareCompositeKnowledgeSource}
+     * seleccione solo las fuentes pertinentes. Java decide; el LLM nunca elige
+     * fuentes.
+     */
+    private static String category(ProjectContext projectContext) {
+        String category = projectContext.projectCategory();
+        if (category == null || category.isBlank()) {
+            category = projectContext.value(AnalyzedDimension.SECTOR);
+        }
+        return category == null ? "" : category.strip();
     }
 
     private static String topic(ProjectContext projectContext) {

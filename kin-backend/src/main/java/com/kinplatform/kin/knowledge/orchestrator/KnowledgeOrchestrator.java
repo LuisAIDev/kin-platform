@@ -410,7 +410,7 @@ public class KnowledgeOrchestrator {
             KnowledgeResult result = assembler.assemble(query, ctx.ranked());
             ctx.setKnowledgeResult(result);
             if (repository != null && !result.isEmpty()) {
-                repository.save(result, request.knowledgeRequest().timeWindow());
+                repository.save(query, result, request.knowledgeRequest().timeWindow());
             }
         }
         ctx.addDecision(OrchestrationDecision.of(

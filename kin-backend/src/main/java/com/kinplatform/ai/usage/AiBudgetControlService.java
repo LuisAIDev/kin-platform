@@ -35,7 +35,6 @@ public class AiBudgetControlService {
     private final CostEstimator costEstimator;
     private final boolean costControlEnabled;
     private final BigDecimal maxRequestEstimateUsd;
-    private final boolean pricesConfigured;
 
     public AiBudgetControlService(
             AiUsagePort usagePort,
@@ -52,7 +51,6 @@ public class AiBudgetControlService {
         if (costEstimator instanceof HeuristicCostEstimator h) {
             pricesOk = h.inputPricePer1M().signum() > 0 && h.outputPricePer1M().signum() > 0;
         }
-        this.pricesConfigured = pricesOk;
         if (costControlEnabled && !pricesOk) {
             throw new IllegalStateException(
                     "Configuración inválida de control de costo de IA: KIN_AI_COST_CONTROL_ENABLED=true "

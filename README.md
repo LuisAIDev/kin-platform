@@ -154,7 +154,7 @@ patrones de ingeniería de nivel profesional:
   Library, Playwright y JaCoCo (≥ 90 % de cobertura de instrucciones en el dominio).
 - **DevSecOps** — 5 workflows de GitHub Actions, SonarQube, CodeQL, Gitleaks, OWASP Dependency
   Check, Spotless/Checkstyle/SpotBugs/PMD, Dependabot y Renovate.
-- **Documentación arquitectónica** — 20 ADRs (ADR-001 … ADR-020) y baseline contractual
+- **Documentación arquitectónica** — 25 ADRs (ADR-001 … ADR-025) y baseline contractual
   (`BASELINE_ARCHITECTURE.md`).
 
 **¿Qué demuestra este proyecto sobre la persona que lo construyó?** Que aprendió estas
@@ -177,14 +177,14 @@ KIN permite evaluar capacidades prácticas en:
 | Seguridad | JWT stateless, BCrypt, CORS de origen único, headers HTTP, rate limiting |
 | Bases de datos | PostgreSQL, Flyway V1…V18, JPA/Hibernate, contextos durables |
 | IA aplicada | DeepSeek vía Spring AI, pipeline determinista, guardrails, fallback en español |
-| Testing | 2.758 tests backend + 316 tests frontend + E2E Playwright |
+| Testing | 2.823 tests backend (2.843 descubiertos; 20 gated de red real) + 316 tests frontend + E2E Playwright |
 | Automatización E2E | Playwright sobre flujos de login, dashboard y Sobre KIN |
 | CI/CD | 5 workflows GitHub Actions con lint, tests, build, E2E, calidad y seguridad |
 | Docker | PostgreSQL + backend + frontend con HEALTHCHECK y usuario no-root |
 | Cloud | Render, Neon/PostgreSQL, dominio propio `kin-platform.com` |
 | Observabilidad | Actuator, Micrometer (`kin.*`), logs estructurados, Prometheus |
 | DevSecOps | CodeQL, Gitleaks, OWASP, SonarQube, Dependabot, Renovate |
-| Documentación técnica | 20 ADRs, especificaciones, release notes y línea base congelada |
+| Documentación técnica | 25 ADRs, especificaciones, release notes y línea base congelada |
 
 El proyecto demuestra **experiencia práctica y verificable** en estas áreas; no se limita a
 declararla.
@@ -330,8 +330,8 @@ Scoring → Recomendaciones → Riesgos → Oportunidades → Reporte → Consul
 | `InterviewEngine` | ADR-015 | Entrevista estratégica dirigida por Java |
 | `EnrichmentEngine` | ADR-016 | Selección y ponderación de hechos relevantes |
 
-**Decisiones de arquitectura:** la evolución se gobierna mediante **20 ADRs** (ADR-001 …
-ADR-020). `kin-docs/BASELINE_ARCHITECTURE.md` define la línea base contractual (ALPHA STABLE):
+**Decisiones de arquitectura:** la evolución se gobierna mediante **25 ADRs** (ADR-001 …
+ADR-025). `kin-docs/BASELINE_ARCHITECTURE.md` define la línea base contractual (ALPHA STABLE):
 los contratos marcados como estables no pueden modificarse sin una ADR aprobada.
 
 ---
@@ -400,7 +400,9 @@ Medidas implementadas en código (`SecurityConfig`, filtros y dominio):
 - **Filtro de suscripción**: bloquea creación de proyectos y mensajes cuando se alcanzan los
   límites del plan (403).
 - **Protección SSRF**: `SourceValidator` exige HTTPS, allowlist de dominios (vacía por defecto =
-  offline-first), status 2xx y content-type permitido.
+  offline-first), status 2xx y content-type permitido. Además, el adaptador HTTP real usa
+  `SecureHttpClient` + `SourceConnectionGuard` (ADR-021): bloqueo de IPs privadas/loopback/
+  link-local, literales de IP y DNS-rebinding fail-closed, con redirecciones revalidadas.
 - **Gestión de secretos** por variables de entorno (`.env` gitignored); credenciales SMTP/Brevo y
   Stripe solo vía secrets.
 - **Validaciones** de entrada, `GlobalExceptionHandler` con respuestas consistentes y
@@ -417,6 +419,156 @@ Medidas implementadas en código (`SecurityConfig`, filtros y dominio):
 - **Logging estructurado** (JSON) con `correlationId`/`requestId`/`traceId` (sin datos sensibles).
 - Métricas internas del pipeline por etapa (duración, éxito/fallo, reintentos, timeout).
 - Salud de producción vía `/api/v1/actuator/health` (público; resto de Actuator solo ADMIN).
+- **Tracing distribuido opcional (ADR-022)** — Micrometer Tracing + bridge OTel + exportador OTLP
+  HTTP (`micrometer-tracing-bridge-otel`, `opentelemetry-exporter-otlp`). Deshabilitado por
+  defecto (`management.tracing.enabled=false`, sampling `0.0`): sin tracer no hay exportador ni
+  dependencia de collector. Para habilitarlo:
+
+  ```bash
+  # Collector local (Jaeger all-in-one, OTLP HTTP en :4318, UI en :16686)
+  docker run -d --name kin-jaeger -p 4317:4317 -p 4318:4318 -p 16686:16686 \
+    -e COLLECTOR_OTLP_ENABLED=true jaegertracing/all-in-one:1.57
+
+  # Backend con tracing habilitado — el endpoint DEBE incluir la ruta /v1/traces
+  MANAGEMENT_TRACING_ENABLED=true \
+  MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0 \
+  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318/v1/traces \
+  mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+
+  # Generar tráfico y verificar los spans en Jaeger
+  curl http://localhost:8080/api/v1/pricing-plans
+  curl "http://localhost:16686/api/traces?service=kin-backend&limit=10"
+  ```
+
+  **Resultado verificado (2026-08-20):** con el endpoint `/v1/traces` se exportaron **13 trazas**
+  a Jaeger (servicio `kin-backend`; spans `http get /pricing-plans`, `http get /auth/me`,
+  `security filterchain before/after`, `authorize request`, `secured request`). Sin la ruta
+  `/v1/traces` el exportador publica en `/` y el collector responde **404** (no exporta). Con el
+  tracing deshabilitado la app arranca y opera normal (health OK, sin exportador OTLP en el log,
+  sin trazas nuevas en Jaeger).
+
+---
+
+## Conocimiento externo (producción) — allowlist global por niveles (ADR-023)
+
+El pipeline de adquisición de conocimiento (ADR-014) es **offline-first por defecto**: sin
+configuración explícita no hay llamadas a la red. ADR-021 añade los **adaptadores de producción**
+seguros y ADR-023 define la **allowlist global por niveles** con metadata por fuente. La
+activación **solo ocurre en el perfil `staging`**; producción sigue con `KNOWLEDGE_EXTERNAL_ENABLED=false`.
+
+| Variable | Default | Significado |
+|----------|---------|-------------|
+| `KNOWLEDGE_EXTERNAL_ENABLED` | `false` | Master switch del adaptador HTTP real |
+| `KNOWLEDGE_ALLOWED_DOMAINS` | (vacío) | Allowlist de dominios (comma-separated); vacío = offline-first |
+| `KNOWLEDGE_HTTP_CONTENT_TYPES` | `application/json` | Tipos de contenido permitidos (JSON y sub-tipos `+json`) |
+| `KNOWLEDGE_TEST_SOURCE_ENABLED` | `false` | Fuente controlada determinista para dev/test/E2E (sin red) |
+
+**Allowlist global (documentada en ADR-023; deshabilitada por defecto):**
+
+| Nivel | Fuente | Dominio | Estado |
+|-------|--------|---------|--------|
+| 1 — Global | Banco Mundial | `api.worldbank.org` | ✅ Probada (PIB, inflación, desempleo) |
+| 1 — Global | BCE (ECB) | `data-api.ecb.europa.eu` | ✅ Probada (tipos de cambio) |
+| 2 — Colombia | Datos Abiertos Colombia (DANE, Superfinanciera, Confecámaras, Finagro) | `www.datos.gov.co` | ✅ Probada (**8 datasets**: TRM, PIB departamental, insumos agrícolas, empresas creadas, exportaciones de café, cartera/crédito, tasas de captación, desembolsos Finagro) |
+| 2 — España | INE | `servicios.ine.es` | ✅ Probada (IPC nacional) |
+| 2 — EE.UU. | openFDA | `api.fda.gov` | 🟡 API verificada (decoder pendiente) |
+| 2 — Argentina/Chile | Datos abiertos (CKAN) | `datos.gob.ar`, `datos.gob.cl` | 🟡 API verificada (integración pendiente) |
+| 1 — Global | IMF, OCDE, UN, CEPAL | — | ⏳ Pendiente (SDMX/API no resuelven desde este entorno) |
+| 2 — México, Perú | INEGI/Banxico, BCRP/INEI | — | ⏳ Pendiente (requieren token o protección anti-bot) |
+
+Cada fuente declara metadata `level`/`region`/`category` para que en el futuro el sistema
+seleccione fuentes por país del proyecto (un país sin Nivel 2 recurre a Nivel 1). Las fuentes
+exactas, URLs y límites están en `application-staging.yml` y ADR-023.
+
+> **Matriz Maestra de Conocimiento** (`kin-docs/MATRIZ_MAESTRA_CONOCIMIENTO.md`): inventario
+> autoritativo de fuentes/categorías/países con licencia, límites, actualización y estado.
+> **Política de Fuentes (ADR-025)**: gobernanza para incorporar/descartar/deprecar fuentes.
+
+**Verificación de red real (2026-08-20):** la cadena real `SecureHttpClient` → guard SSRF →
+`HttpKnowledgeSourceAdapter` → `SourceRegistry` → `SourceValidator` → `KnowledgeGateway` →
+`KnowledgeEngine` se ejecutó con datos reales por país (tests gated por `KIN_TEST_REAL_NETWORK=true`):
+
+```bash
+cd kin-backend
+KIN_TEST_REAL_NETWORK=true mvnw test -Dtest=KnowledgeGlobalAllowlistTest   # 7/7 verdes
+KIN_TEST_REAL_NETWORK=true mvnw test -Dtest=KnowledgeStagingSourcesTest     # config staging real (13 fuentes)
+KIN_TEST_REAL_NETWORK=true mvnw test -Dtest=KnowledgeColombiaSourcesTest    # Colombia ampliada + escenario combinado
+```
+
+Resultados reales obtenidos (fuentes y hechos concretos):
+
+| Escenario | Hechos reales traídos | Latencia |
+|-----------|------------------------|----------|
+| Colombia (café exportación) | PIB Colombia 2024: 420.5 B USD · TRM 3062.96 COP/USD · PIB departamental · ECB | ~4.9 s |
+| España (startup software) | PIB España 2024: 1.73 T USD · **IPC INE 103.899 (2026)** · ECB | ~7.1 s |
+| México (e-commerce) | PIB México 2024: 1.83 T USD · ECB (Nivel 1; fuente nacional pendiente) | ~2.3 s |
+| EE.UU. (alimentos) | PIB EE.UU. 2024: 29.3 T USD · ECB (Nivel 1; FDA pendiente) | ~3.2 s |
+| **Ecuador (sin Nivel 2)** | PIB Ecuador 2024: 123.8 B USD · ECB → **respaldo Nivel 1 sin fallar** | ~2.1 s |
+| Fuente rota (500) | Las demás fuentes siguen aportando (offline-first) | — |
+
+**Colombia ampliada (mercado base, 8 datasets probados en `datos.gov.co`):** además de TRM, PIB
+departamental e insumos agrícolas, se integraron y probaron: **Confecámaras — Empresas creadas**
+(registro mercantil por municipio), **DANE — Exportaciones de café** (p. ej. *café sin tostar →
+China: 3222 mil USD, 2023*), **Superfinanciera — Cartera y crédito** por departamento,
+**Superfinanciera — Tasas de interés de captación** (p. ej. *BBVA 12 %, Banco Caja Social
+12.99 %*), y **Finagro — Desembolsos de redescuento/crédito directo** (p. ej. *Antioquia/Agua:
+$24.2 mil millones*).
+
+**Escenario combinado verificado (comercio exterior de café):** TRM actual + exportaciones de café
+del sector + tasas de interés de financiamiento + desembolsos Finagro + PIB, en un mismo análisis
+(`KnowledgeColombiaSourcesTest`, 2/2 verdes). La caché Redis con estos datasets quedó verificada:
+una consulta idéntica resuelve en **~1 s** (hit de caché).
+
+**Descartadas en Colombia (motivo técnico):** DTF y Bancóldex → vista `403 no tabular` en
+datos.gov.co; IPC nacional, desempleo, censo económico → no publicados como datasets tabulares
+abiertos; Banco de la República → sin API pública (suameca `401`), cubierto vía datos.gov.co/Banco
+Mundial.
+
+---
+
+## Mapeo categoría de proyecto → fuentes (ADR-024)
+
+El catálogo real tiene **19 categorías** (verificado en `V6__create_categories.sql` +
+`V18__add_project_categories.sql`; seed de dev idéntico; el frontend carga `GET /categories`).
+Cada fuente declara `categories` (lista); **vacío = contexto general** (macro que aplica a todo),
+con valores = específica de esas categorías. El `KnowledgeStage` lee la categoría del proyecto
+(campo dedicado en `ProjectContext`, que sobrevive al Analizador) y `Java` selecciona solo las
+fuentes pertinentes — el LLM nunca elige ni ejecuta peticiones.
+
+| Categoría | Fuentes específicas | Estado |
+|---|---|---|
+| Agroindustria | insumos agrícolas · exportaciones de café · Finagro desembolsos | ✅ **POC probado** |
+| Fintech | Superfinanciera tasas · cartera · Finagro desembolsos | ✅ **POC probado** |
+| Salud | MinSalud Saludatos (talento humano) | ✅ **POC probado** |
+| Empresarial | Confecámaras empresas · tasas · cartera · Finagro | ✅ **POC end-to-end** |
+| Comercio | Confecámaras empresas · exportaciones de café | ✅ **POC end-to-end** |
+| Logística | Aerocivil transporte aéreo · exportaciones de café (reuso) | ✅ **POC end-to-end** |
+| Tecnología e Innovación | MinTIC internet fijo · internet móvil | ✅ **POC end-to-end** |
+| Investigación | MinCiencias proyectos de investigación | ✅ **POC end-to-end** |
+| Medio Ambiente | IDEAM calidad del aire | ✅ Fuente probada |
+| Industria | (DANE no publica IPI/manufacturera como dataset tabular) | 🔴 Descartada |
+| Gastronomía | (contexto general; insumos aplican parcial) | 🟡 Contexto + parcial |
+| Educación, Impacto Social, Gobierno, Turismo, Creatividad, Marketing Digital, Servicios, Otro | (sin fuente oficial con API tabular relevante) | ⏳ Pendiente |
+
+Verificado end-to-end en staging (2ª ronda): proyectos reales en **Empresarial, Comercio,
+Logística, Tecnología e Innovación e Investigación** → turno de chat → la caché Redis del turno
+contiene solo las fuentes de su categoría + contexto general (y excluye las demás)
+(`KnowledgeCategoryMappingTest`, 6/6 verdes). Hallazgo corregido: el pipeline ahora pasa el
+**código** de categoría (`Category.code`) y el matcheo normaliza acentos.
+
+**Offline-first / seguridad:** allowlist vacía o dominio fuera de ella rechaza antes de conectar;
+un error 5xx degrada a `KnowledgeResult.empty()` sin romper el análisis; la guardia SSRF
+(`SourceConnectionGuard`) y la allowlist única de acceso no se modifican.
+
+**Caché Redis (ADR-021):** opt-in con `kin.cache.redis.enabled=true` (default `false`).
+`RedisKnowledgeRepository` usa el **contrato de clave determinista** `kin:knowledge:q:<hex>`
+(por consulta: `topic|keywords`) y `kin:knowledge:c:<hex>` (por contenido: `sourceId|claim`
+ordenados), TTL por ventana de la consulta (default 365 días, sobrescribible), invalidación por
+expiración o borrado (resultado vacío / JSON corrupto) y **aislamiento por diseño**: solo se
+cachean hechos públicos validados, nunca PII ni contexto de usuario/proyecto. Verificado contra
+**Redis real** con datos reales: tras una consulta se pueblan las claves `kin:knowledge:*` y una
+segunda consulta idéntica resuelve en **~1 s** (hit de caché).
+hit/miss, TTL expirado, no-colisión entre consultas, deduplicación y ausencia de datos privados.
 
 ---
 
@@ -522,7 +674,7 @@ CI/CD                 ✓  5 workflows GitHub Actions (push/PR/etiquetas/schedul
 
 | Ámbito | Resultado |
 |---|---|
-| Backend | **2.758 tests** · 373 suites · **0 fallos / 0 errores** (`./mvnw verify`, BUILD SUCCESS) |
+| Backend | **2.823 tests** (2.843 descubiertos; 20 gated de red real) · 0 fallos / 0 errores · BUILD SUCCESS (`./mvnw clean verify`) |
 | Frontend | **58 archivos** · **316 tests** · **PASS** (`npm test`, ejecutado) |
 | E2E (Sobre KIN) | **4/4 PASS** (`npx playwright test tests/sobre-kin.spec.ts`, ejecutado) |
 | E2E completo | 8 escenarios (login 3 + dashboard 1 + sobre-kin 4) en entorno aislado (`:3100` / `:8081`) |
@@ -567,7 +719,8 @@ Dependency Check**, **Spotless**, **Checkstyle**, **SpotBugs**, **PMD**, **JaCoC
 - **Frontend**: dominio propio **`kin-platform.com`** (Next.js en producción).
 - **Perfiles Spring**: `dev` (default), `test`, `prod`, `render`, `enterprise`.
 - **Migraciones**: Flyway V1…V18 (`ddl-auto: none` en dev/test, `validate` en prod).
-- **Caché Redis** opcional (`kin.cache.redis.enabled`), implementada y deshabilitada por defecto.
+- **Caché Redis** opcional (`kin.cache.redis.enabled`, default `false`), ADR-021: contrato de
+  clave determinista, TTL 24h, invalidación y aislamiento; implementada y deshabilitada por defecto.
 
 ---
 
@@ -601,15 +754,16 @@ Usuario → Registro/Login → Plan → Suscripción → Acceso a funcionalidade
 - ✅ Product Intelligence (analítica offline)
 - ✅ AI Guardrails + Pipeline Resilience (ADR-017)
 - ✅ Observabilidad (Actuator, Micrometer, logs estructurados)
+- ✅ OpenTelemetry opcional (ADR-022: exportación OTLP **verificada** con collector local Jaeger;
+  deshabilitada por defecto, sin collector obligatorio)
+- ✅ Caché Redis opcional (ADR-021: contrato de clave determinista, TTL, invalidación y
+  aislamiento; Redis real verificado con Testcontainers; opt-in por defecto)
+- ✅ Adaptadores de conocimiento externo con red real (ADR-021/023: `SecureHttpClient` SSRF-safe,
+  allowlist global por niveles `KNOWLEDGE_ALLOWED_DOMAINS`, **verificada por país** — Colombia,
+  España, México, EE.UU. y respaldo Nivel 1 para países sin fuente nacional; offline-first ante
+  fallo o deshabilitado)
 - ✅ Testing (backend + frontend + E2E) y CI/CD (5 workflows)
 - ✅ Despliegue en producción (`kin-platform.com`, Render, Neon/PostgreSQL)
-
-### Parcial
-
-- 🟡 Caché Redis (implementada, deshabilitada por defecto; pendiente ADR de clave de caché)
-- 🟡 Observabilidad OpenTelemetry (preparada; exportación real pendiente de entorno)
-- 🟡 Adaptadores de conocimiento externo (implementados con mocks, sin red real; requieren
-  allowlist de fuentes en producción)
 
 ### Arquitectura / documentación
 
@@ -636,12 +790,19 @@ Información comprobada contra el código y la configuración del repositorio:
 - 🟢 **Project Export** — DOCX/PDF/Markdown (módulo `kin.export`)
 - 🟢 **Product Intelligence** — analítica de uso offline
 - 🟢 **AI Guardrails** — `PromptGuardrail`, `ResponseGuard`, `ResponseFallback`
-- 🟢 **Automated Testing** — 2.758 backend + 316 frontend + E2E Playwright
+- 🟢 **Automated Testing** — 2.823 backend (2.843 descubiertos) + 316 frontend + E2E Playwright
 - 🟢 **CI/CD** — 5 workflows GitHub Actions + SonarQube + CodeQL + Gitleaks + OWASP
 - 🟢 **Cloud deployment** — Docker, Render, Neon/PostgreSQL, dominio propio
 - 🟢 **Security controls** — JWT, BCrypt, CORS, rate limiting, headers, ownership, SSRF-safe
 - 🟢 **Observabilidad** — Actuator, Micrometer `kin.*`, logs estructurados
-- 🟡 **Caché Redis** — implementada, deshabilitada por defecto
+- 🟢 **OpenTelemetry** — exportación OTLP **verificada** con collector local Jaeger (13 trazas;
+  spans HTTP de `kin-backend`); deshabilitada por defecto (ADR-022)
+- 🟢 **Caché Redis** — opt-in por defecto; ADR-021 con contrato de clave determinista
+  (`kin:knowledge:q/c:<hex>`), invalidación y aislamiento; Redis real verificado (TTL efectivo por
+  ventana de consulta)
+- 🟢 **Conocimiento externo** — allowlist global por niveles (ADR-023), red real **verificada por
+  país** (Colombia, España, México, EE.UU., Ecuador-respaldo Nivel 1); SSRF-safe, offline-first
+  ante fallo/deshabilitado; `KNOWLEDGE_EXTERNAL_ENABLED=false` por defecto
 - 📄 **Business Intelligence Layer** — ADR-019 aprobado en diseño (sin código)
 
 **Releases:** `v2.0.0-phase10` (última, Enterprise Document Generation) · `v2.0.0-alpha1` ·
