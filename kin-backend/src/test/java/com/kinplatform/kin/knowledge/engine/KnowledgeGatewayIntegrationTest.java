@@ -1,33 +1,37 @@
 package com.kinplatform.kin.knowledge.engine;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.kinplatform.kin.knowledge.KnowledgeCandidate;
 import com.kinplatform.kin.knowledge.KnowledgeQuery;
 import com.kinplatform.kin.knowledge.KnowledgeRepository;
 import com.kinplatform.kin.knowledge.KnowledgeRequest;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.knowledge.KnowledgeSource;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 class KnowledgeGatewayIntegrationTest {
 
-    private final SourceValidator validator = new SourceValidator(Set.of("example.com"),
-        Duration.ofDays(365), Set.of("application/json"));
+    private final SourceValidator validator =
+            new SourceValidator(Set.of("example.com"), Duration.ofDays(365), Set.of("application/json"));
 
     private KnowledgeCandidate candidate() {
-        return new KnowledgeCandidate("Dato verificado de mercado colombiano. ".repeat(6),
-            "src-1", "Fuente", "https://example.com/report", OffsetDateTime.now().minusDays(5),
-            "application/json", Map.of(SourceValidator.META_SOURCE_TYPE, "official"));
+        return new KnowledgeCandidate(
+                "Dato verificado de mercado colombiano. ".repeat(6),
+                "src-1",
+                "Fuente",
+                "https://example.com/report",
+                OffsetDateTime.now().minusDays(5),
+                "application/json",
+                Map.of(SourceValidator.META_SOURCE_TYPE, "official"));
     }
 
     private KnowledgeRequest request() {
@@ -93,6 +97,31 @@ class KnowledgeGatewayIntegrationTest {
         assertEquals(r1.facts(), r2.facts());
     }
 
+    @Test
+    void gateway_cacheSave_deberiaUsarTtlPorFuente_noLaVentanaDeLaRequest() {
+        var repository = new TtlRepository();
+        var withMaxAge = new KnowledgeCandidate(
+                "Dato de TRM diario. ".repeat(6),
+                "trm",
+                "TRM",
+                "https://example.com/trm",
+                OffsetDateTime.now().minusHours(1),
+                "application/json",
+                Map.of(SourceValidator.META_SOURCE_TYPE, "official"),
+                Duration.ofHours(12));
+        var gateway = new KnowledgeGateway(
+                new SourceRegistry(List.of(new StubSource(List.of(withMaxAge)))), validator, repository);
+
+        var result = gateway.acquire(request());
+
+        assertFalse(result.isEmpty());
+        assertEquals(Duration.ofHours(12), result.effectiveTtl().orElseThrow());
+        assertEquals(
+                Duration.ofHours(12),
+                repository.lastTtl(),
+                "el TTL de caché debe ser el maxAge de la fuente (12h), no la ventana de la request (365d)");
+    }
+
     private StubSource source() {
         return new StubSource(List.of(candidate()));
     }
@@ -131,6 +160,24 @@ class KnowledgeGatewayIntegrationTest {
 
         private boolean isEmpty() {
             return stored == null;
+        }
+    }
+
+    private static final class TtlRepository implements KnowledgeRepository {
+        private Duration lastTtl;
+
+        @Override
+        public Optional<KnowledgeResult> find(KnowledgeQuery query) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void save(KnowledgeResult result, Duration ttl) {
+            lastTtl = ttl;
+        }
+
+        private Duration lastTtl() {
+            return lastTtl;
         }
     }
 }

@@ -177,7 +177,7 @@ KIN permite evaluar capacidades prácticas en:
 | Seguridad | JWT stateless, BCrypt, CORS de origen único, headers HTTP, rate limiting |
 | Bases de datos | PostgreSQL, Flyway V1…V18, JPA/Hibernate, contextos durables |
 | IA aplicada | DeepSeek vía Spring AI, pipeline determinista, guardrails, fallback en español |
-| Testing | 2.823 tests backend (2.843 descubiertos; 20 gated de red real) + 316 tests frontend + E2E Playwright |
+| Testing | 2.827 tests backend (2.847 descubiertos; 20 gated de red real) + 316 tests frontend + E2E Playwright |
 | Automatización E2E | Playwright sobre flujos de login, dashboard y Sobre KIN |
 | CI/CD | 5 workflows GitHub Actions con lint, tests, build, E2E, calidad y seguridad |
 | Docker | PostgreSQL + backend + frontend con HEALTHCHECK y usuario no-root |
@@ -560,14 +560,15 @@ contiene solo las fuentes de su categoría + contexto general (y excluye las dem
 un error 5xx degrada a `KnowledgeResult.empty()` sin romper el análisis; la guardia SSRF
 (`SourceConnectionGuard`) y la allowlist única de acceso no se modifican.
 
-**Caché Redis (ADR-021):** opt-in con `kin.cache.redis.enabled=true` (default `false`).
+**Caché Redis (ADR-021/025):** opt-in con `kin.cache.redis.enabled=true` (default `false`).
 `RedisKnowledgeRepository` usa el **contrato de clave determinista** `kin:knowledge:q:<hex>`
-(por consulta: `topic|keywords`) y `kin:knowledge:c:<hex>` (por contenido: `sourceId|claim`
-ordenados), TTL por ventana de la consulta (default 365 días, sobrescribible), invalidación por
-expiración o borrado (resultado vacío / JSON corrupto) y **aislamiento por diseño**: solo se
-cachean hechos públicos validados, nunca PII ni contexto de usuario/proyecto. Verificado contra
-**Redis real** con datos reales: tras una consulta se pueblan las claves `kin:knowledge:*` y una
-segunda consulta idéntica resuelve en **~1 s** (hit de caché).
+(por consulta: `topic|keywords|categoría`) y `kin:knowledge:c:<hex>` (por contenido: `sourceId|claim`
+ordenados), **TTL por fuente** (mínimo `maxAge` de los hechos del resultado — datos diarios 12–24 h,
+mensuales 30 d, estructurales 60 d), invalidación por expiración o borrado (resultado vacío /
+JSON corrupto) y **aislamiento por diseño**: solo se cachean hechos públicos validados, nunca PII
+ni contexto de usuario/proyecto. Verificado contra **Redis real** con datos reales: tras una
+consulta se pueblan las claves `kin:knowledge:*` y una segunda consulta idéntica resuelve en
+**~1 s** (hit de caché).
 hit/miss, TTL expirado, no-colisión entre consultas, deduplicación y ausencia de datos privados.
 
 ---
@@ -674,7 +675,7 @@ CI/CD                 ✓  5 workflows GitHub Actions (push/PR/etiquetas/schedul
 
 | Ámbito | Resultado |
 |---|---|
-| Backend | **2.823 tests** (2.843 descubiertos; 20 gated de red real) · 0 fallos / 0 errores · BUILD SUCCESS (`./mvnw clean verify`) |
+| Backend | **2.827 tests** (2.847 descubiertos; 20 gated de red real) · 0 fallos / 0 errores · BUILD SUCCESS (`./mvnw clean verify`) |
 | Frontend | **58 archivos** · **316 tests** · **PASS** (`npm test`, ejecutado) |
 | E2E (Sobre KIN) | **4/4 PASS** (`npx playwright test tests/sobre-kin.spec.ts`, ejecutado) |
 | E2E completo | 8 escenarios (login 3 + dashboard 1 + sobre-kin 4) en entorno aislado (`:3100` / `:8081`) |
@@ -790,7 +791,7 @@ Información comprobada contra el código y la configuración del repositorio:
 - 🟢 **Project Export** — DOCX/PDF/Markdown (módulo `kin.export`)
 - 🟢 **Product Intelligence** — analítica de uso offline
 - 🟢 **AI Guardrails** — `PromptGuardrail`, `ResponseGuard`, `ResponseFallback`
-- 🟢 **Automated Testing** — 2.823 backend (2.843 descubiertos) + 316 frontend + E2E Playwright
+- 🟢 **Automated Testing** — 2.827 backend (2.847 descubiertos) + 316 frontend + E2E Playwright
 - 🟢 **CI/CD** — 5 workflows GitHub Actions + SonarQube + CodeQL + Gitleaks + OWASP
 - 🟢 **Cloud deployment** — Docker, Render, Neon/PostgreSQL, dominio propio
 - 🟢 **Security controls** — JWT, BCrypt, CORS, rate limiting, headers, ownership, SSRF-safe

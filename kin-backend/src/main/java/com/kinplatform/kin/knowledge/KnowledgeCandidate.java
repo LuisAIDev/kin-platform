@@ -1,5 +1,6 @@
 package com.kinplatform.kin.knowledge;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Map;
 
@@ -8,17 +9,30 @@ import java.util.Map;
  *
  * <p>El dominio no ve la red: un adaptador de infraestructura entrega
  * candidatos y Java decide (con {@code SourceValidator} en etapas posteriores)
- * cuáles se convierten en hechos verificados.</p>
+ * cuáles se convierten en hechos verificados. {@code maxAge} es la ventana de
+ * frescura de la fuente (ADR-025): se conserva en el hecho para calcular el TTL
+ * de caché por fuente.</p>
  */
 public record KnowledgeCandidate(
-    String content,
-    String sourceId,
-    String sourceName,
-    String url,
-    OffsetDateTime publishedAt,
-    String contentType,
-    Map<String, String> meta
-) {
+        String content,
+        String sourceId,
+        String sourceName,
+        String url,
+        OffsetDateTime publishedAt,
+        String contentType,
+        Map<String, String> meta,
+        Duration maxAge) {
+
+    public KnowledgeCandidate(
+            String content,
+            String sourceId,
+            String sourceName,
+            String url,
+            OffsetDateTime publishedAt,
+            String contentType,
+            Map<String, String> meta) {
+        this(content, sourceId, sourceName, url, publishedAt, contentType, meta, null);
+    }
 
     public KnowledgeCandidate {
         content = content == null ? "" : content;
@@ -30,13 +44,12 @@ public record KnowledgeCandidate(
     }
 
     public static KnowledgeCandidate of(
-        String content,
-        String sourceId,
-        String sourceName,
-        String url,
-        OffsetDateTime publishedAt,
-        String contentType
-    ) {
-        return new KnowledgeCandidate(content, sourceId, sourceName, url, publishedAt, contentType, Map.of());
+            String content,
+            String sourceId,
+            String sourceName,
+            String url,
+            OffsetDateTime publishedAt,
+            String contentType) {
+        return new KnowledgeCandidate(content, sourceId, sourceName, url, publishedAt, contentType, Map.of(), null);
     }
 }

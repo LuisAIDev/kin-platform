@@ -1,8 +1,9 @@
 package com.kinplatform.kin.knowledge;
 
 import com.kinplatform.kin.engine.EngineResult;
-
+import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Resultado inmutable del motor de conocimiento (ADR-014): hechos verificados,
@@ -14,14 +15,14 @@ import java.util.List;
  * pipeline sigue operando con un resultado vacío.</p>
  */
 public record KnowledgeResult(
-    List<KnowledgeFact> facts,
-    List<String> sourcesUsed,
-    List<SourceValidation> validations,
-    double confidence,
-    String explanation,
-    String generatedBy,
-    String engineVersion
-) implements EngineResult {
+        List<KnowledgeFact> facts,
+        List<String> sourcesUsed,
+        List<SourceValidation> validations,
+        double confidence,
+        String explanation,
+        String generatedBy,
+        String engineVersion)
+        implements EngineResult {
 
     public KnowledgeResult {
         facts = facts == null ? List.of() : List.copyOf(facts);
@@ -37,10 +38,24 @@ public record KnowledgeResult(
         return facts.size();
     }
 
+    /**
+     * TTL efectivo de caché (ADR-025): el mínimo {@code maxAge} de las fuentes
+     * que aportaron hechos (la fuente que cambia más seguido fija la expiración).
+     * Vacío si ningún hecho declaró {@code maxAge} (el llamador usa la ventana
+     * de la solicitud).
+     */
+    public Optional<Duration> effectiveTtl() {
+        Duration min = null;
+        for (KnowledgeFact fact : facts) {
+            if (fact.maxAge() != null && (min == null || fact.maxAge().compareTo(min) < 0)) {
+                min = fact.maxAge();
+            }
+        }
+        return Optional.ofNullable(min);
+    }
+
     public static KnowledgeResult empty() {
-        return new KnowledgeResult(
-            List.of(), List.of(), List.of(), 0.0,
-            "No se obtuvo conocimiento externo.", "", "");
+        return new KnowledgeResult(List.of(), List.of(), List.of(), 0.0, "No se obtuvo conocimiento externo.", "", "");
     }
 
     @Override

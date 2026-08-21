@@ -28,6 +28,7 @@ import com.kinplatform.kin.knowledge.policy.CostBudgetUsage;
 import com.kinplatform.kin.knowledge.policy.KnowledgePolicyEngine;
 import com.kinplatform.kin.knowledge.policy.ProviderSelection;
 import com.kinplatform.kin.knowledge.policy.QueryMode;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
@@ -410,7 +411,11 @@ public class KnowledgeOrchestrator {
             KnowledgeResult result = assembler.assemble(query, ctx.ranked());
             ctx.setKnowledgeResult(result);
             if (repository != null && !result.isEmpty()) {
-                repository.save(query, result, request.knowledgeRequest().timeWindow());
+                // TTL por fuente (ADR-025): mínimo maxAge de los hechos; si no se
+                // declaró, se usa la ventana de la solicitud (comportamiento previo).
+                Duration ttl =
+                        result.effectiveTtl().orElse(request.knowledgeRequest().timeWindow());
+                repository.save(query, result, ttl);
             }
         }
         ctx.addDecision(OrchestrationDecision.of(

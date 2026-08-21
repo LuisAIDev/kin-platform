@@ -6,7 +6,6 @@ import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.knowledge.SourceTrust;
 import com.kinplatform.kin.knowledge.orchestrator.ContextAssembler;
 import com.kinplatform.kin.knowledge.orchestrator.RankedCandidate;
-
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -52,21 +51,39 @@ public class DomainContextAssembler implements ContextAssembler {
         var sourcesUsed = List.copyOf(new ArrayList<>(used));
         double confidence = computeConfidence(factsCopy, ranked.size());
         String explanation = buildExplanation(factsCopy, ranked.size(), confidence);
-        return new KnowledgeResult(factsCopy, sourcesUsed, validationsOf(ranked), confidence,
-            explanation, generatorName, engineVersion);
+        return new KnowledgeResult(
+                factsCopy, sourcesUsed, validationsOf(ranked), confidence, explanation, generatorName, engineVersion);
     }
 
     @Override
     public KnowledgeResult emptyResult(String reason) {
-        return new KnowledgeResult(List.of(), List.of(), List.of(), 0.0,
-            reason == null ? "" : reason, generatorName, engineVersion);
+        return new KnowledgeResult(
+                List.of(), List.of(), List.of(), 0.0, reason == null ? "" : reason, generatorName, engineVersion);
     }
 
     private KnowledgeFact normalize(RankedCandidate pair, SourceTrust trust) {
         var candidate = pair.candidate();
         String category = candidate.meta().getOrDefault(SourceValidator.META_CATEGORY, "");
-        return KnowledgeFact.of(candidate.content().strip(), candidate.sourceId(), candidate.url(),
-            candidate.publishedAt(), trust, category);
+        KnowledgeFact base = KnowledgeFact.of(
+                candidate.content().strip(),
+                candidate.sourceId(),
+                candidate.url(),
+                candidate.publishedAt(),
+                trust,
+                category);
+        // Conserva la ventana de frescura de la fuente (ADR-025) para el TTL de caché.
+        if (candidate.maxAge() != null) {
+            return new KnowledgeFact(
+                    base.id(),
+                    base.claim(),
+                    base.sourceId(),
+                    base.url(),
+                    base.publishedAt(),
+                    base.trust(),
+                    base.category(),
+                    candidate.maxAge());
+        }
+        return base;
     }
 
     private List<com.kinplatform.kin.knowledge.SourceValidation> validationsOf(List<RankedCandidate> ranked) {
@@ -83,12 +100,14 @@ public class DomainContextAssembler implements ContextAssembler {
         }
         double acceptance = (double) facts.size() / totalCandidates;
         double avgTrust = facts.stream()
-            .mapToDouble(fact -> trustWeight(fact.trust()))
-            .average().orElse(0.0);
+                .mapToDouble(fact -> trustWeight(fact.trust()))
+                .average()
+                .orElse(0.0);
         double quality = 0.5 * acceptance + 0.5 * avgTrust;
         double contentQuality = facts.stream()
-            .mapToDouble(fact -> contentQuality(fact.claim()))
-            .average().orElse(0.0);
+                .mapToDouble(fact -> contentQuality(fact.claim()))
+                .average()
+                .orElse(0.0);
         return Math.max(0.0, Math.min(1.0, 0.6 * quality + 0.4 * contentQuality));
     }
 
@@ -108,7 +127,7 @@ public class DomainContextAssembler implements ContextAssembler {
         int accepted = facts.size();
         int rejected = totalCandidates - accepted;
         String qualityPercent = String.format(Locale.ROOT, "%.0f", confidence * 100);
-        return "Candidatos aceptados: " + accepted + " de " + totalCandidates
-            + " (" + rejected + " descartados). Calidad: " + qualityPercent + "%.";
+        return "Candidatos aceptados: " + accepted + " de " + totalCandidates + " (" + rejected
+                + " descartados). Calidad: " + qualityPercent + "%.";
     }
 }

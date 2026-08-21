@@ -1,14 +1,13 @@
 package com.kinplatform.kin.knowledge;
 
-import com.kinplatform.kin.engine.EngineResult;
-import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.kinplatform.kin.engine.EngineResult;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.jupiter.api.Test;
 
 class KnowledgeResultTest {
 
@@ -29,8 +28,7 @@ class KnowledgeResultTest {
         var fact = KnowledgeFact.of("claim", "s1", "u", null, SourceTrust.SECONDARY, "C");
         var validation = SourceValidation.accepted(SourceTrust.OFFICIAL_PUBLIC);
         var result = new KnowledgeResult(
-            List.of(fact), List.of("s1"), List.of(validation), 0.8,
-            "explicación", "KnowledgeEngine", "1.0");
+                List.of(fact), List.of("s1"), List.of(validation), 0.8, "explicación", "KnowledgeEngine", "1.0");
 
         assertEquals(List.of(fact), result.facts());
         assertEquals(List.of("s1"), result.sourcesUsed());
@@ -73,18 +71,45 @@ class KnowledgeResultTest {
 
     @Test
     void constructor_deberiaProtegerListas() {
-        var facts = new ArrayList<>(List.of(
-            KnowledgeFact.of("claim", "s1", "u", null, SourceTrust.SECONDARY, "C")));
+        var facts = new ArrayList<>(List.of(KnowledgeFact.of("claim", "s1", "u", null, SourceTrust.SECONDARY, "C")));
         var result = new KnowledgeResult(facts, List.of(), List.of(), 0.5, "e", "k", "1.0");
 
         facts.clear();
-        assertThrows(UnsupportedOperationException.class,
-            () -> result.facts().add(KnowledgeFact.of("x", "s", "u", null, SourceTrust.UNVERIFIED, "C")));
+        assertThrows(UnsupportedOperationException.class, () -> result.facts()
+                .add(KnowledgeFact.of("x", "s", "u", null, SourceTrust.UNVERIFIED, "C")));
         assertEquals(1, result.facts().size());
     }
 
     @Test
     void deberiaImplementarEngineResult() {
         assertTrue(EngineResult.class.isAssignableFrom(KnowledgeResult.class));
+    }
+
+    @Test
+    void effectiveTtl_deberiaSerElMinimoDeLosMaxAgeDeLosHechos() {
+        var corto = KnowledgeFact.of("a", "s1", "u", null, SourceTrust.SECONDARY, "C");
+        var hechoCorto = new KnowledgeFact(
+                corto.id(),
+                corto.claim(),
+                corto.sourceId(),
+                corto.url(),
+                corto.publishedAt(),
+                corto.trust(),
+                corto.category(),
+                java.time.Duration.ofHours(12));
+        var hechoLargo = new KnowledgeFact(
+                null, "b", "s2", "u2", null, SourceTrust.SECONDARY, "C", java.time.Duration.ofDays(30));
+
+        var result = new KnowledgeResult(List.of(hechoCorto, hechoLargo), List.of(), List.of(), 0.9, "e", "k", "1.0");
+
+        assertEquals(java.time.Duration.ofHours(12), result.effectiveTtl().orElseThrow());
+    }
+
+    @Test
+    void effectiveTtl_sinMaxAge_deberiaEstarVacio() {
+        var fact = KnowledgeFact.of("a", "s1", "u", null, SourceTrust.SECONDARY, "C");
+        var result = new KnowledgeResult(List.of(fact), List.of(), List.of(), 0.9, "e", "k", "1.0");
+
+        assertTrue(result.effectiveTtl().isEmpty());
     }
 }

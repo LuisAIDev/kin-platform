@@ -118,7 +118,9 @@ Las categorías con `categories` específicas suman sus fuentes:
 
 ## 6. Cómo se mantiene
 
-1. **Config operativa**: `application-staging.yml` (fuentes + metadata). Producción no la activa.
+1. **Config operativa**: `application-staging.yml` (fuentes + metadata, incluido `max-age` por
+   fuente que define el **TTL de caché** — datos diarios 12–24 h, mensuales 30 d, estructurales
+   60 d). Producción no la activa.
 2. **Pruebas gated de red real**: `KIN_TEST_REAL_NETWORK=true` → `KnowledgeStagingSourcesTest`,
    `KnowledgeGlobalAllowlistTest`, `KnowledgeColombiaSourcesTest`, `KnowledgeCategoryMappingTest`,
    `KnowledgeHttpRealNetworkTest` (cada fuente debe producir hechos reales).
@@ -126,5 +128,6 @@ Las categorías con `categories` específicas suman sus fuentes:
    el mecanismo (`CategoryAwareCompositeKnowledgeSource`) filtra automáticamente. `enabled=false`
    conserva la fuente sin consultarla; `priority` ordena la selección (mayor primero; ADR-025).
 4. **Caché**: Redis opcional (`kin.cache.redis.enabled`), clave determinista
-   `kin:knowledge:q:<hash>` (topic+keywords+categoría) y `kin:knowledge:c:<hash>`.
+   `kin:knowledge:q:<hash>` (topic+keywords+categoría) y `kin:knowledge:c:<hash>`; **TTL por
+   fuente** = mínimo `maxAge` de los hechos del resultado (ADR-025).
 5. **Gobernanza**: ver ADR-025 (Política de Fuentes) para incorporar/descartar/deprecar fuentes.

@@ -64,6 +64,8 @@ public class HttpKnowledgeSourceAdapter implements KnowledgeSource {
     private final Function<HttpResponse, List<HttpItem>> decoder;
     /** Parámetro de consulta anexado con el tema (p. ej. {@code q}); vacío = sin sufijo. */
     private final String queryParam;
+    /** Ventana de frescura de la fuente (ADR-025); se estampa en cada candidato. */
+    private final java.time.Duration maxAge;
 
     public HttpKnowledgeSourceAdapter(
             String sourceId,
@@ -86,12 +88,28 @@ public class HttpKnowledgeSourceAdapter implements KnowledgeSource {
             HttpClient client,
             Function<HttpResponse, List<HttpItem>> decoder,
             String queryParam) {
+        this(sourceId, sourceName, baseUrl, client, decoder, queryParam, null);
+    }
+
+    /**
+     * @param maxAge ventana de frescura de la fuente (TTL de caché sugerido,
+     *               ADR-025); {@code null} = el llamador usa la ventana de la request.
+     */
+    public HttpKnowledgeSourceAdapter(
+            String sourceId,
+            String sourceName,
+            String baseUrl,
+            HttpClient client,
+            Function<HttpResponse, List<HttpItem>> decoder,
+            String queryParam,
+            java.time.Duration maxAge) {
         this.sourceId = sourceId == null ? "" : sourceId;
         this.sourceName = sourceName == null ? "" : sourceName;
         this.baseUrl = baseUrl == null ? "" : baseUrl;
         this.client = client;
         this.decoder = decoder;
         this.queryParam = queryParam == null ? "" : queryParam.trim();
+        this.maxAge = maxAge;
     }
 
     @Override
@@ -120,7 +138,8 @@ public class HttpKnowledgeSourceAdapter implements KnowledgeSource {
                         item.url(),
                         item.publishedAt(),
                         response.contentType(),
-                        Map.of(SourceValidator.META_HTTP_STATUS, String.valueOf(response.statusCode()))));
+                        Map.of(SourceValidator.META_HTTP_STATUS, String.valueOf(response.statusCode())),
+                        maxAge));
             }
             return List.copyOf(candidates);
         } catch (RuntimeException ex) {

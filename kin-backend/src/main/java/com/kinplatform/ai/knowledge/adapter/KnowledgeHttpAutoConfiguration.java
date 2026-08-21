@@ -127,7 +127,8 @@ public class KnowledgeHttpAutoConfiguration {
                     cfg.getBaseUrl(),
                     secureClient,
                     decoderFor(cfg, mapper),
-                    cfg.getQueryParam()));
+                    cfg.getQueryParam(),
+                    cfg.getMaxAge()));
             categories.add(cfg.getCategories() == null ? List.of() : List.copyOf(cfg.getCategories()));
             enabled.add(cfg.isEnabled());
             priorities.add(cfg.getPriority());

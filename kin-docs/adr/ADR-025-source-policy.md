@@ -118,6 +118,17 @@ consulta fija), `fact-columns` (SODA), `landing-page` (URL de los hechos), `max-
 - La caché no se "contamina": ante config invalidada se puede `FLUSHALL` del dominio
   `kin:knowledge:*`.
 
+### P10. Frescura y TTL por fuente (implementado)
+
+- `SourceConfig.maxAge` define la **ventana de frescura** y el **TTL de caché sugerido** por
+  fuente: datos diarios (TRM 12 h, ECB y calidad del aire 24 h), periódicos (tasas 7 d), mensuales
+  (insumos, exportaciones, IPC 30 d) y estructurales/anuales (Finagro, MinCiencias 60 d).
+- El adaptador estampa `maxAge` en cada candidato → `KnowledgeFact` lo conserva →
+  `KnowledgeResult.effectiveTtl()` devuelve el **mínimo** de las fuentes del resultado (la fuente
+  que cambia más seguido fija la expiración) → el `KnowledgeOrchestrator` guarda en Redis con ese
+  TTL en vez de una ventana uniforme. Si ningún hecho declara `maxAge`, se usa la ventana de la
+  solicitud (comportamiento previo).
+
 ---
 
 ## Alternativas consideradas

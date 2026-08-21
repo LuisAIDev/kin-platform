@@ -1,33 +1,32 @@
 package com.kinplatform.ai.knowledge.adapter;
 
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
-import com.kinplatform.kin.knowledge.engine.SourceValidator;
-import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.List;
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.kinplatform.kin.knowledge.KnowledgeCandidate;
+import com.kinplatform.kin.knowledge.KnowledgeQuery;
+import com.kinplatform.kin.knowledge.KnowledgeRequest;
+import com.kinplatform.kin.knowledge.engine.SourceValidator;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+
 class HttpKnowledgeSourceAdapterTest {
 
-    private static final OffsetDateTime PUBLISHED =
-        OffsetDateTime.of(2026, 1, 15, 10, 0, 0, 0, ZoneOffset.ofHours(-5));
+    private static final OffsetDateTime PUBLISHED = OffsetDateTime.of(2026, 1, 15, 10, 0, 0, 0, ZoneOffset.ofHours(-5));
 
-    private final RecordingClient client = new RecordingClient(
-        new HttpKnowledgeSourceAdapter.HttpResponse(200, "application/json", "{}"));
+    private final RecordingClient client =
+            new RecordingClient(new HttpKnowledgeSourceAdapter.HttpResponse(200, "application/json", "{}"));
     private final HttpKnowledgeSourceAdapter adapter = new HttpKnowledgeSourceAdapter(
-        "src-http", "API Oficial", "https://example.com/search",
-        client, response -> List.of(new HttpKnowledgeSourceAdapter.HttpItem(
-            "Dato de mercado.", "https://example.com/report", PUBLISHED)));
+            "src-http",
+            "API Oficial",
+            "https://example.com/search",
+            client,
+            response -> List.of(new HttpKnowledgeSourceAdapter.HttpItem(
+                    "Dato de mercado.", "https://example.com/report", PUBLISHED)));
 
     private KnowledgeQuery query() {
         return KnowledgeQuery.from(KnowledgeRequest.of("retail", List.of("colombia")));
@@ -57,59 +56,92 @@ class HttpKnowledgeSourceAdapterTest {
     }
 
     @Test
+    void fetch_conMaxAge_deberiaEstamparLaVentanaEnCadaCandidato() {
+        var adapterConMaxAge = new HttpKnowledgeSourceAdapter(
+                "src-http",
+                "API Oficial",
+                "https://example.com/search",
+                client,
+                response -> List.of(new HttpKnowledgeSourceAdapter.HttpItem(
+                        "Dato de mercado.", "https://example.com/report", PUBLISHED)),
+                "q",
+                java.time.Duration.ofHours(12));
+
+        List<KnowledgeCandidate> candidates = adapterConMaxAge.fetch(query());
+
+        assertEquals(1, candidates.size());
+        assertEquals(java.time.Duration.ofHours(12), candidates.get(0).maxAge());
+    }
+
+    @Test
     void fetch_deberiaRetornarVacio_cuandoQueryNula() {
         assertTrue(adapter.fetch(null).isEmpty());
     }
 
     @Test
     void fetch_deberiaRetornarVacio_cuandoElClienteFalla() {
-        var failing = new HttpKnowledgeSourceAdapter("src", "s", "https://example.com",
-            request -> {
-                throw new IllegalStateException("red caída");
-            }, response -> List.of());
+        var failing = new HttpKnowledgeSourceAdapter(
+                "src",
+                "s",
+                "https://example.com",
+                request -> {
+                    throw new IllegalStateException("red caída");
+                },
+                response -> List.of());
 
         assertTrue(failing.fetch(query()).isEmpty());
     }
 
     @Test
     void fetch_deberiaRetornarVacio_cuandoElClienteEsNulo() {
-        var nulo = new HttpKnowledgeSourceAdapter("src", "s", "https://example.com",
-            null, response -> List.of());
+        var nulo = new HttpKnowledgeSourceAdapter("src", "s", "https://example.com", null, response -> List.of());
 
         assertTrue(nulo.fetch(query()).isEmpty());
     }
 
     @Test
     void fetch_deberiaRetornarVacio_cuandoLaRespuestaEsNula() {
-        var sinRespuesta = new HttpKnowledgeSourceAdapter("src", "s", "https://example.com",
-            request -> null, response -> List.of());
+        var sinRespuesta = new HttpKnowledgeSourceAdapter(
+                "src", "s", "https://example.com", request -> null, response -> List.of());
 
         assertTrue(sinRespuesta.fetch(query()).isEmpty());
     }
 
     @Test
     void fetch_deberiaRetornarVacio_cuandoNoHayDecoder() {
-        var sinDecoder = new HttpKnowledgeSourceAdapter("src", "s", "https://example.com",
-            request -> new HttpKnowledgeSourceAdapter.HttpResponse(200, "application/json", "{}"), null);
+        var sinDecoder = new HttpKnowledgeSourceAdapter(
+                "src",
+                "s",
+                "https://example.com",
+                request -> new HttpKnowledgeSourceAdapter.HttpResponse(200, "application/json", "{}"),
+                null);
 
         assertTrue(sinDecoder.fetch(query()).isEmpty());
     }
 
     @Test
     void fetch_deberiaRetornarVacio_cuandoElDecoderDevuelveNulo() {
-        var decoderNulo = new HttpKnowledgeSourceAdapter("src", "s", "https://example.com",
-            request -> new HttpKnowledgeSourceAdapter.HttpResponse(200, "application/json", "{}"),
-            response -> null);
+        var decoderNulo = new HttpKnowledgeSourceAdapter(
+                "src",
+                "s",
+                "https://example.com",
+                request -> new HttpKnowledgeSourceAdapter.HttpResponse(200, "application/json", "{}"),
+                response -> null);
 
         assertTrue(decoderNulo.fetch(query()).isEmpty());
     }
 
     @Test
     void fetch_deberiaOmitirItemsNulos() {
-        var conNulos = new HttpKnowledgeSourceAdapter("src", "s", "https://example.com",
-            request -> new HttpKnowledgeSourceAdapter.HttpResponse(200, "application/json", "{}"),
-            response -> java.util.Arrays.asList(null, new HttpKnowledgeSourceAdapter.HttpItem(
-                "Dato.", "https://example.com/a", PUBLISHED), null));
+        var conNulos = new HttpKnowledgeSourceAdapter(
+                "src",
+                "s",
+                "https://example.com",
+                request -> new HttpKnowledgeSourceAdapter.HttpResponse(200, "application/json", "{}"),
+                response -> java.util.Arrays.asList(
+                        null,
+                        new HttpKnowledgeSourceAdapter.HttpItem("Dato.", "https://example.com/a", PUBLISHED),
+                        null));
 
         var candidates = conNulos.fetch(query());
 
@@ -124,9 +156,12 @@ class HttpKnowledgeSourceAdapterTest {
 
     @Test
     void constructor_deberiaSoportarNulos() {
-        var tolerante = new HttpKnowledgeSourceAdapter(null, null, null,
-            request -> new HttpKnowledgeSourceAdapter.HttpResponse(200, null, null),
-            response -> List.of(new HttpKnowledgeSourceAdapter.HttpItem(null, null, null)));
+        var tolerante = new HttpKnowledgeSourceAdapter(
+                null,
+                null,
+                null,
+                request -> new HttpKnowledgeSourceAdapter.HttpResponse(200, null, null),
+                response -> List.of(new HttpKnowledgeSourceAdapter.HttpItem(null, null, null)));
 
         var candidates = tolerante.fetch(query());
 
@@ -162,10 +197,9 @@ class HttpKnowledgeSourceAdapterTest {
 
     @Test
     void fetch_deberiaUsarSeparadorAmpersand_siLaBaseYaTieneQuery() {
-        var recording = new RecordingClient(
-            new HttpKnowledgeSourceAdapter.HttpResponse(200, "application/json", "{}"));
-        var conQuery = new HttpKnowledgeSourceAdapter("src", "s", "https://example.com/search?lang=es",
-            recording, response -> List.of());
+        var recording = new RecordingClient(new HttpKnowledgeSourceAdapter.HttpResponse(200, "application/json", "{}"));
+        var conQuery = new HttpKnowledgeSourceAdapter(
+                "src", "s", "https://example.com/search?lang=es", recording, response -> List.of());
 
         conQuery.fetch(query());
 

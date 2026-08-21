@@ -68,7 +68,7 @@ Implementado en `RedisKnowledgeRepository` (adaptador de `KnowledgeRepository`).
 | **Clave por contenido (deduplicación)** | `kin:knowledge:c:<hex>` con `seed = (sourceId + "|" + claim)` por hecho, ordenados (`sorted()`) y unidos por `"|"` |
 | **Datos en la clave** | Solo `topic` + keywords (consulta normalizada) o la tupla `(sourceId, claim)` por hecho. **Nunca** identidad de usuario ni de proyecto |
 | **Valor** | `KnowledgeResult` serializado en JSON (Jackson, con soporte `OffsetDateTime`; lectura tolerante a `isEmpty()`/`factCount()`) |
-| **TTL** | Default `Duration.ofHours(24)`; sobrescribible por llamada (`save(query, result, ttl)`). En el flujo del `KnowledgeOrchestrator`, el TTL efectivo es la ventana de la `KnowledgeRequest` (`timeWindow()`, default 365 días) |
+| **TTL** | Default `Duration.ofHours(24)`; sobrescribible por llamada (`save(query, result, ttl)`). En el flujo del `KnowledgeOrchestrator`, el TTL efectivo es el **mínimo `maxAge` de las fuentes que aportaron hechos** (`KnowledgeResult.effectiveTtl()`, ADR-025 — TTL por fuente) y, si ningún hecho declara `maxAge`, la ventana de la `KnowledgeRequest` (`timeWindow()`, default 365 días) |
 | **Invalidación** | Expiración por TTL; borrado explícito al detectar resultado vacío o JSON corrupto en `find`; la escritura de la misma clave (mismo `topic`+keywords o mismo contenido) sobrescribe (no duplica) |
 | **Aislamiento** | Sin datos de usuario/proyecto: solo hechos públicos validados. El prefijo de dominio + la ausencia de datos privados es la estrategia de aislamiento |
 | **Determinismo** | Misma consulta → misma clave (verificado por test `clavesDeterministas_sinDuplicadosAlGuardarDosVeces` y `claves_deberianSerDeterministas`) |
