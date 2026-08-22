@@ -59,6 +59,22 @@ services:
           property: password
       - key: ALLOWED_ORIGINS
         value: https://kin-frontend.onrender.com,https://kin-platform.com
+      - key: APP_MAIL_ENABLED
+        value: "true"
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: "KIN Platform"
+      - key: FRONTEND_BASE_URL
+        value: "https://kin-platform.com"
 
   # ---------------- Frontend (Next.js) ----------------
   - type: web

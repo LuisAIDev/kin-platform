@@ -1,6 +1,10 @@
 package com.kinplatform.auth.email;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PostConstruct;
+import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
 import lombok.extern.slf4j.Slf4j;
@@ -32,8 +36,22 @@ public class SmtpEmailSender implements EmailSender {
     private final ObjectProvider<JavaMailSender> mailSenderProvider;
     private JavaMailSender mailSender;
 
-    public SmtpEmailSender(ObjectProvider<JavaMailSender> mailSenderProvider) {
+    private final Counter attemptsCounter;
+    private final Counter successCounter;
+    private final Counter failureCounter;
+    private final Timer latencyTimer;
+
+    public SmtpEmailSender(ObjectProvider<JavaMailSender> mailSenderProvider, MeterRegistry meterRegistry) {
         this.mailSenderProvider = mailSenderProvider;
+        this.attemptsCounter = Counter.builder("kin_email_attempts_total")
+                .tag("sender", "smtp")
+                .register(meterRegistry);
+        this.successCounter =
+                Counter.builder("kin_email_success_total").tag("sender", "smtp").register(meterRegistry);
+        this.failureCounter =
+                Counter.builder("kin_email_failure_total").tag("sender", "smtp").register(meterRegistry);
+        this.latencyTimer =
+                Timer.builder("kin_email_latency_seconds").tag("sender", "smtp").register(meterRegistry);
     }
 
     @Value("${app.mail.from:}")
@@ -58,21 +76,19 @@ public class SmtpEmailSender implements EmailSender {
     public void validate() {
         mailSender = mailSenderProvider.getIfAvailable();
         if (mailSender == null) {
-            throw new IllegalStateException(
-                    "app.mail.enabled=true pero no hay un JavaMailSender disponible "
-                            + "(revisa spring.mail.host / MAIL_HOST). Si SMTP no está configurado, "
-                            + "la aplicación no puede enviar correos de verificación.");
+            throw new IllegalStateException("app.mail.enabled=true pero no hay un JavaMailSender disponible "
+                    + "(revisa spring.mail.host / MAIL_HOST). Si SMTP no está configurado, "
+                    + "la aplicación no puede enviar correos de verificación.");
         }
         if (from == null || from.isBlank()) {
-            throw new IllegalStateException(
-                    "app.mail.enabled=true pero app.mail.from (MAIL_FROM) no está configurado");
+            throw new IllegalStateException("app.mail.enabled=true pero app.mail.from (MAIL_FROM) no está configurado");
         }
         if (mailHost == null || mailHost.isBlank()) {
             throw new IllegalStateException(
                     "app.mail.enabled=true pero spring.mail.host (MAIL_HOST) no está configurado");
         }
-        if (smtpAuth && (mailUsername == null || mailUsername.isBlank()
-                || mailPassword == null || mailPassword.isBlank())) {
+        if (smtpAuth
+                && (mailUsername == null || mailUsername.isBlank() || mailPassword == null || mailPassword.isBlank())) {
             throw new IllegalStateException(
                     "app.mail.enabled=true con mail.smtp.auth=true pero MAIL_USERNAME/MAIL_PASSWORD no están configurados");
         }
@@ -80,41 +96,75 @@ public class SmtpEmailSender implements EmailSender {
 
     @Override
     public void sendVerificationEmail(String to, String fullName, String verificationLink) {
-        try {
-            var message = mailSender.createMimeMessage();
-            var helper = new MimeMessageHelper(message, false, "UTF-8");
-            helper.setFrom(from, fromName);
-            helper.setTo(to);
-            helper.setSubject("Verifica tu correo electrónico en KIN");
-            helper.setText("Hola " + fullName + ",\n\n"
-                    + "Para activar tu cuenta de KIN, abre este enlace:\n\n"
-                    + verificationLink + "\n\n"
-                    + "El enlace es de un solo uso y expira en 24 horas.\n\n"
-                    + "Si no creaste esta cuenta, ignora este mensaje.", false);
-            mailSender.send(message);
-            log.info("Correo de verificación enviado a {}", to);
-        } catch (MessagingException | UnsupportedEncodingException e) {
-            throw new IllegalStateException("No se pudo enviar el correo de verificación", e);
-        }
+        sendEmail(
+                "verification",
+                to,
+                fullName,
+                verificationLink,
+                "Verifica tu correo electrónico en KIN",
+                "Hola " + fullName + ",\n\n"
+                        + "Para activar tu cuenta de KIN, abre este enlace:\n\n"
+                        + verificationLink + "\n\n"
+                        + "El enlace es de un solo uso y expira en 24 horas.\n\n"
+                        + "Si no creaste esta cuenta, ignora este mensaje.");
     }
 
     @Override
     public void sendPasswordResetEmail(String to, String fullName, String resetLink) {
+        sendEmail(
+                "password-reset",
+                to,
+                fullName,
+                resetLink,
+                "Recupera tu contraseña de KIN",
+                "Hola " + fullName + ",\n\n"
+                        + "Para restablecer tu contraseña de KIN, abre este enlace:\n\n"
+                        + resetLink + "\n\n"
+                        + "El enlace es de un solo uso y expira en 24 horas.\n\n"
+                        + "Si no solicitaste este cambio, ignora este mensaje.");
+    }
+
+    private void sendEmail(String type, String to, String fullName, String link, String subject, String text) {
+        attemptsCounter.increment();
+        Timer.Sample sample = Timer.start();
         try {
             var message = mailSender.createMimeMessage();
             var helper = new MimeMessageHelper(message, false, "UTF-8");
             helper.setFrom(from, fromName);
             helper.setTo(to);
-            helper.setSubject("Recupera tu contraseña de KIN");
-            helper.setText("Hola " + fullName + ",\n\n"
-                    + "Para restablecer tu contraseña de KIN, abre este enlace:\n\n"
-                    + resetLink + "\n\n"
-                    + "El enlace es de un solo uso y expira en 24 horas.\n\n"
-                    + "Si no solicitaste este cambio, ignora este mensaje.", false);
+            helper.setSubject(subject);
+            helper.setText(text, false);
             mailSender.send(message);
-            log.info("Correo de recuperación de contraseña enviado a {}", to);
+            String messageId = getMessageId(message);
+            log.info("Correo de {} ACEPTADO POR SMTP para {} messageId={}", type, maskEmail(to), messageId);
+            successCounter.increment();
         } catch (MessagingException | UnsupportedEncodingException e) {
-            throw new IllegalStateException("No se pudo enviar el correo de recuperación de contraseña", e);
+            failureCounter.increment();
+            log.error("Fallo SMTP al enviar correo de {} para {}", type, maskEmail(to), e);
+            throw new IllegalStateException("No se pudo enviar el correo de " + type, e);
+        } finally {
+            sample.stop(latencyTimer);
         }
+    }
+
+    private static String getMessageId(Message message) {
+        try {
+            String[] ids = message.getHeader("Message-ID");
+            if (ids != null && ids.length > 0 && ids[0] != null) {
+                return ids[0];
+            }
+        } catch (MessagingException ignored) {
+        }
+        return "unknown";
+    }
+
+    private static String maskEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return "invalid";
+        }
+        String[] parts = email.split("@", 2);
+        String local = parts[0];
+        String masked = local.length() <= 2 ? "**" : local.charAt(0) + "**" + local.charAt(local.length() - 1);
+        return masked + "@" + parts[1];
     }
 }

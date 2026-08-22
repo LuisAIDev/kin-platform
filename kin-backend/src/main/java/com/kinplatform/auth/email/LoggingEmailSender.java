@@ -1,6 +1,9 @@
 package com.kinplatform.auth.email;
 
 import com.kinplatform.auth.TestVerificationStore;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PostConstruct;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -34,27 +37,81 @@ public class LoggingEmailSender implements EmailSender {
 
     private final Environment environment;
     private final ObjectProvider<TestVerificationStore> storeProvider;
+    private final MeterRegistry meterRegistry;
+
+    private final Counter attemptsCounter;
+    private final Counter successCounter;
+    private final Counter failureCounter;
+    private final Timer latencyTimer;
+
+    public LoggingEmailSender(
+            Environment environment, ObjectProvider<TestVerificationStore> storeProvider, MeterRegistry meterRegistry) {
+        this.environment = environment;
+        this.storeProvider = storeProvider;
+        this.meterRegistry = meterRegistry;
+        this.attemptsCounter = Counter.builder("kin_email_attempts_total")
+                .tag("sender", "logging")
+                .register(meterRegistry);
+        this.successCounter = Counter.builder("kin_email_success_total")
+                .tag("sender", "logging")
+                .register(meterRegistry);
+        this.failureCounter = Counter.builder("kin_email_failure_total")
+                .tag("sender", "logging")
+                .register(meterRegistry);
+        this.latencyTimer = Timer.builder("kin_email_latency_seconds")
+                .tag("sender", "logging")
+                .register(meterRegistry);
+    }
 
     @PostConstruct
     public void validateNotInProduction() {
         for (String profile : environment.getActiveProfiles()) {
             if (PRODUCTION_PROFILES.contains(profile)) {
-                throw new IllegalStateException(
-                        "LoggingEmailSender está prohibido en perfiles de producción ("
-                                + String.join(", ", PRODUCTION_PROFILES)
-                                + "). Configura SMTP (MAIL_HOST, MAIL_FROM, etc.) y APP_MAIL_ENABLED=true.");
+                throw new IllegalStateException("LoggingEmailSender está prohibido en perfiles de producción ("
+                        + String.join(", ", PRODUCTION_PROFILES)
+                        + "). Configura SMTP (MAIL_HOST, MAIL_FROM, etc.) y APP_MAIL_ENABLED=true.");
             }
         }
     }
 
     @Override
     public void sendVerificationEmail(String to, String fullName, String verificationLink) {
-        log.warn("[email-verification][dev/no-smtp] destinatario={} enlace={}", to, verificationLink);
-        storeProvider.ifAvailable(store -> store.put(to, verificationLink));
+        attemptsCounter.increment();
+        Timer.Sample sample = Timer.start();
+        try {
+            log.warn("[email-verification][dev/no-smtp] destinatario={} enlace={}", maskEmail(to), verificationLink);
+            storeProvider.ifAvailable(store -> store.put(to, verificationLink));
+            successCounter.increment();
+        } catch (Exception e) {
+            failureCounter.increment();
+            throw new IllegalStateException("No se pudo procesar el correo de verificación (logging)", e);
+        } finally {
+            sample.stop(latencyTimer);
+        }
     }
 
     @Override
     public void sendPasswordResetEmail(String to, String fullName, String resetLink) {
-        log.warn("[password-reset][dev/no-smtp] destinatario={} enlace={}", to, resetLink);
+        attemptsCounter.increment();
+        Timer.Sample sample = Timer.start();
+        try {
+            log.warn("[password-reset][dev/no-smtp] destinatario={} enlace={}", maskEmail(to), resetLink);
+            successCounter.increment();
+        } catch (Exception e) {
+            failureCounter.increment();
+            throw new IllegalStateException("No se pudo procesar el correo de recuperación (logging)", e);
+        } finally {
+            sample.stop(latencyTimer);
+        }
+    }
+
+    private static String maskEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return "invalid";
+        }
+        String[] parts = email.split("@", 2);
+        String local = parts[0];
+        String masked = local.length() <= 2 ? "**" : local.charAt(0) + "**" + local.charAt(local.length() - 1);
+        return masked + "@" + parts[1];
     }
 }

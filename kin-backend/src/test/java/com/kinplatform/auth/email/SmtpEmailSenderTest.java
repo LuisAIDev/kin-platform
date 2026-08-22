@@ -7,6 +7,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 import java.util.Properties;
@@ -21,14 +22,16 @@ class SmtpEmailSenderTest {
 
     private SmtpEmailSender sender;
     private JavaMailSender mailSender;
+    private SimpleMeterRegistry meterRegistry;
 
     @BeforeEach
     void setUp() {
         mailSender = mock(JavaMailSender.class);
+        meterRegistry = new SimpleMeterRegistry();
         DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
         bf.registerSingleton("mailSender", mailSender);
         ObjectProvider<JavaMailSender> provider = bf.getBeanProvider(JavaMailSender.class);
-        sender = new SmtpEmailSender(provider);
+        sender = new SmtpEmailSender(provider, meterRegistry);
         ReflectionTestUtils.setField(sender, "from", "no-reply@kin.test");
         ReflectionTestUtils.setField(sender, "fromName", "KIN Platform");
         ReflectionTestUtils.setField(sender, "mailHost", "smtp.test.com");
@@ -53,7 +56,7 @@ class SmtpEmailSenderTest {
     void sinJavaMailSenderDisponible_deberiaFallarConMensajeClaro() {
         DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
         ObjectProvider<JavaMailSender> emptyProvider = bf.getBeanProvider(JavaMailSender.class);
-        sender = new SmtpEmailSender(emptyProvider);
+        sender = new SmtpEmailSender(emptyProvider, meterRegistry);
         ReflectionTestUtils.setField(sender, "from", "no-reply@kin.test");
         ReflectionTestUtils.setField(sender, "mailHost", "smtp.test.com");
 
@@ -97,12 +100,13 @@ class SmtpEmailSenderTest {
         ReflectionTestUtils.setField(sender, "fromName", "KIN Platform");
 
         final jakarta.mail.Message[] captured = new jakarta.mail.Message[1];
-        when(mailSender.createMimeMessage())
-                .thenReturn(new MimeMessage(Session.getInstance(new Properties())));
+        when(mailSender.createMimeMessage()).thenReturn(new MimeMessage(Session.getInstance(new Properties())));
         doAnswer(inv -> {
-            captured[0] = inv.getArgument(0);
-            return null;
-        }).when(mailSender).send(any(MimeMessage.class));
+                    captured[0] = inv.getArgument(0);
+                    return null;
+                })
+                .when(mailSender)
+                .send(any(MimeMessage.class));
 
         sender.validate();
         sender.sendVerificationEmail("destino@example.com", "Ana", "https://kin-platform.com/verify-email?token=abc");

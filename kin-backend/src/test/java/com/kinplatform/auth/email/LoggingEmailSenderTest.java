@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.kinplatform.auth.TestVerificationStore;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.mock.env.MockEnvironment;
@@ -12,7 +13,8 @@ import org.springframework.mock.env.MockEnvironment;
 class LoggingEmailSenderTest {
 
     private static LoggingEmailSender senderWith(MockEnvironment env, DefaultListableBeanFactory bf) {
-        return new LoggingEmailSender(env, bf.getBeanProvider(TestVerificationStore.class));
+        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        return new LoggingEmailSender(env, bf.getBeanProvider(TestVerificationStore.class), meterRegistry);
     }
 
     @Test
