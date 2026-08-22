@@ -76,6 +76,108 @@ class RedisKnowledgeRepositoryTest {
                 List.of(fact), List.of(sourceId), List.of(), 0.9, "verificado", "KnowledgeEngine", "v1");
     }
 
+    private static KnowledgeFact factWithMaxAge(String claim, String sourceId, Duration maxAge) {
+        var fact = new KnowledgeFact(
+                null,
+                claim,
+                sourceId,
+                "https://data.autorizado.com/" + sourceId,
+                OffsetDateTime.now().minusDays(1),
+                SourceTrust.OFFICIAL_PUBLIC,
+                "MARKET");
+        return new KnowledgeFact(
+                fact.id(),
+                fact.claim(),
+                fact.sourceId(),
+                fact.url(),
+                fact.publishedAt(),
+                fact.trust(),
+                fact.category(),
+                maxAge);
+    }
+
+    private static KnowledgeResult resultWithMaxAge(Duration... maxAges) {
+        List<KnowledgeFact> facts = new java.util.ArrayList<>();
+        for (int i = 0; i < maxAges.length; i++) {
+            facts.add(factWithMaxAge("dato " + i, "s" + i, maxAges[i]));
+        }
+        return new KnowledgeResult(
+                facts,
+                facts.stream().map(KnowledgeFact::sourceId).toList(),
+                List.of(),
+                0.9,
+                "verificado",
+                "KnowledgeEngine",
+                "v1");
+    }
+
+    private long ttlSeconds(String key) {
+        Long ttl = redis.getExpire(key, java.util.concurrent.TimeUnit.SECONDS);
+        return ttl == null ? -1L : ttl;
+    }
+
+    @Test
+    void ttlPorFuente_deberiaAplicarElMaxAgeEnElComandoRedis() {
+        RedisKnowledgeRepository repository = repository();
+        KnowledgeQuery query = query("trm");
+
+        repository.save(query, resultWithMaxAge(Duration.ofHours(12)), Duration.ofDays(365));
+
+        String qk = RedisKnowledgeRepository.KEY_PREFIX
+                + RedisKnowledgeRepository.QUERY_KEY
+                + Integer.toHexString(
+                        (query.topic() + "|" + String.join(",", query.keywords()) + "|" + query.category()).hashCode());
+        long qTtl = ttlSeconds(qk);
+        assertTrue(
+                qTtl >= 43_190 && qTtl <= 43_200,
+                "TTL esperado 12h (43200s) por maxAge de la fuente, obtenido " + qTtl);
+    }
+
+    @Test
+    void ttlMinimo_deberiaPrevalecerConVariasFuentes() {
+        RedisKnowledgeRepository repository = repository();
+        KnowledgeQuery query = query("mixto");
+
+        repository.save(query, resultWithMaxAge(Duration.ofHours(12), Duration.ofDays(30)), Duration.ofDays(365));
+
+        String qk = RedisKnowledgeRepository.KEY_PREFIX
+                + RedisKnowledgeRepository.QUERY_KEY
+                + Integer.toHexString(
+                        (query.topic() + "|" + String.join(",", query.keywords()) + "|" + query.category()).hashCode());
+        long ttl = ttlSeconds(qk);
+        assertTrue(ttl >= 43_190 && ttl <= 43_200, "TTL esperado = menor maxAge (12h), obtenido " + ttl);
+    }
+
+    @Test
+    void ttlSinMaxAge_deberiaUsarElTtlProvisto() {
+        RedisKnowledgeRepository repository = repository();
+        KnowledgeQuery query = query("general");
+
+        repository.save(query, result("dato", "s1", "https://data.autorizado.com/1"), Duration.ofDays(30));
+
+        String qk = RedisKnowledgeRepository.KEY_PREFIX
+                + RedisKnowledgeRepository.QUERY_KEY
+                + Integer.toHexString(
+                        (query.topic() + "|" + String.join(",", query.keywords()) + "|" + query.category()).hashCode());
+        long ttl = ttlSeconds(qk);
+        assertTrue(ttl >= 2_591_900 && ttl <= 2_592_000, "TTL esperado = ttl del llamador (30d), obtenido " + ttl);
+    }
+
+    @Test
+    void ttlCallerMenor_deberiaPrevalecerSobreElMaxAge() {
+        RedisKnowledgeRepository repository = repository();
+        KnowledgeQuery query = query("corto");
+
+        repository.save(query, resultWithMaxAge(Duration.ofDays(30)), Duration.ofHours(6));
+
+        String qk = RedisKnowledgeRepository.KEY_PREFIX
+                + RedisKnowledgeRepository.QUERY_KEY
+                + Integer.toHexString(
+                        (query.topic() + "|" + String.join(",", query.keywords()) + "|" + query.category()).hashCode());
+        long ttl = ttlSeconds(qk);
+        assertTrue(ttl >= 21_500 && ttl <= 21_600, "TTL esperado = min(caller 6h, maxAge 30d) = 6h, obtenido " + ttl);
+    }
+
     @Test
     void missLuegoHit_conMismaConsulta() {
         RedisKnowledgeRepository repository = repository();

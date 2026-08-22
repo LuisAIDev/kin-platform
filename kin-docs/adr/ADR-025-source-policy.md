@@ -128,6 +128,11 @@ consulta fija), `fact-columns` (SODA), `landing-page` (URL de los hechos), `max-
   que cambia más seguido fija la expiración) → el `KnowledgeOrchestrator` guarda en Redis con ese
   TTL en vez de una ventana uniforme. Si ningún hecho declara `maxAge`, se usa la ventana de la
   solicitud (comportamiento previo).
+- **Refuerzo a nivel repositorio**: `RedisKnowledgeRepository` aplica también el TTL dinámico al
+  emitir el comando de expiración (`SETEX`): TTL efectivo = `min(ttl del llamador,
+  effectiveTtl())` cuando los hechos declaran `maxAge`, y el `ttl` del llamador (o 24 h si es
+  `null`) si no lo declaran. Así, aunque un llamador pase una ventana larga, la frescura de cada
+  fuente se respeta de forma autónoma en la caché.
 
 ### P11. Modo sombra (Fase 1 del plan de activación)
 

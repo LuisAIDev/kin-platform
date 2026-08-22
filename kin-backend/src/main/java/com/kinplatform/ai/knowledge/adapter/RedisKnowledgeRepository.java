@@ -109,7 +109,7 @@ public class RedisKnowledgeRepository implements KnowledgeRepository {
         if (json == null) {
             return;
         }
-        Duration effective = ttl == null ? Duration.ofHours(24) : ttl;
+        Duration effective = effectiveTtl(result, ttl);
         redis.opsForValue().set(keyForQuery(query), json, effective);
         redis.opsForValue().set(keyForResult(result), json, effective);
     }
@@ -122,7 +122,22 @@ public class RedisKnowledgeRepository implements KnowledgeRepository {
         if (json == null) {
             return;
         }
-        redis.opsForValue().set(key, json, ttl == null ? Duration.ofHours(24) : ttl);
+        redis.opsForValue().set(key, json, effectiveTtl(result, ttl));
+    }
+
+    /**
+     * TTL dinámico e independiente por fuente (ADR-025): prevalece la frescura.
+     * Si los hechos del resultado declaran {@code maxAge}, el TTL efectivo es el
+     * mínimo entre el {@code ttl} del llamador y el mínimo de esos {@code maxAge}
+     * (la fuente que cambia más seguido fija la expiración). Si ningún hecho
+     * declara {@code maxAge}, se usa el {@code ttl} del llamador (o 24 h si es
+     * {@code null}) — retrocompatibilidad con el contrato congelado de ADR-014.
+     */
+    private Duration effectiveTtl(KnowledgeResult result, Duration ttl) {
+        Duration base = ttl == null ? Duration.ofHours(24) : ttl;
+        return result.effectiveTtl()
+                .map(fresh -> base.compareTo(fresh) <= 0 ? base : fresh)
+                .orElse(base);
     }
 
     private String serialize(KnowledgeResult result) {
