@@ -85,9 +85,12 @@ tema en categorías distintas → hechos distintos → claves distintas).
 | Tecnología e Innovación | MinTIC internet fijo, MinTIC internet móvil | ✅ **POC end-to-end (2ª ronda)** |
 | Investigación | MinCiencias proyectos de investigación e innovación | ✅ **POC end-to-end (2ª ronda)** |
 | Medio Ambiente | IDEAM calidad del aire | ✅ Fuente probada |
+| **Gobierno** | **SECOP — origen de recursos de contratación (Colombia Compra Eficiente)** | ✅ **Nueva (Fase 1B), probada + shadow** |
+| **Servicios** | Confecámaras empresas (reuso) | ✅ **Nueva (Fase 1B), probada + shadow** |
+| **Marketing Digital** | MinTIC internet fijo y móvil (reuso) | ✅ **Nueva (Fase 1B), probada + shadow** |
+| **Gastronomía** | insumos agrícolas (reuso: precios de insumos alimentarios) | ✅ **Nueva (Fase 1B), probada + shadow (reuso)** |
 | Industria | (sin fuente tabular: DANE no publica IPI/manufacturera en datos.gov.co) | 🔴 Descartada (motivo documentado) |
-| Gastronomía | (contexto general; insumos aplican parcial) | 🟡 Contexto + parcial |
-| Educación, Impacto Social, Gobierno, Turismo, Creatividad, Marketing Digital, Servicios, Otro | (contexto general) | 🟡/⏳ Solo contexto general |
+| Educación, Impacto Social, Turismo, Creatividad, Otro | (solo contexto general; sin fuente nacional tabular) | ⏳ Pendiente (motivo documentado) |
 
 Todas las categorías reciben al menos el **contexto general** (Banco Mundial + ECB + TRM + PIB
 departamental + IPC INE). El mecanismo está listo: agregar cobertura específica a una categoría es

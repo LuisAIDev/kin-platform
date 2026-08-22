@@ -88,6 +88,39 @@ class KnowledgeCategoryMappingTest {
         assertFalse(used.contains("insumos-agricolas"), "no debe consultar insumos: " + used);
     }
 
+    @Test
+    void gobierno_consultaFuentesSECOP() {
+        var used = run("GOBIERNO", "Consultoría B2G para entidades públicas");
+        assertTrue(used.contains("secop-origen-recursos"), "debe consultar SECOP: " + used);
+        assertFalse(used.contains("saludatos-ths"), "no debe consultar salud: " + used);
+        assertFalse(used.contains("mintic-internet-fijo"), "no debe consultar MinTIC: " + used);
+    }
+
+    @Test
+    void servicios_consultaConfecamaras() {
+        var used = run("SERVICIOS", "Empresa de servicios de outsourcing");
+        assertTrue(used.contains("confecamaras-empresas"), "reuso: registro mercantil aplica a servicios: " + used);
+        assertFalse(used.contains("saludatos-ths"), "no debe consultar salud: " + used);
+        assertFalse(used.contains("minciencias-proyectos"), "no debe consultar investigación: " + used);
+    }
+
+    @Test
+    void marketingDigital_consultaMinTIC() {
+        var used = run("MARKETING_DIGITAL", "Agencia de marketing digital y publicidad");
+        assertTrue(used.contains("mintic-internet-fijo"), "reuso: penetración digital: " + used);
+        assertTrue(used.contains("mintic-internet-movil"), "reuso: tráfico móvil: " + used);
+        assertFalse(used.contains("secop-origen-recursos"), "no debe consultar SECOP: " + used);
+        assertFalse(used.contains("saludatos-ths"), "no debe consultar salud: " + used);
+    }
+
+    @Test
+    void gastronomia_consultaInsumos() {
+        var used = run("GASTRONOMIA", "Restaurante de comida colombiana");
+        assertTrue(used.contains("insumos-agricolas"), "reuso: precios de insumos alimentarios: " + used);
+        assertFalse(used.contains("secop-origen-recursos"), "no debe consultar SECOP: " + used);
+        assertFalse(used.contains("minciencias-proyectos"), "no debe consultar investigación: " + used);
+    }
+
     private static Set<String> run(String category, String topic) {
         var props = props();
         KnowledgeAdapterMetrics metrics = new KnowledgeAdapterMetrics(new SimpleMeterRegistry());

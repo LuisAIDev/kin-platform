@@ -104,7 +104,7 @@ kin:
         max-age: 30d
         level: 2
         region: COL
-        categories: [AGROINDUSTRIA]
+        categories: [AGROINDUSTRIA, GASTRONOMIA]
       # ---------- Nivel 2 — España ----------
       - id: ine-ipc
         name: INE España — IPC nacional
@@ -127,7 +127,7 @@ kin:
         max-age: 30d
         level: 2
         region: COL
-        categories: [EMPRESARIAL, COMERCIO]
+        categories: [EMPRESARIAL, COMERCIO, SERVICIOS]
       - id: dane-exportaciones-cafe
         name: DANE — Exportaciones de café (comercio exterior)
         base-url: "https://www.datos.gov.co/resource/5fct-ib9u.json?$limit=20&$where=descripcion_partida10_dig%20like%20%27%25caf%25%27"
@@ -215,7 +215,7 @@ kin:
         max-age: 30d
         level: 2
         region: COL
-        categories: [TECNOLOGIA]
+        categories: [TECNOLOGIA, MARKETING_DIGITAL]
       - id: mintic-internet-movil
         name: MinTIC — Tráfico de Internet móvil por proveedor
         base-url: "https://www.datos.gov.co/resource/4z5v-cr6b.json?$limit=10"
@@ -226,7 +226,7 @@ kin:
         max-age: 30d
         level: 2
         region: COL
-        categories: [TECNOLOGIA]
+        categories: [TECNOLOGIA, MARKETING_DIGITAL]
       - id: minciencias-proyectos
         name: MinCiencias — Proyectos de investigación e innovación evaluados
         base-url: "https://www.datos.gov.co/resource/6hgx-q9pi.json?$limit=10"
@@ -238,6 +238,17 @@ kin:
         level: 2
         region: COL
         categories: [INVESTIGACION]
+      - id: secop-origen-recursos
+        name: Colombia Compra Eficiente — SECOP, origen de recursos de contratación
+        base-url: "https://www.datos.gov.co/resource/3xwx-53wt.json?$limit=10"
+        format: SODA_JSON
+        query-param: ""
+        fact-columns: [orig_rec_nombre, valor, anno_bpin]
+        landing-page: "https://www.datos.gov.co/d/3xwx-53wt"
+        max-age: 30d
+        level: 2
+        region: COL
+        categories: [GOBIERNO]
 
   cache:
     redis:

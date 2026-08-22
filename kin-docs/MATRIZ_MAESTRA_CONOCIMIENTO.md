@@ -58,6 +58,7 @@ Leyenda de estado: ✅ probada e integrada · 🟡 API verificada (integración/
 | `mintic-internet-fijo` | MinTIC — Accesos internet fijo (`n48w-gutb`) | `SODA_JSON` | TECNOLOGIA | CC BY-SA 4.0 | Ídem | Trimestral | ✅ |
 | `mintic-internet-movil` | MinTIC — Tráfico internet móvil (`4z5v-cr6b`) | `SODA_JSON` | TECNOLOGIA | CC BY-SA 4.0 | Ídem | Trimestral | ✅ |
 | `minciencias-proyectos` | MinCiencias — Proyectos de investigación (`6hgx-q9pi`) | `SODA_JSON` | INVESTIGACION | CC BY-SA 4.0 | Ídem | Anual (convocatorias) | ✅ |
+| `secop-origen-recursos` | Colombia Compra Eficiente — SECOP, origen de recursos (`3xwx-53wt`) | `SODA_JSON` | GOBIERNO | CC BY-SA 4.0 | Ídem | Periódica | ✅ |
 
 ### 2.3 Nivel 2 — España
 
@@ -85,9 +86,12 @@ Las categorías con `categories` específicas suman sus fuentes:
 | Tecnología e Innovación | mintic-internet-fijo · mintic-internet-movil | ✅ probada end-to-end |
 | Investigación | minciencias-proyectos | ✅ probada end-to-end |
 | Medio Ambiente | calidad-aire-colombia | ✅ fuente probada |
+| Gobierno | secop-origen-recursos (contratación pública) | ✅ **nueva (Fase 1B)** |
+| Servicios | confecamaras-empresas (reuso) | ✅ **nueva (Fase 1B)** |
+| Marketing Digital | mintic-internet-fijo/móvil (reuso) | ✅ **nueva (Fase 1B)** |
+| Gastronomía y Alimentos | insumos-agricolas (reuso) | ✅ **nueva (Fase 1B)** |
 | Industria | (DANE no publica IPI/manufacturera como dataset tabular) | 🔴 descartada |
-| Gastronomía y Alimentos | (contexto general; insumos aplican parcial) | 🟡 contexto + parcial |
-| Educación, Impacto Social, Gobierno, Turismo, Creatividad, Marketing Digital, Servicios, Otro | (solo contexto general) | ⏳ pendiente |
+| Educación, Impacto Social, Turismo, Creatividad, Otro | (solo contexto general) | ⏳ pendiente |
 
 ---
 
