@@ -38,6 +38,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -74,9 +76,17 @@ class ChatOrchestratorServiceImplTest {
     void setUp() {
         objectMapper = spy(new ObjectMapper());
 
+        ExecutorService syncExecutor = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "kin-test-sync-" + System.nanoTime());
+            t.setDaemon(true);
+            return t;
+        });
+
         orchestrator = new ChatOrchestratorServiceImpl(
                 chatService, projectRepository, objectMapper, conversationOrchestrator,
-                new PromptGuardrail(), reportRepository);
+                new PromptGuardrail(), reportRepository,
+                null, null, null, null,
+                syncExecutor, true);
 
         request = new ChatRequest();
         request.setContent(CONTENT);
@@ -174,7 +184,7 @@ class ChatOrchestratorServiceImplTest {
             assertNotNull(result);
             SseEmitter mockEmitter = mocked.constructed().get(0);
 
-            verify(mockEmitter, times(3))
+            verify(mockEmitter, times(4))
                     .send(any(SseEmitter.SseEventBuilder.class));
             verify(mockEmitter).complete();
             verify(mockEmitter, never()).completeWithError(any());
@@ -182,24 +192,29 @@ class ChatOrchestratorServiceImplTest {
             // Verify content & order of each JSON payload sent to ObjectMapper
             ArgumentCaptor<Object> jsonCaptor =
                     ArgumentCaptor.forClass(Object.class);
-            verify(objectMapper, times(3))
+            verify(objectMapper, times(4))
                     .writeValueAsString(jsonCaptor.capture());
 
             var payloads = jsonCaptor.getAllValues();
 
             @SuppressWarnings("unchecked")
-            Map<String, Object> firstToken =
+            Map<String, Object> startedPayload =
                     (Map<String, Object>) payloads.get(0);
+            assertEquals("Procesando tu mensaje...", startedPayload.get("message"));
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> firstToken =
+                    (Map<String, Object>) payloads.get(1);
             assertEquals("A", firstToken.get("token"));
 
             @SuppressWarnings("unchecked")
             Map<String, Object> secondToken =
-                    (Map<String, Object>) payloads.get(1);
+                    (Map<String, Object>) payloads.get(2);
             assertEquals("B", secondToken.get("token"));
 
             @SuppressWarnings("unchecked")
             Map<String, Object> donePayload =
-                    (Map<String, Object>) payloads.get(2);
+                    (Map<String, Object>) payloads.get(3);
             assertEquals(true, donePayload.get("done"));
             assertEquals("AB", donePayload.get("content"));
 
@@ -233,18 +248,27 @@ class ChatOrchestratorServiceImplTest {
             assertNotNull(result);
             SseEmitter mockEmitter = mocked.constructed().get(0);
 
-            verify(mockEmitter).send(any(SseEmitter.SseEventBuilder.class));
+            verify(mockEmitter, times(2))
+                    .send(any(SseEmitter.SseEventBuilder.class));
             verify(mockEmitter).complete();
             verify(mockEmitter, never()).completeWithError(any());
 
-            // Verify error payload
+            // Verify error payload (first is started, second is error)
             ArgumentCaptor<Object> jsonCaptor =
                     ArgumentCaptor.forClass(Object.class);
-            verify(objectMapper).writeValueAsString(jsonCaptor.capture());
+            verify(objectMapper, times(2))
+                    .writeValueAsString(jsonCaptor.capture());
+
+            var payloads = jsonCaptor.getAllValues();
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> startedPayload =
+                    (Map<String, Object>) payloads.get(0);
+            assertEquals("Procesando tu mensaje...", startedPayload.get("message"));
 
             @SuppressWarnings("unchecked")
             Map<String, Object> errorPayload =
-                    (Map<String, Object>) jsonCaptor.getValue();
+                    (Map<String, Object>) payloads.get(1);
             assertEquals("AI model unavailable", errorPayload.get("error"));
 
             // Assistant message should NOT be saved (error path)
@@ -274,26 +298,31 @@ class ChatOrchestratorServiceImplTest {
             assertNotNull(result);
             SseEmitter mockEmitter = mocked.constructed().get(0);
 
-            verify(mockEmitter, times(2))
+            verify(mockEmitter, times(3))
                     .send(any(SseEmitter.SseEventBuilder.class));
             verify(mockEmitter).complete();
 
             // Verify fallback done payload (assistantMessageId = "")
             ArgumentCaptor<Object> jsonCaptor =
                     ArgumentCaptor.forClass(Object.class);
-            verify(objectMapper, times(2))
+            verify(objectMapper, times(3))
                     .writeValueAsString(jsonCaptor.capture());
 
             var payloads = jsonCaptor.getAllValues();
 
             @SuppressWarnings("unchecked")
-            Map<String, Object> tokenPayload =
+            Map<String, Object> startedPayload =
                     (Map<String, Object>) payloads.get(0);
+            assertEquals("Procesando tu mensaje...", startedPayload.get("message"));
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> tokenPayload =
+                    (Map<String, Object>) payloads.get(1);
             assertEquals("Token \u00FAnico", tokenPayload.get("token"));
 
             @SuppressWarnings("unchecked")
             Map<String, Object> donePayload =
-                    (Map<String, Object>) payloads.get(1);
+                    (Map<String, Object>) payloads.get(2);
             assertEquals(true, donePayload.get("done"));
             assertEquals("Token \u00FAnico", donePayload.get("content"));
             assertEquals("", donePayload.get("assistantMessageId"));
@@ -307,7 +336,7 @@ class ChatOrchestratorServiceImplTest {
     @Test
     void processMessageStream_cuandoSendLanzaIOException_marcaCompletadoSinCompleteWithError() throws Exception {
         stubCommonDependencies();
-        stubStream(Flux.just("A"));
+        // No stubStream needed - send throws immediately
 
         try (var mocked = mockConstruction(SseEmitter.class,
                 (mock, context) ->
@@ -345,17 +374,26 @@ class ChatOrchestratorServiceImplTest {
             assertNotNull(result);
             SseEmitter mockEmitter = mocked.constructed().get(0);
 
-            verify(mockEmitter).send(any(SseEmitter.SseEventBuilder.class));
+            verify(mockEmitter, times(2))
+                    .send(any(SseEmitter.SseEventBuilder.class));
             verify(mockEmitter).complete();
 
             // Verify done payload has empty content
             ArgumentCaptor<Object> jsonCaptor =
                     ArgumentCaptor.forClass(Object.class);
-            verify(objectMapper).writeValueAsString(jsonCaptor.capture());
+            verify(objectMapper, times(2))
+                    .writeValueAsString(jsonCaptor.capture());
+
+            var payloads = jsonCaptor.getAllValues();
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> startedPayload =
+                    (Map<String, Object>) payloads.get(0);
+            assertEquals("Procesando tu mensaje...", startedPayload.get("message"));
 
             @SuppressWarnings("unchecked")
             Map<String, Object> donePayload =
-                    (Map<String, Object>) jsonCaptor.getValue();
+                    (Map<String, Object>) payloads.get(1);
             assertEquals(true, donePayload.get("done"));
             assertEquals("", donePayload.get("content"));
 
@@ -397,7 +435,7 @@ class ChatOrchestratorServiceImplTest {
     }
 
     @Test
-    void processMessageStream_deberiaPersistirReporte_cuandoOutcomeREPORT() {
+    void processMessageStream_deberiaPersistirReporte_cuandoOutcomeREPORT() throws IOException {
         stubCommonDependencies();
         var report = ConsultingReport.empty();
         when(conversationOrchestrator.orchestrateStreamWithOutcome(any(ConversationTurn.class)))
@@ -410,6 +448,8 @@ class ChatOrchestratorServiceImplTest {
             SseEmitter result = orchestrator.processMessageStream(USER_ID, PROJECT_ID, request);
             assertNotNull(result);
             SseEmitter mockEmitter = mocked.constructed().get(0);
+            verify(mockEmitter, times(3))
+                    .send(any(SseEmitter.SseEventBuilder.class));
             verify(mockEmitter).complete();
         }
 

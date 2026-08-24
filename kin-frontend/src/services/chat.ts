@@ -26,6 +26,8 @@ export interface StreamCallbacks {
   onToken: (token: string) => void;
   onDone: (response: ChatResponse) => void;
   onError: (error: Error) => void;
+  onStarted?: () => void;
+  onKeepAlive?: () => void;
 }
 
 export interface ChatStreamError extends Error {
@@ -69,6 +71,7 @@ export const chatService = {
         return;
       }
       let receivedTokens = false;
+      let receivedStarted = false;
       try {
         const url = `${API_URL}/projects/${projectId}/chat/stream`;
         console.log("=== CHAT SENDING REQUEST ===");
@@ -143,6 +146,13 @@ export const chatService = {
                   callbacks.onError(
                     streamError(parsed.error ?? "Unknown server error", receivedTokens),
                   );
+                } else if (eventType === "started") {
+                  if (!receivedStarted) {
+                    receivedStarted = true;
+                    callbacks.onStarted?.();
+                  }
+                } else if (eventType === "keepalive") {
+                  callbacks.onKeepAlive?.();
                 }
               } catch {
                 // ignore parse errors for individual tokens

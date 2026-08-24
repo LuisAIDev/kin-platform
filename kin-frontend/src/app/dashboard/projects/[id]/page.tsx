@@ -35,18 +35,23 @@ export default function ProjectDetailPage({ params }: Props) {
   const router = useRouter();
 
   const [project, setProject] = useState<Project | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+const [messages, setMessages] = useState<ChatMessage[]>([]);
 const [lastAction, setLastAction] = useState<ExportAction | null>(null);
-  const [input, setInput] = useState("");
-  const [sending, setSending] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [streamingId, setStreamingId] = useState<string | null>(null);
-  const [infoOpen, setInfoOpen] = useState(false);
-  const [chatLimitError, setChatLimitError] = useState<string | null>(null);
+const [input, setInput] = useState("");
+const [sending, setSending] = useState(false);
+const [loading, setLoading] = useState(true);
+const [streamingId, setStreamingId] = useState<string | null>(null);
+const [infoOpen, setInfoOpen] = useState(false);
+const [chatLimitError, setChatLimitError] = useState<string | null>(null);
+const [streamStarted, setStreamStarted] = useState(false);
+const [streamError, setStreamError] = useState<string | null>(null);
+const [streamErrorHadTokens, setStreamErrorHadTokens] = useState(false);
+const [pendingRetry, setPendingRetry] = useState<{ content: string; aiId: string } | null>(null);
 
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const sendingRef = useRef(false);
-  const abortRef = useRef<AbortController | null>(null);
+const chatEndRef = useRef<HTMLDivElement>(null);
+const sendingRef = useRef(false);
+const abortRef = useRef<AbortController | null>(null);
+const lastUserMessageRef = useRef<string>("");
 
   useEffect(() => {
     const token = authService.getToken();
@@ -94,6 +99,9 @@ const [lastAction, setLastAction] = useState<ExportAction | null>(null);
     setSending(true);
     setInput("");
     setLastAction(null);
+    setStreamStarted(false);
+    setStreamError(null);
+    setStreamErrorHadTokens(false);
 
     const optimisticUser: ChatMessage = {
       id: crypto.randomUUID(),
@@ -118,6 +126,7 @@ const [lastAction, setLastAction] = useState<ExportAction | null>(null);
       createdAt: new Date().toISOString(),
     };
 
+    lastUserMessageRef.current = text;
     setMessages((prev) => [...prev, optimisticUser, optimisticAi]);
     setStreamingId(aiId);
 
@@ -125,10 +134,23 @@ const [lastAction, setLastAction] = useState<ExportAction | null>(null);
       sendingRef.current = false;
       setStreamingId(null);
       setSending(false);
+      setStreamStarted(false);
+      setStreamError(null);
+      setStreamErrorHadTokens(false);
+      setPendingRetry(null);
     };
 
     abortRef.current = chatService.sendMessageStream(id, text, {
+      onStarted: () => {
+        setStreamStarted(true);
+      },
+      onKeepAlive: () => {
+        // Keep-alive recibido: el backend sigue procesando
+        console.log("=== KEEP-ALIVE RECEIVED ===");
+      },
       onToken: (token: string) => {
+        setStreamError(null);
+        setStreamErrorHadTokens(false);
         setMessages((prev) =>
           prev.map((m) =>
             m.id === aiId ? { ...m, content: m.content + token } : m
@@ -158,18 +180,24 @@ const [lastAction, setLastAction] = useState<ExportAction | null>(null);
         console.error("Request URL:", `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"}/projects/${id}/chat/stream`);
         console.error("Token present:", !!authService.getToken());
         const hadTokens = (err as ChatStreamError | undefined)?.hadTokens ?? false;
-        setMessages((prev) =>
-          prev.map((m) => {
+        setStreamError(err.message);
+        setStreamErrorHadTokens(hadTokens);
+        setMessages((prev) => {
+          let aiMessageContent = "";
+          const updated = prev.map((m) => {
             if (m.id !== aiId) return m;
-            // Reglas 2-4: si ya llegaron tokens (o el error lo indica), conservar
-            // el contenido parcial real y NO destruirlo con el mensaje de error.
             if (hadTokens || m.content.length > 0) {
+              aiMessageContent = m.content;
               return { ...m, content: m.content };
             }
-            // Regla 5: error sin ningún token recibido → mostrar el mensaje de error.
             return { ...m, content: "(error al generar respuesta)" };
-          })
-        );
+          });
+          // Si hubo tokens, permitir reintento
+          if (hadTokens || aiMessageContent.length > 0) {
+            setPendingRetry({ content: lastUserMessageRef.current, aiId });
+          }
+          return updated;
+        });
         done();
       },
     });
@@ -179,6 +207,15 @@ const [lastAction, setLastAction] = useState<ExportAction | null>(null);
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  };
+
+  const handleRetry = () => {
+    if (pendingRetry && !sendingRef.current) {
+      const { content, aiId } = pendingRetry;
+      setPendingRetry(null);
+      // Reenviar el mismo mensaje
+      handleSend(content);
     }
   };
 
@@ -336,8 +373,36 @@ const [lastAction, setLastAction] = useState<ExportAction | null>(null);
                     </p>
                   )}
                   <RenderContent content={msg.content} />
+                  {isStreaming && streamStarted && msg.content.length === 0 && (
+                    <p className="text-xs text-neutral-500 italic mt-1">
+                      KIN está preparando tu respuesta...
+                    </p>
+                  )}
                   {isStreaming && (
                     <span className="inline-block w-2 h-4 bg-primary-500 animate-pulse ml-0.5" />
+                  )}
+                  {streamError && !isStreaming && msg.id === streamingId && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-xs text-amber-600 flex-1">
+                        {streamErrorHadTokens
+                          ? "La respuesta se interrumpió. Puedes reintentar para continuarla."
+                          : "No se pudo generar la respuesta."}
+                      </span>
+                      {streamErrorHadTokens && (
+                        <button
+                          type="button"
+                          onClick={handleRetry}
+                          disabled={sending}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 transition disabled:opacity-50 min-h-11"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                            <polyline points="23 4 15 4 15 12" />
+                          </svg>
+                          Reintentar
+                        </button>
+                      )}
+                    </div>
                   )}
                   {showContinue && (
                     <button
