@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { projectsService, type Project } from "@/services/projects";
 import { chatService, type ChatMessage, type ChatResponse, type ChatStreamError } from "@/services/chat";
 import type { ExportAction } from "@/services/exportProject";
-import { authService } from "@/services/auth";
 import ViabilityScore from "@/components/ViabilityScore";
 import PdfReportButton from "@/components/PdfReportButton";
 import ExportProjectButton from "@/components/export/ExportProjectButton";
@@ -54,12 +53,6 @@ const abortRef = useRef<AbortController | null>(null);
 const lastUserMessageRef = useRef<string>("");
 
   useEffect(() => {
-    const token = authService.getToken();
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
     Promise.all([
       projectsService.getById(id),
       chatService.getHistory(id),
@@ -178,7 +171,6 @@ const lastUserMessageRef = useRef<string>("");
       onError: (err) => {
         console.error("=== CHAT ERROR ===", err);
         console.error("Request URL:", `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"}/projects/${id}/chat/stream`);
-        console.error("Token present:", !!authService.getToken());
         const hadTokens = (err as ChatStreamError | undefined)?.hadTokens ?? false;
         setStreamError(err.message);
         setStreamErrorHadTokens(hadTokens);

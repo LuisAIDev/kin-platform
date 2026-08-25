@@ -64,21 +64,12 @@ describe("enterpriseApi", () => {
     expect(String(fetchMock.mock.calls[0][0])).toContain("/enterprise/p1/1/export/PDF");
   });
 
-  it("incluye la cabecera Authorization cuando existe token", async () => {
-    localStorage.setItem("kin_token_v2", "tok");
+  it("incluye credentials:include en la solicitud", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(dashboard));
     await enterpriseApi.getDashboard("p1", 1);
     const init = fetchMock.mock.calls[0][1] as RequestInit;
-    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer tok");
-    localStorage.removeItem("kin_token_v2");
-  });
-
-  it("no incluye Authorization sin token", async () => {
-    localStorage.removeItem("kin_token_v2");
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(dashboard));
-    await enterpriseApi.getDashboard("p1", 1);
-    const init = fetchMock.mock.calls[0][1] as RequestInit;
-    expect((init.headers as Record<string, string>).Authorization).toBeUndefined();
+    expect((init.headers as Record<string, string> | undefined)?.Authorization).toBeUndefined();
+    expect(init.credentials).toBe("include");
   });
 
   it("lanza un error cuando la descarga falla", async () => {
@@ -147,8 +138,7 @@ describe("enterpriseApi.generate", () => {
     );
   });
 
-  it("incluye Authorization en la solicitud de generación", async () => {
-    localStorage.setItem("kin_token_v2", "tok");
+  it("incluye credentials:include en la solicitud de generación", async () => {
     const fetchMock = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response("", { status: 202 }));
@@ -156,7 +146,7 @@ describe("enterpriseApi.generate", () => {
     await enterpriseApi.generate("p1", true);
 
     const init = fetchMock.mock.calls[0][1] as RequestInit;
-    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer tok");
-    localStorage.removeItem("kin_token_v2");
+    expect((init.headers as Record<string, string> | undefined)?.Authorization).toBeUndefined();
+    expect(init.credentials).toBe("include");
   });
 });

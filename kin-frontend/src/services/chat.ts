@@ -1,5 +1,4 @@
 import { api } from "./api";
-import { getToken } from "./session";
 import { isChatMessageTooLong, MAX_CHAT_MESSAGE_LENGTH } from "@/utils/chatLimits";
 import type { ExportAction } from "@/services/exportProject";
 
@@ -56,10 +55,8 @@ export const chatService = {
 
   sendMessageStream: (projectId: string, content: string, callbacks: StreamCallbacks): AbortController => {
     const controller = new AbortController();
-    const token = getToken();
 
     const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
 
     (async () => {
       if (isChatMessageTooLong(content)) {
@@ -74,12 +71,6 @@ export const chatService = {
       let receivedStarted = false;
       try {
         const url = `${API_URL}/projects/${projectId}/chat/stream`;
-        console.log("=== CHAT SENDING REQUEST ===");
-        console.log("URL:", url);
-        console.log("Method: POST");
-        console.log("Headers:", JSON.stringify(headers));
-        console.log("Body:", JSON.stringify({ content: content.substring(0, 200) }));
-        console.log("Token present:", !!token);
 
         const res = await fetch(url, {
           method: "POST",
@@ -89,13 +80,8 @@ export const chatService = {
           credentials: "include",
         });
 
-        console.log("=== CHAT RESPONSE ===");
-        console.log("HTTP Status:", res.status, res.statusText);
-        console.log("Headers:", res.headers.get("content-type"));
-
         if (!res.ok) {
           const body = await res.json().catch(() => null);
-          console.error("=== CHAT ERROR RESPONSE BODY ===", body);
           throw new Error(body?.error ?? `Request failed (${res.status})`);
         }
 
@@ -142,7 +128,6 @@ export const chatService = {
                   });
                   break;
                 } else if (eventType === "error") {
-                  console.error("=== CHAT STREAM ERROR EVENT ===", parsed);
                   callbacks.onError(
                     streamError(parsed.error ?? "Unknown server error", receivedTokens),
                   );

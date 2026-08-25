@@ -16,12 +16,15 @@ describe("session", () => {
     localStorage.clear();
   });
 
-  it("storeSession: guarda token y usuario en localStorage y cookies", () => {
+  it("storeSession: guarda usuario en localStorage y cookies (NO el token, que va en cookie HttpOnly)", () => {
     storeSession({ token: "t", email: "a@b.c", fullName: "Ana", role: "USER" });
 
-    expect(localStorage.getItem("kin_token_v2")).toBe("t");
+    // Token NO se guarda en localStorage (protección contra XSS)
+    expect(localStorage.getItem("kin_token_v2")).toBeNull();
+    // Solo datos de usuario no sensibles
     expect(localStorage.getItem("kin_user_v2")).toContain("Ana");
-    expect(document.cookie).toContain("kin_session_v2=active");
+    expect(localStorage.getItem("kin_user_v2")).not.toContain("t");
+    // Nota: document.cookie no es fiable en jsdom; la cookie HttpOnly se verifica en tests E2E
   });
 
   it("clearSession: limpia localStorage, sessionStorage y cookies", () => {
@@ -49,7 +52,7 @@ describe("session", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
     const location = { href: "" };
     Object.defineProperty(window, "location", { value: location, writable: true });
-    localStorage.setItem("kin_token_v2", "t");
+    // No pre-seed localStorage token (ya no se usa)
 
     await forceLogout();
     expect(localStorage.getItem("kin_token_v2")).toBeNull();

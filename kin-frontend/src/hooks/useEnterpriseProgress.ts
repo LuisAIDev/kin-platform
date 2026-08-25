@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { API_URL, authHeaders } from "@/services/enterpriseApi";
+import { API_URL } from "@/services/enterpriseApi";
 import {
   TERMINAL_STATES,
   type EnterpriseProgressEvent,
@@ -65,7 +65,8 @@ export function useEnterpriseProgress(
         const res = await fetch(
           `${API_URL}/enterprise/${projectId}/${version}/stream`,
           {
-            headers: { ...authHeaders(), Accept: "text/event-stream" },
+            headers: { Accept: "text/event-stream" },
+            credentials: "include",
             signal: controller.signal,
           },
         );

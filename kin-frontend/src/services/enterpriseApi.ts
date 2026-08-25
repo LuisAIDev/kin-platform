@@ -2,20 +2,14 @@ import type {
   EnterpriseDashboard,
   EnterpriseInformation,
 } from "@/types/enterprise";
-import { API_URL, getToken } from "@/services/session";
+import { API_URL } from "@/services/session";
 
 /** URL base de la API del backend KIN (compartida con el resto de servicios). */
 export { API_URL };
 
-/** Token JWT almacenado por la aplicación principal (misma clave que el resto de servicios). */
-export function authHeaders(): Record<string, string> {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 async function jsonRequest<T>(endpoint: string): Promise<T> {
   const res = await fetch(`${API_URL}${endpoint}`, {
-    headers: { ...authHeaders(), Accept: "application/json" },
+    headers: { Accept: "application/json" },
     credentials: "include",
   });
   if (!res.ok) {
@@ -25,7 +19,7 @@ async function jsonRequest<T>(endpoint: string): Promise<T> {
 }
 
 async function binaryRequest(endpoint: string): Promise<Blob> {
-  const res = await fetch(`${API_URL}${endpoint}`, { headers: authHeaders() });
+  const res = await fetch(`${API_URL}${endpoint}`, { credentials: "include" });
   if (!res.ok) {
     throw new Error(`Request failed (${res.status})`);
   }
@@ -68,7 +62,8 @@ export const enterpriseApi: EnterpriseApi = {
   generate: async (projectId, asyncMode = true) => {
     const res = await fetch(`${API_URL}/enterprise/${projectId}/generate`, {
       method: "POST",
-      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ async: asyncMode }),
     });
     // 201 (síncrona), 202 (asíncrona) o 409 (ya en curso): la generación

@@ -24,15 +24,15 @@ describe("api", () => {
     mockedForceLogout.mockReset();
   });
 
-  it("get: agrega Authorization con token y devuelve JSON", async () => {
-    localStorage.setItem("kin_token_v2", "tok-1");
+  it("get: usa credentials:include y devuelve JSON", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ ok: true }));
 
     const result = await api.get<{ ok: boolean }>("/ping");
 
     expect(result.ok).toBe(true);
     const [, init] = fetchMock.mock.calls[0];
-    expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer tok-1");
+    expect((init?.headers as Record<string, string> | undefined)?.Authorization).toBeUndefined();
+    expect((init as RequestInit).credentials).toBe("include");
     expect(String(fetchMock.mock.calls[0][0])).toContain("/ping");
   });
 
@@ -95,52 +95,44 @@ describe("api", () => {
   });
 
   it("401 con el token actual fuerza logout", async () => {
-    localStorage.setItem("kin_token_v2", "current-tok");
+    localStorage.setItem("kin_user_v2", JSON.stringify({ email: "a@b.c", fullName: "Ana", role: "FREE" }));
     vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ error: "x" }, 401));
+
+    await expect(api.get("/x")).rejects.toThrow("Unauthorized");
+    expect(mockedForceLogout).toHaveBeenCalled();
+    // forceLogout está mockeado, no limpia localStorage real
+  });
+
+  it("401 siempre fuerza logout (sin token en localStorage)", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ error: "Token inválido" }, 401));
 
     await expect(api.get("/x")).rejects.toThrow("Unauthorized");
     expect(mockedForceLogout).toHaveBeenCalled();
   });
 
-  it("401 de una petición con token antiguo no fuerza logout ni borra el token nuevo", async () => {
-    localStorage.setItem("kin_token_v2", "old-tok");
+  it("400 authenticated user fuerza logout", async () => {
+    localStorage.setItem("kin_user_v2", JSON.stringify({ email: "a@b.c", fullName: "Ana", role: "FREE" }));
     let resolveFetch!: (r: Response) => void;
     const pending = new Promise<Response>((r) => (resolveFetch = r));
     vi.spyOn(globalThis, "fetch").mockReturnValue(pending as Promise<Response>);
 
     const p = api.get("/x");
-    localStorage.setItem("kin_token_v2", "new-tok");
-    resolveFetch(jsonResponse({ error: "Token inválido" }, 401));
-
-    await expect(p).rejects.toThrow("Unauthorized");
-    expect(mockedForceLogout).not.toHaveBeenCalled();
-    expect(localStorage.getItem("kin_token_v2")).toBe("new-tok");
-  });
-
-  it("400 authenticated user de una petición con token antiguo no fuerza logout", async () => {
-    localStorage.setItem("kin_token_v2", "old-tok");
-    let resolveFetch!: (r: Response) => void;
-    const pending = new Promise<Response>((r) => (resolveFetch = r));
-    vi.spyOn(globalThis, "fetch").mockReturnValue(pending as Promise<Response>);
-
-    const p = api.get("/x");
-    localStorage.setItem("kin_token_v2", "new-tok");
     resolveFetch(jsonResponse({ error: "No authenticated user" }, 400));
 
     await expect(p).rejects.toThrow("No authenticated user");
-    expect(mockedForceLogout).not.toHaveBeenCalled();
-    expect(localStorage.getItem("kin_token_v2")).toBe("new-tok");
+    expect(mockedForceLogout).toHaveBeenCalled();
+    // forceLogout está mockeado, no limpia localStorage real
   });
 
   it("200 en /auth/me mantiene la sesión activa", async () => {
-    localStorage.setItem("kin_token_v2", "tok");
+    localStorage.setItem("kin_user_v2", JSON.stringify({ email: "a@b.c", fullName: "Ana", role: "FREE" }));
     vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ email: "a@b.c" }, 200));
 
     const result = await api.get<{ email: string }>("/auth/me");
 
     expect(result).toEqual({ email: "a@b.c" });
     expect(mockedForceLogout).not.toHaveBeenCalled();
-    expect(localStorage.getItem("kin_token_v2")).toBe("tok");
+    expect(localStorage.getItem("kin_user_v2")).toContain("a@b.c");
   });
 
   it("200 en /subscriptions/status mantiene la sesión activa", async () => {

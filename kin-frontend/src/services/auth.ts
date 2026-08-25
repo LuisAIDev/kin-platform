@@ -3,7 +3,6 @@ import {
   API_URL,
   storeSession,
   clearSession,
-  getToken,
   setPendingEmail,
 } from "./session";
 
@@ -72,26 +71,15 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    const token = getToken();
     try {
-      if (token) {
-        // Esperar a que el backend invalide la cookie HttpOnly (Set-Cookie Max-Age=0)
-        // antes de limpiar la sesión y navegar, para que el middleware /login no
-        // vuelva a redirigir al dashboard.
-        await fetch(`${API_URL}/auth/logout`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          credentials: "include",
-        });
-      }
+      await fetch(`${API_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
     } catch {
       // best-effort: aunque el POST falle, continuar limpiando la sesión local
     }
     clearSession();
-  },
-
-  getToken(): string | null {
-    return getToken();
   },
 
   getUser(): AuthResponse | null {

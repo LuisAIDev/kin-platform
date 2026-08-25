@@ -65,14 +65,16 @@ describe("authService", () => {
     expect(localStorage.getItem("kin_token_v2")).toBeNull();
   });
 
-  it("login: éxito guarda sesión", async () => {
+  it("login: éxito guarda sesión (usuario en localStorage, token en cookie HttpOnly)", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(sessionUser));
 
     const result = await authService.login({ email: "a@b.c", password: "x" });
 
     expect(result.error).toBeNull();
     expect(result.data?.token).toBe("t");
-    expect(localStorage.getItem("kin_token_v2")).toBe("t");
+    // Token NO se guarda en localStorage (protección XSS)
+    expect(localStorage.getItem("kin_token_v2")).toBeNull();
+    expect(localStorage.getItem("kin_user_v2")).toContain("Ana");
   });
 
   it("login: EMAIL_VERIFICATION_REQUIRED devuelve el código sin forzar logout", async () => {
@@ -141,30 +143,29 @@ describe("authService", () => {
     expect(result.data?.message).toContain("recibirás un nuevo mensaje");
   });
 
-  it("logout: limpia sesión (sin token no llama a la API)", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch");
-
-    await authService.logout();
-
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(localStorage.getItem("kin_token_v2")).toBeNull();
-  });
-
-  it("logout: con token llama a /auth/logout y limpia", async () => {
-    localStorage.setItem("kin_token_v2", "t");
+  it("logout: limpia sesión y llama a /auth/logout para invalidar cookie HttpOnly", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
 
     await authService.logout();
 
     expect(String(fetchMock.mock.calls[0][0])).toContain("/auth/logout");
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: "POST", credentials: "include" });
     expect(localStorage.getItem("kin_token_v2")).toBeNull();
   });
 
-  it("getToken/getUser: leen de localStorage", () => {
-    localStorage.setItem("kin_token_v2", "tok");
+  it("logout: con token previo llama a /auth/logout y limpia", async () => {
+    localStorage.setItem("kin_user_v2", JSON.stringify(sessionUser));
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
+
+    await authService.logout();
+
+    expect(String(fetchMock.mock.calls[0][0])).toContain("/auth/logout");
+    expect(localStorage.getItem("kin_user_v2")).toBeNull();
+  });
+
+  it("getUser: lee de localStorage", () => {
     localStorage.setItem("kin_user_v2", JSON.stringify(sessionUser));
 
-    expect(authService.getToken()).toBe("tok");
     expect(authService.getUser()?.email).toBe("a@b.c");
     expect(authService.getUser()?.fullName).toBe("Ana");
   });

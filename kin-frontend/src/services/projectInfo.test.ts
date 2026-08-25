@@ -52,8 +52,7 @@ describe("projectInfoService", () => {
     expect(String(fetchMock.mock.calls[0][0])).toContain("/projects/p1/documents");
   });
 
-  it("uploadDocument: envía FormData con Authorization y devuelve el documento", async () => {
-    localStorage.setItem("kin_token_v2", "tok");
+  it("uploadDocument: envía FormData con credentials:include y devuelve el documento", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       jsonResponse({ id: "d1", filename: "notas.txt", status: "PROCESADO" }),
     );
@@ -64,14 +63,16 @@ describe("projectInfoService", () => {
     expect(result.filename).toBe("notas.txt");
     const [url, init] = fetchMock.mock.calls[0];
     expect(String(url)).toContain("/projects/p1/documents");
-    const headers = (init as RequestInit).headers as Record<string, string>;
-    expect(headers.Authorization).toBe("Bearer tok");
+    const headers = (init as RequestInit).headers as Record<string, string> | undefined;
+    if (headers) {
+      expect(headers.Authorization).toBeUndefined();
+    }
+    expect((init as RequestInit).credentials).toBe("include");
     expect(init).toBeDefined();
     expect((init as RequestInit).body).toBeInstanceOf(FormData);
   });
 
   it("uploadDocument: lanza el error del backend", async () => {
-    localStorage.setItem("kin_token_v2", "tok");
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ error: "Formato no permitido" }), { status: 400 }),
     );

@@ -1,4 +1,4 @@
-import { forceLogout, getToken } from "./session";
+import { forceLogout } from "./session";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
 
@@ -6,16 +6,10 @@ async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = getToken();
-
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
 
   const res = await fetch(`${API_URL}${endpoint}`, {
     ...options,
@@ -31,17 +25,13 @@ async function request<T>(
     error.code = body?.code;
 
     if (res.status === 401) {
-      if (getToken() === token) {
-        forceLogout();
-      }
+      forceLogout();
       error.message = "Unauthorized";
       throw error;
     }
 
     if (res.status === 400 && message.toLowerCase().includes("authenticated user")) {
-      if (getToken() === token) {
-        forceLogout();
-      }
+      forceLogout();
     }
 
     throw error;

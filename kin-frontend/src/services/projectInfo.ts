@@ -1,5 +1,4 @@
 import { api } from "./api";
-import { getToken } from "./session";
 
 /** Origen de un dato estructurado del proyecto (nunca se presenta un dato desconocido como 0). */
 export type InfoSourceType =
@@ -42,8 +41,6 @@ export interface ProjectDocumentItem {
   updatedAt: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
-
 export const projectInfoService = {
   listInfo: (projectId: string) =>
     api.get<StructuredInfoEntry[]>(`/projects/${projectId}/info`),
@@ -58,12 +55,11 @@ export const projectInfoService = {
     api.post<StructuredInfoEntry>(`/projects/${projectId}/info/${section}/${key}/confirm`, {}),
 
   uploadDocument: async (projectId: string, file: File): Promise<ProjectDocumentItem> => {
-    const token = getToken();
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch(`${API_URL}/projects/${projectId}/documents`, {
+    const res = await fetch(`${api.API_URL}/projects/${projectId}/documents`, {
       method: "POST",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: "include",
       body: form,
     });
     if (!res.ok) {

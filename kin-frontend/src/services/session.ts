@@ -32,20 +32,18 @@ export function clearSession() {
 }
 
 export function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("kin_token_v2");
-}
-
-function setCookie(name: string, value: string) {
-  document.cookie = `${name}=${value}; ${COOKIE_OPTIONS}`;
+  return null;
 }
 
 export function storeSession(res: { token: string | null; email: string; fullName: string; role: string; emailVerified?: boolean }) {
-  if (res.token) {
-    localStorage.setItem("kin_token_v2", res.token);
-  }
-  localStorage.setItem("kin_user_v2", JSON.stringify(res));
-  setCookie("kin_session_v2", "active");
+  localStorage.setItem("kin_user_v2", JSON.stringify({
+    email: res.email,
+    fullName: res.fullName,
+    role: res.role,
+    emailVerified: res.emailVerified ?? false,
+  }));
+  // El token se almacena SOLO en la cookie HttpOnly (kin_token_v2) gestionada por el backend.
+  // No guardamos el token en localStorage/sessionStorage para evitar exposición a XSS.
 }
 
 export function setPendingEmail(email: string) {
@@ -65,16 +63,11 @@ export async function forceLogout() {
   if (_forceLogoutInProgress) return;
   _forceLogoutInProgress = true;
 
-  const token = getToken();
   try {
-    if (token) {
-      // Esperar a que el backend invalide la cookie HttpOnly antes de navegar.
-      await fetch(`${API_URL}/auth/logout`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        credentials: "include",
-      });
-    }
+    await fetch(`${API_URL}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
   } catch {
     // best-effort
   }
