@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { api, API_URL } from "./api";
 
 /** Origen de un dato estructurado del proyecto (nunca se presenta un dato desconocido como 0). */
 export type InfoSourceType =
@@ -57,7 +57,7 @@ export const projectInfoService = {
   uploadDocument: async (projectId: string, file: File): Promise<ProjectDocumentItem> => {
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch(`${api.API_URL}/projects/${projectId}/documents`, {
+    const res = await fetch(`${API_URL}/projects/${projectId}/documents`, {
       method: "POST",
       credentials: "include",
       body: form,

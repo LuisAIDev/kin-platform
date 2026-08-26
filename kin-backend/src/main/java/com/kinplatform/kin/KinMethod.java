@@ -10,6 +10,8 @@ import com.kinplatform.kin.enterprise.application.EnterprisePipelineResultStore;
 import com.kinplatform.kin.enterprise.application.EnterpriseTurnResults;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.DomainEventBus;
+import com.kinplatform.kin.event.ReportGeneratedEvent;
+import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.kin.pipeline.Pipeline;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import org.slf4j.Logger;
@@ -42,6 +44,7 @@ public class KinMethod {
     private final ResponseFallback responseFallback;
     private final ProjectContextSyncPort contextSync;
     private final EnterprisePipelineResultStore pipelineResultStore;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     private static final ProjectContextSyncPort NO_OP_SYNC = (projectId, context) -> { };
     private static final EnterprisePipelineResultStore NO_OP_RESULT_STORE = new EnterprisePipelineResultStore() {
@@ -57,7 +60,7 @@ public class KinMethod {
     public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository) {
         this(pipeline, eventBus, contextRepository,
             new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0), NO_OP_SYNC,
-            NO_OP_RESULT_STORE);
+            NO_OP_RESULT_STORE, null);
     }
 
     /**
@@ -67,7 +70,7 @@ public class KinMethod {
      */
     public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository,
                      ResponseFallback responseFallback) {
-        this(pipeline, eventBus, contextRepository, responseFallback, NO_OP_SYNC, NO_OP_RESULT_STORE);
+        this(pipeline, eventBus, contextRepository, responseFallback, NO_OP_SYNC, NO_OP_RESULT_STORE, null);
     }
 
     /**
@@ -79,12 +82,12 @@ public class KinMethod {
                      ProjectContextSyncPort contextSync) {
         this(pipeline, eventBus, contextRepository,
             new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0), contextSync,
-            NO_OP_RESULT_STORE);
+            NO_OP_RESULT_STORE, null);
     }
 
     public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository,
                      ResponseFallback responseFallback, ProjectContextSyncPort contextSync) {
-        this(pipeline, eventBus, contextRepository, responseFallback, contextSync, NO_OP_RESULT_STORE);
+        this(pipeline, eventBus, contextRepository, responseFallback, contextSync, NO_OP_RESULT_STORE, null);
     }
 
     /**
@@ -99,7 +102,7 @@ public class KinMethod {
                      EnterprisePipelineResultStore pipelineResultStore) {
         this(pipeline, eventBus, contextRepository,
             new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
-            contextSync, pipelineResultStore);
+            contextSync, pipelineResultStore, null);
     }
 
     /**
@@ -112,12 +115,23 @@ public class KinMethod {
     public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository,
                      ResponseFallback responseFallback, ProjectContextSyncPort contextSync,
                      EnterprisePipelineResultStore pipelineResultStore) {
+        this(pipeline, eventBus, contextRepository, responseFallback, contextSync, pipelineResultStore, null);
+    }
+
+    /**
+     * Constructor completo con OutboxEventPublisher para publicación transaccional de eventos.
+     */
+    public KinMethod(Pipeline pipeline, DomainEventBus eventBus, ContextRepository contextRepository,
+                     ResponseFallback responseFallback, ProjectContextSyncPort contextSync,
+                     EnterprisePipelineResultStore pipelineResultStore,
+                     OutboxEventPublisher outboxEventPublisher) {
         this.pipeline = pipeline;
         this.eventBus = eventBus;
         this.contextRepository = contextRepository;
         this.responseFallback = responseFallback;
         this.contextSync = contextSync == null ? NO_OP_SYNC : contextSync;
         this.pipelineResultStore = pipelineResultStore == null ? NO_OP_RESULT_STORE : pipelineResultStore;
+        this.outboxEventPublisher = outboxEventPublisher;
     }
 
     public KinMethodResult execute(KinMethodCommand command) {
@@ -221,7 +235,18 @@ public class KinMethod {
 
     private void publish(List<DomainEvent> events) {
         for (var event : events) {
-            eventBus.publish(event);
+            // Publicar en outbox transaccional (at-least-once)
+            if (outboxEventPublisher != null) {
+                outboxEventPublisher.publish(event);
+            } else {
+                // Fallback: si outbox está deshabilitado, publicar directamente
+                eventBus.publish(event);
+            }
+            // Para eventos que requieren entrega síncrona inmediata (SSE, etc.),
+            // también publicar en el bus en memoria
+            if (event instanceof ReportGeneratedEvent) {
+                eventBus.publish(event);
+            }
         }
     }
 

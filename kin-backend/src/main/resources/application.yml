@@ -195,6 +195,28 @@ kin:
       # Fuente controlada determinista para dev/test/E2E (sin red).
       enabled: ${KNOWLEDGE_TEST_SOURCE_ENABLED:false}
 
+  # -----------------------------------------------------------
+  # Transactional Outbox (ADR-026, KIN 2.4)
+  # Garantiza entrega at-least-once de Domain Events escribiendo en la misma
+  # transacción del caso de uso. El relé (OutboxRelay) publica asíncronamente.
+  # -----------------------------------------------------------
+  outbox:
+    # Master switch: si false, el publicador no persiste eventos (útil para tests
+    # que no quieren tocar la BD). Default true.
+    enabled: ${KIN_OUTBOX_ENABLED:true}
+    # Relé asíncrono que procesa eventos PENDING y los publica en DomainEventBus
+    relay:
+      # Master switch del relé. Si false, no se procesan eventos.
+      enabled: ${KIN_OUTBOX_RELAY_ENABLED:true}
+      # Intervalo de polling en milisegundos
+      poll-interval-ms: ${KIN_OUTBOX_RELAY_POLL_INTERVAL_MS:2000}
+      # Tamaño del lote por ciclo de polling
+      batch-size: ${KIN_OUTBOX_RELAY_BATCH_SIZE:100}
+      # Máximo de reintentos antes de DEAD_LETTER
+      max-retries: ${KIN_OUTBOX_RELAY_MAX_RETRIES:5}
+      # Base para backoff exponencial (ms)
+      backoff-base-ms: ${KIN_OUTBOX_RELAY_BACKOFF_BASE_MS:1000}
+
 # -----------------------------------------------------------
 # Actuator — health check + metrics (Fase 7 observabilidad:
 # se exponen metrics y prometheus para monitoreo Enterprise;

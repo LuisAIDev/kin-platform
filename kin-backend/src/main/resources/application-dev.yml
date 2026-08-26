@@ -40,3 +40,9 @@ app:
   mail:
     # Dev: sin SMTP real, se usa LoggingEmailSender (el enlace se imprime en consola).
     enabled: false
+
+kin:
+  outbox:
+    relay:
+      # Dev: polling más rápido para desarrollo
+      poll-interval-ms: 500

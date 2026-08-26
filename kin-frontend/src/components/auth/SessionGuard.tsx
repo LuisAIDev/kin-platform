@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authService } from "@/services/auth";
 import { checkForceLogout, clearSession } from "@/services/session";
 
 export default function SessionGuard({ children }: { children: React.ReactNode }) {
@@ -14,10 +13,8 @@ export default function SessionGuard({ children }: { children: React.ReactNode }
       router.replace("/login");
       return;
     }
-
-    if (!authService.getToken()) {
-      router.replace("/login");
-    }
+    // Con cookie HttpOnly, la autenticación la maneja el middleware (proxy.ts)
+    // No podemos leer la cookie HttpOnly desde JavaScript
   }, [router]);
 
   return <>{children}</>;

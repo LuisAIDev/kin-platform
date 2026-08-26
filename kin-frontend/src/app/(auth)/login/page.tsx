@@ -22,19 +22,13 @@ export default function LoginPage() {
       sessionStorage.clear();
     }
 
-    const tokenAtMount = authService.getToken();
-    if (tokenAtMount) {
-      api.get("/auth/me")
-        .then(() => router.push("/dashboard/projects"))
-        .catch(() => {
-          if (authService.getToken() === tokenAtMount) {
-            authService.logout();
-          }
-        })
-        .finally(() => setChecking(false));
-    } else {
-      setTimeout(() => setChecking(false));
-    }
+    // Con cookie HttpOnly, verificamos la sesión llamando directamente a /auth/me
+    api.get("/auth/me")
+      .then(() => router.push("/dashboard/projects"))
+      .catch(() => {
+        // Si falla, no hay sesión válida
+      })
+      .finally(() => setChecking(false));
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {

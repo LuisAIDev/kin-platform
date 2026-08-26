@@ -25,3 +25,7 @@ kin:
     # nivel de servicio con mocks.
     cost-control:
       enabled: false
+  # Tests: deshabilitar relé del outbox por defecto (se habilita en tests específicos)
+  outbox:
+    relay:
+      enabled: false

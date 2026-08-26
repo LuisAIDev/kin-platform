@@ -286,6 +286,7 @@ flowchart TB
 | `kin.enterprise` | BC Enterprise: documentos de negocio, versionado, eventos, renderers |
 | `kin.export` | BC Export (ADR-020): exportación estructurada del proyecto (DOCX/PDF/Markdown) |
 | `kin.event` / `kin.usage` | Eventos de dominio y métricas de uso |
+| `kin.eventbus` | **Transactional Outbox (ADR-026)**: persistencia atómica de Domain Events, relé asíncrono con reintento y dead-letter |
 
 ---
 
@@ -330,8 +331,8 @@ Scoring → Recomendaciones → Riesgos → Oportunidades → Reporte → Consul
 | `InterviewEngine` | ADR-015 | Entrevista estratégica dirigida por Java |
 | `EnrichmentEngine` | ADR-016 | Selección y ponderación de hechos relevantes |
 
-**Decisiones de arquitectura:** la evolución se gobierna mediante **25 ADRs** (ADR-001 …
-ADR-025). `kin-docs/BASELINE_ARCHITECTURE.md` define la línea base contractual (ALPHA STABLE):
+**Decisiones de arquitectura:** la evolución se gobierna mediante **26 ADRs** (ADR-001 …
+ADR-026). `kin-docs/BASELINE_ARCHITECTURE.md` define la línea base contractual (ALPHA STABLE):
 los contratos marcados como estables no pueden modificarse sin una ADR aprobada.
 
 ---
@@ -409,6 +410,129 @@ Medidas implementadas en código (`SecurityConfig`, filtros y dominio):
   `@Valid`/Bean Validation en DTOs.
 - **Correo transaccional** (verificación de email, password reset) con Brevo SMTP.
 - **Escaneo de secretos en CI** con Gitleaks.
+
+---
+
+## Transactional Outbox (ADR-026, KIN 2.4)
+
+KIN implementa el patrón **Transactional Outbox** para garantizar la entrega *at-least-once* de eventos de dominio
+(`ReportGeneratedEvent`, `KnowledgeAcquiredEvent`, `ConversationCompletedEvent`, etc.) incluso si los listeners
+fallan o la infraestructura de mensajería está caída.
+
+**Arquitectura:**
+
+1. **Tabla `domain_event_outbox`** (PostgreSQL): persiste eventos dentro de la misma transacción que el caso de uso
+   (`KinMethod.execute()`). Campos: `id`, `aggregate_id`, `event_type` (FQCN), `payload` (JSONB), `metadata` (JSONB),
+   `status` (PENDING/PUBLISHED/FAILED/DEAD_LETTER), `retry_count`, `created_at`, `published_at`, `last_error`.
+
+2. **Puerto `OutboxEventPublisher`** (dominio puro): `publish(DomainEvent event)` valida `null` y `aggregateId`,
+   lanza excepciones claras. Se invoca **dentro** de la transacción del caso de uso.
+
+3. **Adaptador `TransactionalOutboxEventPublisher`** (infraestructura): `JdbcTemplate` + `ObjectMapper`
+   (con `JavaTimeModule` + `@JsonTypeInfo` para serialización polimórfica). Verifica transacción activa
+   (`TransactionSynchronizationManager`). Respeta `kin.outbox.enabled`.
+
+4. **Relé `OutboxRelay`** (infraestructura): polling programado (`@Scheduled`) con `SELECT ... FOR UPDATE SKIP LOCKED`
+   (lote configurable). Deserializa con `@JsonTypeInfo`, publica en `DomainEventBus` (in-memory),
+   reintentos con backoff exponencial, dead-letter tras `maxRetries`.
+
+**Métricas Micrometer (`kin.outbox.*`):**
+
+| Métrica | Tipo | Descripción |
+|---------|------|-------------|
+| `kin.outbox.published` | Counter | Eventos publicados exitosamente |
+| `kin.outbox.failed` | Counter | Eventos que fallaron (se reintentarán) |
+| `kin.outbox.dead_letter` | Counter | Eventos en dead-letter (agotados reintentos) |
+| `kin.outbox.pending` | Gauge | Eventos pendientes en cola |
+| `kin.outbox.relay.duration` | Timer | Duración del ciclo del relé |
+
+**Configuración (application.yml):**
+
+```yaml
+kin:
+  outbox:
+    enabled: true                    # Master switch del publicador
+    relay:
+      enabled: true                  # Master switch del relé
+      poll-interval-ms: 2000         # Intervalo de polling (ms)
+      batch-size: 100                # Tamaño del lote
+      max-retries: 5                 # Reintentos antes de DEAD_LETTER
+      backoff-base-ms: 1000          # Base para backoff exponencial
+```
+
+**Logging estructurado:** incluye `correlationId` y `userId` (si el evento implementa `HasUserId`) extraídos del metadata JSON.
+
+**Feature flags:** `kin.outbox.enabled` y `kin.outbox.relay.enabled` (ambos default `true`);
+deshabilitables para tests que no usan BD.
+
+**Integración en Pipeline (PR 3):**
+
+El `KinMethod` ahora usa `OutboxEventPublisher` para publicar eventos de dominio:
+
+1. **Publicación transaccional**: Los eventos se guardan en `domain_event_outbox` dentro de la misma transacción que el caso de uso (`KinMethod.execute()`).
+2. **Fallback legacy**: Si `kin.outbox.enabled=false`, se usa `DomainEventBus` directamente (comportamiento anterior).
+3. **Entrega síncrona para SSE**: Eventos `ReportGeneratedEvent` se publican también en `DomainEventBus` tras guardarse en outbox, manteniendo la entrega inmediata a SSE sin latencia.
+
+**Behavior:**
+- Con `kin.outbox.enabled=true` (default): eventos se persisten en tabla y el relé los procesa asíncronamente.
+- Con `kin.outbox.enabled=false`: fallback a publicación directa en `DomainEventBus` (comportamiento legacy).
+- `ReportGeneratedEvent` se publica también en `DomainEventBus` para mantener entrega inmediata a SSE.
+
+---
+
+## Interfaz de Administración DLQ (PR 5)
+
+KIN incluye una interfaz web completa para gestionar la Dead Letter Queue en `/admin/outbox/dead-letter` (acceso solo ADMIN):
+
+**Funcionalidades:**
+- **Listado paginado** con columnas: id, aggregate_id, event_type, created_at, last_error, retry_count.
+- **Botón "Reencolar"** por evento: POST `/admin/outbox/dead-letter/{id}/retry` → status → PENDING.
+- **Botón "Eliminar"** por evento: DELETE `/admin/outbox/dead-letter/{id}`.
+- **Botón "Eliminar todo"** con doble confirmación: DELETE `/admin/outbox/dead-letter?confirm=true`.
+- **Filtros** por `event_type` y `aggregate_id`.
+- **Estadísticas**: total, por tipo, top agregados.
+- **Protección ADMIN**: middleware de autenticación + `@PreAuthorize("hasRole('ADMIN')")`.
+
+**Pruebas E2E (Playwright):**
+- `admin-dlq.spec.ts`: login admin, reencolar, eliminar, verificar estado.
+- `admin-permissions.spec.ts`: acceso denegado sin rol ADMIN.
+
+**Pruebas de integración DLQ:**
+- `OutboxRelayIntegrationTest`: publicación atómica, procesamiento, reintentos, dead-letter.
+- `OutboxRelayDisabledIntegrationTest`: relé desactivado no procesa.
+
+---
+
+## Deduplicación de Conocimiento (PR 6, ADR-027)
+
+El **DeduplicationEngine** (ADR-027) elimina hechos duplicados o casi duplicados que el KnowledgeEngine obtiene de múltiples fuentes, garantizando que el scoring y las recomendaciones no se distorsionen por información redundante.
+
+**Estrategias en cascada (determinísticas, sin LLM):**
+
+| Estrategia | Prioridad | Descripción |
+|------------|-----------|-------------|
+| **ExactMatchStrategy** | 10 | Coincidencia exacta de `sourceId`, `category` y `claim` normalizado. |
+| **FuzzyMatchStrategy** | 20 | Similitud Jaro-Winkler para texto (umbral configurable, default 0.85). |
+| **SemanticMatchStrategy** | 30 | Similitud semántica vía embeddings (stub, futura implementación). |
+
+**Resultado:** `DeduplicationResult` con hechos únicos, grupos de duplicados (para auditoría) y métricas.
+
+**Integración:** `DeduplicationStage` (priority 55) tras `KnowledgeStage` (50), antes de `EnrichmentStage`. Guarda `DeduplicationResult` en `PipelineContext.deduplicationResult()`.
+
+**Configuración (`application.yml`):**
+```yaml
+kin:
+  deduplication:
+    enabled: true
+    fuzzy:
+      threshold: 0.85
+    strategies:
+      - EXACT_MATCH
+      - FUZZY_MATCH
+      - SEMANTIC
+```
+
+**Feature flag:** `kin.deduplication.enabled` (default `true`); deshabilitable para tests.
 
 ---
 

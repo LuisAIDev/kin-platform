@@ -1,4 +1,4 @@
-import { API_URL, getToken } from "@/services/session";
+import { API_URL } from "@/services/session";
 
 export type ExportFormat = "DOCX" | "PDF" | "MARKDOWN";
 export type ExportMode = "COMPLETE" | "SUMMARY";
@@ -30,10 +30,9 @@ export class ExportApiError extends Error {
   }
 }
 
-/** Mismo mecanismo de autenticación que el resto de servicios KIN (Bearer + cookie). */
+/** Mismo mecanismo de autenticación que el resto de servicios KIN (cookie HttpOnly + credentials). */
 function exportHeaders(): Record<string, string> {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  return { Accept: "application/json" };
 }
 
 async function parseError(res: Response): Promise<ExportApiError> {

@@ -8,6 +8,7 @@ import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.kin.ai.PromptAssembler;
 import com.kinplatform.kin.ai.prompt.ConversationPromptBuilder;
+import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.kin.ai.prompt.ReportPromptBuilder;
 import com.kinplatform.kin.ai.prompt.SectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ExecutiveSummaryFormatter;
@@ -33,8 +34,18 @@ import com.kinplatform.kin.context.strategy.DefaultExplorationStrategy;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
+import com.kinplatform.kin.conversation.ResponseFallback;
+import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.kin.engine.DomainEngine;
+import com.kinplatform.kin.knowledge.KnowledgeResult;
+import com.kinplatform.kin.knowledge.deduplication.DeduplicationResult;
+import com.kinplatform.kin.knowledge.deduplication.DeduplicationStrategy;
+import com.kinplatform.kin.knowledge.deduplication.DeduplicationEngine;
+import com.kinplatform.kin.knowledge.deduplication.DeduplicationStage;
+import com.kinplatform.kin.knowledge.deduplication.ExactMatchStrategy;
+import com.kinplatform.kin.knowledge.deduplication.FuzzyMatchStrategy;
+import com.kinplatform.kin.knowledge.deduplication.SemanticMatchStrategy;
 import com.kinplatform.kin.engine.EngineExecutor;
 import com.kinplatform.kin.engine.EngineRegistry;
 import com.kinplatform.kin.enrichment.EnrichmentEngine;
@@ -50,6 +61,13 @@ import com.kinplatform.kin.interview.engine.AnswerValidator;
 import com.kinplatform.kin.interview.engine.InterviewBlueprint;
 import com.kinplatform.kin.interview.engine.InterviewEngine;
 import com.kinplatform.kin.interview.stage.InterviewStage;
+import com.kinplatform.kin.knowledge.KnowledgeRepository;
+import com.kinplatform.kin.knowledge.KnowledgeSource;
+import com.kinplatform.kin.knowledge.deduplication.DeduplicationEngine;
+import com.kinplatform.kin.knowledge.deduplication.DeduplicationStage;
+import com.kinplatform.kin.knowledge.deduplication.ExactMatchStrategy;
+import com.kinplatform.kin.knowledge.deduplication.FuzzyMatchStrategy;
+import com.kinplatform.kin.knowledge.deduplication.SemanticMatchStrategy;
 import com.kinplatform.kin.knowledge.KnowledgeRepository;
 import com.kinplatform.kin.knowledge.KnowledgeSource;
 import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
@@ -517,6 +535,31 @@ public class KinConfig {
     }
 
     @Bean
+    public ExactMatchStrategy exactMatchStrategy() {
+        return new ExactMatchStrategy();
+    }
+
+    @Bean
+    public FuzzyMatchStrategy fuzzyMatchStrategy() {
+        return new FuzzyMatchStrategy(0.85);
+    }
+
+    @Bean
+    public SemanticMatchStrategy semanticMatchStrategy() {
+        return new SemanticMatchStrategy(0.90);
+    }
+
+    @Bean
+    public DeduplicationEngine deduplicationEngine(List<DeduplicationStrategy> strategies) {
+        return new DeduplicationEngine(strategies);
+    }
+
+    @Bean
+    public DeduplicationStage deduplicationStage(DeduplicationEngine deduplicationEngine) {
+        return new DeduplicationStage(deduplicationEngine);
+    }
+
+    @Bean
     public AnswerValidator answerValidator() {
         return new AnswerValidator();
     }
@@ -553,6 +596,7 @@ public class KinConfig {
             StrategistStage strategist,
             InterviewStage interview,
             KnowledgeStage knowledge,
+            DeduplicationStage deduplication,
             EnrichmentStage enrichment,
             ConsultorStage consultor,
             ScoringStage scoring,
@@ -568,6 +612,7 @@ public class KinConfig {
                         strategist,
                         interview,
                         knowledge,
+                        deduplication,
                         enrichment,
                         scoring,
                         recommendation,
@@ -595,9 +640,12 @@ public class KinConfig {
             DomainEventBus eventBus,
             ContextRepository contextRepository,
             ProjectContextSyncPort projectContextSyncPort,
-            EnterprisePipelineResultStore enterprisePipelineResultStore) {
+            EnterprisePipelineResultStore enterprisePipelineResultStore,
+            OutboxEventPublisher outboxEventPublisher) {
         return new KinMethod(
-                chatPipeline, eventBus, contextRepository, projectContextSyncPort, enterprisePipelineResultStore);
+                chatPipeline, eventBus, contextRepository,
+                new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
+                projectContextSyncPort, enterprisePipelineResultStore, outboxEventPublisher);
     }
 
     @Bean

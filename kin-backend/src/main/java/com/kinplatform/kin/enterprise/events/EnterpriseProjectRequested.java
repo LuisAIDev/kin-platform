@@ -15,10 +15,16 @@ import java.util.UUID;
  * {@code siguiente = última + 1}). El Milestone 2A solo define el contrato; la
  * emisión y el consumo se implementarán en milestones posteriores.</p>
  *
- * @param projectId identificador del proyecto de KIN origen
- * @param version   versión solicitada del proyecto empresarial
+ * @param projectId    identificador del proyecto de KIN origen
+ * @param version      versión solicitada del proyecto empresarial
+ * @param correlationId ID opcional de correlación para idempotencia (PR 4); si no se provee,
+ *                      se genera automáticamente en el listener
  */
-public record EnterpriseProjectRequested(UUID projectId, int version) implements DomainEvent {
+public record EnterpriseProjectRequested(UUID projectId, int version, String correlationId) implements DomainEvent {
+
+    public EnterpriseProjectRequested(UUID projectId, int version) {
+        this(projectId, version, null);
+    }
 
     @Override
     public String type() {

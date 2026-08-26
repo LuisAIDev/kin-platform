@@ -20,22 +20,20 @@ import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
 import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.kin.eventbus.IdempotencyService;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.mockito.Mockito;
 
-/**
- * Tests de wiring del ciclo automático Enterprise (Fase 10, M3B): verifica que
- * {@link EnterpriseWebConfig} produce los tres beans nuevos (executor, trigger
- * y listener) invocando directamente los factory methods de la configuración,
- * sin levantar el contexto Spring completo (estrategia hermética del proyecto).
- */
 class EnterpriseWebConfigWiringTest {
 
     private final EnterpriseWebConfig config = new EnterpriseWebConfig();
+    private final IdempotencyService idempotencyService = new IdempotencyService(Mockito.mock(JdbcTemplate.class));
 
     @Test
     void enterpriseGenerationExecutor_devuelveUnExecutorQueEjecutaTareas() throws Exception {
@@ -87,7 +85,8 @@ class EnterpriseWebConfigWiringTest {
                 eventBus,
                 config.enterpriseGenerationExecutor(),
                 config.enterprisePipelineResultStore(),
-                null);
+                null,
+                idempotencyService);
 
         assertNotNull(listener);
         eventBus.publish(new EnterpriseProjectRequested(projectId, 1));

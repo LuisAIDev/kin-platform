@@ -15,16 +15,16 @@ export default function PricingPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = authService.getToken();
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
     subscriptionApi
       .getPlans()
       .then(setPlans)
-      .catch((err) => setError(err instanceof Error ? err.message : "Error al cargar planes"))
+      .catch((err) => {
+        if (err instanceof Error && err.message.includes("401")) {
+          router.push("/login");
+        } else {
+          setError(err instanceof Error ? err.message : "Error al cargar planes");
+        }
+      })
       .finally(() => setLoading(false));
   }, [router]);
 

@@ -17,12 +17,6 @@ export default function SubscriptionPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = authService.getToken();
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
     Promise.all([
       subscriptionApi.getStatus(),
       subscriptionApi.getCurrent().catch(() => null),
@@ -31,7 +25,13 @@ export default function SubscriptionPage() {
         setStatus(statusData);
         setSubscription(subData);
       })
-      .catch((err) => setError(err instanceof Error ? err.message : "Error al cargar suscripción"))
+      .catch((err) => {
+        if (err instanceof Error && err.message.includes("401")) {
+          router.push("/login");
+        } else {
+          setError(err instanceof Error ? err.message : "Error al cargar suscripción");
+        }
+      })
       .finally(() => setLoading(false));
   }, [router]);
 

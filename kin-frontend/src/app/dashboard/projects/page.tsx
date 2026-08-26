@@ -22,12 +22,6 @@ export default function ProjectsPage() {
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
 
   useEffect(() => {
-    const token = authService.getToken();
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
     let cancelled = false;
 
     Promise.all([
@@ -42,9 +36,13 @@ export default function ProjectsPage() {
       })
       .catch((err) => {
         if (!cancelled) {
-          console.error("=== FAILED TO LOAD PROJECTS/SUBSCRIPTION ===", err);
-          setProjects([]);
-          setSubscription(null);
+          if (err instanceof Error && err.message.includes("401")) {
+            router.push("/login");
+          } else {
+            console.error("=== FAILED TO LOAD PROJECTS/SUBSCRIPTION ===", err);
+            setProjects([]);
+            setSubscription(null);
+          }
         }
       })
       .finally(() => {

@@ -4,6 +4,7 @@ import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
 import com.kinplatform.kin.event.DomainEventBus;
+import com.kinplatform.kin.eventbus.IdempotencyService;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -36,6 +37,11 @@ import org.slf4j.LoggerFactory;
  * {@link EnterpriseAiBudgetGate}, la generación pasa por la misma autoridad de
  * presupuesto de Fase 1 antes de invocar al LLM; sin presupuesto suficiente la
  * generación se omite (no se llama a DeepSeek).</p>
+ *
+ * <p>Idempotencia (PR 4): el listener verifica {@link IdempotencyService}
+ * antes de procesar para evitar duplicados por reintentos del outbox relé
+ * (semántica at-least-once). El registro en {@code processed_events} ocurre
+ * dentro de la misma transacción que el procesamiento.</p>
  */
 public final class EnterpriseProjectRequestedListener {
 
@@ -46,6 +52,7 @@ public final class EnterpriseProjectRequestedListener {
     private final Executor executor;
     private final EnterprisePipelineResultStore pipelineResultStore;
     private final EnterpriseAiBudgetGate aiBudgetGate;
+    private final IdempotencyService idempotencyService;
 
     /** Store no operativo (sin resultados del pipeline → offline-first). */
     private static final EnterprisePipelineResultStore NO_OP_RESULT_STORE = new EnterprisePipelineResultStore() {
@@ -71,7 +78,7 @@ public final class EnterpriseProjectRequestedListener {
             ContextRepository contextRepository,
             DomainEventBus eventBus,
             Executor executor) {
-        this(orchestrator, contextRepository, eventBus, executor, NO_OP_RESULT_STORE, null);
+        this(orchestrator, contextRepository, eventBus, executor, NO_OP_RESULT_STORE, null, null);
     }
 
     /**
@@ -93,7 +100,7 @@ public final class EnterpriseProjectRequestedListener {
             DomainEventBus eventBus,
             Executor executor,
             EnterprisePipelineResultStore pipelineResultStore) {
-        this(orchestrator, contextRepository, eventBus, executor, pipelineResultStore, null);
+        this(orchestrator, contextRepository, eventBus, executor, pipelineResultStore, null, null);
     }
 
     /**
@@ -109,11 +116,35 @@ public final class EnterpriseProjectRequestedListener {
             Executor executor,
             EnterprisePipelineResultStore pipelineResultStore,
             EnterpriseAiBudgetGate aiBudgetGate) {
+        this(orchestrator, contextRepository, eventBus, executor, pipelineResultStore, aiBudgetGate, null);
+    }
+
+    /**
+     * Constructor con idempotencia (PR 4): inyecta el servicio de idempotencia
+     * para evitar procesar eventos duplicados del outbox relé.
+     *
+     * @param orchestrator        orquestador que ejecuta la generación (obligatorio)
+     * @param contextRepository   repositorio del contexto durable (obligatorio)
+     * @param eventBus            bus de eventos de dominio existente (obligatorio)
+     * @param executor            ejecutor para la generación asíncrona (obligatorio)
+     * @param pipelineResultStore resultados reales del pipeline (obligatorio)
+     * @param aiBudgetGate        gate de presupuesto de IA (opcional, {@code null} = sin gate)
+     * @param idempotencyService  servicio de idempotencia (opcional, {@code null} = sin idempotencia)
+     */
+    public EnterpriseProjectRequestedListener(
+            EnterpriseGenerationOrchestrator orchestrator,
+            ContextRepository contextRepository,
+            DomainEventBus eventBus,
+            Executor executor,
+            EnterprisePipelineResultStore pipelineResultStore,
+            EnterpriseAiBudgetGate aiBudgetGate,
+            IdempotencyService idempotencyService) {
         this.orchestrator = requireNonNull(orchestrator, "orchestrator");
         this.contextRepository = requireNonNull(contextRepository, "contextRepository");
         this.executor = requireNonNull(executor, "executor");
         this.pipelineResultStore = requireNonNull(pipelineResultStore, "pipelineResultStore");
         this.aiBudgetGate = aiBudgetGate;
+        this.idempotencyService = idempotencyService;
         requireNonNull(eventBus, "eventBus").subscribe(EnterpriseProjectRequested.class, this::onRequested);
     }
 
@@ -126,6 +157,14 @@ public final class EnterpriseProjectRequestedListener {
      */
     public void onRequested(EnterpriseProjectRequested event) {
         if (event == null) {
+            return;
+        }
+        // Idempotencia: usar correlationId del evento o generar uno basado en projectId + version
+        String eventId = event.correlationId() != null ? event.correlationId() :
+                "enterprise-requested-" + event.projectId() + "-" + event.version();
+        if (idempotencyService != null && !idempotencyService.tryMarkProcessed(
+                eventId, event.projectId(), event.getClass().getName())) {
+            log.debug("Evento duplicado ignorado (idempotencia): eventId={}", eventId);
             return;
         }
         executor.execute(() -> {

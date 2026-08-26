@@ -10,6 +10,7 @@ import com.kinplatform.kin.enrichment.EnrichmentResult;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.interview.InterviewResult;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
+import com.kinplatform.kin.knowledge.deduplication.DeduplicationResult;
 import com.kinplatform.kin.reporting.RecommendationResult;
 import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
@@ -118,6 +119,14 @@ public class PipelineContext {
 
     public KnowledgeResult knowledgeResult() { return knowledgeResult; }
     public void knowledgeResult(KnowledgeResult r) { this.knowledgeResult = r; }
+
+    public DeduplicationResult deduplicationResult() {
+        return (DeduplicationResult) attributes.get("deduplicationResult");
+    }
+
+    public void deduplicationResult(DeduplicationResult r) {
+        attributes.put("deduplicationResult", r);
+    }
 
     public InterviewResult interviewResult() { return interviewResult; }
     public void interviewResult(InterviewResult r) { this.interviewResult = r; }
