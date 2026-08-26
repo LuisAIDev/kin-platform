@@ -88,4 +88,8 @@ services:
     autoDeploy: true
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://kin-backend.onrender.com/api/v1
+        value: https://kin-backend-lwmy.onrender.com/api/v1
+      # Formulario de feedback del piloto (botón "Dar feedback" en Mi Salud /
+      # Portal Médico). Sustituir por la URL real del formulario.
+      - key: NEXT_PUBLIC_FEEDBACK_URL
+        value: https://forms.example.com/feedback-piloto

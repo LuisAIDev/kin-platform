@@ -47,8 +47,9 @@
 
 1. **Static Site** o **Web Service** para Next.js.
 2. Build: `npm install && npm run build`.
-3. `NEXT_PUBLIC_API_URL=https://<backend>.onrender.com/api/v1`.
-4. Verificar: cargar `/dashboard/projects` con sesión.
+3. `NEXT_PUBLIC_API_URL=https://kin-backend-lwmy.onrender.com/api/v1` (URL real del backend).
+4. `NEXT_PUBLIC_FEEDBACK_URL=<URL del formulario de feedback del piloto>` (opcional; el botón "Dar feedback" usa `mailto:` si se omite).
+5. Verificar: cargar `/dashboard/projects` con sesión.
 
 ## 6. Post-despliegue
 
