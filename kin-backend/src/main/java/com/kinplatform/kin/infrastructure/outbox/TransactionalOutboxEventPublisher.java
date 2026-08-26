@@ -8,9 +8,9 @@ import com.kinplatform.kin.eventbus.EventSerializationException;
 import com.kinplatform.kin.eventbus.domain.OutboxRecord;
 import com.kinplatform.kin.eventbus.domain.OutboxStatus;
 import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -20,7 +20,6 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class TransactionalOutboxEventPublisher implements OutboxEventPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(TransactionalOutboxEventPublisher.class);
@@ -29,6 +28,7 @@ public class TransactionalOutboxEventPublisher implements OutboxEventPublisher {
     private final ObjectMapper objectMapper;
     private final boolean enabled;
 
+    @Autowired
     public TransactionalOutboxEventPublisher(JdbcTemplate jdbcTemplate,
                                              @Value("${kin.outbox.enabled:true}") boolean enabled) {
         this.jdbcTemplate = jdbcTemplate;
