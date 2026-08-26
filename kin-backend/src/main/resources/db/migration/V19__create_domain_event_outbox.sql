@@ -12,7 +12,12 @@
 -- Estados: PENDING -> PUBLISHED / FAILED -> DEAD_LETTER (tras max retries)
 -- ============================================================
 
-CREATE TABLE domain_event_outbox (
+-- Habilitar extensión uuid-ossp para uuid_generate_v4() (requerida en PostgreSQL/Neon)
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- ============================================================
+-- Tabla Outbox transaccional
+-- ============================================================
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     aggregate_id    UUID NOT NULL,                    -- ID del agregado origen (Project, User, etc.)
     event_type      VARCHAR(120) NOT NULL,            -- FQCN del evento: com.kinplatform.kin.event.ReportGeneratedEvent
