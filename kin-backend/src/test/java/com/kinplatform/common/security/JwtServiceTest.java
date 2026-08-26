@@ -10,7 +10,6 @@ import java.util.Base64;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.core.env.Environment;
 import org.springframework.mock.env.MockEnvironment;
 
 class JwtServiceTest {
@@ -20,7 +19,7 @@ class JwtServiceTest {
     @BeforeEach
     void setUp() {
         String secret = Base64.getEncoder().encodeToString("kin-test-secret-key-for-unit-tests-0123456789".getBytes());
-        jwtService = new JwtService(secret, 86_400_000L, new MockEnvironment());
+        jwtService = new JwtService(secret, 86_400_000L, 604_800_000L, new MockEnvironment());
     }
 
     @Test
@@ -52,7 +51,7 @@ class JwtServiceTest {
     void tokenDeOtraClave_deberiaSerInvalido() {
         String otherSecret =
                 Base64.getEncoder().encodeToString("kin-other-secret-key-for-different-signature".getBytes());
-        JwtService other = new JwtService(otherSecret, 86_400_000L, new MockEnvironment());
+        JwtService other = new JwtService(otherSecret, 86_400_000L, 604_800_000L, new MockEnvironment());
         String token = other.generateToken(UUID.randomUUID(), "b@kin.com", "FREE");
 
         assertFalse(jwtService.isTokenValid(token));
@@ -82,22 +81,25 @@ class JwtServiceTest {
 
     @Test
     void secretNulo_deberiaFallarEnConstructor() {
-        IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> new JwtService(null, 86_400_000L, new MockEnvironment()));
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> new JwtService(null, 86_400_000L, 604_800_000L, new MockEnvironment()));
         assertTrue(ex.getMessage().contains("JWT_SECRET no está configurado"));
     }
 
     @Test
     void secretVacio_deberiaFallarEnConstructor() {
-        IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> new JwtService("", 86_400_000L, new MockEnvironment()));
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> new JwtService("", 86_400_000L, 604_800_000L, new MockEnvironment()));
         assertTrue(ex.getMessage().contains("JWT_SECRET no está configurado"));
     }
 
     @Test
     void secretNoBase64_deberiaFallarEnConstructor() {
-        IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> new JwtService("not-base64!", 86_400_000L, new MockEnvironment()));
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> new JwtService("not-base64!", 86_400_000L, 604_800_000L, new MockEnvironment()));
         assertTrue(ex.getMessage().contains("no es Base64 válido"));
     }
 
@@ -105,8 +107,9 @@ class JwtServiceTest {
     void secretMuyCorto_deberiaFallarEnConstructor() {
         // 16 bytes = 128 bits (insuficiente para HS256 que requiere 256 bits)
         String shortSecret = Base64.getEncoder().encodeToString("1234567890123456".getBytes());
-        IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> new JwtService(shortSecret, 86_400_000L, new MockEnvironment()));
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> new JwtService(shortSecret, 86_400_000L, 604_800_000L, new MockEnvironment()));
         assertTrue(ex.getMessage().contains("demasiado corto"));
         assertTrue(ex.getMessage().contains("16 bytes"));
     }
@@ -115,18 +118,44 @@ class JwtServiceTest {
     void secretValido256Bits_deberiaFuncionar() {
         // 32 bytes = 256 bits (mínimo para HS256)
         String validSecret = Base64.getEncoder().encodeToString("kin-test-secret-key-32-bytes-long!!".getBytes());
-        JwtService service = new JwtService(validSecret, 86_400_000L, new MockEnvironment());
+        JwtService service = new JwtService(validSecret, 86_400_000L, 604_800_000L, new MockEnvironment());
         String token = service.generateToken(UUID.randomUUID(), "test@kin.com", "FREE");
         assertTrue(service.isTokenValid(token));
     }
 
     @Test
     void secretPorDefectoEnProd_deberiaFallar() {
-        String defaultSecret = "a2luLXBsYXRmb3JtLXNlY3VyZS1qd3Qtc2VjcmV0LWZvci1wcm9kdWN0aW9uLWNlcnRpZmljYXRpb24tMjAyNi0wMTIzNDU2Nzg5YWJjZGVm";
+        String defaultSecret =
+                "a2luLXBsYXRmb3JtLXNlY3VyZS1qd3Qtc2VjcmV0LWZvci1wcm9kdWN0aW9uLWNlcnRpZmljYXRpb24tMjAyNi0wMTIzNDU2Nzg5YWJjZGVm";
         MockEnvironment prodEnv = new MockEnvironment();
         prodEnv.setActiveProfiles("prod");
-        IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> new JwtService(defaultSecret, 86_400_000L, prodEnv));
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class, () -> new JwtService(defaultSecret, 86_400_000L, 604_800_000L, prodEnv));
         assertTrue(ex.getMessage().contains("no puede usar el valor de prueba por defecto"));
+    }
+
+    @Test
+    void refreshToken_deberiaEmitirNuevoAccessToken() {
+        UUID userId = UUID.randomUUID();
+        String refresh = jwtService.generateRefreshToken(userId, "a@kin.com", "PATIENT");
+
+        String newAccess = jwtService.refreshAccessToken(refresh);
+
+        assertTrue(newAccess != null);
+        assertTrue(jwtService.isTokenValid(newAccess));
+        assertEquals("a@kin.com", jwtService.extractEmail(newAccess));
+    }
+
+    @Test
+    void refreshConAccessToken_deberiaRechazarse() {
+        String access = jwtService.generateToken(UUID.randomUUID(), "a@kin.com", "PATIENT");
+
+        assertTrue(jwtService.refreshAccessToken(access) == null);
+    }
+
+    @Test
+    void refreshInvalido_deberiaRechazarse() {
+        assertTrue(jwtService.refreshAccessToken("not.a.refresh") == null);
+        assertTrue(jwtService.refreshAccessToken(null) == null);
     }
 }

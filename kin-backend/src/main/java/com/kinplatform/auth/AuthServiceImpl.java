@@ -91,9 +91,8 @@ public class AuthServiceImpl implements AuthService {
             // por producto para guiar al usuario legítimo hacia la pantalla de
             // verificación; el abuso se mitiga con rate limiting. No cambiar sin
             // autorización.
-            throw new EmailVerificationRequiredException(
-                    "Tu correo electrónico aún no ha sido verificado. "
-                            + "Revisa tu bandeja de entrada para activar tu cuenta.");
+            throw new EmailVerificationRequiredException("Tu correo electrónico aún no ha sido verificado. "
+                    + "Revisa tu bandeja de entrada para activar tu cuenta.");
         }
 
         var token = jwtService.generateToken(
@@ -106,6 +105,12 @@ public class AuthServiceImpl implements AuthService {
                 .role(user.getRole().name())
                 .emailVerified(true)
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String refreshAccessToken(String refreshToken) {
+        return jwtService.refreshAccessToken(refreshToken);
     }
 
     @Override
@@ -170,9 +175,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private String baseUrl() {
-        return frontendBaseUrl == null || frontendBaseUrl.isBlank()
-                ? "http://localhost:3000"
-                : frontendBaseUrl;
+        return frontendBaseUrl == null || frontendBaseUrl.isBlank() ? "http://localhost:3000" : frontendBaseUrl;
     }
 
     private static void validatePasswordStrength(String password) {

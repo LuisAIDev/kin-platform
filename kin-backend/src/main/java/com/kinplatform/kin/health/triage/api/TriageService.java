@@ -1,0 +1,106 @@
+package com.kinplatform.kin.health.triage.api;
+
+import com.kinplatform.kin.health.triage.config.TriageProperties;
+import com.kinplatform.kin.health.triage.domain.Symptom;
+import com.kinplatform.kin.health.triage.domain.TriageCatalog;
+import com.kinplatform.kin.health.triage.domain.TriageConsultation;
+import com.kinplatform.kin.health.triage.domain.TriageInput;
+import com.kinplatform.kin.health.triage.domain.TriageResult;
+import com.kinplatform.kin.health.triage.engine.TriageEngine;
+import com.kinplatform.kin.health.triage.port.TriageConsultationRepository;
+import com.kinplatform.kin.health.triage.port.TriageKnowledgeRepository;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Servicio de aplicación del módulo de triaje (ADR-028).
+ *
+ * <p>Orquesta la consulta del paciente: valida el feature flag, carga el
+ * catálogo, ejecuta el {@link TriageEngine} (determinista), persiste la
+ * consulta (auditoría e historial por usuario) y expone el catálogo de
+ * síntomas al frontend. El aislamiento por usuario es responsabilidad del
+ * llamador (controller resuelve el {@code userId} desde la autenticación).</p>
+ */
+@Service
+public class TriageService {
+
+    private static final Logger log = LoggerFactory.getLogger(TriageService.class);
+
+    private final TriageEngine engine;
+    private final TriageKnowledgeRepository knowledgeRepository;
+    private final TriageConsultationRepository consultationRepository;
+    private final TriageProperties properties;
+
+    public TriageService(
+            TriageEngine engine,
+            TriageKnowledgeRepository knowledgeRepository,
+            TriageConsultationRepository consultationRepository,
+            TriageProperties properties) {
+        this.engine = engine;
+        this.knowledgeRepository = knowledgeRepository;
+        this.consultationRepository = consultationRepository;
+        this.properties = properties;
+    }
+
+    /**
+     * Realiza una consulta de triaje para el paciente.
+     *
+     * @param userId   id del paciente autenticado (se usa para el historial)
+     * @param symptoms síntomas reportados
+     * @return resultado del motor de triaje
+     */
+    @Transactional
+    public TriageResult analyze(UUID userId, List<String> symptoms) {
+        if (!properties.isEnabled()) {
+            throw new TriageDisabledException();
+        }
+        if (userId == null) {
+            throw new IllegalArgumentException("userId no puede ser null");
+        }
+        TriageCatalog catalog = knowledgeRepository.loadCatalog();
+        TriageResult result = engine.evaluate(TriageInput.of(symptoms), catalog);
+        if (!result.isEmpty()) {
+            TriageConsultation consultation =
+                    TriageConsultation.of(UUID.randomUUID(), userId, symptoms, result.results(), OffsetDateTime.now());
+            consultationRepository.save(consultation);
+            log.info(
+                    "TriageService: userId={} -> {} condición(es), top={}",
+                    userId,
+                    result.results().size(),
+                    result.results().isEmpty() ? "-" : result.results().get(0).name());
+        } else {
+            log.info("TriageService: userId={} -> sin condiciones candidatas", userId);
+        }
+        return result;
+    }
+
+    /**
+     * Catálogo de síntomas disponibles (para el formulario del paciente).
+     */
+    @Transactional(readOnly = true)
+    public List<Symptom> listSymptoms() {
+        if (!properties.isEnabled()) {
+            throw new TriageDisabledException();
+        }
+        return knowledgeRepository.loadCatalog().symptoms();
+    }
+
+    /**
+     * Historial de consultas del paciente (aislamiento por {@code userId}).
+     */
+    @Transactional(readOnly = true)
+    public List<TriageConsultation> history(UUID userId) {
+        if (!properties.isEnabled()) {
+            throw new TriageDisabledException();
+        }
+        if (userId == null) {
+            return List.of();
+        }
+        return consultationRepository.findByUserId(userId);
+    }
+}

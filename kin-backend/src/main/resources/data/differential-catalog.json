@@ -1,0 +1,27 @@
+{
+  "source": "health-differential-bundle",
+  "description": "Dataset estructurado de factores de riesgo y pruebas complementarias para el diagnóstico diferencial (ADR-029). Offline-first: se usa cuando las fuentes externas no están disponibles.",
+  "riskFactors": [
+    { "condition": "Gripe", "factor": "edad avanzada", "weight": 0.30, "description": "Adultos mayores de 65 años" },
+    { "condition": "Gripe", "factor": "embarazo", "weight": 0.25, "description": "Mujeres embarazadas" },
+    { "condition": "Neumonía", "factor": "fumador", "weight": 0.35, "description": "Tabaquismo activo" },
+    { "condition": "Neumonía", "factor": "edad avanzada", "weight": 0.30, "description": "Adultos mayores de 65 años" },
+    { "condition": "Asma", "factor": "fumador", "weight": 0.40, "description": "Tabaquismo activo" },
+    { "condition": "Diabetes tipo 2", "factor": "obesidad", "weight": 0.35, "description": "Obesidad (IMC ≥ 30)" },
+    { "condition": "Diabetes tipo 2", "factor": "antecedente familiar", "weight": 0.25, "description": "Historia familiar de diabetes" },
+    { "condition": "Hipertensión arterial", "factor": "obesidad", "weight": 0.30, "description": "Obesidad (IMC ≥ 30)" },
+    { "condition": "Angina de pecho", "factor": "fumador", "weight": 0.40, "description": "Tabaquismo activo" },
+    { "condition": "Angina de pecho", "factor": "hipertensión", "weight": 0.25, "description": "Hipertensión arterial previa" }
+  ],
+  "recommendedTests": [
+    { "condition": "Gripe", "test": "Prueba rápida de antígeno", "description": "Detección rápida del virus de la influenza" },
+    { "condition": "Neumonía", "test": "Radiografía de tórax", "description": "Imagen del tórax para detectar infiltrados" },
+    { "condition": "Neumonía", "test": "Hemograma completo", "description": "Recuento de glóbulos blancos" },
+    { "condition": "Asma", "test": "Espirometría", "description": "Evaluación de la función pulmonar" },
+    { "condition": "Diabetes tipo 2", "test": "Glucosa en ayunas", "description": "Medición de glucosa en sangre en ayunas" },
+    { "condition": "Diabetes tipo 2", "test": "Hemoglobina glicosilada", "description": "Promedio de glucosa de 3 meses (HbA1c)" },
+    { "condition": "Hipertensión arterial", "test": "Medición de presión arterial", "description": "Toma repetida de presión arterial" },
+    { "condition": "Angina de pecho", "test": "Electrocardiograma", "description": "Registro de la actividad eléctrica del corazón" },
+    { "condition": "Angina de pecho", "test": "Troponina", "description": "Marcador de daño miocárdico" }
+  ]
+}

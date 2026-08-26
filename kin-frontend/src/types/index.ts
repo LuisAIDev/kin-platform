@@ -10,7 +10,7 @@ export interface User {
   id: string;
   email: string;
   fullName: string;
-  role: "FREE" | "PREMIUM" | "FACILITADOR" | "ADMIN";
+  role: "FREE" | "PREMIUM" | "FACILITADOR" | "PATIENT" | "PHYSICIAN" | "ADMIN";
   credits: number;
   avatarUrl: string | null;
   createdAt: string;

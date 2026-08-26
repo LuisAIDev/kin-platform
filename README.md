@@ -292,29 +292,32 @@ flowchart TB
 
 ## KIN Intelligence Pipeline
 
-El motor de análisis de KIN se compone de **13 etapas** verificadas en código
+El motor de análisis de KIN se compone de **15 etapas** verificadas en código
 (`KinConfig.chatPipeline`):
 
 ```text
-Analizador → Evaluador → Estratega → Entrevista → Conocimiento → Enriquecimiento →
-Scoring → Recomendaciones → Riesgos → Oportunidades → Reporte → Consultor → Eventos
+Analizador → Triaje → Diagnóstico diferencial → Evaluador → Estratega → Entrevista →
+Conocimiento → Enriquecimiento → Scoring → Recomendaciones → Riesgos → Oportunidades →
+Reporte → Consultor → Eventos
 ```
 
 | # | Etapa | Responsabilidad |
 |---|---|---|
 | 1 | **Analizador** | Extrae dimensiones del mensaje y actualiza el `ProjectContext` |
-| 2 | **Evaluador** | `CompletenessEvaluation` de las dimensiones cubiertas |
-| 3 | **Estratega** | Decide la acción (`ConversationDecision`): `ASK`, `REPORT`, etc. |
-| 4 | **Entrevista** | Entrevista estratégica dirigida por Java (contexto completo) |
-| 5 | **Conocimiento** | Adquiere hechos externos verificados (offline-first) |
-| 6 | **Enriquecimiento** | `FactRanker` selecciona y pondera los hechos relevantes por categoría |
-| 7 | **Scoring** | Score de viabilidad por categoría y dimensión |
-| 8 | **Recomendaciones** | `RecommendationEngine` |
-| 9 | **Riesgos** | `RiskEngine` |
-| 10 | **Oportunidades** | `OpportunityEngine` (8 analizadores auto-descubiertos) |
-| 11 | **Reporte** | `ReportEngine` orquesta los `SectionAssembler` y produce el `ConsultingReport` |
-| 12 | **Consultor** | Selecciona el prompt (conversación o REPORT) y comunica la respuesta del LLM |
-| 13 | **Eventos** | Publica eventos de dominio según la decisión |
+| 2 | **Triaje** | Triaje digital de síntomas (ADR-028, solo proyectos `SALUD`; se omite sin síntomas) |
+| 3 | **Diagnóstico diferencial** | Factores de riesgo + pruebas sugeridas + explicación (ADR-029, se omite sin triaje) |
+| 4 | **Evaluador** | `CompletenessEvaluation` de las dimensiones cubiertas |
+| 5 | **Estratega** | Decide la acción (`ConversationDecision`): `ASK`, `REPORT`, etc. |
+| 6 | **Entrevista** | Entrevista estratégica dirigida por Java (contexto completo) |
+| 7 | **Conocimiento** | Adquiere hechos externos verificados (offline-first) |
+| 8 | **Enriquecimiento** | `FactRanker` selecciona y pondera los hechos relevantes por categoría |
+| 9 | **Scoring** | Score de viabilidad por categoría y dimensión |
+| 10 | **Recomendaciones** | `RecommendationEngine` |
+| 11 | **Riesgos** | `RiskEngine` |
+| 12 | **Oportunidades** | `OpportunityEngine` (8 analizadores auto-descubiertos) |
+| 13 | **Reporte** | `ReportEngine` orquesta los `SectionAssembler` y produce el `ConsultingReport` |
+| 14 | **Consultor** | Selecciona el prompt (conversación o REPORT) y comunica la respuesta del LLM |
+| 15 | **Eventos** | Publica eventos de dominio según la decisión |
 
 **Motores de dominio** (fase / ADR):
 
@@ -330,9 +333,10 @@ Scoring → Recomendaciones → Riesgos → Oportunidades → Reporte → Consul
 | `KnowledgeEngine` | ADR-014 | Adquisición y validación de conocimiento externo (SSRF-safe) |
 | `InterviewEngine` | ADR-015 | Entrevista estratégica dirigida por Java |
 | `EnrichmentEngine` | ADR-016 | Selección y ponderación de hechos relevantes |
+| `TriageEngine` | ADR-028 | Triaje digital determinista (síntomas → condiciones con probabilidad) |
 
-**Decisiones de arquitectura:** la evolución se gobierna mediante **26 ADRs** (ADR-001 …
-ADR-026). `kin-docs/BASELINE_ARCHITECTURE.md` define la línea base contractual (ALPHA STABLE):
+**Decisiones de arquitectura:** la evolución se gobierna mediante **28 ADRs** (ADR-001 …
+ADR-028). `kin-docs/BASELINE_ARCHITECTURE.md` define la línea base contractual (ALPHA STABLE):
 los contratos marcados como estables no pueden modificarse sin una ADR aprobada.
 
 ---
@@ -709,7 +713,7 @@ hit/miss, TTL expirado, no-colisión entre consultas, deduplicación y ausencia 
 ## API REST
 
 Todos los endpoints se sirven bajo el prefijo global **`/api/v1`** (`server.servlet.context-path`).
-**57 endpoints** verificados en 18 controllers (inventario completo de Spring). Autenticación:
+**90 endpoints** verificados en 25 controllers (inventario completo de Spring). Autenticación:
 **Public**, **Bearer JWT** o **ADMIN**.
 
 | Método | Endpoint | Auth | Descripción |
@@ -722,6 +726,7 @@ Todos los endpoints se sirven bajo el prefijo global **`/api/v1`** (`server.serv
 | `POST` | `/auth/forgot-password` | Public | Solicitud de reset de contraseña |
 | `POST` | `/auth/reset-password` | Public | Aplicar reset de contraseña |
 | `POST` | `/auth/logout` | Public | Logout; limpia la cookie |
+| `POST` | `/auth/refresh` | Public | Renueva el access token (refresh token 7 días) |
 | `GET` | `/pricing-plans` | Public | Planes de precios activos |
 | `GET` | `/pricing-plans/{id}` | Public | Detalle de un plan |
 | `POST` | `/admin/pricing-plans` | ADMIN | Crear plan |
@@ -771,6 +776,391 @@ Todos los endpoints se sirven bajo el prefijo global **`/api/v1`** (`server.serv
 | `GET` | `/enterprise/{projectId}/{version}/stream` | Bearer JWT (owner) | SSE de progreso de generación |
 | `GET` | `/auth/test/verification-link?email=` | Public* | Hook E2E que expone el enlace de verificación capturado (solo perfil `test`) |
 | `GET` | `/test/deepseek` | ADMIN | Test de conectividad DeepSeek (perfil test/dev) |
+| `POST` | `/health/triage` | Bearer JWT | Consulta de triaje por síntomas (Salud, ADR-028) |
+| `GET` | `/health/triage/symptoms` | Bearer JWT | Catálogo de síntomas para el formulario |
+| `GET` | `/health/triage/history` | Bearer JWT | Historial de triaje del paciente autenticado |
+| `POST` | `/admin/health/triage/catalog/update` | ADMIN | Fuerza la actualización del catálogo desde fuentes externas |
+| `GET` | `/health/differential?consultationId=...` | Bearer JWT | Diagnóstico diferencial de una consulta de triaje (ADR-029) |
+| `POST` | `/health/differential` | Bearer JWT | Diagnóstico diferencial por síntomas directos |
+| `GET` | `/health/dashboard/summary` | Bearer JWT | Resumen de salud del paciente (ADR-030) |
+| `GET` | `/health/dashboard/history` | Bearer JWT | Historial paginado de consultas de triaje |
+| `GET` | `/health/dashboard/history/{consultationId}` | Bearer JWT | Detalle de una consulta del paciente |
+| `GET` | `/health/dashboard/profile` | Bearer JWT | Perfil del paciente (factores de riesgo, crónicas) |
+| `PUT` | `/health/dashboard/profile` | Bearer JWT | Actualizar perfil del paciente |
+| `GET` | `/health/dashboard/care-plan` | Bearer JWT | Plan de cuidado personalizado |
+| `GET` | `/health/dashboard/reminders` | Bearer JWT | Listar recordatorios activos |
+| `POST` | `/health/dashboard/reminders` | Bearer JWT | Crear recordatorio base |
+| `GET` | `/health/physician/patients` | JWT (PHYSICIAN) | Pacientes asignados al médico (ADR-031) |
+| `GET` | `/health/physician/patients/{patientId}/summary` | JWT (PHYSICIAN) | Resumen clínico del paciente |
+| `GET` | `/health/physician/patients/{patientId}/history` | JWT (PHYSICIAN) | Historial de triajes del paciente |
+| `GET` | `/health/physician/alerts` | JWT (PHYSICIAN) | Alertas activas del médico |
+| `POST` | `/health/physician/alerts/{alertId}/acknowledge` | JWT (PHYSICIAN) | Marcar alerta como atendida |
+| `POST` | `/admin/health/physician/assign` | ADMIN | Asignar paciente a médico |
+| `POST` | `/admin/health/catalog/import-from-external` | ADMIN | Importar condiciones/síntomas desde fuentes externas |
+| `GET` | `/admin/health/catalog/coverage` | ADMIN | Informe de cobertura de síntomas por condición |
+| `GET` | `/health/telemedicine/conversations` | Bearer JWT | Conversaciones del usuario (ADR-032) |
+| `GET` | `/health/telemedicine/messages?with=...` | Bearer JWT | Mensajes de una conversación (marca leídos) |
+| `POST` | `/health/telemedicine/messages` | Bearer JWT | Enviar mensaje (requiere asignación) |
+| `GET` | `/health/telemedicine/unread` | Bearer JWT | Contador de mensajes no leídos |
+| `POST` | `/health/telemedicine/appointments` | Bearer JWT | Solicitar cita |
+| `PUT` | `/health/telemedicine/appointments/{id}/status` | JWT (PHYSICIAN) | Confirmar/rechazar/completar cita |
+| `GET` | `/health/telemedicine/appointments` | Bearer JWT | Lista de citas (filtro por rol) |
+| `POST` | `/admin/health/pilot/setup` | ADMIN | Crear/actualizar el grupo piloto (idempotente) |
+| `GET` | `/admin/health/pilot/metrics` | ADMIN | Métricas de éxito anonimizadas del piloto |
+
+---
+
+## Salud - Triaje Digital (ADR-028)
+
+Módulo de apoyo a la decisión para pacientes: introducen sus síntomas y obtienen una lista de posibles condiciones con un score de probabilidad, severidad, urgencia y recomendación. **Herramienta informativa: no sustituye el diagnóstico médico profesional** (aviso incluido en la respuesta y en la UI).
+
+### Backend
+
+Bounded context `com.kinplatform.kin.health.triage` (Clean Architecture + DDD):
+- **Dominio**: `Symptom` (+ `aliases` para normalización), `Condition`, `SymptomConditionRelation` (peso 0..1 + `required`), enums `Severity`/`Urgency`, `TriageCatalog`, `TriageInput`, `TriageResult`, `CatalogUpdate`/`CatalogUpdateResult`, `SymptomNormalizer`.
+- **Motor determinista** `TriageEngine` (`DomainEngine<TriageInput, TriageResult>`): para cada condición suma los pesos de los síntomas presentes, excluye condiciones con síntomas `required` ausentes, normaliza a probabilidad (0..1) y ordena descendente. Sin IA/LLM (el NLP solo extrae síntomas, nunca calcula).
+- **Extracción NLP**: `SymptomExtractor` es un puerto de dominio; `OpenNLPSymptomExtractor` (OpenNLP, sin modelos descargados) detecta síntomas y aliases con fallback determinista a `KeywordSymptomExtractor`. P. ej. *"tengo tos seca, fiebre de 38° y dolor muscular"* → `[tos, fiebre, dolor muscular]`.
+- **Etapa de pipeline** `TriageStage` (aditiva, después del Analizador): extrae síntomas del mensaje con el extractor inyectado y, solo si hay síntomas, ejecuta el motor y almacena `PipelineContext.triageResult`. Se omite si el módulo está deshabilitado o el proyecto no es de categoría `SALUD`.
+- **Persistencia** (Flyway `V21__create_triage_tables.sql` + `V22__expand_triage_catalog.sql`): tablas `symptoms` (con `aliases` JSONB), `conditions`, `symptom_condition_relations` y `triage_consultations` (JSONB), con seed de **50 condiciones** y **100+ relaciones**.
+- **Enriquecimiento del catálogo** (fase profesional): `HealthKnowledgeAdapter` implementa `KnowledgeSource` (dataset empaquetado `data/triage-catalog-extended.json` u API médica externa), `HealthCatalogParser` convierte los candidatos en `CatalogUpdate` con IDs deterministas y `TriageKnowledgeRepository.applyUpdate` hace un upsert idempotente. `TriageCatalogUpdateService` integra el **KnowledgeEngine** y degrada con elegancia al bundle si la fuente falla (el catálogo local nunca se rompe).
+
+### Configuración
+
+```yaml
+kin:
+  health:
+    triage:
+      enabled: ${KIN_HEALTH_TRIAGE_ENABLED:true}        # Master switch del módulo
+      max-conditions: ${KIN_HEALTH_TRIAGE_MAX_CONDITIONS:5}  # Límite de resultados
+      data-source: ${KIN_HEALTH_TRIAGE_DATA_SOURCE:db}  # db (default) o file (futuro)
+      nlp-enabled: ${KIN_HEALTH_TRIAGE_NLP_ENABLED:true} # Extracción con OpenNLP (fallback keywords)
+      catalog:
+        external-enabled: ${KIN_HEALTH_TRIAGE_CATALOG_EXTERNAL_ENABLED:false}  # API médica externa (PubMed/WHO)
+        base-url: ${KIN_HEALTH_TRIAGE_CATALOG_BASE_URL:}                       # URL de la API externa
+        bundled-resource: ${KIN_HEALTH_TRIAGE_CATALOG_BUNDLED_RESOURCE:data/triage-catalog-extended.json}
+```
+
+### Actualización del catálogo (admin)
+
+```bash
+curl -X POST http://localhost:8080/api/v1/admin/health/triage/catalog/update \
+  -H "Authorization: Bearer <JWT_ADMIN>"
+# → {"symptomsAdded":N,"conditionsAdded":N,"relationsAdded":N,"source":"health-catalog","changed":true}
+```
+
+### Uso
+
+```bash
+curl -X POST http://localhost:8080/api/v1/health/triage \
+  -H "Authorization: Bearer <JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{"symptoms": ["fiebre", "tos", "dolor de cabeza"]}'
+```
+
+Respuesta:
+
+```json
+{
+  "status": "SUCCESS",
+  "results": [
+    {
+      "conditionId": "...",
+      "condition": "Gripe",
+      "description": "...",
+      "probability": 0.61,
+      "severity": "MODERADO",
+      "urgency": "MEDIA",
+      "recommendation": "Consulta médica en 24-48 h. Reposo e hidratación abundante.",
+      "matchedSymptoms": ["fiebre", "tos", "dolor de cabeza"]
+    }
+  ],
+  "disclaimer": "Esta herramienta es de apoyo informativo y no sustituye la evaluación ni el diagnóstico de un profesional de la salud..."
+}
+```
+
+### Frontend
+
+- Ruta `/dashboard/patient/triage`: formulario con buscador + multiselect de síntomas, botón **Analizar** y tarjetas de resultados con barra de probabilidad, severidad, urgencia y recomendación.
+- Aviso destacado de que es una herramienta informativa.
+- Accesible desde el menú lateral (*Triaje Digital*).
+
+### Roles y seguridad
+
+- Endpoints protegidos por JWT (roles `FREE`, `PREMIUM`, `FACILITADOR`, `PATIENT`, `ADMIN`).
+- El `userId` se resuelve siempre desde la autenticación: cada paciente solo ve su propio historial.
+
+---
+
+## Salud - Consolidación del catálogo (fase 2, ADR-028)
+
+Mejora de la calidad clínica de KIN Health: catálogo ampliado, NER mejorado, validación de datos y UX.
+
+### Catálogo 100+ condiciones
+
+- **Flyway V26** amplía el catálogo a **100 condiciones**, **95 síntomas** y **~253 relaciones**, con la columna `validation_status` (`PENDING`/`REVIEWED`/`APPROVED`/`REJECTED`) para auditoría clínica.
+
+### Importación desde fuentes externas
+
+- `HealthDataImporter` integra el **KnowledgeEngine** para adquirir condiciones/síntomas desde APIs médicas abiertas (WHO, PubMed, datasets estructurados), normaliza y deduplica con IDs deterministas, y aplica la actualización al repositorio JPA con estado `PENDING`.
+- Endpoint admin `POST /api/v1/admin/health/catalog/import-from-external`.
+- Feature flag `kin.health.triage.auto-update` (default `false`).
+
+### NER V2
+
+- `OpenNLPSymptomExtractorV2` mejora la extracción con **negaciones** ("no tengo…"), **parafraseo** ("me duele la cabeza" → "dolor de cabeza") y **mediciones** ("fiebre de 38°"), con fallback determinista a keywords. **≥10 % de mejora de F1** sobre keyword matching (verificado en `OpenNLPSymptomExtractorV2Test`).
+
+### Informe de cobertura y validación clínica
+
+- `GET /api/v1/admin/health/catalog/coverage` genera el informe de cobertura de síntomas por condición.
+- Proceso de revisión documentado en `kin-docs/GUIA_VALIDACION_CLINICA.md`.
+
+### Mejoras UX
+
+- Triaje: el paciente confirma/edita los síntomas seleccionados antes de analizar.
+- Diagnóstico diferencial: enlaces a Wikipedia y MedlinePlus por condición.
+- Dashboard: gráfico de evolución de consultas por mes.
+
+---
+
+## Salud - Diagnóstico Diferencial (ADR-029)
+
+Módulo que parte del `TriageResult` y genera un **diagnóstico diferencial** más elaborado: condiciones probables con su probabilidad ajustada por **factores de riesgo**, **pruebas complementarias** para diferenciar y una **explicación** breve. **Herramienta informativa: no sustituye el diagnóstico médico profesional** (aviso en la respuesta y en la UI).
+
+### Backend
+
+Bounded context `com.kinplatform.kin.health.differential` (Clean Architecture + DDD):
+- **Dominio**: `DifferentialInput`, `DifferentialResult`, `DifferentialItem`, `RiskFactor` (condición, factor, peso), `RecommendedTest` (condición, prueba, descripción), `DifferentialCatalog`, `PatientContext`.
+- **Motor determinista** `DifferentialEngine` (`DomainEngine<DifferentialInput, DifferentialResult>`): ajusta la probabilidad con `p' = p + weight·(1-p)` por factor de riesgo coincidente, adjunta pruebas del catálogo, genera el `reasoning` por template y ordena descendente. Sin IA/LLM.
+- **Etapa de pipeline** `DifferentialStage` (aditiva, justo después de `TriageStage`): lee `PipelineContext.triageResult` y almacena `PipelineContext.differentialResult`; se omite si el módulo está deshabilitado o no hay triaje.
+- **Persistencia** (Flyway `V23__create_differential_tables.sql`): tablas `risk_factors` y `recommended_tests` con **25 factores de riesgo** y **22 pruebas** sembradas.
+- **Enriquecimiento** vía KnowledgeEngine: `DifferentialKnowledgeAdapter` (bundle `data/differential-catalog.json` u API externa) + `DifferentialCatalogParser` (resuelve nombres → ids) + upsert idempotente.
+
+### Configuración
+
+```yaml
+kin:
+  health:
+    differential:
+      enabled: ${KIN_HEALTH_DIFFERENTIAL_ENABLED:true}
+      max-items: ${KIN_HEALTH_DIFFERENTIAL_MAX_ITEMS:5}
+      catalog:
+        external-enabled: ${KIN_HEALTH_DIFFERENTIAL_CATALOG_EXTERNAL_ENABLED:false}
+        base-url: ${KIN_HEALTH_DIFFERENTIAL_CATALOG_BASE_URL:}
+        bundled-resource: ${KIN_HEALTH_DIFFERENTIAL_CATALOG_BUNDLED_RESOURCE:data/differential-catalog.json}
+```
+
+### Uso
+
+```bash
+# Por síntomas directos (ejecuta triaje primero)
+curl -X POST http://localhost:8080/api/v1/health/differential \
+  -H "Authorization: Bearer <JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{"symptoms": ["tos seca", "fiebre", "dolor muscular"], "riskFactors": ["fumador"]}'
+
+# Por una consulta de triaje existente
+curl "http://localhost:8080/api/v1/health/differential?consultationId=<id>" \
+  -H "Authorization: Bearer <JWT>"
+```
+
+### Frontend
+
+- En `/dashboard/patient/triage`, tras el triaje aparece la sección **Diagnóstico diferencial** con selectores de factores de riesgo y tarjetas de condiciones con probabilidad, severidad, urgencia, factores de riesgo y pruebas sugeridas.
+
+---
+
+## Salud - Dashboard del Paciente (ADR-030)
+
+Panel centralizado del paciente en **`/dashboard/patient/health`** ("Mi Salud"): resumen de salud, historial de consultas, perfil con factores de riesgo gestionados y plan de cuidado personalizado.
+
+### Backend
+
+Bounded context `com.kinplatform.kin.health.dashboard` (Clean Architecture + DDD):
+- **Dominio**: `PatientProfile`, `HealthSummary`, `CarePlan`, `Reminder`, `CareRecommendationRegistry` (plantillas deterministas sin LLM).
+- **`DashboardService`**: calcula el resumen (consultas, condiciones más frecuentes, último triaje, recordatorios), el historial paginado, el perfil y el plan de cuidado (condiciones crónicas del perfil + condiciones del historial → recomendaciones combinadas y deduplicadas).
+- **Persistencia** (Flyway `V24__create_patient_profiles.sql`): `patient_profiles` (JSONB) y `reminders`.
+- Los **factores de riesgo del perfil** se consumen por el `DifferentialEngine` (ADR-029) en futuros diagnósticos.
+
+### Configuración
+
+```yaml
+kin:
+  health:
+    dashboard:
+      enabled: ${KIN_HEALTH_DASHBOARD_ENABLED:true}
+      top-conditions: ${KIN_HEALTH_DASHBOARD_TOP_CONDITIONS:3}
+```
+
+### Uso
+
+```bash
+# Resumen
+curl http://localhost:8080/api/v1/health/dashboard/summary -H "Authorization: Bearer <JWT>"
+# Historial paginado
+curl "http://localhost:8080/api/v1/health/dashboard/history?page=0&size=10" -H "Authorization: Bearer <JWT>"
+# Actualizar perfil
+curl -X PUT http://localhost:8080/api/v1/health/dashboard/profile \
+  -H "Authorization: Bearer <JWT>" -H "Content-Type: application/json" \
+  -d '{"riskFactors": ["fumador"], "chronicConditions": ["hipertensión"]}'
+# Plan de cuidado
+curl http://localhost:8080/api/v1/health/dashboard/care-plan -H "Authorization: Bearer <JWT>"
+```
+
+### Frontend
+
+- Ruta **`/dashboard/patient/health`** con `HealthSummaryCards` (consultas, diagnósticos, último triaje, recordatorios, condiciones más frecuentes), `HistoryList` (tabla paginada con "Ver detalle" en modal), `ProfileEditor` (factores de riesgo y condiciones crónicas) y `CarePlanView` (recomendaciones con prioridad).
+
+---
+
+## Salud - Portal para Médicos (ADR-031)
+
+Portal para profesionales de la salud en **`/dashboard/physician`** (accesible solo para rol `PHYSICIAN`): pacientes asignados, resumen clínico, historial y alertas automáticas de alta urgencia.
+
+### Backend
+
+Bounded context `com.kinplatform.kin.health.physician` (Clean Architecture + DDD):
+- **Dominio**: `PatientSummary`, `ClinicalAlert` (tipo/severidad/estado), `PhysicianPatientAssignment`.
+- **`PhysicianService`**: lista de pacientes asignados (paginated), resumen clínico e historial (solo pacientes asignados — **aislamiento estricto**, 404 en otro caso), alertas activas y `acknowledgeAlert`.
+- **Alertas automáticas deterministas**: `ClinicalAlertEventListener` escucha `TriagePerformedEvent` (extendido aditivamente con `maxUrgency`/`conditionNames`) y, si la urgencia máxima es `ALTA`, crea una alerta para cada médico asignado al paciente.
+- **Asignación**: endpoint ADMIN `POST /admin/health/physician/assign` (MVP: asignación manual).
+- **Persistencia** (Flyway `V25__create_physician_tables.sql`): `physician_patient_assignments` y `clinical_alerts`.
+- **Seguridad**: rol `PHYSICIAN` añadido; endpoints `/health/physician/**` restringidos a `PHYSICIAN`/`ADMIN`.
+
+### Configuración
+
+```yaml
+kin:
+  health:
+    physician:
+      enabled: ${KIN_HEALTH_PHYSICIAN_ENABLED:true}
+```
+
+### Uso
+
+```bash
+# Pacientes asignados
+curl http://localhost:8080/api/v1/health/physician/patients -H "Authorization: Bearer <JWT_PHYSICIAN>"
+# Resumen clínico
+curl http://localhost:8080/api/v1/health/physician/patients/<patientId>/summary -H "Authorization: Bearer <JWT_PHYSICIAN>"
+# Alertas activas
+curl http://localhost:8080/api/v1/health/physician/alerts -H "Authorization: Bearer <JWT_PHYSICIAN>"
+# Asignar paciente a médico (admin)
+curl -X POST http://localhost:8080/api/v1/admin/health/physician/assign \
+  -H "Authorization: Bearer <JWT_ADMIN>" -H "Content-Type: application/json" \
+  -d '{"physicianId": "<id>", "patientId": "<id>"}'
+```
+
+### Frontend
+
+- Ruta **`/dashboard/physician`** con `AlertList` (alertas de alta urgencia con "Marcar atendida"), `PatientList` (tabla paginada con "Ver resumen") y `PatientDetailView` (resumen clínico + historial en modal). Item "Portal Médico" en el sidebar solo para rol `PHYSICIAN`.
+
+---
+
+## Salud - Telemedicina (ADR-032)
+
+Comunicación asíncrona segura entre pacientes y sus médicos asignados: mensajería y gestión de citas, con notificaciones básicas dentro de la plataforma.
+
+### Backend
+
+Bounded context `com.kinplatform.kin.health.telemedicine` (Clean Architecture + DDD):
+- **Dominio**: `Message` (emisor, receptor, conversación determinista y simétrica, leído) y `Appointment` (estado `PENDIENTE`/`CONFIRMADA`/`CANCELADA`/`COMPLETADA`).
+- **`TelemedicineService`**: enviar/listar mensajes, marcar leídos, contador de no leídos, solicitar cita, confirmar/rechazar/completar cita y listar por rol. La validación de asignación médico-paciente se reutiliza de `PhysicianPatientRepository` (ADR-031).
+- **Cifrado en reposo**: el contenido de los mensajes se cifra con AES/GCM (`ContentCipher`, clave `kin.health.telemedicine.crypto-secret`).
+- **Persistencia** (Flyway `V27__create_telemedicine_tables.sql`): `messages` y `appointments`.
+- **Notificaciones**: contador de no leídos vía `GET /unread` + polling en el frontend (sin WebSockets).
+
+### Configuración
+
+```yaml
+kin:
+  health:
+    telemedicine:
+      enabled: ${KIN_HEALTH_TELEMEDICINE_ENABLED:true}
+      crypto-secret: ${KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET:kin-telemedicine-dev-key}
+```
+
+> En producción configure `crypto-secret` con un secreto propio.
+
+### Frontend
+
+- **Paciente**: `/dashboard/patient/messages` y `/dashboard/patient/appointments`.
+- **Médico**: `/dashboard/physician/messages` y `/dashboard/physician/appointments`.
+- Componentes `ChatView` (hilo con input y polling), `MessagesPage` (lista de conversaciones + chat), `AppointmentForm` (solicitar cita) y `AppointmentList` (con acciones de confirmar/rechazar para el médico).
+
+---
+
+## Salud - Piloto clínico
+
+Arranque controlado de KIN Health con un grupo reducido (10–20 pacientes, 2–3
+médicos) para validar usabilidad, calidad clínica y flujo de comunicación.
+
+### Backend
+
+Bounded context `com.kinplatform.kin.health.pilot`:
+- **`PilotOnboardingService`**: crea el grupo piloto en una sola llamada
+  (idempotente). Crea usuarios `PATIENT`/`PHYSICIAN` (BCrypt, marca
+  `emailVerified`/`active`) y las asignaciones médico-paciente reutilizando
+  `PhysicianService.assignPatient` (ADR-031). Las asignaciones con correos
+  desconocidos se omiten sin fallar.
+- **`PilotMetricsService`**: KPIs anonimizados (sin correos ni nombres) — tasa
+  de finalización de triaje, tiempo medio de respuesta del médico (proxy),
+  volumen de triajes/mensajes/citas y alertas pendientes.
+
+### Endpoints (ADMIN)
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `POST` | `/admin/health/pilot/setup` | Crea/actualiza el grupo piloto (idempotente) |
+| `GET` | `/admin/health/pilot/metrics` | Métricas de éxito anonimizadas |
+
+### Frontend
+
+- Botón **"Dar feedback"** en `Mi Salud` y `Portal Médico`
+  (`components/health/FeedbackButton`). Apunta a `NEXT_PUBLIC_FEEDBACK_URL`
+  (formulario configurable); si está vacío usa `mailto:soporte@kin-platform.com`.
+
+### Documentación operativa
+
+| Documento | Contenido |
+|-----------|-----------|
+| `kin-docs/BRIEF_PILOTO.md` | Objetivos, KPIs, procedimiento de arranque y criterios de salida |
+| `kin-docs/GUIA_USUARIO_PILOTO.md` | Guía entregable a pacientes y médicos participantes |
+| `kin-docs/MODELO_CONSENTIMIENTO.md` | Plantilla de consentimiento informado |
+
+---
+
+## Operaciones
+
+Guías operativas para producción en `kin-docs/`:
+
+| Guía | Contenido |
+|------|-----------|
+| `GUIA_DESPLIEGUE_PRODUCCION.md` | Despliegue en Render/Neon, variables de entorno, post-despliegue |
+| `GUIA_MONITOREO.md` | Métricas clave (`kin.health.*`), umbrales de alerta, logs JSON con `correlationId` |
+| `GUIA_RECUPERACION.md` | Rollback, recuperación ante fallos, rotación de secretos (JWT y crypto-secret de telemedicina) |
+| `GUIA_VALIDACION_CLINICA.md` | Validación del catálogo clínico (PENDING/APPROVED) |
+| `GUIA_TELEMEDICINA.md` | Uso de mensajería y citas |
+| `BRIEF_PILOTO.md` | Objetivos, KPIs y arranque del piloto clínico |
+| `GUIA_USUARIO_PILOTO.md` | Guía entregable a participantes del piloto |
+| `MODELO_CONSENTIMIENTO.md` | Consentimiento informado del piloto |
+
+### Observabilidad en producción
+
+- Métricas Micrometer en `/api/v1/actuator/metrics` (incluidas `kin.health.triages.total`,
+  `kin.health.triages.high_urgency`, `kin.health.differentials.total`,
+  `kin.health.telemedicine.messages.total`, `kin.health.telemedicine.appointments.total`).
+- Healthchecks: `/api/v1/actuator/health` + `/health/healthModules` (estado de los módulos de salud).
+- Logs JSON con `correlationId`/`userId` (perfiles `prod`/`render`).
+- Rate limiting por IP en `/auth/**`, `/health/triage/**`, `/health/differential/**` y
+  `/health/telemedicine/**` (configurable en `app.rate-limit.*`).
+- Caché del catálogo con `@Cacheable` (`kin.triage.catalog`); Redis opcional.
+
+### Seguridad en producción
+
+- JWT: access 24 h + **refresh token** 7 días (`POST /api/v1/auth/refresh`).
+- Mensajes de telemedicina **cifrados en reposo** (AES/GCM) con rotación de claves
+  (lista separada por comas en `KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET`).
+- CORS limitado a orígenes autorizados (`app.cors.allowed-origins`; `kin-platform.com` siempre garantizado).
 
 ---
 

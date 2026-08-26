@@ -14,6 +14,12 @@ public interface AuthService {
     /** Login: solo emite JWT si el correo está verificado. */
     AuthResponse login(LoginRequest request);
 
+    /**
+     * Renueva el access token a partir de un refresh token válido (fase de
+     * producción). Devuelve {@code null} si el refresh es inválido.
+     */
+    String refreshAccessToken(String refreshToken);
+
     UserDTO getCurrentUser(String token);
 
     void logout(String token);

@@ -196,6 +196,87 @@ kin:
       enabled: ${KNOWLEDGE_TEST_SOURCE_ENABLED:false}
 
   # -----------------------------------------------------------
+  # Módulo de Triaje Digital (ADR-028) — Salud
+  # Herramienta de apoyo informativo (no sustituye el diagnóstico médico).
+  # -----------------------------------------------------------
+  health:
+    triage:
+      # Master switch del módulo.
+      enabled: ${KIN_HEALTH_TRIAGE_ENABLED:true}
+      # Límite máximo de condiciones en el resultado.
+      max-conditions: ${KIN_HEALTH_TRIAGE_MAX_CONDITIONS:5}
+      # Fuente de conocimiento: db (default) o file (futuro).
+      data-source: ${KIN_HEALTH_TRIAGE_DATA_SOURCE:db}
+      # SymptomExtractor: NLP (OpenNLP, fallback determinista) vs keywords.
+      nlp-enabled: ${KIN_HEALTH_TRIAGE_NLP_ENABLED:true}
+      # Auto-actualización del catálogo desde fuentes externas (fase de
+      # consolidación). Default false: la importación solo ocurre bajo demanda
+      # vía /admin/health/catalog/import-from-external. Los datos importados
+      # entran como PENDING y deben pasar validación clínica.
+      auto-update: ${KIN_HEALTH_TRIAGE_AUTO_UPDATE:false}
+      # Caché del catálogo (fase de producción): envuelve el repositorio JPA con
+      # @Cacheable (en memoria por defecto; Redis si spring.cache.type=redis).
+      catalog-cache-enabled: ${KIN_HEALTH_TRIAGE_CATALOG_CACHE_ENABLED:true}
+      # Enriquecimiento del catálogo desde fuentes externas (fase profesional).
+      # Defaults offline-first: el bundle empaquetado (data/triage-catalog-extended.json)
+      # alimenta la actualización bajo demanda sin red.
+      catalog:
+        source-id: ${KIN_HEALTH_TRIAGE_CATALOG_SOURCE_ID:health-catalog}
+        source-name: ${KIN_HEALTH_TRIAGE_CATALOG_SOURCE_NAME:Health Catalog}
+        # Master switch de la API médica externa (WHO/PubMed/dataset estructurado).
+        external-enabled: ${KIN_HEALTH_TRIAGE_CATALOG_EXTERNAL_ENABLED:false}
+        # URL base de la API médica externa (requerida cuando está habilitada).
+        base-url: ${KIN_HEALTH_TRIAGE_CATALOG_BASE_URL:}
+        # Recurso empaquetado del dataset CIE-10/WHO (offline-first).
+        bundled-resource: ${KIN_HEALTH_TRIAGE_CATALOG_BUNDLED_RESOURCE:data/triage-catalog-extended.json}
+
+  # -----------------------------------------------------------
+  # Diagnóstico Diferencial (ADR-029) — Salud
+  # Herramienta de apoyo informativo (no sustituye el diagnóstico médico).
+  # -----------------------------------------------------------
+  differential:
+    # Master switch del módulo.
+    enabled: ${KIN_HEALTH_DIFFERENTIAL_ENABLED:true}
+    # Límite máximo de ítems en el resultado.
+    max-items: ${KIN_HEALTH_DIFFERENTIAL_MAX_ITEMS:5}
+    # Enriquecimiento del catálogo (factores de riesgo y pruebas) desde fuentes
+    # externas. Defaults offline-first: bundle empaquetado.
+    catalog:
+      source-id: ${KIN_HEALTH_DIFFERENTIAL_CATALOG_SOURCE_ID:health-differential}
+      source-name: ${KIN_HEALTH_DIFFERENTIAL_CATALOG_SOURCE_NAME:Health Differential Catalog}
+      external-enabled: ${KIN_HEALTH_DIFFERENTIAL_CATALOG_EXTERNAL_ENABLED:false}
+      base-url: ${KIN_HEALTH_DIFFERENTIAL_CATALOG_BASE_URL:}
+      bundled-resource: ${KIN_HEALTH_DIFFERENTIAL_CATALOG_BUNDLED_RESOURCE:data/differential-catalog.json}
+
+  # -----------------------------------------------------------
+  # Dashboard de Salud del Paciente (ADR-030)
+  # Panel centralizado: resumen, historial, perfil y plan de cuidado.
+  # -----------------------------------------------------------
+  dashboard:
+    # Master switch del módulo.
+    enabled: ${KIN_HEALTH_DASHBOARD_ENABLED:true}
+    # Límite de condiciones más frecuentes en el resumen.
+    top-conditions: ${KIN_HEALTH_DASHBOARD_TOP_CONDITIONS:3}
+
+  # -----------------------------------------------------------
+  # Portal para Médicos (ADR-031)
+  # Lista de pacientes, resumen clínico, historial y alertas.
+  # -----------------------------------------------------------
+  physician:
+    # Master switch del módulo.
+    enabled: ${KIN_HEALTH_PHYSICIAN_ENABLED:true}
+
+  # -----------------------------------------------------------
+  # Telemedicina (ADR-032) — mensajería asíncrona y citas
+  # -----------------------------------------------------------
+  telemedicine:
+    # Master switch del módulo.
+    enabled: ${KIN_HEALTH_TELEMEDICINE_ENABLED:true}
+    # Clave para cifrar el contenido de mensajes en reposo (AES/GCM).
+    # En producción DEBE configurarse con un secreto propio.
+    crypto-secret: ${KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET:kin-telemedicine-dev-key}
+
+  # -----------------------------------------------------------
   # Transactional Outbox (ADR-026, KIN 2.4)
   # Garantiza entrega at-least-once de Domain Events escribiendo en la misma
   # transacción del caso de uso. El relé (OutboxRelay) publica asíncronamente.
@@ -272,7 +353,10 @@ stripe:
 # -----------------------------------------------------------
 jwt:
   secret: ${JWT_SECRET}
+  # Access token: 24 h.
   expiration-ms: 86400000
+  # Refresh token: 7 días (renovación sin re-autenticar).
+  refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
 
 # -----------------------------------------------------------
 # dotenv — busca .env en la raíz del repo (no en kin-backend/)

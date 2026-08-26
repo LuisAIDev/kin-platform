@@ -8,6 +8,10 @@ import { useState } from "react";
 const NAV_ITEMS = [
   { label: "Mis Proyectos", href: "/dashboard/projects" },
   { label: "Nuevo Proyecto", href: "/dashboard/projects/new" },
+  { label: "Triaje Digital", href: "/dashboard/patient/triage" },
+  { label: "Mi Salud", href: "/dashboard/patient/health" },
+  { label: "Mensajes", href: "/dashboard/patient/messages" },
+  { label: "Citas", href: "/dashboard/patient/appointments" },
   { label: "Analytics", href: "/dashboard/analytics" },
   { label: "Insights", href: "/dashboard/insights" },
   { label: "Recomendaciones", href: "/dashboard/recommendations" },
@@ -19,13 +23,20 @@ const NAV_ITEMS = [
 ];
 
 const ADMIN_ITEM = { label: "Administración", href: "/dashboard/admin/pricing" };
+const PHYSICIAN_ITEM = { label: "Portal Médico", href: "/dashboard/physician" };
+const PHYSICIAN_MSGS = { label: "Mensajes", href: "/dashboard/physician/messages" };
+const PHYSICIAN_APPTS = { label: "Citas", href: "/dashboard/physician/appointments" };
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const user = typeof window !== "undefined" ? authService.getUser() : null;
   const isAdmin = user?.role === "ADMIN";
-  const allItems = isAdmin ? [...NAV_ITEMS, ADMIN_ITEM] : NAV_ITEMS;
+  const isPhysician = user?.role === "PHYSICIAN" || isAdmin;
+  let items = NAV_ITEMS;
+  if (isPhysician) items = [...items, PHYSICIAN_ITEM, PHYSICIAN_MSGS, PHYSICIAN_APPTS];
+  if (isAdmin) items = [...items, ADMIN_ITEM];
+  const allItems = items;
 
   const handleLogout = async () => {
     await authService.logout();
@@ -37,6 +48,27 @@ export default function Sidebar() {
   const isActive = (href: string) => {
     if (href === "/dashboard/projects/new") {
       return pathname === "/dashboard/projects/new";
+    }
+    if (href === "/dashboard/patient/triage") {
+      return pathname === "/dashboard/patient/triage";
+    }
+    if (href === "/dashboard/patient/health") {
+      return pathname === "/dashboard/patient/health";
+    }
+    if (href === "/dashboard/patient/messages") {
+      return pathname === "/dashboard/patient/messages";
+    }
+    if (href === "/dashboard/patient/appointments") {
+      return pathname === "/dashboard/patient/appointments";
+    }
+    if (href === "/dashboard/physician") {
+      return pathname === "/dashboard/physician";
+    }
+    if (href === "/dashboard/physician/messages") {
+      return pathname === "/dashboard/physician/messages";
+    }
+    if (href === "/dashboard/physician/appointments") {
+      return pathname === "/dashboard/physician/appointments";
     }
     if (href === "/dashboard/admin/pricing") {
       return pathname.startsWith("/dashboard/admin");

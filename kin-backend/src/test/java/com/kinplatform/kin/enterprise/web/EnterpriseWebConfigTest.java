@@ -99,5 +99,10 @@ class EnterpriseWebConfigTest {
         EnterpriseProjectAccessControl enterpriseProjectAccessControl() {
             return mock(EnterpriseProjectAccessControl.class);
         }
+
+        @Bean
+        org.springframework.jdbc.core.JdbcTemplate jdbcTemplate() {
+            return mock(org.springframework.jdbc.core.JdbcTemplate.class);
+        }
     }
 }

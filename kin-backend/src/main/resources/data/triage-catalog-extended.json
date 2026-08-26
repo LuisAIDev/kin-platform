@@ -1,0 +1,81 @@
+{
+  "source": "health-catalog-bundle",
+  "description": "Dataset estructurado de condiciones médicas para el enriquecimiento del catálogo de triaje (ADR-028, fase profesional). Offline-first: se usa cuando las fuentes externas no están disponibles.",
+  "conditions": [
+    {
+      "name": "Candidiasis vaginal",
+      "description": "Infección fúngica vaginal por Candida",
+      "icdCode": "B37.3",
+      "severity": "LEVE",
+      "urgency": "MEDIA",
+      "recommendation": "Consulta médica para tratamiento antifúngico tópico.",
+      "symptoms": [
+        { "name": "picazón en la piel", "weight": 0.8, "required": true },
+        { "name": "secreción anormal vaginal", "weight": 0.8, "required": false }
+      ]
+    },
+    {
+      "name": "Hepatitis aguda",
+      "description": "Inflamación aguda del hígado por virus hepatotropos",
+      "icdCode": "B17.9",
+      "severity": "GRAVE",
+      "urgency": "ALTA",
+      "recommendation": "Consulta médica urgente. Análisis de función hepática.",
+      "symptoms": [
+        { "name": "ictericia", "weight": 0.9, "required": true },
+        { "name": "náuseas", "weight": 0.6, "required": false },
+        { "name": "dolor abdominal", "weight": 0.6, "required": false }
+      ]
+    },
+    {
+      "name": "Meningitis",
+      "description": "Inflamación de las meninges, urgencia neurológica",
+      "icdCode": "G03.9",
+      "severity": "GRAVE",
+      "urgency": "ALTA",
+      "recommendation": "Acudir a urgencias de inmediato. No automedicarse.",
+      "symptoms": [
+        { "name": "rigidez de nuca", "weight": 0.95, "required": true },
+        { "name": "fiebre", "weight": 0.7, "required": false },
+        { "name": "dolor de cabeza", "weight": 0.7, "required": false }
+      ]
+    },
+    {
+      "name": "Tuberculosis pulmonar",
+      "description": "Infección bacteriana crónica pulmonar por Mycobacterium tuberculosis",
+      "icdCode": "A15.9",
+      "severity": "GRAVE",
+      "urgency": "ALTA",
+      "recommendation": "Consulta médica. Tratamiento supervisado y aislamiento respiratorio inicial.",
+      "symptoms": [
+        { "name": "tos", "weight": 0.8, "required": true },
+        { "name": "sudoración nocturna", "weight": 0.8, "required": false },
+        { "name": "pérdida de peso", "weight": 0.7, "required": false }
+      ]
+    },
+    {
+      "name": "Erisipela",
+      "description": "Infección cutánea bacteriana superficial con borde elevado",
+      "icdCode": "A46",
+      "severity": "GRAVE",
+      "urgency": "ALTA",
+      "recommendation": "Consulta médica en 24 h. Requiere antibiótico.",
+      "symptoms": [
+        { "name": "enrojecimiento de la piel", "weight": 0.9, "required": true },
+        { "name": "fiebre", "weight": 0.7, "required": false }
+      ]
+    },
+    {
+      "name": "Enfermedad de Ménière",
+      "description": "Trastorno del oído interno con vértigo episódico",
+      "icdCode": "H81.0",
+      "severity": "MODERADO",
+      "urgency": "MEDIA",
+      "recommendation": "Consulta otorrinolaringológica. Dieta baja en sodio.",
+      "symptoms": [
+        { "name": "mareo", "weight": 0.9, "required": true },
+        { "name": "zumbido en los oídos", "weight": 0.7, "required": false }
+      ]
+    }
+  ]
+}

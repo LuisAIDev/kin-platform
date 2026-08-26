@@ -67,7 +67,12 @@ export default function DeadLetterAdminPage() {
       router.replace("/dashboard");
       return;
     }
-    loadData();
+    // Diferir la carga para no llamar setState sincrónicamente dentro del
+    // efecto (evita renders en cascada; el linter react-hooks/set-state-in-effect).
+    const t = window.setTimeout(() => {
+      void loadData();
+    }, 0);
+    return () => window.clearTimeout(t);
   }, [router, loadData]);
 
   const handleRetry = async (id: string) => {

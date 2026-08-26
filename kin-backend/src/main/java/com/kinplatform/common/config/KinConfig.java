@@ -8,7 +8,6 @@ import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.kin.ai.PromptAssembler;
 import com.kinplatform.kin.ai.prompt.ConversationPromptBuilder;
-import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.kin.ai.prompt.ReportPromptBuilder;
 import com.kinplatform.kin.ai.prompt.SectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ExecutiveSummaryFormatter;
@@ -32,20 +31,11 @@ import com.kinplatform.kin.context.ProjectContextSyncPort;
 import com.kinplatform.kin.context.strategy.ConversationStrategist;
 import com.kinplatform.kin.context.strategy.DefaultExplorationStrategy;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
-import com.kinplatform.kin.conversation.history.HistoryWindow;
-import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.ResponseFallback;
+import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.kin.engine.DomainEngine;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.deduplication.DeduplicationResult;
-import com.kinplatform.kin.knowledge.deduplication.DeduplicationStrategy;
-import com.kinplatform.kin.knowledge.deduplication.DeduplicationEngine;
-import com.kinplatform.kin.knowledge.deduplication.DeduplicationStage;
-import com.kinplatform.kin.knowledge.deduplication.ExactMatchStrategy;
-import com.kinplatform.kin.knowledge.deduplication.FuzzyMatchStrategy;
-import com.kinplatform.kin.knowledge.deduplication.SemanticMatchStrategy;
 import com.kinplatform.kin.engine.EngineExecutor;
 import com.kinplatform.kin.engine.EngineRegistry;
 import com.kinplatform.kin.enrichment.EnrichmentEngine;
@@ -55,6 +45,9 @@ import com.kinplatform.kin.enterprise.application.EnterprisePipelineResultStore;
 import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
+import com.kinplatform.kin.health.differential.stage.DifferentialStage;
+import com.kinplatform.kin.health.triage.stage.TriageStage;
 import com.kinplatform.kin.interview.InterviewQuestion;
 import com.kinplatform.kin.interview.InterviewRepository;
 import com.kinplatform.kin.interview.engine.AnswerValidator;
@@ -65,11 +58,10 @@ import com.kinplatform.kin.knowledge.KnowledgeRepository;
 import com.kinplatform.kin.knowledge.KnowledgeSource;
 import com.kinplatform.kin.knowledge.deduplication.DeduplicationEngine;
 import com.kinplatform.kin.knowledge.deduplication.DeduplicationStage;
+import com.kinplatform.kin.knowledge.deduplication.DeduplicationStrategy;
 import com.kinplatform.kin.knowledge.deduplication.ExactMatchStrategy;
 import com.kinplatform.kin.knowledge.deduplication.FuzzyMatchStrategy;
 import com.kinplatform.kin.knowledge.deduplication.SemanticMatchStrategy;
-import com.kinplatform.kin.knowledge.KnowledgeRepository;
-import com.kinplatform.kin.knowledge.KnowledgeSource;
 import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
 import com.kinplatform.kin.knowledge.engine.KnowledgeGateway;
 import com.kinplatform.kin.knowledge.engine.SourceRegistry;
@@ -592,6 +584,8 @@ public class KinConfig {
     @Bean
     public Pipeline chatPipeline(
             AnalyzerStage analyzer,
+            TriageStage triage,
+            DifferentialStage differential,
             EvaluatorStage evaluator,
             StrategistStage strategist,
             InterviewStage interview,
@@ -608,6 +602,8 @@ public class KinConfig {
         return new Pipeline(
                 List.of(
                         analyzer,
+                        triage,
+                        differential,
                         evaluator,
                         strategist,
                         interview,
@@ -643,9 +639,13 @@ public class KinConfig {
             EnterprisePipelineResultStore enterprisePipelineResultStore,
             OutboxEventPublisher outboxEventPublisher) {
         return new KinMethod(
-                chatPipeline, eventBus, contextRepository,
+                chatPipeline,
+                eventBus,
+                contextRepository,
                 new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
-                projectContextSyncPort, enterprisePipelineResultStore, outboxEventPublisher);
+                projectContextSyncPort,
+                enterprisePipelineResultStore,
+                outboxEventPublisher);
     }
 
     @Bean

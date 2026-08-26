@@ -4,5 +4,7 @@ public enum UserRole {
     FREE,
     PREMIUM,
     FACILITADOR,
+    PATIENT,
+    PHYSICIAN,
     ADMIN
 }

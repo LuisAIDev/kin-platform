@@ -32,6 +32,7 @@
         <testcontainers.version>1.21.4</testcontainers.version>
         <jjwt.version>0.12.5</jjwt.version>
         <spring-ai.version>1.1.7</spring-ai.version>
+        <opennlp.version>2.3.1</opennlp.version>
     </properties>
 
     <dependencyManagement>
@@ -63,6 +64,15 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- OpenNLP - NLP para el SymptomExtractor del triaje (ADR-028).
+             El NLP solo extrae síntomas; el TriageEngine sigue siendo 100 % determinista.
+             WhitespaceTokenizer/DictionaryNameFinder no requieren descarga de modelos. -->
+        <dependency>
+            <groupId>org.apache.opennlp</groupId>
+            <artifactId>opennlp-tools</artifactId>
+            <version>${opennlp.version}</version>
         </dependency>
 
         <!-- Mail — envío de correos (verificación de email, SMTP configurable por perfil) -->

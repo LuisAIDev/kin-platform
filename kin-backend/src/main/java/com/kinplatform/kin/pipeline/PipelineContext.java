@@ -8,6 +8,8 @@ import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.engine.EngineResult;
 import com.kinplatform.kin.enrichment.EnrichmentResult;
 import com.kinplatform.kin.event.DomainEvent;
+import com.kinplatform.kin.health.differential.domain.DifferentialResult;
+import com.kinplatform.kin.health.triage.domain.TriageResult;
 import com.kinplatform.kin.interview.InterviewResult;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.knowledge.deduplication.DeduplicationResult;
@@ -16,13 +18,12 @@ import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 import com.kinplatform.kin.reporting.risk.RiskResult;
 import com.kinplatform.kin.scoring.ScoreResult;
-import reactor.core.publisher.Flux;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import reactor.core.publisher.Flux;
 
 public class PipelineContext {
 
@@ -45,6 +46,8 @@ public class PipelineContext {
     private ConsultingReport consultingReport;
     private KnowledgeResult knowledgeResult;
     private InterviewResult interviewResult;
+    private TriageResult triageResult;
+    private DifferentialResult differentialResult;
     private EnrichmentResult enrichmentResult;
     private final List<DomainEvent> events = new ArrayList<>();
     private final Map<String, Object> attributes = new HashMap<>();
@@ -56,11 +59,15 @@ public class PipelineContext {
     private TurnDirective turnDirective;
     private ResponseValidation responseValidation;
 
-    public PipelineContext(UUID projectId, UUID userId, String userMessage,
-                           List<com.kinplatform.kin.context.Message> history,
-                           String projectTitle, String projectDescription, String projectCategory) {
-        this(projectId, userId, userMessage, history, projectTitle, projectDescription,
-            projectCategory, null);
+    public PipelineContext(
+            UUID projectId,
+            UUID userId,
+            String userMessage,
+            List<com.kinplatform.kin.context.Message> history,
+            String projectTitle,
+            String projectDescription,
+            String projectCategory) {
+        this(projectId, userId, userMessage, history, projectTitle, projectDescription, projectCategory, null);
     }
 
     /**
@@ -68,10 +75,15 @@ public class PipelineContext {
      * {@link EnrichmentResult} del turno. El constructor de 7 parámetros
      * (compatibilidad) delega en este con {@code null}.
      */
-    public PipelineContext(UUID projectId, UUID userId, String userMessage,
-                           List<com.kinplatform.kin.context.Message> history,
-                           String projectTitle, String projectDescription, String projectCategory,
-                           EnrichmentResult enrichmentResult) {
+    public PipelineContext(
+            UUID projectId,
+            UUID userId,
+            String userMessage,
+            List<com.kinplatform.kin.context.Message> history,
+            String projectTitle,
+            String projectDescription,
+            String projectCategory,
+            EnrichmentResult enrichmentResult) {
         this.projectId = projectId;
         this.userId = userId;
         this.userMessage = userMessage;
@@ -82,43 +94,113 @@ public class PipelineContext {
         this.enrichmentResult = enrichmentResult;
     }
 
-    public UUID projectId() { return projectId; }
-    public UUID userId() { return userId; }
-    public String userMessage() { return userMessage; }
-    public List<com.kinplatform.kin.context.Message> history() { return history; }
-    public String projectTitle() { return projectTitle; }
-    public String projectDescription() { return projectDescription; }
-    public String projectCategory() { return projectCategory; }
+    public UUID projectId() {
+        return projectId;
+    }
 
-    public ProjectContext projectContext() { return projectContext; }
-    public void projectContext(ProjectContext ctx) { this.projectContext = ctx; }
+    public UUID userId() {
+        return userId;
+    }
 
-    public CompletenessEvaluation evaluation() { return evaluation; }
-    public void evaluation(CompletenessEvaluation e) { this.evaluation = e; }
+    public String userMessage() {
+        return userMessage;
+    }
 
-    public ConversationDecision decision() { return decision; }
-    public void decision(ConversationDecision d) { this.decision = d; }
+    public List<com.kinplatform.kin.context.Message> history() {
+        return history;
+    }
 
-    public String aiResponse() { return aiResponse; }
-    public void aiResponse(String r) { this.aiResponse = r; }
+    public String projectTitle() {
+        return projectTitle;
+    }
 
-    public ScoreResult scoreResult() { return scoreResult; }
-    public void scoreResult(ScoreResult s) { this.scoreResult = s; }
+    public String projectDescription() {
+        return projectDescription;
+    }
 
-    public RecommendationResult recommendationResult() { return recommendationResult; }
-    public void recommendationResult(RecommendationResult r) { this.recommendationResult = r; }
+    public String projectCategory() {
+        return projectCategory;
+    }
 
-    public RiskResult riskResult() { return riskResult; }
-    public void riskResult(RiskResult r) { this.riskResult = r; }
+    public ProjectContext projectContext() {
+        return projectContext;
+    }
 
-    public OpportunityResult opportunityResult() { return opportunityResult; }
-    public void opportunityResult(OpportunityResult r) { this.opportunityResult = r; }
+    public void projectContext(ProjectContext ctx) {
+        this.projectContext = ctx;
+    }
 
-    public ConsultingReport consultingReport() { return consultingReport; }
-    public void consultingReport(ConsultingReport r) { this.consultingReport = r; }
+    public CompletenessEvaluation evaluation() {
+        return evaluation;
+    }
 
-    public KnowledgeResult knowledgeResult() { return knowledgeResult; }
-    public void knowledgeResult(KnowledgeResult r) { this.knowledgeResult = r; }
+    public void evaluation(CompletenessEvaluation e) {
+        this.evaluation = e;
+    }
+
+    public ConversationDecision decision() {
+        return decision;
+    }
+
+    public void decision(ConversationDecision d) {
+        this.decision = d;
+    }
+
+    public String aiResponse() {
+        return aiResponse;
+    }
+
+    public void aiResponse(String r) {
+        this.aiResponse = r;
+    }
+
+    public ScoreResult scoreResult() {
+        return scoreResult;
+    }
+
+    public void scoreResult(ScoreResult s) {
+        this.scoreResult = s;
+    }
+
+    public RecommendationResult recommendationResult() {
+        return recommendationResult;
+    }
+
+    public void recommendationResult(RecommendationResult r) {
+        this.recommendationResult = r;
+    }
+
+    public RiskResult riskResult() {
+        return riskResult;
+    }
+
+    public void riskResult(RiskResult r) {
+        this.riskResult = r;
+    }
+
+    public OpportunityResult opportunityResult() {
+        return opportunityResult;
+    }
+
+    public void opportunityResult(OpportunityResult r) {
+        this.opportunityResult = r;
+    }
+
+    public ConsultingReport consultingReport() {
+        return consultingReport;
+    }
+
+    public void consultingReport(ConsultingReport r) {
+        this.consultingReport = r;
+    }
+
+    public KnowledgeResult knowledgeResult() {
+        return knowledgeResult;
+    }
+
+    public void knowledgeResult(KnowledgeResult r) {
+        this.knowledgeResult = r;
+    }
 
     public DeduplicationResult deduplicationResult() {
         return (DeduplicationResult) attributes.get("deduplicationResult");
@@ -128,39 +210,113 @@ public class PipelineContext {
         attributes.put("deduplicationResult", r);
     }
 
-    public InterviewResult interviewResult() { return interviewResult; }
-    public void interviewResult(InterviewResult r) { this.interviewResult = r; }
+    public InterviewResult interviewResult() {
+        return interviewResult;
+    }
 
-    public EnrichmentResult enrichmentResult() { return enrichmentResult; }
-    public void withEnrichmentResult(EnrichmentResult r) { this.enrichmentResult = r; }
+    public void interviewResult(InterviewResult r) {
+        this.interviewResult = r;
+    }
 
-    public void setEngineResult(String engineName, EngineResult result) { engineResults.put(engineName, result); }
+    public TriageResult triageResult() {
+        return triageResult;
+    }
+
+    public void triageResult(TriageResult r) {
+        this.triageResult = r;
+    }
+
+    public DifferentialResult differentialResult() {
+        return differentialResult;
+    }
+
+    public void differentialResult(DifferentialResult r) {
+        this.differentialResult = r;
+    }
+
+    public EnrichmentResult enrichmentResult() {
+        return enrichmentResult;
+    }
+
+    public void withEnrichmentResult(EnrichmentResult r) {
+        this.enrichmentResult = r;
+    }
+
+    public void setEngineResult(String engineName, EngineResult result) {
+        engineResults.put(engineName, result);
+    }
+
     @SuppressWarnings("unchecked")
-    public <T extends EngineResult> T engineResult(String engineName) { return (T) engineResults.get(engineName); }
-    public Map<String, EngineResult> engineResults() { return Map.copyOf(engineResults); }
+    public <T extends EngineResult> T engineResult(String engineName) {
+        return (T) engineResults.get(engineName);
+    }
 
-    public List<DomainEvent> events() { return List.copyOf(events); }
-    public void addEvent(DomainEvent event) { events.add(event); }
+    public Map<String, EngineResult> engineResults() {
+        return Map.copyOf(engineResults);
+    }
 
-    public void setAttribute(String key, Object value) { attributes.put(key, value); }
+    public List<DomainEvent> events() {
+        return List.copyOf(events);
+    }
+
+    public void addEvent(DomainEvent event) {
+        events.add(event);
+    }
+
+    public void setAttribute(String key, Object value) {
+        attributes.put(key, value);
+    }
+
     @SuppressWarnings("unchecked")
-    public <T> T getAttribute(String key) { return (T) attributes.get(key); }
+    public <T> T getAttribute(String key) {
+        return (T) attributes.get(key);
+    }
 
-    public boolean completed() { return completed; }
-    public void markCompleted() { this.completed = true; }
+    public boolean completed() {
+        return completed;
+    }
 
-    public String currentStage() { return currentStage; }
-    public void currentStage(String stage) { this.currentStage = stage; }
+    public void markCompleted() {
+        this.completed = true;
+    }
 
-    public boolean streaming() { return streaming; }
-    public void streaming(boolean streaming) { this.streaming = streaming; }
+    public String currentStage() {
+        return currentStage;
+    }
 
-    public Flux<String> aiResponseFlux() { return aiResponseFlux; }
-    public void aiResponseFlux(Flux<String> flux) { this.aiResponseFlux = flux; }
+    public void currentStage(String stage) {
+        this.currentStage = stage;
+    }
 
-    public TurnDirective turnDirective() { return turnDirective; }
-    public void turnDirective(TurnDirective directive) { this.turnDirective = directive; }
+    public boolean streaming() {
+        return streaming;
+    }
 
-    public ResponseValidation responseValidation() { return responseValidation; }
-    public void responseValidation(ResponseValidation validation) { this.responseValidation = validation; }
+    public void streaming(boolean streaming) {
+        this.streaming = streaming;
+    }
+
+    public Flux<String> aiResponseFlux() {
+        return aiResponseFlux;
+    }
+
+    public void aiResponseFlux(Flux<String> flux) {
+        this.aiResponseFlux = flux;
+    }
+
+    public TurnDirective turnDirective() {
+        return turnDirective;
+    }
+
+    public void turnDirective(TurnDirective directive) {
+        this.turnDirective = directive;
+    }
+
+    public ResponseValidation responseValidation() {
+        return responseValidation;
+    }
+
+    public void responseValidation(ResponseValidation validation) {
+        this.responseValidation = validation;
+    }
 }

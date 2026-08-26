@@ -12,10 +12,8 @@ import com.kinplatform.kin.enterprise.application.EnterprisePipelineResultStore;
 import com.kinplatform.kin.enterprise.application.EnterpriseProjectRequestedListener;
 import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
 import com.kinplatform.kin.enterprise.application.EnterpriseRendererFactory;
-import com.kinplatform.kin.enterprise.application.EnterpriseExportService;
 import com.kinplatform.kin.enterprise.application.InMemoryEnterprisePipelineResultStore;
 import com.kinplatform.kin.enterprise.application.ProgressPublishingEnterpriseProjectRepository;
-import com.kinplatform.kin.enterprise.application.EnterpriseAiBudgetGate;
 import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectAccessControl;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
@@ -30,7 +28,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.context.annotation.Primary;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
