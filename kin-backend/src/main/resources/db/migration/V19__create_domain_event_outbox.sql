@@ -18,6 +18,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ============================================================
 -- Tabla Outbox transaccional
 -- ============================================================
+CREATE TABLE domain_event_outbox (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     aggregate_id    UUID NOT NULL,                    -- ID del agregado origen (Project, User, etc.)
     event_type      VARCHAR(120) NOT NULL,            -- FQCN del evento: com.kinplatform.kin.event.ReportGeneratedEvent
