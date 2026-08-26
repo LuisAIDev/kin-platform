@@ -9,8 +9,9 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -21,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-@RequiredArgsConstructor
+@ConditionalOnProperty(name = "kin.outbox.enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
 public class OutboxRelay {
 
@@ -36,6 +37,7 @@ public class OutboxRelay {
     private final Counter deadLetterCounter;
     private final Timer relayDurationTimer;
 
+    @Autowired
     public OutboxRelay(JdbcTemplate jdbcTemplate,
                        DomainEventBus domainEventBus,
                        ObjectMapper objectMapper,
