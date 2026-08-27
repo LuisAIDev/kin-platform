@@ -814,6 +814,7 @@ Todos los endpoints se sirven bajo el prefijo global **`/api/v1`** (`server.serv
 | `POST` | `/admin/users/physicians/{userId}/reject` | ADMIN | Rechazar cédula de un médico |
 | `GET` | `/admin/health/email/diagnostic?to=...` | ADMIN | Diagnóstico SMTP (conexión + correo de prueba) |
 | `POST` | `/admin/users/{userId}/verify` | ADMIN | Marcar email como verificado manualmente |
+| `POST` | `/admin/users/{userId}/reset-password-link` | ADMIN | Generar enlace de reset de contraseña sin correo |
 | `POST` | `/admin/security/rate-limit/reset?ip=...` | ADMIN | Desbloquear una IP del rate limiting |
 
 ---
@@ -1264,6 +1265,31 @@ Si un usuario se registra pero **no recibe el correo de verificación**:
 7. **Logs de envío:** cada intento registra `Correo de {tipo} ACEPTADO POR SMTP`
    (éxito) o `Fallo SMTP al enviar ...` (error con destinatario y asunto). El
    contenido completo del correo se loguea en DEBUG solo en perfiles `dev`/`test`.
+
+### Solución de problemas de recuperación de contraseña
+
+El flujo de `POST /auth/forgot-password` genera un token (hash SHA-256, 24 h,
+un solo uso) en `password_reset_tokens` y envía el correo **por el mismo
+`EmailSender`** de la verificación (`SmtpEmailSender` en producción). La URL usa
+`FRONTEND_BASE_URL` → `<FRONTEND_BASE_URL>/reset-password?token=<token>`
+(verifica que `FRONTEND_BASE_URL` esté configurado en Render).
+
+1. **Verificar que el token se genera en la BD:** tras solicitar la
+   recuperación, debe aparecer una fila en `password_reset_tokens` para el
+   usuario (el hash). Si no hay fila, el usuario no existe o el envío lanzó
+   excepción (en cuyo caso `forgot-password` respondería 500, no 200).
+2. **Probar el SMTP general:** `GET /admin/health/email/diagnostic?to=...`
+   (ADMIN). Si el correo de prueba llega pero el de recuperación no, revisa la
+   plantilla/asunto y spam.
+3. **Fallback de logs:** con `MAIL_DEBUG_FALLBACK=true` +
+   `MAIL_DEBUG_FALLBACK_ALLOWLIST=@tu-dominio`, si el envío falla (excepción) el
+   enlace se imprime en los logs (WARN). El envío en este entorno **no falla**
+   (SMTP acepta), por lo que el problema real suele ser la entrega de Brevo
+   (remitente no verificado, sandbox, créditos o filtros de spam).
+4. **Acceso urgente (ADMIN):** `POST /admin/users/{userId}/reset-password-link`
+   devuelve `{"resetUrl": "..."}` con un token válido sin depender del correo.
+5. **Anti-enumeración:** `forgot-password` responde siempre el mismo mensaje
+   genérico; no cambia este comportamiento.
 
 ### Rate limiting (auth y salud)
 

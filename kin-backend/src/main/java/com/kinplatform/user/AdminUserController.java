@@ -1,6 +1,7 @@
 package com.kinplatform.user;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -46,5 +47,15 @@ public class AdminUserController {
     public ResponseEntity<Void> verifyEmail(@PathVariable UUID userId) {
         adminUserService.verifyEmail(userId);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Genera un enlace de restablecimiento de contraseña sin enviar correo
+     * (último recurso si los correos de recuperación no llegan).
+     */
+    @PostMapping("/{userId}/reset-password-link")
+    public ResponseEntity<Map<String, String>> resetPasswordLink(@PathVariable UUID userId) {
+        String link = adminUserService.generateResetLink(userId);
+        return ResponseEntity.ok(Map.of("resetUrl", link));
     }
 }

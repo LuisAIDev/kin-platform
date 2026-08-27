@@ -94,4 +94,16 @@ class AdminUserControllerTest {
 
         verify(adminUserService).verifyEmail(id);
     }
+
+    @Test
+    void resetPasswordLink_deberiaDevolverUrl() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(adminUserService.generateResetLink(id)).thenReturn("https://kin-platform.com/reset-password?token=abc");
+
+        mockMvc.perform(post("/admin/users/{userId}/reset-password-link", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resetUrl").value("https://kin-platform.com/reset-password?token=abc"));
+
+        verify(adminUserService).generateResetLink(id);
+    }
 }

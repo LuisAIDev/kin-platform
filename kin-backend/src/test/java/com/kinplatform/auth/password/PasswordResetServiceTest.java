@@ -1,6 +1,7 @@
 package com.kinplatform.auth.password;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -27,10 +28,13 @@ class PasswordResetServiceTest {
 
     @Mock
     private PasswordResetTokenRepository tokenRepository;
+
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private PasswordEncoder passwordEncoder;
+
     @Mock
     private EmailSender emailSender;
 
@@ -38,8 +42,7 @@ class PasswordResetServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new PasswordResetService(
-                tokenRepository, userRepository, passwordEncoder, emailSender);
+        service = new PasswordResetService(tokenRepository, userRepository, passwordEncoder, emailSender);
     }
 
     private User user() {
@@ -58,10 +61,11 @@ class PasswordResetServiceTest {
 
         service.requestReset(EMAIL);
 
-        verify(emailSender).sendPasswordResetEmail(
-                org.mockito.ArgumentMatchers.eq(EMAIL),
-                org.mockito.ArgumentMatchers.eq("Test User"),
-                org.mockito.ArgumentMatchers.contains("/reset-password?token="));
+        verify(emailSender)
+                .sendPasswordResetEmail(
+                        org.mockito.ArgumentMatchers.eq(EMAIL),
+                        org.mockito.ArgumentMatchers.eq("Test User"),
+                        org.mockito.ArgumentMatchers.contains("/reset-password?token="));
         verify(tokenRepository).save(any(PasswordResetToken.class));
     }
 
@@ -102,8 +106,7 @@ class PasswordResetServiceTest {
         boolean ok = service.resetPassword(RAW_TOKEN, "NuevaPass1!");
 
         assertTrue(ok);
-        verify(userRepository).save(org.mockito.ArgumentMatchers.argThat(
-                u -> "encoded".equals(u.getPasswordHash())));
+        verify(userRepository).save(org.mockito.ArgumentMatchers.argThat(u -> "encoded".equals(u.getPasswordHash())));
         verify(tokenRepository).save(any(PasswordResetToken.class));
     }
 
@@ -148,5 +151,24 @@ class PasswordResetServiceTest {
 
         assertFalse(ok);
         verify(tokenRepository, never()).findByTokenHash(any());
+    }
+
+    @Test
+    void generateResetLink_deberiaCrearTokenYDevolverUrl() {
+        var user = user();
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+
+        String link = service.generateResetLink(user.getId());
+
+        assertTrue(link.startsWith("http://localhost:3000/reset-password?token="));
+        assertTrue(link.length() > "http://localhost:3000/reset-password?token=".length());
+        verify(tokenRepository).save(any(PasswordResetToken.class));
+    }
+
+    @Test
+    void generateResetLink_usuarioInexistente_deberiaLanzar() {
+        when(userRepository.findById(any())).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> service.generateResetLink(UUID.randomUUID()));
     }
 }

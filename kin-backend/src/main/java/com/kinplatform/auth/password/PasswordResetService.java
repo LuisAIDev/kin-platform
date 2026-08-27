@@ -10,6 +10,7 @@ import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,34 @@ public class PasswordResetService {
         String link = (frontendBaseUrl == null || frontendBaseUrl.isBlank() ? "http://localhost:3000" : frontendBaseUrl)
                 + "/reset-password?token=" + token;
         emailSender.sendPasswordResetEmail(user.getEmail(), user.getFullName(), link);
-        log.info("Enlace de recuperación de contraseña enviado a {}", user.getEmail());
+        log.info("Enlace de recuperación de contraseña enviado a {}", maskEmail(user.getEmail()));
+    }
+
+    /**
+     * Genera un enlace de restablecimiento para un usuario (sin enviar correo).
+     * Uso operativo (solo ADMIN): permite a un administrador entregar el enlace
+     * directamente cuando los correos no llegan. Invalida tokens anteriores.
+     */
+    @Transactional
+    public String generateResetLink(UUID userId) {
+        var user = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        String token = createForUser(user);
+        String base = frontendBaseUrl == null || frontendBaseUrl.isBlank() ? "http://localhost:3000" : frontendBaseUrl;
+        String link = base + "/reset-password?token=" + token;
+        log.info("Enlace de recuperación generado manualmente para {}", maskEmail(user.getEmail()));
+        return link;
+    }
+
+    private static String maskEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return email == null ? "invalid" : "***";
+        }
+        String[] parts = email.split("@", 2);
+        String local = parts[0];
+        String masked = local.length() <= 2 ? "**" : local.charAt(0) + "**" + local.charAt(local.length() - 1);
+        return masked + "@" + parts[1];
     }
 
     /**
