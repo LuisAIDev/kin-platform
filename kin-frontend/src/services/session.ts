@@ -82,7 +82,9 @@ export async function forceLogout() {
 
   clearSession();
 
-  if (typeof window !== "undefined") {
+  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+    // Evita un bucle de recarga si ya estamos en /login (p. ej. un 401 del
+    // wrapper api durante la verificación de sesión).
     window.location.href = "/login";
   }
 }

@@ -3,18 +3,9 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { authService } from "@/services/auth";
-import { api } from "@/services/api";
 import { storeSession } from "@/services/session";
 import { canAccessPath, homePathForRole, isAccountUnderReview } from "@/utils/roles";
 import AccountReviewScreen from "@/components/auth/AccountReviewScreen";
-
-interface MePayload {
-  role?: string;
-  email?: string;
-  fullName?: string;
-  emailVerified?: boolean;
-  verificationStatus?: string | null;
-}
 
 /**
  * Guard de rutas por rol/vertical (client-side).
@@ -47,23 +38,18 @@ export default function RoleGuard({ children }: { children: React.ReactNode }) {
     }
 
     // Sin espejo local: verificar contra el servidor antes de decidir.
+    // Se usa un fetch raw (authService.fetchCurrentUser): un 401 aquí significa
+    // que no hay sesión (no debe disparar forceLogout ni recargar en bucle).
     let cancelled = false;
-    api
-      .get<MePayload>("/auth/me")
+    authService
+      .fetchCurrentUser()
       .then((me) => {
         if (cancelled) return;
         if (!me?.role) {
           router.replace("/login");
           return;
         }
-        storeSession({
-          token: null,
-          email: me.email ?? "",
-          fullName: me.fullName ?? "",
-          role: me.role,
-          emailVerified: me.emailVerified ?? true,
-          verificationStatus: me.verificationStatus ?? null,
-        });
+        storeSession(me);
         if (!canAccessPath(me.role, pathname)) {
           router.replace(homePathForRole(me.role));
         }

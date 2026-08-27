@@ -173,4 +173,28 @@ describe("authService", () => {
   it("getUser: sin datos devuelve null", () => {
     expect(authService.getUser()).toBeNull();
   });
+
+  it("fetchCurrentUser: con sesión válida devuelve el usuario", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse({ email: "a@b.c", fullName: "Ana", role: "PATIENT", emailVerified: true, verificationStatus: null }),
+    );
+
+    const user = await authService.fetchCurrentUser();
+
+    expect(String(fetchMock.mock.calls[0][0])).toContain("/auth/me");
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ credentials: "include" });
+    expect(user?.role).toBe("PATIENT");
+    expect(user?.token).toBeNull();
+  });
+
+  it("fetchCurrentUser: con 401 devuelve null SIN disparar forceLogout (evita el bucle de recarga)", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("{}", { status: 401 }));
+
+    const user = await authService.fetchCurrentUser();
+
+    expect(user).toBeNull();
+    expect(mockedForceLogout).not.toHaveBeenCalled();
+  });
 });

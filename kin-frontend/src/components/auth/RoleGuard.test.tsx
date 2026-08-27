@@ -4,7 +4,7 @@ import RoleGuard from "@/components/auth/RoleGuard";
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
-const { meGet } = vi.hoisted(() => ({ meGet: vi.fn() }));
+const { fetchCurrentUser } = vi.hoisted(() => ({ fetchCurrentUser: vi.fn() }));
 const { storeSession } = vi.hoisted(() => ({ storeSession: vi.fn() }));
 
 let pathname = "/dashboard/empresa";
@@ -13,10 +13,7 @@ vi.mock("next/navigation", () => ({
   usePathname: () => pathname,
   useRouter: () => ({ replace: push }),
 }));
-vi.mock("@/services/auth", () => ({ authService: { getUser } }));
-vi.mock("@/services/api", () => ({
-  api: { get: (url: string) => (url === "/auth/me" ? meGet() : Promise.reject(new Error("nope"))) },
-}));
+vi.mock("@/services/auth", () => ({ authService: { getUser, fetchCurrentUser } }));
 vi.mock("@/services/session", () => ({ storeSession }));
 vi.mock("@/components/auth/AccountReviewScreen", () => ({
   default: () => <div data-testid="review">Cuenta en revisión</div>,
@@ -25,7 +22,7 @@ vi.mock("@/components/auth/AccountReviewScreen", () => ({
 describe("RoleGuard", () => {
   beforeEach(() => {
     getUser.mockReset();
-    meGet.mockReset();
+    fetchCurrentUser.mockReset();
     storeSession.mockReset();
     push.mockReset();
     pathname = "/dashboard/empresa";
@@ -42,7 +39,8 @@ describe("RoleGuard", () => {
 
   it("sin sesión local pero con cookie válida re-sincroniza en lugar de redirigir a /login (evita el bucle)", async () => {
     getUser.mockReturnValue(null);
-    meGet.mockResolvedValue({
+    fetchCurrentUser.mockResolvedValue({
+      token: null,
       role: "FREE",
       email: "a@b.c",
       fullName: "Ana",
@@ -61,7 +59,7 @@ describe("RoleGuard", () => {
   it("sin sesión y en ruta de otra vertical redirige al home del rol", async () => {
     pathname = "/dashboard/patient/health";
     getUser.mockReturnValue(null);
-    meGet.mockResolvedValue({ role: "FREE", email: "a@b.c", emailVerified: true });
+    fetchCurrentUser.mockResolvedValue({ token: null, role: "FREE", email: "a@b.c", emailVerified: true });
 
     render(<RoleGuard>contenido</RoleGuard>);
 
@@ -70,7 +68,7 @@ describe("RoleGuard", () => {
 
   it("sin sesión válida redirige a /login", async () => {
     getUser.mockReturnValue(null);
-    meGet.mockRejectedValue(new Error("401"));
+    fetchCurrentUser.mockResolvedValue(null);
 
     render(<RoleGuard>contenido</RoleGuard>);
 

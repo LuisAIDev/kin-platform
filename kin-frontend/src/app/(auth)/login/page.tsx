@@ -4,7 +4,6 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authService } from "@/services/auth";
-import { api } from "@/services/api";
 import { checkForceLogout, setPendingEmail, storeSession } from "@/services/session";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { homePathForRole } from "@/utils/roles";
@@ -25,30 +24,15 @@ function LoginForm() {
       sessionStorage.clear();
     }
 
-    // Con cookie HttpOnly, verificamos la sesión llamando directamente a /auth/me
-    api
-      .get<{
-        role?: string;
-        email?: string;
-        fullName?: string;
-        emailVerified?: boolean;
-        verificationStatus?: string | null;
-      } | null>("/auth/me")
+    // Con cookie HttpOnly, verificamos la sesión con un fetch raw (un 401 aquí
+    // es esperado si no hay sesión: NO debe disparar forceLogout ni recargar).
+    authService
+      .fetchCurrentUser()
       .then((me) => {
-        if (me?.role) {
-          storeSession({
-            token: null,
-            email: me.email ?? "",
-            fullName: me.fullName ?? "",
-            role: me.role,
-            emailVerified: me.emailVerified ?? true,
-            verificationStatus: me.verificationStatus ?? null,
-          });
+        if (me) {
+          storeSession(me);
+          router.push(homePathForRole(me.role));
         }
-        router.push(homePathForRole(me?.role));
-      })
-      .catch(() => {
-        // Si falla, no hay sesión válida
       })
       .finally(() => setChecking(false));
   }, [router]);

@@ -1145,7 +1145,9 @@ autenticado, el componente redirige a `/login` (el middleware `src/proxy.ts`
 ya protege `/dashboard`). Si el espejo local (`kin_user_v2`) se pierde pero la
 cookie `kin_token_v2` existe, `RoleGuard` **re-sincroniza la sesión desde
 `/auth/me`** en lugar de redirigir, evitando el bucle `/login ⇄ /dashboard`
-(parpadeo del login).
+(parpadeo del login). La página de login y `RoleGuard` consultan la sesión con
+`authService.fetchCurrentUser()` (fetch raw que no dispara `forceLogout` ante
+un 401), a diferencia del wrapper `api` que recargaría `/login` en bucle.
 
 ### Verticales y hubs del dashboard
 

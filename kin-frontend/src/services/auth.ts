@@ -122,4 +122,29 @@ export const authService = {
     const raw = localStorage.getItem("kin_user_v2");
     return raw ? JSON.parse(raw) : null;
   },
+
+  /**
+   * Consulta la sesión actual contra `/auth/me` de forma segura (fetch raw, sin
+   * el wrapper `api`). Un 401 es una respuesta NORMAL cuando no hay sesión: NO
+   * debe disparar `forceLogout` (que recarga /login y provoca un bucle).
+   * Devuelve el usuario o `null`.
+   */
+  async fetchCurrentUser(): Promise<AuthResponse | null> {
+    try {
+      const res = await fetch(`${API_URL}/auth/me`, { credentials: "include" });
+      if (!res.ok) return null;
+      const body = await res.json();
+      if (!body?.role) return null;
+      return {
+        token: null,
+        email: body.email ?? "",
+        fullName: body.fullName ?? "",
+        role: body.role,
+        emailVerified: body.emailVerified ?? true,
+        verificationStatus: body.verificationStatus ?? null,
+      };
+    } catch {
+      return null;
+    }
+  },
 };
