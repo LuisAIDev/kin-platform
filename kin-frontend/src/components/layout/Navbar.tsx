@@ -6,15 +6,22 @@ import Link from "next/link";
 interface NavbarProps {
   /**
    * "landing": navegación del sitio público con anclas de la portada.
-   * "about": navegación de la página "Sobre KIN" (sin anclas de la portada).
+   * "about": navegación de las páginas públicas secundarias (Sobre KIN / Arquitectura).
    */
   variant?: "landing" | "about";
+  /**
+   * Ruta actual para marcar aria-current en la variante "about".
+   * Por defecto "/sobre-kin" (comportamiento histórico).
+   */
+  activePath?: string;
 }
 
 const NAV_LINK_CLASS =
   "text-sm font-medium text-neutral-500 hover:text-primary-600 transition-colors duration-200";
+const NAV_ACTIVE_CLASS =
+  "text-sm font-medium text-primary-600 transition-colors duration-200";
 
-export default function Navbar({ variant = "landing" }: NavbarProps) {
+export default function Navbar({ variant = "landing", activePath = "/sobre-kin" }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -48,10 +55,17 @@ export default function Navbar({ variant = "landing" }: NavbarProps) {
                 </Link>
                 <Link
                   href="/sobre-kin"
-                  aria-current="page"
-                  className="text-sm font-medium text-primary-600 transition-colors duration-200"
+                  aria-current={activePath === "/sobre-kin" ? "page" : undefined}
+                  className={activePath === "/sobre-kin" ? NAV_ACTIVE_CLASS : NAV_LINK_CLASS}
                 >
                   Sobre KIN
+                </Link>
+                <Link
+                  href="/arquitectura"
+                  aria-current={activePath === "/arquitectura" ? "page" : undefined}
+                  className={activePath === "/arquitectura" ? NAV_ACTIVE_CLASS : NAV_LINK_CLASS}
+                >
+                  Arquitectura técnica
                 </Link>
               </>
             ) : (

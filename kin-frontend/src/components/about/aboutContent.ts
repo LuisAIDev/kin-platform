@@ -88,8 +88,8 @@ export interface ArchitectureHub {
  * cuando cambien los resultados de la suite.
  */
 export const QA_METRICS = {
-  frontendTests: 316,
-  testFiles: 58,
+  frontendTests: 399,
+  testFiles: 74,
   e2e: "4/4",
 };
 
@@ -139,7 +139,7 @@ const TECH_CATEGORIES: TechCategory[] = [
     icon: "database",
     items: [
       { name: "PostgreSQL", description: "Base de datos relacional en dev, test y producción." },
-      { name: "Migraciones de base de datos", description: "Flyway versiona el esquema (V1…V18)." },
+      { name: "Migraciones de base de datos", description: "Flyway versiona el esquema (V1…V29)." },
       { name: "Persistencia", description: "Entidades JPA: usuarios, proyectos, reportes, suscripciones." },
       { name: "Datos estructurados del proyecto", description: "Información del proyecto por secciones (project_info)." },
     ],
@@ -152,7 +152,7 @@ const TECH_CATEGORIES: TechCategory[] = [
     items: [
       { name: "DeepSeek", description: "Proveedor de IA actual (vía API compatible con OpenAI)." },
       { name: "Spring AI", description: "Integración del modelo con el backend." },
-      { name: "Orquestación por etapas", description: "Pipeline de 12 etapas: análisis, scoring, reporte y conversación." },
+      { name: "Orquestación por etapas", description: "Pipeline de 16 etapas: análisis, conocimiento, scoring, reporte y conversación." },
       { name: "Contexto durable", description: "El contexto del proyecto persiste entre turnos." },
     ],
   },
@@ -223,7 +223,7 @@ const SHOWCASE_GROUPS: ShowcaseGroup[] = [
       { name: "Spring Security", description: "Autenticación y autorización de la API." },
       { name: "JPA / Hibernate", description: "Persistencia orientada a objetos." },
       { name: "PostgreSQL", description: "Base de datos relacional." },
-      { name: "Flyway", description: "Migraciones versionadas del esquema (V1…V18)." },
+      { name: "Flyway", description: "Migraciones versionadas del esquema (V1…V29)." },
       { name: "JWT", description: "Sesiones stateless firmadas (jjwt)." },
     ],
   },
@@ -235,7 +235,7 @@ const SHOWCASE_GROUPS: ShowcaseGroup[] = [
     items: [
       { name: "DeepSeek", description: "Proveedor de IA actual (vía API compatible con OpenAI)." },
       { name: "Spring AI", description: "Integración del modelo con el backend." },
-      { name: "Orquestación por etapas", description: "Pipeline de 12 etapas que analiza, evalúa y genera el reporte." },
+      { name: "Orquestación por etapas", description: "Pipeline de 16 etapas que analiza, evalúa y genera el reporte." },
       { name: "Procesamiento de contexto", description: "Contexto durable del proyecto entre turnos de conversación." },
     ],
   },
@@ -394,7 +394,7 @@ export const ABOUT_CONTENT = {
       branches: [
         { label: "Frontend", description: "Next.js · React · TypeScript" },
         { label: "Backend", description: "Spring Boot · Java 17" },
-        { label: "IA", description: "Orquestador de 12 etapas" },
+        { label: "IA", description: "Orquestador de 16 etapas" },
       ],
       base: { label: "PostgreSQL", description: "Persistencia · contexto · reportes" },
       deploy: { label: "Cloud / Docker", description: "Render · GitHub Actions · docker-compose" },
@@ -405,8 +405,8 @@ export const ABOUT_CONTENT = {
       { label: "API REST", description: "Endpoints /api/v1 protegidos con JWT" },
       { label: "Backend", description: "Spring Boot: controladores, servicios, puertos y adaptadores" },
       { label: "Seguridad", description: "Spring Security + JWT + ownership de proyectos" },
-      { label: "Persistencia", description: "JPA / Hibernate sobre PostgreSQL (Flyway V1…V18)" },
-      { label: "IA", description: "DeepSeek vía Spring AI + pipeline de 12 etapas" },
+      { label: "Persistencia", description: "JPA / Hibernate sobre PostgreSQL (Flyway V1…V29)" },
+      { label: "IA", description: "DeepSeek vía Spring AI + pipeline de 16 etapas" },
       { label: "Documentos", description: "Carga y extracción de texto (PDF, DOCX, XLSX)" },
       { label: "Reportes y exportación", description: "PDF, DOCX y Markdown desde el reporte del proyecto" },
       { label: "Testing", description: "JUnit, Vitest, Playwright y Testcontainers" },
@@ -431,7 +431,7 @@ export const ABOUT_CONTENT = {
         layers: [
           { label: "KIN", description: "Frontend + backend" },
           { label: "Backend", description: "Orquestador de conversación y pipeline" },
-          { label: "Orquestación IA", description: "12 etapas del pipeline inteligente" },
+          { label: "Orquestación IA", description: "16 etapas del pipeline inteligente" },
           { label: "Modelo / proveedor", description: "DeepSeek vía Spring AI" },
           { label: "Contexto durable", description: "Persistencia del contexto en PostgreSQL" },
         ],

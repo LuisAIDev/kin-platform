@@ -102,6 +102,39 @@ export default function SobreKinPage() {
         {/* ── Arquitectura de KIN ──────────────────────────── */}
         <ArchitectureSection />
 
+        {/* ── CTA: arquitectura técnica pública ────────────── */}
+        <section className="border-y border-neutral-100 bg-neutral-50/50 py-14 sm:py-16">
+          <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
+            <h2 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+              Arquitectura técnica de KIN
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-neutral-500">
+              Una visión de ingeniería sobre cómo KIN combina arquitectura de software,
+              inteligencia artificial determinista, seguridad, testing y cloud.
+            </p>
+            <Link
+              href="/arquitectura"
+              className="mt-7 inline-flex items-center gap-2 rounded-xl border border-primary-200 bg-white px-6 py-3 text-sm font-semibold text-primary-700 shadow-sm transition-all duration-200 hover:border-primary-300 hover:bg-primary-50 hover:shadow-md"
+            >
+              Explorar arquitectura técnica
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+                />
+              </svg>
+            </Link>
+          </div>
+        </section>
+
         {/* ── Lo que KIN demuestra ─────────────────────────── */}
         <DemonstrateSection />
 
@@ -240,12 +273,20 @@ export default function SobreKinPage() {
             <p className="text-sm text-neutral-500">
               © {new Date().getFullYear()} KIN — Knowledge, Innovation &amp; Navigation.
             </p>
-            <Link
-              href="/"
-              className="text-sm font-medium text-neutral-500 transition-colors hover:text-primary-600"
-            >
-              Volver al inicio
-            </Link>
+            <div className="flex items-center gap-5">
+              <Link
+                href="/arquitectura"
+                className="text-sm font-medium text-neutral-500 transition-colors hover:text-primary-600"
+              >
+                Arquitectura técnica
+              </Link>
+              <Link
+                href="/"
+                className="text-sm font-medium text-neutral-500 transition-colors hover:text-primary-600"
+              >
+                Volver al inicio
+              </Link>
+            </div>
           </div>
         </div>
       </footer>

@@ -55,4 +55,15 @@ describe("Navbar", () => {
     expect(screen.queryByRole("link", { name: "Precios" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Contacto" })).toBeNull();
   });
+
+  it("variante about con activePath='/arquitectura' marca Arquitectura técnica como actual", () => {
+    render(<Navbar variant="about" activePath="/arquitectura" />);
+
+    const archLink = screen.getByRole("link", { name: "Arquitectura técnica" });
+    expect(archLink).toHaveAttribute("href", "/arquitectura");
+    expect(archLink).toHaveAttribute("aria-current", "page");
+
+    const aboutLink = screen.getByRole("link", { name: "Sobre KIN" });
+    expect(aboutLink).not.toHaveAttribute("aria-current");
+  });
 });

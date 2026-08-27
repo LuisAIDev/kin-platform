@@ -458,6 +458,11 @@ export default function Home() {
                     Sobre KIN
                   </Link>
                 </li>
+                <li>
+                  <Link href="/arquitectura" className="text-sm text-neutral-500 hover:text-primary-600 transition-colors">
+                    Arquitectura técnica
+                  </Link>
+                </li>
               </ul>
             </div>
             <div className="sm:text-right">
