@@ -50,6 +50,144 @@ export default function SobreKinPage() {
           </div>
         </section>
 
+        {/* ── ¿Por qué nació KIN? ──────────────────────────── */}
+        <section className="border-y border-neutral-100 bg-neutral-50/50 py-20 sm:py-24">
+          <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+            <SectionHeading eyebrow={content.whyBorn.eyebrow} title={content.whyBorn.title} />
+            <div className="mt-10 space-y-5 text-base leading-7 text-neutral-600 sm:text-lg sm:leading-8">
+              {content.whyBorn.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Evolución de KIN ─────────────────────────────── */}
+        <section className="py-20 sm:py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <SectionHeading
+              eyebrow={content.evolution.eyebrow}
+              title={content.evolution.title}
+              intro={content.evolution.intro}
+            />
+            <ol
+              className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+              role="list"
+            >
+              {content.evolution.stages.map((stage, index) => (
+                <li
+                  key={stage.label}
+                  className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+                >
+                  <span
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-xs font-bold text-primary-700 ring-1 ring-primary-100"
+                    aria-hidden="true"
+                  >
+                    {index + 1}
+                  </span>
+                  <h3 className="mt-3 text-sm font-semibold text-neutral-900">{stage.label}</h3>
+                  <p className="mt-1.5 text-xs leading-5 text-neutral-500">{stage.description}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* ── KIN y la inteligencia artificial ─────────────── */}
+        <section className="border-y border-neutral-100 bg-neutral-50/50 py-20 sm:py-24">
+          <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+            <SectionHeading eyebrow={content.aiNarrative.eyebrow} title={content.aiNarrative.title} />
+            <div className="mt-10 space-y-5 text-base leading-7 text-neutral-600 sm:text-lg sm:leading-8">
+              {content.aiNarrative.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+            <div className="mt-10 rounded-2xl border border-primary-100 bg-primary-50/50 p-8 text-center">
+              <p className="text-xl font-bold text-primary-800 sm:text-2xl">
+                {content.aiNarrative.principle}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Knowledge Engine ─────────────────────────────── */}
+        <section className="py-20 sm:py-24">
+          <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+            <SectionHeading
+              eyebrow={content.knowledgeBrief.eyebrow}
+              title={content.knowledgeBrief.title}
+            />
+            <div className="mt-10 space-y-5 text-base leading-7 text-neutral-600 sm:text-lg sm:leading-8">
+              {content.knowledgeBrief.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+            <div className="mt-8 text-center">
+              <Link
+                href={content.knowledgeBrief.ctaHref}
+                className="inline-flex items-center gap-2 rounded-xl border border-primary-200 bg-white px-6 py-3 text-sm font-semibold text-primary-700 shadow-sm transition-all duration-200 hover:border-primary-300 hover:bg-primary-50 hover:shadow-md"
+              >
+                {content.knowledgeBrief.ctaLabel}
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+                  />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Vertical de Salud ────────────────────────────── */}
+        <section className="border-y border-neutral-100 bg-neutral-50/50 py-20 sm:py-24">
+          <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+            <SectionHeading eyebrow={content.health.eyebrow} title={content.health.title} />
+            <div className="mt-10 space-y-5 text-base leading-7 text-neutral-600 sm:text-lg sm:leading-8">
+              {content.health.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+            <div className="mt-8 rounded-xl border border-neutral-200 bg-white p-6">
+              <p className="text-sm font-semibold text-neutral-900">Importante</p>
+              <ul className="mt-3 space-y-2" role="list">
+                {content.health.disclaimers.map((disclaimer) => (
+                  <li key={disclaimer} className="flex items-start gap-2.5 text-sm leading-6 text-neutral-600">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary-500" aria-hidden="true" />
+                    {disclaimer}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Para quién se construye ──────────────────────── */}
+        <section className="py-20 sm:py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <SectionHeading eyebrow={content.audience.eyebrow} title={content.audience.title} />
+            <div className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {content.audience.items.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-2xl border border-neutral-200 bg-white p-7 shadow-sm"
+                >
+                  <h3 className="text-base font-semibold text-neutral-900">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-neutral-500">{item.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ── Creado por ───────────────────────────────────── */}
         <section className="border-y border-neutral-100 bg-neutral-50/50 py-20 sm:py-24">
           <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
@@ -220,26 +358,8 @@ export default function SobreKinPage() {
           </div>
         </section>
 
-        {/* ── Para quién se construye ──────────────────────── */}
-        <section className="py-20 sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <SectionHeading eyebrow={content.audience.eyebrow} title={content.audience.title} />
-            <div className="mx-auto mt-14 grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-3">
-              {content.audience.items.map((item) => (
-                <div
-                  key={item.title}
-                  className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm"
-                >
-                  <h3 className="text-lg font-semibold text-neutral-900">{item.title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-neutral-500">{item.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ── Frase final ──────────────────────────────────── */}
-        <section className="border-y border-neutral-100 bg-neutral-50/50 py-24 sm:py-32">
+        <section className="py-24 sm:py-32">
           <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
             <p className="text-2xl font-semibold leading-relaxed text-neutral-900 sm:text-3xl">
               {content.closing.lines[0]}

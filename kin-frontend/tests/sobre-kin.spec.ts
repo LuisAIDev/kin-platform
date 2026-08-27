@@ -6,11 +6,25 @@ test.describe('Sobre KIN', () => {
 
     await expect(page.getByRole('heading', { level: 1, name: 'Sobre KIN' })).toBeVisible();
     await expect(
-      page.getByText('Una plataforma construida para aprender, crear y aportar.'),
+      page.getByText(
+        'Una plataforma tecnológica creada para transformar ideas e información dispersa en proyectos más estructurados, analizables y accionables.',
+      ),
     ).toBeVisible();
     await expect(page.getByText('Luis Orlando Guerra González').first()).toBeVisible();
     await expect(
       page.getByRole('heading', { name: 'Engineering Showcase' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: '¿Por qué nació KIN?' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'La evolución de KIN' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Knowledge Engine: conocimiento externo controlado' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Capacidad de adaptarse a diferentes contextos' }),
     ).toBeVisible();
     await expect(
       page.getByRole('heading', { name: 'Tecnologías y capacidades demostradas' }),

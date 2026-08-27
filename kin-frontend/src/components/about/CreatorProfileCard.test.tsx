@@ -17,7 +17,7 @@ describe("CreatorProfileCard", () => {
     expect(screen.getByText(ABOUT_CONTENT.profile.description)).toBeInTheDocument();
   });
 
-  it("enlaza el repositorio público de KIN (GitHub)", () => {
+  it("enlaza el perfil de GitHub del creador", () => {
     render(<CreatorProfileCard />);
     const link = screen.getByRole("link", { name: /GitHub/ });
     expect(link).toHaveAttribute("href", ABOUT_LINKS.github.href);

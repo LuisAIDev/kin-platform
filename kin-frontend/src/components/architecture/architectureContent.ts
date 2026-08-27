@@ -419,7 +419,7 @@ export const ARCH_QUALITY: Section & { metrics: MetricItem[]; tools: string[] } 
     "KIN se valida con pruebas unitarias, de integración y E2E. Las métricas corresponden a la ejecución más reciente de la suite del proyecto.",
   metrics: [
     { value: "2.832", label: "tests backend ejecutados", note: "2.856 descubiertos (última suite registrada)" },
-    { value: "399", label: "tests frontend", note: "74 archivos de prueba" },
+    { value: "406", label: "tests frontend", note: "75 archivos de prueba" },
     { value: "≥90 %", label: "cobertura de instrucciones", note: "en los módulos de dominio (JaCoCo)" },
     { value: "E2E", label: "Playwright", note: "login, dashboard y Sobre KIN" },
   ],

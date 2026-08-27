@@ -66,7 +66,7 @@ describe("architectureContent — cifras verificadas", () => {
 
   it("las métricas de calidad corresponden a la suite vigente", () => {
     const frontend = ARCH_QUALITY.metrics.find((m) => m.label === "tests frontend");
-    expect(frontend?.value).toBe("399");
+    expect(frontend?.value).toBe("406");
 
     const backend = ARCH_QUALITY.metrics.find((m) => m.label === "tests backend ejecutados");
     expect(backend?.value).toBe("2.832");

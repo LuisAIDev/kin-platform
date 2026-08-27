@@ -1,8 +1,8 @@
 import { ABOUT_CONTENT, ABOUT_LINKS } from "./aboutContent";
 
 /**
- * Tarjeta de perfil profesional del creador. Solo enlaza recursos que existen
- * en el proyecto (repositorio y LinkedIn, referenciados en el README y render.yaml).
+ * Tarjeta de perfil profesional del creador. Enlaza el perfil de GitHub y el de
+ * LinkedIn del creador. El repositorio fuente de KIN es privado y no se enlaza.
  */
 export default function CreatorProfileCard() {
   const { profile } = ABOUT_CONTENT;

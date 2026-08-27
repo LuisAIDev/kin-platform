@@ -49,6 +49,11 @@ export interface AudienceItem {
   description: string;
 }
 
+export interface NarrativeStage {
+  label: string;
+  description: string;
+}
+
 export interface ShowcaseGroup {
   id: string;
   title: string;
@@ -88,14 +93,14 @@ export interface ArchitectureHub {
  * cuando cambien los resultados de la suite.
  */
 export const QA_METRICS = {
-  frontendTests: 399,
-  testFiles: 74,
+  frontendTests: 406,
+  testFiles: 75,
   e2e: "4/4",
 };
 
 export const ABOUT_LINKS = {
-  /** Repositorio público de KIN (referenciado en render.yaml y en el README del proyecto). */
-  github: { label: "GitHub", href: "https://github.com/LuisAIDev/kin-platform" },
+  /** Perfil de GitHub del creador. El repositorio fuente de KIN es privado. */
+  github: { label: "GitHub", href: "https://github.com/LuisAIDev" },
   /** Perfil de LinkedIn del creador (referenciado en el README del proyecto). */
   linkedin: {
     label: "LinkedIn",
@@ -177,7 +182,7 @@ const TECH_CATEGORIES: TechCategory[] = [
     items: [
       { name: "Docker", description: "Contenedores para PostgreSQL, backend y frontend." },
       { name: "Git", description: "Control de versiones del proyecto." },
-      { name: "GitHub", description: "Repositorio público y despliegue (LuisAIDev/kin-platform)." },
+      { name: "GitHub", description: "Control de versiones, integración continua y despliegue (LuisAIDev)." },
       { name: "Render", description: "Despliegue en la nube del backend y del frontend." },
     ],
   },
@@ -339,15 +344,78 @@ export const ABOUT_CONTENT = {
   hero: {
     badge: "Knowledge, Innovation & Navigation",
     title: "Sobre KIN",
-    subtitle: "Una plataforma construida para aprender, crear y aportar.",
+    subtitle:
+      "Una plataforma tecnológica creada para transformar ideas e información dispersa en proyectos más estructurados, analizables y accionables.",
   },
   whatIs: {
     eyebrow: "La plataforma",
     title: "¿Qué es KIN?",
     paragraphs: [
-      "KIN es una plataforma de inteligencia para apoyar la estructuración, análisis y evolución de proyectos de emprendedores, empresarios y organizaciones.",
-      "Fue concebida como un proyecto tecnológico orientado a aplicar conocimientos de desarrollo de software, inteligencia artificial, arquitectura de sistemas, bases de datos, seguridad, automatización y pruebas de software en una solución real.",
-      "KIN no representa únicamente una aplicación terminada. Representa un proceso continuo de aprendizaje, construcción y evolución tecnológica.",
+      "KIN es una plataforma de inteligencia y estructuración estratégica orientada a emprendedores, empresarios, organizaciones y personas que necesitan estructurar una idea o un proyecto, o analizar y evolucionar uno existente.",
+      "Su propósito es ayudar a transformar información dispersa en contexto estructurado, evaluación, conocimiento, riesgos, oportunidades, recomendaciones y documentación profesional reproducible.",
+      "KIN no es un chatbot con una interfaz atractiva: es una plataforma tecnológica en la que la inteligencia artificial es un componente dentro de una arquitectura mayor, con un motor determinista que decide y una capa de IA que comunica.",
+      "KIN es una herramienta de apoyo al análisis y a la toma de decisiones: no garantiza éxito empresarial ni reemplaza consultores, médicos, abogados u otros profesionales.",
+    ],
+  },
+  whyBorn: {
+    eyebrow: "El origen",
+    title: "¿Por qué nació KIN?",
+    paragraphs: [
+      "KIN nació como una iniciativa de aprendizaje práctico: aprender construyendo. Fue la forma de aplicar conocimientos reales de análisis de software, arquitectura, backend, frontend, bases de datos, inteligencia artificial, seguridad, testing, DevOps y cloud sobre un problema concreto.",
+      "Con el tiempo el proyecto fue más allá de un ejercicio académico: se convirtió en una plataforma tecnológica real, desplegada y en evolución, sobre la cual su creador continúa aprendiendo.",
+      "KIN comenzó como una forma de aprender y evolucionó hacia una plataforma real desde la que seguir aprendiendo.",
+    ],
+  },
+  evolution: {
+    eyebrow: "Trayectoria conceptual",
+    title: "La evolución de KIN",
+    intro:
+      "Una representación conceptual de cómo KIN pasó de ser una idea a una plataforma completa. No es un historial cronológico exacto: describe las etapas de maduración del proyecto.",
+    stages: [
+      { label: "Idea", description: "Identificación de un problema real: estructurar información dispersa de proyectos." },
+      { label: "Aprendizaje", description: "Construcción inicial para aplicar conocimientos de desarrollo de software." },
+      { label: "Arquitectura", description: "Separación de responsabilidades y evolución hacia una arquitectura mantenible." },
+      { label: "Inteligencia artificial", description: "Integración de IA dentro de una arquitectura controlada y determinista." },
+      { label: "Knowledge Engine", description: "Incorporación de conocimiento externo mediante selección determinista y fuentes controladas." },
+      { label: "Seguridad", description: "Evolución de controles de autenticación, autorización, protección de red y SSRF." },
+      { label: "Testing", description: "Automatización progresiva de pruebas unitarias, de integración y E2E." },
+      { label: "Cloud", description: "Despliegue de la plataforma en infraestructura cloud." },
+      { label: "Evolución continua", description: "KIN continúa siendo un proyecto vivo, construido para incorporar nuevas capacidades." },
+    ],
+  },
+  aiNarrative: {
+    eyebrow: "KIN y la inteligencia artificial",
+    title: "La IA como componente, no como sustituto",
+    paragraphs: [
+      "KIN no fue concebida como un chatbot con una interfaz bonita. La inteligencia artificial es un componente dentro de una arquitectura mayor.",
+      "Las decisiones críticas del sistema se toman en el motor determinista: el contexto, las reglas, la adquisición de conocimiento y las fuentes están gobernados por políticas, no por el modelo.",
+      "El modelo de lenguaje se usa para comunicar y explicar los resultados. De ahí el principio que guía el proyecto: «Java decide. El LLM únicamente comunica».",
+    ],
+    principle: "Java decide. El LLM únicamente comunica.",
+  },
+  knowledgeBrief: {
+    eyebrow: "Conocimiento",
+    title: "Knowledge Engine: conocimiento externo controlado",
+    paragraphs: [
+      "Uno de los retos de una plataforma inteligente es distinguir entre conocimiento generado por un modelo e información externa que puede obtenerse, validarse y trazarse.",
+      "KIN aborda este reto con un Knowledge Engine: puede trabajar con conocimiento externo bajo reglas controladas, con selección determinista, fuentes autorizadas, validación, evidencia, trazabilidad y seguridad.",
+      "Los detalles técnicos de cómo funciona se explican en la página de arquitectura técnica.",
+    ],
+    ctaLabel: "Ver detalles técnicos",
+    ctaHref: "/arquitectura",
+  },
+  health: {
+    eyebrow: "Una plataforma adaptable",
+    title: "Capacidad de adaptarse a diferentes contextos",
+    paragraphs: [
+      "KIN fue diseñada para trabajar con diferentes categorías o verticales de proyecto. Cada proyecto se clasifica en una de 19 categorías y el análisis se adapta a ese contexto.",
+      "Una de las capacidades específicas implementadas corresponde a la vertical de Salud, con etapas de evaluación digital orientativa: triaje de síntomas, evaluación y diagnóstico diferencial como apoyo informativo.",
+      "La vertical de Salud es una capacidad específica dentro de una plataforma más amplia, no el propósito exclusivo de KIN.",
+    ],
+    disclaimers: [
+      "Es una evaluación digital orientativa, no un diagnóstico médico real.",
+      "No sustituye la evaluación ni el diagnóstico de un profesional de la salud.",
+      "No se realizan prescripciones, tratamientos ni certificaciones clínicas.",
     ],
   },
   creator: {
@@ -355,15 +423,17 @@ export const ABOUT_CONTENT = {
     title: "Creado por",
     name: "Luis Orlando Guerra González",
     paragraphs: [
-      "KIN fue concebida y desarrollada por Luis Orlando Guerra González, desarrollador de software en formación y Tecnólogo de Análisis y Desarrollo de Software, con interés en el desarrollo full-stack, la calidad del software y la inteligencia artificial.",
+      "KIN fue concebida y desarrollada por Luis Orlando Guerra González, desarrollador de software y Tecnólogo de Análisis y Desarrollo de Software, con interés en el desarrollo full-stack, la calidad del software, la arquitectura y la inteligencia artificial.",
       "Es un proyecto construido de forma autodidacta y disciplinada: cada módulo, integración y prueba representa práctica real sobre problemas concretos, no solo teoría.",
+      "KIN no demuestra que su creador ya lo sabe todo. Demuestra que puede aprender, construir, validar y evolucionar un sistema real: desde el análisis y el diseño hasta la implementación, las pruebas, la seguridad y el despliegue.",
       "Su objetivo es continuar creciendo dentro de la ingeniería de software, trabajar junto a equipos de desarrollo, recibir code reviews y críticas constructivas, aprender de profesionales con más experiencia y aportar lo aprendido durante la construcción de KIN.",
     ],
   },
   purpose: {
     title: "Mi propósito",
     paragraphs: [
-      "Mi objetivo con KIN no es solamente construir una aplicación, sino demostrar que el aprendizaje constante puede convertirse en soluciones tecnológicas capaces de aportar valor a la sociedad.",
+      "Mi motivación no se limita a construir software por construirlo. La idea es utilizar tecnología para resolver problemas, facilitar procesos, ayudar a estructurar ideas, acercar herramientas tecnológicas y aportar soluciones útiles.",
+      "KIN es una muestra de ese propósito: el aprendizaje constante puede convertirse en soluciones tecnológicas capaces de aportar valor a personas y organizaciones.",
       "Quiero continuar creciendo como desarrollador, aprender de otros profesionales y formar parte de equipos de ingeniería donde pueda aportar lo que he aprendido y, al mismo tiempo, seguir aprendiendo de personas con mayor experiencia.",
       "La tecnología cambia constantemente. Por eso considero que un buen desarrollador nunca termina de aprender.",
     ],
@@ -463,16 +533,23 @@ export const ABOUT_CONTENT = {
     items: [
       {
         title: "Emprendedores",
-        description: "Personas que están estructurando y desarrollando nuevas ideas.",
+        description:
+          "Personas que están estructurando una idea y necesitan convertir información dispersa en un proyecto más claro.",
       },
       {
         title: "Empresarios",
-        description: "Personas que necesitan analizar y evolucionar proyectos existentes.",
+        description:
+          "Personas que necesitan analizar proyectos existentes y organizar información para apoyar la toma de decisiones.",
       },
       {
         title: "Organizaciones",
         description:
-          "Equipos que pueden utilizar herramientas tecnológicas para estructurar información y apoyar procesos de análisis.",
+          "Equipos que pueden utilizar herramientas tecnológicas para estructurar información y apoyar procesos internos de análisis.",
+      },
+      {
+        title: "Personas que están aprendiendo",
+        description:
+          "KIN también representa un entorno real para comprender cómo se construye, prueba, protege y despliega software.",
       },
     ],
   },
@@ -506,13 +583,14 @@ export const ABOUT_CONTENT = {
       "KIN nació del interés por aprender haciendo: construir una solución real que apoye a emprendedores, empresarios y organizaciones, y que a la vez demuestre mediante hechos lo que puedo construir.",
       "No fue creada con un objetivo comercial. Fue creada para practicar análisis, arquitectura, desarrollo full-stack, integración con IA, seguridad, testing y evolución constante sobre un problema real.",
       "KIN no representa el final de mi aprendizaje. Representa una evidencia de lo que he aprendido hasta ahora y una plataforma desde la cual quiero seguir aprendiendo.",
+      "No lo sé todo: construí KIN, la probé, la corregí y la desplegué. Eso es lo que el proyecto demuestra: capacidad de aprender y de llevar un sistema real hasta producción.",
     ],
   },
   keepLearning: {
     eyebrow: "Futuro",
     title: "Quiero seguir aprendiendo",
     intro:
-      "Mi siguiente paso no es dejar de aprender porque construí KIN. Es precisamente lo contrario.",
+      "Mi siguiente paso no es dejar de aprender porque construí KIN. Es precisamente lo contrario. Estas son áreas de crecimiento profesional, no funcionalidades que KIN ya implementa.",
     areas: [
       "Arquitectura de software",
       "Sistemas distribuidos",
