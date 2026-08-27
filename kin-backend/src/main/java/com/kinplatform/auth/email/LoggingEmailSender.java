@@ -72,6 +72,10 @@ public class LoggingEmailSender implements EmailSender {
                         + "). Configura SMTP (MAIL_HOST, MAIL_FROM, etc.) y APP_MAIL_ENABLED=true.");
             }
         }
+        log.warn("CORREO DESHABILITADO (modo sin SMTP): el envío de verificación/recuperación SOLO se imprime "
+                + "en los logs (buscar '[email-verification]' o '[password-reset]'). En un despliegue, si el "
+                + "correo no llega, revisa en el entorno: SPRING_PROFILES_ACTIVE (debe incluir 'prod'/'render') "
+                + "y APP_MAIL_ENABLED=true con MAIL_HOST/MAIL_PORT/MAIL_USERNAME/MAIL_PASSWORD/MAIL_FROM.");
     }
 
     @Override

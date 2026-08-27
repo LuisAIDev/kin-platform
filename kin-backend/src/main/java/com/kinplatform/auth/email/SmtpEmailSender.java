@@ -63,6 +63,9 @@ public class SmtpEmailSender implements EmailSender {
     @Value("${spring.mail.host:}")
     private String mailHost;
 
+    @Value("${spring.mail.port:587}")
+    private String mailPort;
+
     @Value("${spring.mail.username:}")
     private String mailUsername;
 
@@ -92,6 +95,12 @@ public class SmtpEmailSender implements EmailSender {
             throw new IllegalStateException(
                     "app.mail.enabled=true con mail.smtp.auth=true pero MAIL_USERNAME/MAIL_PASSWORD no están configurados");
         }
+        log.info(
+                "SMTP habilitado: host={}:{} from={} smtpAuth={} — los correos se envían por SMTP real",
+                mailHost,
+                mailPort,
+                maskEmail(from),
+                smtpAuth);
     }
 
     @Override
