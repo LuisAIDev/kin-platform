@@ -1141,13 +1141,20 @@ usuario autenticado (leído de la sesión local, `authService.getUser()`):
 | `ADMIN` | Menú completo (empresarial + salud + portal médico + Administración) |
 
 Un usuario empresarial no ve opciones de salud y viceversa. Sin usuario
-autenticado, el componente redirige a `/login` (el middleware `src/proxy.ts`
-ya protege `/dashboard`). Si el espejo local (`kin_user_v2`) se pierde pero la
-cookie `kin_token_v2` existe, `RoleGuard` **re-sincroniza la sesión desde
-`/auth/me`** en lugar de redirigir, evitando el bucle `/login ⇄ /dashboard`
-(parpadeo del login). La página de login y `RoleGuard` consultan la sesión con
-`authService.fetchCurrentUser()` (fetch raw que no dispara `forceLogout` ante
-un 401), a diferencia del wrapper `api` que recargaría `/login` en bucle.
+autenticado, el componente redirige a `/login`. Si el espejo local (`kin_user_v2`)
+se pierde pero la cookie `kin_token_v2` existe, `RoleGuard` **re-sincroniza la
+sesión desde `/auth/me`** en lugar de redirigir. La página de login y `RoleGuard`
+consultan la sesión con `authService.fetchCurrentUser()` (fetch raw que no
+dispara `forceLogout` ante un 401), a diferencia del wrapper `api` que recargaría
+`/login` en bucle.
+
+> **Cookie HttpOnly cross-origin**: la cookie `kin_token_v2` la establece el
+> backend en su propio origen (`kin-backend-lwmy.onrender.com`, host-only). En
+> despliegues cross-origin el navegador no la envía al frontend, por lo que el
+> middleware (`src/proxy.ts`) **no la usa para gatear `/dashboard`** (deja pasar);
+> la sesión la resuelve el cliente (`RoleGuard` → `/auth/me`) y las llamadas API
+> envían la cookie al backend correctamente (SameSite=None + Secure + CORS con
+> credentials).
 
 ### Verticales y hubs del dashboard
 

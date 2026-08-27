@@ -57,8 +57,16 @@ export default async function proxy(request: NextRequest) {
   const token = request.cookies.get("kin_token_v2")?.value;
 
   if (pathname.startsWith("/dashboard")) {
+    // La cookie HttpOnly (kin_token_v2) la establece el BACKEND en su propio
+    // origen (p. ej. kin-backend-lwmy.onrender.com) y es host-only (sin Domain).
+    // En despliegues cross-origin el navegador NO la envía al frontend
+    // (kin-platform.com), así que aquí puede estar ausente AUNQUE la sesión
+    // exista. Si no hay cookie, dejamos pasar: el RoleGuard (cliente) resuelve
+    // la sesión llamando a /auth/me (fetch raw), que sí recibe la cookie del
+    // backend. Redirigir /dashboard → /login aquí provocaba que el login
+    // "no hiciera nada" (rebote inmediato tras pulsar Entrar).
     if (!token) {
-      return buildLoginRedirect(request);
+      return NextResponse.next();
     }
 
     const { ok, verified, role } = await checkSession(token);

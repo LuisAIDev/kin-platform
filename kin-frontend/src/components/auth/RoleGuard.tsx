@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { authService } from "@/services/auth";
 import { storeSession } from "@/services/session";
@@ -10,20 +10,22 @@ import AccountReviewScreen from "@/components/auth/AccountReviewScreen";
 /**
  * Guard de rutas por rol/vertical (client-side).
  *
- * El middleware (`src/proxy.ts`) es la autoridad de autenticación (cookie
- * HttpOnly). Este guard aplica la segmentación por rol:
+ * El middleware (`src/proxy.ts`) resuelve la sesión cuando la cookie HttpOnly
+ * es visible en el origen del frontend (mismo-origen); en despliegues
+ * cross-origin la cookie pertenece al backend y este guard la resuelve vía
+ * `/auth/me`. Este guard aplica la segmentación por rol:
  * - Médico pendiente/rechazado → pantalla de espera "en revisión".
  * - Ruta fuera de la vertical → home del rol.
  *
- * Si el espejo local (`kin_user_v2`) se perdió pero la cookie existe, se
- * **re-sincroniza** desde `/auth/me` en lugar de rebotar a `/login`; esto evita
- * el bucle de redirección (middleware /login ⇄ guard) que hace parpadear la
- * página de login. Solo se redirige a `/login` si el servidor confirma que no
- * hay sesión.
+ * Si el espejo local (`kin_user_v2`) se perdió pero la sesión existe, se
+ * **re-sincroniza** desde `/auth/me` en lugar de rebotar a `/login`. Solo se
+ * redirige a `/login` si el servidor confirma que no hay sesión.
  */
 export default function RoleGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  // Forza un re-render tras re-sincronizar el espejo local (storeSession).
+  const [, setResynced] = useState(false);
   const user = typeof window !== "undefined" ? authService.getUser() : null;
   const role = user?.role;
 
@@ -50,6 +52,7 @@ export default function RoleGuard({ children }: { children: React.ReactNode }) {
           return;
         }
         storeSession(me);
+        setResynced(true);
         if (!canAccessPath(me.role, pathname)) {
           router.replace(homePathForRole(me.role));
         }
@@ -63,7 +66,18 @@ export default function RoleGuard({ children }: { children: React.ReactNode }) {
     };
   }, [role, pathname, router, user]);
 
-  if (typeof window !== "undefined" && user && isAccountUnderReview(user)) {
+  if (!user) {
+    // Sin espejo local: mostramos una pantalla de carga mientras resolvemos la
+    // sesión contra el servidor (evita parpadear el dashboard con contenido de
+    // una sesión inexistente o lanzar llamadas 401 redundantes).
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-neutral-500">Verificando sesión...</p>
+      </div>
+    );
+  }
+
+  if (isAccountUnderReview(user)) {
     return <AccountReviewScreen />;
   }
 
