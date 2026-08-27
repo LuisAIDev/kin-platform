@@ -41,6 +41,12 @@ describe("Navbar", () => {
     expect(aboutLink).toHaveAttribute("href", "/sobre-kin");
   });
 
+  it("incluye el enlace 'Arquitectura técnica' en la variante landing", () => {
+    render(<Navbar />);
+    const archLink = screen.getByRole("link", { name: "Arquitectura técnica" });
+    expect(archLink).toHaveAttribute("href", "/arquitectura");
+  });
+
   it("variante about: muestra 'Plataforma' y 'Sobre KIN' activo, sin anclas de la portada", () => {
     render(<Navbar variant="about" />);
 

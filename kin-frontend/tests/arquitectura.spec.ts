@@ -43,6 +43,25 @@ test.describe('Arquitectura técnica', () => {
     ).toBeVisible();
   });
 
+  test('navegación hacia Arquitectura técnica desde el Navbar de la portada', async ({ page }) => {
+    await page.goto('/');
+    await page
+      .getByRole('navigation')
+      .getByRole('link', { name: 'Arquitectura técnica' })
+      .click();
+
+    await page.waitForURL(/\/arquitectura/);
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Arquitectura técnica de KIN' }),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('navigation')
+        .first()
+        .getByRole('link', { name: 'Arquitectura técnica' }),
+    ).toHaveAttribute('aria-current', 'page');
+  });
+
   test('el CTA de evaluación enlaza al mecanismo de contacto existente', async ({ page }) => {
     await page.goto('/arquitectura');
 

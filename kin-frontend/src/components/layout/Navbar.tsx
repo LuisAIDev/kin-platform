@@ -82,6 +82,9 @@ export default function Navbar({ variant = "landing", activePath = "/sobre-kin" 
                 <Link href="/sobre-kin" className={NAV_LINK_CLASS}>
                   Sobre KIN
                 </Link>
+                <Link href="/arquitectura" className={NAV_LINK_CLASS}>
+                  Arquitectura técnica
+                </Link>
               </>
             )}
           </div>

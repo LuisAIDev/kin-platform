@@ -93,7 +93,7 @@ export interface ArchitectureHub {
  * cuando cambien los resultados de la suite.
  */
 export const QA_METRICS = {
-  frontendTests: 406,
+  frontendTests: 407,
   testFiles: 75,
   e2e: "4/4",
 };
