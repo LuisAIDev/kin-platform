@@ -35,12 +35,20 @@ export function getToken(): string | null {
   return null;
 }
 
-export function storeSession(res: { token: string | null; email: string; fullName: string; role: string; emailVerified?: boolean }) {
+export function storeSession(res: {
+  token: string | null;
+  email: string;
+  fullName: string;
+  role: string;
+  emailVerified?: boolean;
+  verificationStatus?: string | null;
+}) {
   localStorage.setItem("kin_user_v2", JSON.stringify({
     email: res.email,
     fullName: res.fullName,
     role: res.role,
     emailVerified: res.emailVerified ?? false,
+    verificationStatus: res.verificationStatus ?? null,
   }));
   // El token se almacena SOLO en la cookie HttpOnly (kin_token_v2) gestionada por el backend.
   // No guardamos el token en localStorage/sessionStorage para evitar exposición a XSS.

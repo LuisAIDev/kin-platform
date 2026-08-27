@@ -1,10 +1,9 @@
 package com.kinplatform.auth.dto;
 
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -17,4 +16,7 @@ public class UserDTO {
     private String avatarUrl;
     private Integer credits;
     private Boolean emailVerified;
+
+    /** Estado de verificación de identidad (médicos): PENDING/APPROVED/REJECTED o null. */
+    private String verificationStatus;
 }

@@ -58,6 +58,29 @@ export function isPhysicianRole(role?: string | null): boolean {
   return role === "PHYSICIAN";
 }
 
+/** Estado de verificación de identidad de un médico (auto-registro). */
+export type PhysicianVerificationStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface RoleContext {
+  role?: string | null;
+  verificationStatus?: string | null;
+}
+
+/** Un médico con la cuenta pendiente de revisión por un administrador. */
+export function isAccountPendingReview(user?: RoleContext | null): boolean {
+  return user?.role === "PHYSICIAN" && user?.verificationStatus === "PENDING";
+}
+
+/** Un médico con la cuenta rechazada. */
+export function isAccountRejected(user?: RoleContext | null): boolean {
+  return user?.role === "PHYSICIAN" && user?.verificationStatus === "REJECTED";
+}
+
+/** Cuenta médica no habilitada (pendiente o rechazada). */
+export function isAccountUnderReview(user?: RoleContext | null): boolean {
+  return isAccountPendingReview(user) || isAccountRejected(user);
+}
+
 /**
  * Determina si un usuario puede acceder a un pathname del dashboard.
  * Reglas:

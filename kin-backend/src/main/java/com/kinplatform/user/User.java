@@ -3,6 +3,7 @@ package com.kinplatform.user;
 import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.UserSubscription;
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -50,6 +51,46 @@ public class User {
     @Column(name = "email_verified", nullable = false)
     @Builder.Default
     private Boolean emailVerified = false;
+
+    /** Fecha de nacimiento del paciente (auto-registro vertical Salud). */
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    /** Sexo del paciente (auto-registro vertical Salud). */
+    @Column(name = "sex", length = 20)
+    private String sex;
+
+    /** Teléfono de contacto. */
+    @Column(name = "phone", length = 30)
+    private String phone;
+
+    /** Número de cédula profesional del médico (validado por ADMIN). */
+    @Column(name = "license_number", length = 60)
+    private String licenseNumber;
+
+    /** Especialidad médica declarada en el auto-registro. */
+    @Column(name = "specialty", length = 100)
+    private String specialty;
+
+    /** País del médico (auto-registro). */
+    @Column(name = "country", length = 60)
+    private String country;
+
+    /**
+     * Estado de verificación del médico. {@code null} = no sujeto a revisión
+     * (equivalente a APROBADO para médicos del piloto/administrador).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "physician_verification_status", length = 20)
+    private PhysicianVerificationStatus physicianVerificationStatus;
+
+    /**
+     * Consentimiento explícito para el tratamiento de datos de salud. Requerido
+     * en el auto-registro de la vertical Salud.
+     */
+    @Column(name = "health_data_consent", nullable = false)
+    @Builder.Default
+    private Boolean healthDataConsent = false;
 
     /** Proyectos COMPLETADOS en el período vigente (persistente; no decrece al eliminar). */
     @Column(name = "completed_projects", nullable = false)

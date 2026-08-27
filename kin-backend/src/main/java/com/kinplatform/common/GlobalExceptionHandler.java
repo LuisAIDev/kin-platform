@@ -1,6 +1,7 @@
 package com.kinplatform.common;
 
 import com.kinplatform.auth.EmailVerificationRequiredException;
+import com.kinplatform.auth.PhysicianPendingReviewException;
 import com.kinplatform.pricing.PlanNotFoundException;
 import com.kinplatform.project.ProjectLimitExceededException;
 import com.kinplatform.project.ReportNotFoundException;
@@ -56,6 +57,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleEmailVerificationRequired(EmailVerificationRequiredException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of("error", ex.getMessage(), "code", "EMAIL_VERIFICATION_REQUIRED"));
+    }
+
+    @ExceptionHandler(PhysicianPendingReviewException.class)
+    public ResponseEntity<Map<String, String>> handlePhysicianPendingReview(PhysicianPendingReviewException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", ex.getMessage(), "code", "ACCOUNT_PENDING_REVIEW"));
     }
 
     /**

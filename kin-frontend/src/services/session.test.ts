@@ -17,13 +17,13 @@ describe("session", () => {
   });
 
   it("storeSession: guarda usuario en localStorage y cookies (NO el token, que va en cookie HttpOnly)", () => {
-    storeSession({ token: "t", email: "a@b.c", fullName: "Ana", role: "USER" });
+    storeSession({ token: "secret-token-abc123", email: "a@b.c", fullName: "Ana", role: "USER" });
 
     // Token NO se guarda en localStorage (protección contra XSS)
     expect(localStorage.getItem("kin_token_v2")).toBeNull();
+    expect(localStorage.getItem("kin_user_v2")).not.toContain("secret-token-abc123");
     // Solo datos de usuario no sensibles
     expect(localStorage.getItem("kin_user_v2")).toContain("Ana");
-    expect(localStorage.getItem("kin_user_v2")).not.toContain("t");
     // Nota: document.cookie no es fiable en jsdom; la cookie HttpOnly se verifica en tests E2E
   });
 

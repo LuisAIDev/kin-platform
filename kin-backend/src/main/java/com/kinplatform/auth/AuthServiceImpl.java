@@ -2,12 +2,15 @@ package com.kinplatform.auth;
 
 import com.kinplatform.auth.dto.AuthResponse;
 import com.kinplatform.auth.dto.LoginRequest;
+import com.kinplatform.auth.dto.PatientRegisterRequest;
+import com.kinplatform.auth.dto.PhysicianRegisterRequest;
 import com.kinplatform.auth.dto.RegisterRequest;
 import com.kinplatform.auth.dto.UserDTO;
 import com.kinplatform.auth.email.EmailSender;
 import com.kinplatform.auth.verification.EmailVerificationTokenService;
 import com.kinplatform.auth.verification.VerifyEmailOutcome;
 import com.kinplatform.common.security.JwtService;
+import com.kinplatform.user.PhysicianVerificationStatus;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
@@ -33,15 +36,16 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        var email = request.getEmail().toLowerCase().trim();
+        var email = normalize(request.getEmail());
         validatePasswordStrength(request.getPassword());
+        requireFullName(request.getFullName());
 
         // Política anti-enumeración: si el email ya existe, se responde con la
         // MISMA respuesta genérica que un registro nuevo (201, sin token, sin
         // verificación). No se revela si el correo existe, ni el estado de la
         // cuenta, ni si está verificado.
         if (userRepository.existsByEmail(email)) {
-            return genericRegisterResponse(email, request.getFullName().trim());
+            return genericRegisterResponse(email, request.getFullName().trim(), UserRole.FREE, null);
         }
 
         var user = User.builder()
@@ -56,15 +60,84 @@ public class AuthServiceImpl implements AuthService {
 
         sendVerification(user);
 
-        return genericRegisterResponse(user.getEmail(), user.getFullName());
+        return genericRegisterResponse(user.getEmail(), user.getFullName(), UserRole.FREE, null);
     }
 
-    private static AuthResponse genericRegisterResponse(String email, String fullName) {
+    @Override
+    @Transactional
+    public AuthResponse registerPatient(PatientRegisterRequest request) {
+        var email = normalize(request.getEmail());
+        validatePasswordStrength(request.getPassword());
+        requireFullName(request.getFullName());
+        requireHealthConsent(request.getHealthDataConsent());
+
+        if (userRepository.existsByEmail(email)) {
+            return genericRegisterResponse(email, request.getFullName().trim(), UserRole.PATIENT, null);
+        }
+
+        var user = User.builder()
+                .email(email)
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .fullName(request.getFullName().trim())
+                .role(UserRole.PATIENT)
+                .emailVerified(false)
+                .dateOfBirth(request.getDateOfBirth())
+                .sex(request.getSex() == null ? null : request.getSex().trim())
+                .phone(request.getPhone() == null ? null : request.getPhone().trim())
+                .healthDataConsent(true)
+                .build();
+
+        user = userRepository.save(user);
+
+        sendVerification(user);
+
+        return genericRegisterResponse(user.getEmail(), user.getFullName(), UserRole.PATIENT, null);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse registerPhysician(PhysicianRegisterRequest request) {
+        var email = normalize(request.getEmail());
+        validatePasswordStrength(request.getPassword());
+        requireFullName(request.getFullName());
+        requireHealthConsent(request.getHealthDataConsent());
+        String license = validateLicenseNumber(request.getLicenseNumber());
+
+        if (userRepository.existsByEmail(email)) {
+            return genericRegisterResponse(
+                    email, request.getFullName().trim(), UserRole.PHYSICIAN, PhysicianVerificationStatus.PENDING);
+        }
+
+        var user = User.builder()
+                .email(email)
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .fullName(request.getFullName().trim())
+                .role(UserRole.PHYSICIAN)
+                .emailVerified(false)
+                .licenseNumber(license)
+                .specialty(request.getSpecialty().trim())
+                .country(request.getCountry().trim())
+                .phone(request.getPhone() == null ? null : request.getPhone().trim())
+                .physicianVerificationStatus(PhysicianVerificationStatus.PENDING)
+                .healthDataConsent(true)
+                .build();
+
+        user = userRepository.save(user);
+
+        sendVerification(user);
+
+        return genericRegisterResponse(
+                user.getEmail(), user.getFullName(), UserRole.PHYSICIAN, PhysicianVerificationStatus.PENDING);
+    }
+
+    private static AuthResponse genericRegisterResponse(
+            String email, String fullName, UserRole role, PhysicianVerificationStatus verificationStatus) {
         return AuthResponse.builder()
                 .email(email)
                 .fullName(fullName)
-                .role(UserRole.FREE.name())
+                .role(role.name())
                 .emailVerified(false)
+                .verificationStatus(verificationStatus == null ? null : verificationStatus.name())
                 .build();
     }
 
@@ -95,6 +168,13 @@ public class AuthServiceImpl implements AuthService {
                     + "Revisa tu bandeja de entrada para activar tu cuenta.");
         }
 
+        if (user.getRole() == UserRole.PHYSICIAN
+                && (user.getPhysicianVerificationStatus() == PhysicianVerificationStatus.PENDING
+                        || user.getPhysicianVerificationStatus() == PhysicianVerificationStatus.REJECTED)) {
+            throw new PhysicianPendingReviewException("Tu cuenta está siendo verificada por nuestro equipo. "
+                    + "Recibirás un correo cuando sea aprobada.");
+        }
+
         var token = jwtService.generateToken(
                 user.getId(), user.getEmail(), user.getRole().name());
 
@@ -104,6 +184,10 @@ public class AuthServiceImpl implements AuthService {
                 .fullName(user.getFullName())
                 .role(user.getRole().name())
                 .emailVerified(true)
+                .verificationStatus(
+                        user.getPhysicianVerificationStatus() == null
+                                ? null
+                                : user.getPhysicianVerificationStatus().name())
                 .build();
     }
 
@@ -132,6 +216,10 @@ public class AuthServiceImpl implements AuthService {
                 .avatarUrl(user.getAvatarUrl())
                 .credits(user.getCredits())
                 .emailVerified(user.getEmailVerified())
+                .verificationStatus(
+                        user.getPhysicianVerificationStatus() == null
+                                ? null
+                                : user.getPhysicianVerificationStatus().name())
                 .build();
     }
 
@@ -195,5 +283,39 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException(
                     "La contraseña debe combinar letras mayúsculas, minúsculas, números o símbolos");
         }
+    }
+
+    private static String normalize(String email) {
+        return email == null ? "" : email.toLowerCase().trim();
+    }
+
+    private static void requireFullName(String fullName) {
+        if (fullName == null || fullName.isBlank()) {
+            throw new IllegalArgumentException("El nombre es obligatorio");
+        }
+    }
+
+    private static void requireHealthConsent(Boolean consent) {
+        if (!Boolean.TRUE.equals(consent)) {
+            throw new IllegalArgumentException(
+                    "Debes aceptar el consentimiento para el tratamiento de tus datos de salud");
+        }
+    }
+
+    /**
+     * Valida el formato de la cédula profesional (4-20 caracteres alfanuméricos,
+     * opcionalmente con guiones, normalizados a mayúsculas). Evita valores vacíos
+     * o con caracteres inválidos.
+     */
+    private static String validateLicenseNumber(String licenseNumber) {
+        if (licenseNumber == null || licenseNumber.isBlank()) {
+            throw new IllegalArgumentException("El número de cédula profesional es obligatorio");
+        }
+        String normalized = licenseNumber.trim().toUpperCase();
+        if (!normalized.matches("[A-Z0-9-]{4,20}")) {
+            throw new IllegalArgumentException(
+                    "El número de cédula profesional no es válido (4-20 caracteres alfanuméricos)");
+        }
+        return normalized;
     }
 }

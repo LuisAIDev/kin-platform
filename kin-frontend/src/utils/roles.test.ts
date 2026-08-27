@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   canAccessPath,
   homePathForRole,
+  isAccountPendingReview,
+  isAccountRejected,
+  isAccountUnderReview,
   isAdminRole,
   isBusinessRole,
   isHealthRole,
@@ -104,6 +107,27 @@ describe("roles utils", () => {
     it("la raíz /dashboard se permite (el hub decide el redirect)", () => {
       expect(canAccessPath("FREE", "/dashboard")).toBe(true);
       expect(canAccessPath("PATIENT", "/dashboard")).toBe(true);
+    });
+  });
+
+  describe("estado pendiente de revisión del médico", () => {
+    it("detecta médico con cuenta pendiente", () => {
+      expect(isAccountPendingReview({ role: "PHYSICIAN", verificationStatus: "PENDING" })).toBe(true);
+      expect(isAccountPendingReview({ role: "PHYSICIAN", verificationStatus: "APPROVED" })).toBe(false);
+      expect(isAccountPendingReview({ role: "PATIENT", verificationStatus: "PENDING" })).toBe(false);
+      expect(isAccountPendingReview(null)).toBe(false);
+    });
+
+    it("detecta médico con cuenta rechazada", () => {
+      expect(isAccountRejected({ role: "PHYSICIAN", verificationStatus: "REJECTED" })).toBe(true);
+      expect(isAccountRejected({ role: "PHYSICIAN", verificationStatus: "PENDING" })).toBe(false);
+    });
+
+    it("considera 'en revisión' tanto PENDING como REJECTED", () => {
+      expect(isAccountUnderReview({ role: "PHYSICIAN", verificationStatus: "PENDING" })).toBe(true);
+      expect(isAccountUnderReview({ role: "PHYSICIAN", verificationStatus: "REJECTED" })).toBe(true);
+      expect(isAccountUnderReview({ role: "PHYSICIAN", verificationStatus: "APPROVED" })).toBe(false);
+      expect(isAccountUnderReview({ role: "PHYSICIAN" })).toBe(false);
     });
   });
 });

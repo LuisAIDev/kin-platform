@@ -35,6 +35,7 @@ const SECTIONS: AdminSection[] = [
     description: "Herramientas de administración de la plataforma.",
     links: [
       { label: "Planes de precios", href: "/dashboard/admin/pricing" },
+      { label: "Verificación de médicos", href: "/dashboard/admin/physicians" },
       { label: "Dead Letter Queue", href: "/dashboard/admin/outbox/dead-letter" },
       { label: "Configuración", href: "/dashboard/settings" },
     ],

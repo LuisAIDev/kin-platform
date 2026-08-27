@@ -3,6 +3,8 @@ package com.kinplatform.auth;
 import com.kinplatform.auth.dto.AuthResponse;
 import com.kinplatform.auth.dto.ForgotPasswordRequest;
 import com.kinplatform.auth.dto.LoginRequest;
+import com.kinplatform.auth.dto.PatientRegisterRequest;
+import com.kinplatform.auth.dto.PhysicianRegisterRequest;
 import com.kinplatform.auth.dto.RefreshTokenRequest;
 import com.kinplatform.auth.dto.RegisterRequest;
 import com.kinplatform.auth.dto.ResetPasswordRequest;
@@ -47,6 +49,20 @@ public class AuthController {
     public ResponseEntity<AuthResponse> register(
             @Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
         var authResponse = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
+    }
+
+    @PostMapping("/register/patient")
+    public ResponseEntity<AuthResponse> registerPatient(
+            @Valid @RequestBody PatientRegisterRequest request, HttpServletResponse response) {
+        var authResponse = authService.registerPatient(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
+    }
+
+    @PostMapping("/register/physician")
+    public ResponseEntity<AuthResponse> registerPhysician(
+            @Valid @RequestBody PhysicianRegisterRequest request, HttpServletResponse response) {
+        var authResponse = authService.registerPhysician(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
     }
 

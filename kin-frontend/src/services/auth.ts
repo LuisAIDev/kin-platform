@@ -12,6 +12,21 @@ export interface RegisterRequest {
   password: string;
 }
 
+export interface PatientRegisterRequest extends RegisterRequest {
+  dateOfBirth: string; // yyyy-MM-dd
+  sex: string;
+  phone?: string;
+  healthDataConsent: boolean;
+}
+
+export interface PhysicianRegisterRequest extends RegisterRequest {
+  licenseNumber: string;
+  specialty: string;
+  country: string;
+  phone?: string;
+  healthDataConsent: boolean;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -23,12 +38,33 @@ export interface AuthResponse {
   fullName: string;
   role: string;
   emailVerified: boolean;
+  verificationStatus?: string | null;
 }
 
 export const authService = {
   async register(data: RegisterRequest) {
     try {
       const res = await api.post<AuthResponse>("/auth/register", data);
+      setPendingEmail(res.email);
+      return { data: res, error: null };
+    } catch (err) {
+      return { data: null, error: (err as Error).message };
+    }
+  },
+
+  async registerPatient(data: PatientRegisterRequest) {
+    try {
+      const res = await api.post<AuthResponse>("/auth/register/patient", data);
+      setPendingEmail(res.email);
+      return { data: res, error: null };
+    } catch (err) {
+      return { data: null, error: (err as Error).message };
+    }
+  },
+
+  async registerPhysician(data: PhysicianRegisterRequest) {
+    try {
+      const res = await api.post<AuthResponse>("/auth/register/physician", data);
       setPendingEmail(res.email);
       return { data: res, error: null };
     } catch (err) {

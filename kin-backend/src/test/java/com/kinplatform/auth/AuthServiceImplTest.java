@@ -7,21 +7,26 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.kinplatform.auth.dto.AuthResponse;
 import com.kinplatform.auth.dto.LoginRequest;
+import com.kinplatform.auth.dto.PatientRegisterRequest;
+import com.kinplatform.auth.dto.PhysicianRegisterRequest;
 import com.kinplatform.auth.dto.RegisterRequest;
 import com.kinplatform.auth.dto.UserDTO;
 import com.kinplatform.auth.email.EmailSender;
 import com.kinplatform.auth.verification.EmailVerificationTokenService;
 import com.kinplatform.auth.verification.VerifyEmailOutcome;
 import com.kinplatform.common.security.JwtService;
+import com.kinplatform.user.PhysicianVerificationStatus;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -104,7 +109,8 @@ class AuthServiceImplTest {
         assertEquals(EMAIL, response.getEmail());
         assertEquals("FREE", response.getRole());
         verify(tokenService).createForUser(user);
-        verify(emailSender).sendVerificationEmail(EMAIL, "KIN User", "http://localhost:3000/verify-email?token=verify-token");
+        verify(emailSender)
+                .sendVerificationEmail(EMAIL, "KIN User", "http://localhost:3000/verify-email?token=verify-token");
     }
 
     @Test
@@ -313,7 +319,8 @@ class AuthServiceImplTest {
 
         authService.resendVerification(EMAIL);
 
-        verify(emailSender).sendVerificationEmail(EMAIL, "KIN User", "http://localhost:3000/verify-email?token=new-token");
+        verify(emailSender)
+                .sendVerificationEmail(EMAIL, "KIN User", "http://localhost:3000/verify-email?token=new-token");
     }
 
     @Test
@@ -343,5 +350,202 @@ class AuthServiceImplTest {
         authService.resendVerification(EMAIL);
 
         verify(emailSender, never()).sendVerificationEmail(anyString(), anyString(), anyString());
+    }
+
+    // ---------- Auto-registro vertical Salud ----------
+
+    private PatientRegisterRequest patientRequest() {
+        var req = new PatientRegisterRequest();
+        req.setEmail(EMAIL);
+        req.setPassword("KINpass123!a");
+        req.setFullName("Ana Paciente");
+        req.setDateOfBirth(LocalDate.of(1990, 5, 15));
+        req.setSex("FEMENINO");
+        req.setPhone("+34600000000");
+        req.setHealthDataConsent(true);
+        return req;
+    }
+
+    private PhysicianRegisterRequest physicianRequest() {
+        var req = new PhysicianRegisterRequest();
+        req.setEmail(EMAIL);
+        req.setPassword("KINpass123!a");
+        req.setFullName("Dr. García");
+        req.setLicenseNumber("cedula-12345");
+        req.setSpecialty("Medicina Interna");
+        req.setCountry("España");
+        req.setPhone("+34600000000");
+        req.setHealthDataConsent(true);
+        return req;
+    }
+
+    @Test
+    void registerPatient_deberiaCrearPacienteEnviarVerificacionYSinToken() {
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(false);
+        when(passwordEncoder.encode("KINpass123!a")).thenReturn("hashed");
+        var user = User.builder()
+                .id(UUID.randomUUID())
+                .email(EMAIL)
+                .passwordHash("hashed")
+                .fullName("Ana Paciente")
+                .role(UserRole.PATIENT)
+                .emailVerified(false)
+                .dateOfBirth(LocalDate.of(1990, 5, 15))
+                .sex("FEMENINO")
+                .phone("+34600000000")
+                .healthDataConsent(true)
+                .build();
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(tokenService.createForUser(user)).thenReturn("verify-token");
+
+        AuthResponse response = authService.registerPatient(patientRequest());
+
+        assertNull(response.getToken());
+        assertFalse(response.getEmailVerified());
+        assertEquals("PATIENT", response.getRole());
+        verify(userRepository)
+                .save(argThat(u -> u.getRole() == UserRole.PATIENT && Boolean.TRUE.equals(u.getHealthDataConsent())));
+        verify(emailSender)
+                .sendVerificationEmail(EMAIL, "Ana Paciente", "http://localhost:3000/verify-email?token=verify-token");
+    }
+
+    @Test
+    void registerPatient_sinConsentimiento_deberiaFallar() {
+        var req = patientRequest();
+        req.setHealthDataConsent(false);
+
+        assertThrows(IllegalArgumentException.class, () -> authService.registerPatient(req));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void registerPatient_conEmailExistente_deberiaResponderGenericoSinEnumeracion() {
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(true);
+
+        AuthResponse response = authService.registerPatient(patientRequest());
+
+        assertNull(response.getToken());
+        assertEquals("PATIENT", response.getRole());
+        verify(userRepository, never()).save(any(User.class));
+        verify(emailSender, never()).sendVerificationEmail(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void registerPhysician_deberiaCrearMedicoPendienteEnviarVerificacion() {
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(false);
+        when(passwordEncoder.encode("KINpass123!a")).thenReturn("hashed");
+        var user = User.builder()
+                .id(UUID.randomUUID())
+                .email(EMAIL)
+                .passwordHash("hashed")
+                .fullName("Dr. García")
+                .role(UserRole.PHYSICIAN)
+                .emailVerified(false)
+                .licenseNumber("CEDULA-12345")
+                .specialty("Medicina Interna")
+                .country("España")
+                .physicianVerificationStatus(PhysicianVerificationStatus.PENDING)
+                .healthDataConsent(true)
+                .build();
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(tokenService.createForUser(user)).thenReturn("verify-token");
+
+        AuthResponse response = authService.registerPhysician(physicianRequest());
+
+        assertNull(response.getToken());
+        assertFalse(response.getEmailVerified());
+        assertEquals("PHYSICIAN", response.getRole());
+        assertEquals("PENDING", response.getVerificationStatus());
+        verify(userRepository)
+                .save(argThat(u -> u.getRole() == UserRole.PHYSICIAN
+                        && u.getPhysicianVerificationStatus() == PhysicianVerificationStatus.PENDING
+                        && "CEDULA-12345".equals(u.getLicenseNumber())));
+        verify(emailSender)
+                .sendVerificationEmail(EMAIL, "Dr. García", "http://localhost:3000/verify-email?token=verify-token");
+    }
+
+    @Test
+    void registerPhysician_cedulaInvalida_deberiaFallar() {
+        var req = physicianRequest();
+        req.setLicenseNumber("¡inválida!");
+
+        assertThrows(IllegalArgumentException.class, () -> authService.registerPhysician(req));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void registerPhysician_sinConsentimiento_deberiaFallar() {
+        var req = physicianRequest();
+        req.setHealthDataConsent(false);
+
+        assertThrows(IllegalArgumentException.class, () -> authService.registerPhysician(req));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    private User physicianUser(PhysicianVerificationStatus status) {
+        return User.builder()
+                .id(UUID.randomUUID())
+                .email(EMAIL)
+                .passwordHash("hashed")
+                .fullName("Dr. García")
+                .role(UserRole.PHYSICIAN)
+                .emailVerified(true)
+                .physicianVerificationStatus(status)
+                .build();
+    }
+
+    private LoginRequest loginRequest() {
+        var req = new LoginRequest();
+        req.setEmail(EMAIL);
+        req.setPassword("password123");
+        return req;
+    }
+
+    @Test
+    void login_medicoPendiente_deberiaLanzarPendingReview() {
+        when(userRepository.findByEmail(EMAIL))
+                .thenReturn(Optional.of(physicianUser(PhysicianVerificationStatus.PENDING)));
+        when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
+
+        var ex = assertThrows(PhysicianPendingReviewException.class, () -> authService.login(loginRequest()));
+
+        assertTrue(ex.getMessage().contains("siendo verificada"));
+    }
+
+    @Test
+    void login_medicoRechazado_deberiaLanzarPendingReview() {
+        when(userRepository.findByEmail(EMAIL))
+                .thenReturn(Optional.of(physicianUser(PhysicianVerificationStatus.REJECTED)));
+        when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
+
+        assertThrows(PhysicianPendingReviewException.class, () -> authService.login(loginRequest()));
+    }
+
+    @Test
+    void login_medicoAprobado_deberiaDevolverToken() {
+        when(userRepository.findByEmail(EMAIL))
+                .thenReturn(Optional.of(physicianUser(PhysicianVerificationStatus.APPROVED)));
+        when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
+        when(jwtService.generateToken(any(UUID.class), anyString(), anyString()))
+                .thenReturn(TOKEN);
+
+        AuthResponse response = authService.login(loginRequest());
+
+        assertEquals(TOKEN, response.getToken());
+        assertEquals("APPROVED", response.getVerificationStatus());
+    }
+
+    @Test
+    void login_medicoPilotoSinEstado_deberiaDevolverToken() {
+        // Médicos del piloto/admin tienen verificationStatus null → equivalen a aprobados.
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(physicianUser(null)));
+        when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
+        when(jwtService.generateToken(any(UUID.class), anyString(), anyString()))
+                .thenReturn(TOKEN);
+
+        AuthResponse response = authService.login(loginRequest());
+
+        assertEquals(TOKEN, response.getToken());
+        assertNull(response.getVerificationStatus());
     }
 }

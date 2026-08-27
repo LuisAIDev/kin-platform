@@ -1,6 +1,7 @@
 package com.kinplatform.user;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +16,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
 
     boolean existsByEmail(String email);
+
+    /** Médicos con un estado de verificación concreto (p. ej. PENDING para el panel de ADMIN). */
+    List<User> findByRoleAndPhysicianVerificationStatus(UserRole role, PhysicianVerificationStatus verificationStatus);
 
     /**
      * Incremento ATÓMICO y CONDICIONAL del contador persistente de proyectos

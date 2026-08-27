@@ -14,4 +14,7 @@ public class AuthResponse {
     private String fullName;
     private String role;
     private Boolean emailVerified;
+
+    /** Estado de verificación de identidad (médicos): PENDING/APPROVED/REJECTED o null. */
+    private String verificationStatus;
 }

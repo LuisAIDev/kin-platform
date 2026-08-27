@@ -719,6 +719,8 @@ Todos los endpoints se sirven bajo el prefijo global **`/api/v1`** (`server.serv
 | Método | Endpoint | Auth | Descripción |
 |---|---|---|---|
 | `POST` | `/auth/register` | Public | Registro de usuario (201) |
+| `POST` | `/auth/register/patient` | Public | Registro de paciente (vertical Salud) |
+| `POST` | `/auth/register/physician` | Public | Registro de médico (verificación pendiente) |
 | `POST` | `/auth/login` | Public | Login; cookie HttpOnly `kin_token_v2` |
 | `GET` | `/auth/me` | Bearer JWT | Perfil del usuario autenticado |
 | `GET` | `/auth/verify-email?token=` | Public | Verificación de email |
@@ -807,6 +809,9 @@ Todos los endpoints se sirven bajo el prefijo global **`/api/v1`** (`server.serv
 | `GET` | `/health/telemedicine/appointments` | Bearer JWT | Lista de citas (filtro por rol) |
 | `POST` | `/admin/health/pilot/setup` | ADMIN | Crear/actualizar el grupo piloto (idempotente) |
 | `GET` | `/admin/health/pilot/metrics` | ADMIN | Métricas de éxito anonimizadas del piloto |
+| `GET` | `/admin/users/physicians/pending` | ADMIN | Médicos pendientes de verificación |
+| `POST` | `/admin/users/physicians/{userId}/approve` | ADMIN | Aprobar cédula de un médico |
+| `POST` | `/admin/users/physicians/{userId}/reject` | ADMIN | Rechazar cédula de un médico |
 
 ---
 
@@ -1151,6 +1156,24 @@ server-side, resuelve el rol vía `/auth/me`) y **`RoleGuard`** (client-side, en
 el layout del dashboard). Así, un paciente no puede abrir
 `/dashboard/empresa/analytics` ni un empresario `/dashboard/patient/health`.
 La raíz `/dashboard` redirige al home del rol.
+
+### Auto-registro de la vertical Salud
+
+La vertical Salud permite el **auto-registro** con verificación de identidad:
+
+| Flujo | Endpoint | Resultado |
+|-------|----------|-----------|
+| Paciente | `POST /auth/register/patient` | Rol `PATIENT`, verificación de email, acceso inmediato a `/dashboard/salud` |
+| Médico | `POST /auth/register/physician` | Rol `PHYSICIAN`, estado `PENDING` (cédula profesional), **no puede iniciar sesión hasta que un ADMIN lo apruebe** |
+
+- Registro en el frontend: `/register/salud` (selección de rol), formularios
+  `PatientRegisterForm` / `PhysicianRegisterForm` (reutilizables, con
+  consentimiento explícito de datos de salud).
+- Un médico pendiente/rechazado recibe el código `ACCOUNT_PENDING_REVIEW` al
+  intentar loguearse y una pantalla de espera ("cuenta en revisión") vía
+  `RoleGuard`.
+- Admin aprueba/rechaza desde `/dashboard/admin/physicians`
+  (`GET /admin/users/physicians/pending`, `POST .../{id}/approve|reject`).
 
 ### Documentación operativa
 

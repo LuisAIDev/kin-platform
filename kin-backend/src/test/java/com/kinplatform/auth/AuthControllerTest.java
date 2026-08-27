@@ -36,9 +36,8 @@ class AuthControllerTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc =
-                MockMvcBuilders.standaloneSetup(new AuthController(authService, passwordResetService))
-                        .build();
+        mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(authService, passwordResetService))
+                .build();
     }
 
     @Test
@@ -137,8 +136,10 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"a@kin.com\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value(
-                        "Si existe una cuenta asociada a este correo y necesita verificación, recibirás un nuevo mensaje."));
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "Si existe una cuenta asociada a este correo y necesita verificación, recibirás un nuevo mensaje."));
     }
 
     @Test
@@ -256,6 +257,59 @@ class AuthControllerTest {
         mockMvc.perform(post("/auth/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"token\":\"tok\",\"newPassword\":\"corta\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void registerPatient_deberiaResponder201ConRolPaciente() throws Exception {
+        when(authService.registerPatient(any()))
+                .thenReturn(AuthResponse.builder()
+                        .email("p@kin.com")
+                        .fullName("Ana Paciente")
+                        .role("PATIENT")
+                        .emailVerified(false)
+                        .build());
+
+        mockMvc.perform(post("/auth/register/patient")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"p@kin.com\",\"password\":\"KINpass123!a\","
+                                + "\"fullName\":\"Ana Paciente\",\"dateOfBirth\":\"1990-05-15\","
+                                + "\"sex\":\"FEMENINO\",\"healthDataConsent\":true}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.role").value("PATIENT"))
+                .andExpect(jsonPath("$.emailVerified").value(false));
+    }
+
+    @Test
+    void registerPhysician_deberiaResponder201ConVerificacionPendiente() throws Exception {
+        when(authService.registerPhysician(any()))
+                .thenReturn(AuthResponse.builder()
+                        .email("m@kin.com")
+                        .fullName("Dr. García")
+                        .role("PHYSICIAN")
+                        .emailVerified(false)
+                        .verificationStatus("PENDING")
+                        .build());
+
+        mockMvc.perform(post("/auth/register/physician")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"m@kin.com\",\"password\":\"KINpass123!a\","
+                                + "\"fullName\":\"Dr. García\",\"licenseNumber\":\"CEDULA-12345\","
+                                + "\"specialty\":\"Medicina Interna\",\"country\":\"España\","
+                                + "\"healthDataConsent\":true}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.role").value("PHYSICIAN"))
+                .andExpect(jsonPath("$.verificationStatus").value("PENDING"));
+    }
+
+    @Test
+    void registerPhysician_sinConsentimiento_deberiaResponder400() throws Exception {
+        mockMvc.perform(post("/auth/register/physician")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"m@kin.com\",\"password\":\"KINpass123!a\","
+                                + "\"fullName\":\"Dr. García\",\"licenseNumber\":\"CEDULA-12345\","
+                                + "\"specialty\":\"Medicina Interna\",\"country\":\"España\","
+                                + "\"healthDataConsent\":false}"))
                 .andExpect(status().isBadRequest());
     }
 }

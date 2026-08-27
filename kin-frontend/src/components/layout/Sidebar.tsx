@@ -58,6 +58,7 @@ const ADMIN_ITEMS: NavItem[] = [
   { label: "Mensajes", href: "/dashboard/patient/messages" },
   { label: "Citas", href: "/dashboard/patient/appointments" },
   { label: "Administración", href: "/dashboard/admin/pricing" },
+  { label: "Verificación de médicos", href: "/dashboard/admin/physicians" },
   { label: "Planes", href: "/dashboard/pricing" },
   { label: "Suscripción", href: "/dashboard/subscription" },
   { label: "Configuración", href: "/dashboard/settings" },

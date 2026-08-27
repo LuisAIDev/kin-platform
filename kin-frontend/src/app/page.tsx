@@ -139,7 +139,7 @@ export default function Home() {
                 </svg>
               </Link>
               <Link
-                href="/login?vertical=salud"
+                href="/register/salud"
                 className="inline-flex items-center gap-2 rounded-xl border-2 border-primary-200 bg-white/80 px-8 py-3.5 text-sm font-semibold text-primary-700 shadow-sm hover:bg-primary-50 hover:border-primary-300 hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 backdrop-blur-sm"
               >
                 Soy Paciente o Médico: portal de salud
@@ -232,7 +232,7 @@ export default function Home() {
               </ul>
               <div className="mt-8 flex-1 flex items-end">
                 <Link
-                  href="/login?vertical=salud"
+                  href="/register/salud"
                   className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-500 hover:shadow-lg transition-all duration-200"
                 >
                   Acceder al portal de salud
