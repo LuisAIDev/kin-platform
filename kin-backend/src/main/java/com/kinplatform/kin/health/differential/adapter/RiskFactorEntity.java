@@ -34,7 +34,7 @@ public class RiskFactorEntity {
     @Column(name = "factor", nullable = false, length = 120)
     private String factor;
 
-    @Column(name = "weight", nullable = false)
+    @Column(name = "weight", nullable = false, columnDefinition = "NUMERIC(5,2)")
     private Double weight;
 
     @Column(name = "description", length = 255)

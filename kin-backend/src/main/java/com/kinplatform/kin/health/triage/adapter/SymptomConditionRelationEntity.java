@@ -28,7 +28,7 @@ public class SymptomConditionRelationEntity {
     @EmbeddedId
     private SymptomConditionRelationId id;
 
-    @Column(name = "weight", nullable = false)
+    @Column(name = "weight", nullable = false, columnDefinition = "NUMERIC(5,2)")
     private Double weight;
 
     @Column(name = "required", nullable = false)
