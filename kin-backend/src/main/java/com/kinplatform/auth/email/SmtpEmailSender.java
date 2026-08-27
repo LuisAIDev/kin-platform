@@ -7,6 +7,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -74,6 +75,22 @@ public class SmtpEmailSender implements EmailSender {
 
     @Value("${spring.mail.properties.mail.smtp.auth:false}")
     private boolean smtpAuth;
+
+    /**
+     * Feature flag de último recurso: si el envío falla y el destinatario está en
+     * {@link #debugFallbackAllowlist}, el enlace de verificación se imprime en los
+     * logs (WARN). NUNCA se activa sin whitelist explícita. Default {@code false}.
+     */
+    @Value("${app.mail.debug-fallback:false}")
+    private boolean debugFallback;
+
+    /** Whitelist de destinatarios para el fallback (emails o dominios {@code @dominio}). */
+    @Value("${app.mail.debug-fallback-allowlist:}")
+    private String debugFallbackAllowlist;
+
+    /** Perfiles activos (comma-separated) para el log DEBUG del contenido (solo dev/test). */
+    @Value("${spring.profiles.active:}")
+    private String activeProfiles;
 
     @PostConstruct
     public void validate() {
@@ -149,11 +166,56 @@ public class SmtpEmailSender implements EmailSender {
             successCounter.increment();
         } catch (MessagingException | UnsupportedEncodingException e) {
             failureCounter.increment();
-            log.error("Fallo SMTP al enviar correo de {} para {}", type, maskEmail(to), e);
+            log.error(
+                    "Fallo SMTP al enviar correo de {} para {} — asunto '{}': {}",
+                    type,
+                    maskEmail(to),
+                    subject,
+                    e.getMessage(),
+                    e);
+            logDebugBody(to, subject, text);
+            if (debugFallback && isFallbackAllowed(to)) {
+                log.warn(
+                        "[MAIL_DEBUG_FALLBACK] No se pudo enviar el correo de {} a {}; "
+                                + "enlace (último recurso): {}",
+                        type,
+                        maskEmail(to),
+                        link);
+            }
             throw new IllegalStateException("No se pudo enviar el correo de " + type, e);
         } finally {
             sample.stop(latencyTimer);
         }
+    }
+
+    /**
+     * Log DEBUG con el contenido completo del correo, SOLO en perfiles
+     * dev/test (nunca en producción) y con el nivel de log DEBUG activo.
+     */
+    private void logDebugBody(String to, String subject, String text) {
+        boolean devOrTest =
+                activeProfiles != null && (activeProfiles.contains("dev") || activeProfiles.contains("test"));
+        if (devOrTest && log.isDebugEnabled()) {
+            log.debug("[SMTP][debug] Contenido del correo para {} — asunto '{}':\n{}", maskEmail(to), subject, text);
+        }
+    }
+
+    /**
+     * Determina si un destinatario está en la whitelist del fallback de
+     * último recurso (email exacto o dominio {@code @dominio}).
+     */
+    boolean isFallbackAllowed(String to) {
+        if (debugFallbackAllowlist == null || debugFallbackAllowlist.isBlank() || to == null) {
+            return false;
+        }
+        String recipient = to.toLowerCase().trim();
+        return Arrays.stream(debugFallbackAllowlist.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .anyMatch(entry -> {
+                    String e = entry.toLowerCase();
+                    return recipient.equals(e) || (e.startsWith("@") && recipient.endsWith(e));
+                });
     }
 
     private static String getMessageId(Message message) {

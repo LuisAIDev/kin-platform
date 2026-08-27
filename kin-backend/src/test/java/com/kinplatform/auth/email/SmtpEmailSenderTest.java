@@ -1,5 +1,6 @@
 package com.kinplatform.auth.email;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -114,5 +115,28 @@ class SmtpEmailSenderTest {
         String fromHeader = captured[0].getFrom()[0].toString();
         assertTrue(fromHeader.contains("KIN Platform"));
         assertTrue(fromHeader.contains("hola@kin-platform.com"));
+    }
+
+    @Test
+    void fallbackAllowlist_conDominioEnWhitelist_deberiaPermitir() {
+        ReflectionTestUtils.setField(sender, "debugFallbackAllowlist", "@kin-platform.com, admin@kin.com");
+
+        assertTrue(sender.isFallbackAllowed("cualquiera@kin-platform.com"));
+        assertTrue(sender.isFallbackAllowed("admin@kin.com"));
+        assertFalse(sender.isFallbackAllowed("luisgue.11@hotmail.com"));
+    }
+
+    @Test
+    void fallbackAllowlist_vacia_noDeberiaPermitirNada() {
+        ReflectionTestUtils.setField(sender, "debugFallbackAllowlist", "");
+
+        assertFalse(sender.isFallbackAllowed("admin@kin.com"));
+    }
+
+    @Test
+    void fallbackAllowlist_conNulo_noDeberiaPermitirNada() {
+        ReflectionTestUtils.setField(sender, "debugFallbackAllowlist", null);
+
+        assertFalse(sender.isFallbackAllowed("admin@kin.com"));
     }
 }

@@ -73,6 +73,15 @@ services:
         sync: false
       - key: MAIL_FROM_NAME
         value: "KIN Platform"
+      # Diagnóstico SMTP (GET /admin/health/email/diagnostic?to=...) y fallback
+      # de último recurso (imprime el enlace en logs SOLO para destinatarios de
+      # la whitelist; default deshabilitado).
+      - key: MAIL_DIAGNOSTIC_TO
+        sync: false
+      - key: MAIL_DEBUG_FALLBACK
+        value: "false"
+      - key: MAIL_DEBUG_FALLBACK_ALLOWLIST
+        sync: false
       - key: FRONTEND_BASE_URL
         value: "https://kin-platform.com"
 

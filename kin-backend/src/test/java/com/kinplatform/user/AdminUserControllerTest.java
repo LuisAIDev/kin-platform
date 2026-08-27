@@ -85,4 +85,13 @@ class AdminUserControllerTest {
 
         mockMvc.perform(post("/admin/users/physicians/{userId}/approve", id)).andExpect(status().isBadRequest());
     }
+
+    @Test
+    void verifyEmail_deberiaLlamarAlServicio() throws Exception {
+        UUID id = UUID.randomUUID();
+
+        mockMvc.perform(post("/admin/users/{userId}/verify", id)).andExpect(status().isOk());
+
+        verify(adminUserService).verifyEmail(id);
+    }
 }

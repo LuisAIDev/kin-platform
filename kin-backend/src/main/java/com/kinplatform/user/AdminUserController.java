@@ -37,4 +37,14 @@ public class AdminUserController {
         adminUserService.setVerificationStatus(userId, PhysicianVerificationStatus.REJECTED);
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * Marca el email de un usuario como verificado manualmente (último recurso
+     * operativo si los correos de verificación no llegan).
+     */
+    @PostMapping("/{userId}/verify")
+    public ResponseEntity<Void> verifyEmail(@PathVariable UUID userId) {
+        adminUserService.verifyEmail(userId);
+        return ResponseEntity.ok().build();
+    }
 }

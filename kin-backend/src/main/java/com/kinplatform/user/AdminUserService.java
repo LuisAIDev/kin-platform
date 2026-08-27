@@ -45,4 +45,17 @@ public class AdminUserService {
         user.setPhysicianVerificationStatus(status);
         userRepository.save(user);
     }
+
+    /**
+     * Marca el email de un usuario como verificado manualmente (último recurso
+     * operativo cuando los correos no llegan). Requiere rol ADMIN.
+     */
+    @Transactional
+    public void verifyEmail(UUID userId) {
+        User user = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        user.setEmailVerified(true);
+        userRepository.save(user);
+    }
 }

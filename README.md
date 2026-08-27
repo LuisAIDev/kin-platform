@@ -812,6 +812,8 @@ Todos los endpoints se sirven bajo el prefijo global **`/api/v1`** (`server.serv
 | `GET` | `/admin/users/physicians/pending` | ADMIN | Médicos pendientes de verificación |
 | `POST` | `/admin/users/physicians/{userId}/approve` | ADMIN | Aprobar cédula de un médico |
 | `POST` | `/admin/users/physicians/{userId}/reject` | ADMIN | Rechazar cédula de un médico |
+| `GET` | `/admin/health/email/diagnostic?to=...` | ADMIN | Diagnóstico SMTP (conexión + correo de prueba) |
+| `POST` | `/admin/users/{userId}/verify` | ADMIN | Marcar email como verificado manualmente |
 
 ---
 
@@ -1217,6 +1219,50 @@ Guías operativas para producción en `kin-docs/`:
 - Mensajes de telemedicina **cifrados en reposo** (AES/GCM) con rotación de claves
   (lista separada por comas en `KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET`).
 - CORS limitado a orígenes autorizados (`app.cors.allowed-origins`; `kin-platform.com` siempre garantizado).
+
+### Solución de problemas de correos
+
+Si un usuario se registra pero **no recibe el correo de verificación**:
+
+1. **Confirmar el modo de envío en los logs de Render** (el backend lo imprime al
+   arrancar):
+   - `INFO ... SMTP habilitado: host=... from=*** smtpAuth=true` → el envío es por
+     SMTP real.
+   - `WARN ... CORREO DESHABILITADO (modo sin SMTP)` → el enlace solo se imprime en
+     los logs; configura `APP_MAIL_ENABLED=true` + `MAIL_*` y el perfil `render`.
+
+2. **Ejecutar el diagnóstico SMTP (solo ADMIN):**
+   ```bash
+   curl -H "Authorization: Bearer <token_admin>" \
+     "https://kin-backend.onrender.com/api/v1/admin/health/email/diagnostic?to=test@example.com"
+   ```
+   Devuelve la configuración (enmascarada), el resultado de la conexión SMTP y el
+   resultado del envío de un correo de prueba. Sin `to`, usa `MAIL_DIAGNOSTIC_TO`.
+
+3. **Probar SMTP desde la consola de Render (Shell):**
+   ```bash
+   bash scripts/test-smtp.sh test@example.com
+   ```
+
+4. **Revisar Brevo:** confirmar que `MAIL_FROM` usa un dominio **verificado** en
+   Brevo (DKIM/SPF), que la cuenta tiene créditos y no está en modo sandbox, y
+   revisar la sección de emails transaccionales. Hotmail/Outlook filtra con fuerza:
+   verifica también spam y los registros de rebotes.
+
+5. **Fallback de último recurso (debug):** con `MAIL_DEBUG_FALLBACK=true` y
+   `MAIL_DEBUG_FALLBACK_ALLOWLIST=@kin-platform.com`, si el envío falla, el enlace
+   se imprime en los logs (WARN) solo para destinatarios de la whitelist. Apágalo
+   tras depurar.
+
+6. **Verificación manual en BD (urgencia, solo ADMIN):**
+   ```bash
+   curl -X POST -H "Authorization: Bearer <token_admin>" \
+     "https://kin-backend.onrender.com/api/v1/admin/users/<userId>/verify"
+   ```
+
+7. **Logs de envío:** cada intento registra `Correo de {tipo} ACEPTADO POR SMTP`
+   (éxito) o `Fallo SMTP al enviar ...` (error con destinatario y asunto). El
+   contenido completo del correo se loguea en DEBUG solo en perfiles `dev`/`test`.
 
 ---
 
