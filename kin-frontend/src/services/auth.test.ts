@@ -95,7 +95,7 @@ describe("authService", () => {
     expect(mockedForceLogout).not.toHaveBeenCalled();
   });
 
-  it("login: error 401 devuelve mensaje y fuerza logout", async () => {
+  it("login: error 401 devuelve mensaje y NO fuerza logout (error de credenciales, no sesión expirada)", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       jsonResponse({ error: "Invalid email or password" }, 401)
     );
@@ -103,8 +103,8 @@ describe("authService", () => {
     const result = await authService.login({ email: "a@b.c", password: "x" });
 
     expect(result.data).toBeNull();
-    expect(result.error).toBe("Unauthorized");
-    expect(mockedForceLogout).toHaveBeenCalled();
+    expect(result.error).toBe("Invalid email or password");
+    expect(mockedForceLogout).not.toHaveBeenCalled();
   });
 
   it("verifyEmail: éxito devuelve mensaje", async () => {

@@ -2,6 +2,29 @@ import { forceLogout } from "./session";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
 
+/**
+ * Endpoints de autenticación/registro: en ellos un 401/400 es un error de
+ * NEGOCIO (credenciales inválidas, email no verificado, cuenta pendiente), NO
+ * una sesión expirada. En esos casos NO se debe llamar a `forceLogout()` (que
+ * recargaba /login o limpiaba la sesión) sino propagar el error al llamante
+ * para que la UI muestre un mensaje.
+ */
+const AUTH_ENDPOINTS = [
+  "/auth/login",
+  "/auth/register",
+  "/auth/register/patient",
+  "/auth/register/physician",
+  "/auth/resend-verification",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+  "/auth/verify-email",
+  "/auth/refresh",
+];
+
+function isAuthEndpoint(endpoint: string): boolean {
+  return AUTH_ENDPOINTS.some((prefix) => endpoint.startsWith(prefix));
+}
+
 async function request<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -24,13 +47,12 @@ async function request<T>(
     const error = new Error(message) as Error & { code?: string };
     error.code = body?.code;
 
-    if (res.status === 401) {
+    if (res.status === 401 && !isAuthEndpoint(endpoint)) {
       forceLogout();
       error.message = "Unauthorized";
-      throw error;
     }
 
-    if (res.status === 400 && message.toLowerCase().includes("authenticated user")) {
+    if (res.status === 400 && !isAuthEndpoint(endpoint) && message.toLowerCase().includes("authenticated user")) {
       forceLogout();
     }
 

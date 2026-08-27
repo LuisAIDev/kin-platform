@@ -54,10 +54,23 @@ function LoginForm() {
           setError("Demasiados intentos de inicio de sesión. Espera 60 segundos antes de intentar de nuevo.");
           return;
         }
-        setError(result.error);
+        if (
+          result.error === "Unauthorized" ||
+          result.error === "Invalid email or password" ||
+          result.error === "Bad credentials"
+        ) {
+          setError("Correo o contraseña incorrectos.");
+        } else {
+          setError(result.error);
+        }
         return;
       }
       router.push(homePathForRole(result.data?.role));
+    } catch (err) {
+      // Defensivo: authService.login nunca lanza (devuelve {error}), pero si
+      // algo inesperado ocurre, mostrarlo en vez de dejar el botón "mudo".
+      console.error("Error inesperado al iniciar sesión", err);
+      setError("No se pudo iniciar sesión. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }

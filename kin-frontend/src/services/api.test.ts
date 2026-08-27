@@ -145,4 +145,44 @@ describe("api", () => {
     expect(mockedForceLogout).not.toHaveBeenCalled();
     expect(localStorage.getItem("kin_token_v2")).toBe("tok");
   });
+
+  it("401 en /auth/login NO fuerza logout y propaga el mensaje (error de credenciales)", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ error: "Invalid email or password" }, 401));
+
+    await expect(api.post("/auth/login", { email: "a@b.c", password: "x" }))
+      .rejects.toThrow("Invalid email or password");
+    expect(mockedForceLogout).not.toHaveBeenCalled();
+  });
+
+  it("400 en /auth/login NO fuerza logout y propaga el mensaje", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ error: "Invalid email or password" }, 400));
+
+    await expect(api.post("/auth/login", { email: "a@b.c", password: "x" }))
+      .rejects.toThrow("Invalid email or password");
+    expect(mockedForceLogout).not.toHaveBeenCalled();
+  });
+
+  it("403 en /auth/login con code EMAIL_VERIFICATION_REQUIRED propaga el código", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValue(jsonResponse({ error: "correo no verificado", code: "EMAIL_VERIFICATION_REQUIRED" }, 403));
+
+    const err = await api.post("/auth/login", { email: "a@b.c", password: "x" }).catch((e: Error & { code?: string }) => e);
+
+    expect(err.code).toBe("EMAIL_VERIFICATION_REQUIRED");
+    expect(mockedForceLogout).not.toHaveBeenCalled();
+  });
+
+  it("401 en /auth/register/physician NO fuerza logout", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ error: "boom" }, 401));
+
+    await expect(api.post("/auth/register/physician", {})).rejects.toThrow("boom");
+    expect(mockedForceLogout).not.toHaveBeenCalled();
+  });
+
+  it("401 en endpoints NO-auth SÍ fuerza logout (sesión expirada)", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ error: "Token inválido" }, 401));
+
+    await expect(api.get("/projects")).rejects.toThrow("Unauthorized");
+    expect(mockedForceLogout).toHaveBeenCalled();
+  });
 });

@@ -79,7 +79,11 @@ export const authService = {
       return { data: res, error: null };
     } catch (err) {
       const e = err as Error & { code?: string };
-      return { data: null, error: e.message, code: e.code };
+      return {
+        data: null,
+        error: e?.message || "No se pudo conectar con el servidor",
+        code: e?.code,
+      };
     }
   },
 
