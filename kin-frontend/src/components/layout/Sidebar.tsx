@@ -3,15 +3,19 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authService } from "@/services/auth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const NAV_ITEMS = [
+interface NavItem {
+  label: string;
+  href: string;
+}
+
+// ---- Menús por rol ----
+
+// Empresarial (FREE / PREMIUM / FACILITADOR / USER legacy): estructuración de proyectos.
+const BUSINESS_ITEMS: NavItem[] = [
   { label: "Mis Proyectos", href: "/dashboard/projects" },
   { label: "Nuevo Proyecto", href: "/dashboard/projects/new" },
-  { label: "Triaje Digital", href: "/dashboard/patient/triage" },
-  { label: "Mi Salud", href: "/dashboard/patient/health" },
-  { label: "Mensajes", href: "/dashboard/patient/messages" },
-  { label: "Citas", href: "/dashboard/patient/appointments" },
   { label: "Analytics", href: "/dashboard/analytics" },
   { label: "Insights", href: "/dashboard/insights" },
   { label: "Recomendaciones", href: "/dashboard/recommendations" },
@@ -22,21 +26,69 @@ const NAV_ITEMS = [
   { label: "Sobre KIN", href: "/sobre-kin" },
 ];
 
-const ADMIN_ITEM = { label: "Administración", href: "/dashboard/admin/pricing" };
-const PHYSICIAN_ITEM = { label: "Portal Médico", href: "/dashboard/physician" };
-const PHYSICIAN_MSGS = { label: "Mensajes", href: "/dashboard/physician/messages" };
-const PHYSICIAN_APPTS = { label: "Citas", href: "/dashboard/physician/appointments" };
+// Paciente: solo salud.
+const PATIENT_ITEMS: NavItem[] = [
+  { label: "Mi Salud", href: "/dashboard/patient/health" },
+  { label: "Triaje Digital", href: "/dashboard/patient/triage" },
+  { label: "Mensajes", href: "/dashboard/patient/messages" },
+  { label: "Citas", href: "/dashboard/patient/appointments" },
+  { label: "Configuración", href: "/dashboard/settings" },
+];
+
+// Médico: solo su portal (Portal Médico ya incluye la lista de pacientes).
+const PHYSICIAN_ITEMS: NavItem[] = [
+  { label: "Portal Médico", href: "/dashboard/physician" },
+  { label: "Mensajes", href: "/dashboard/physician/messages" },
+  { label: "Citas", href: "/dashboard/physician/appointments" },
+  { label: "Configuración", href: "/dashboard/settings" },
+];
+
+// Admin: menú completo (empresarial + salud + administración).
+const ADMIN_ITEMS: NavItem[] = [
+  { label: "Mis Proyectos", href: "/dashboard/projects" },
+  { label: "Nuevo Proyecto", href: "/dashboard/projects/new" },
+  { label: "Analytics", href: "/dashboard/analytics" },
+  { label: "Insights", href: "/dashboard/insights" },
+  { label: "Recomendaciones", href: "/dashboard/recommendations" },
+  { label: "Reportes", href: "/dashboard/reports" },
+  { label: "Mi Salud", href: "/dashboard/patient/health" },
+  { label: "Triaje Digital", href: "/dashboard/patient/triage" },
+  { label: "Portal Médico", href: "/dashboard/physician" },
+  { label: "Mensajes", href: "/dashboard/patient/messages" },
+  { label: "Citas", href: "/dashboard/patient/appointments" },
+  { label: "Administración", href: "/dashboard/admin/pricing" },
+  { label: "Planes", href: "/dashboard/pricing" },
+  { label: "Suscripción", href: "/dashboard/subscription" },
+  { label: "Configuración", href: "/dashboard/settings" },
+  { label: "Sobre KIN", href: "/sobre-kin" },
+];
+
+function getRoleItems(role: string | undefined): NavItem[] {
+  switch (role) {
+    case "ADMIN":
+      return ADMIN_ITEMS;
+    case "PATIENT":
+      return PATIENT_ITEMS;
+    case "PHYSICIAN":
+      return PHYSICIAN_ITEMS;
+    default:
+      return BUSINESS_ITEMS;
+  }
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const user = typeof window !== "undefined" ? authService.getUser() : null;
-  const isAdmin = user?.role === "ADMIN";
-  const isPhysician = user?.role === "PHYSICIAN" || isAdmin;
-  let items = NAV_ITEMS;
-  if (isPhysician) items = [...items, PHYSICIAN_ITEM, PHYSICIAN_MSGS, PHYSICIAN_APPTS];
-  if (isAdmin) items = [...items, ADMIN_ITEM];
-  const allItems = items;
+  const role = user?.role;
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && !user) {
+      router.push("/login");
+    }
+  }, [user, router]);
+
+  const allItems = getRoleItems(role);
 
   const handleLogout = async () => {
     await authService.logout();

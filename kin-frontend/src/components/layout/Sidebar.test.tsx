@@ -19,24 +19,91 @@ vi.mock("next/link", () => ({
 }));
 vi.mock("@/services/auth", () => ({ authService: { getUser, logout } }));
 
+function mockUser(role: string) {
+  getUser.mockReturnValue({ token: "t", email: "a@b.c", fullName: "Ana", role });
+}
+
 describe("Sidebar", () => {
   beforeEach(() => {
     getUser.mockReset();
     logout.mockReset();
     push.mockReset();
     pathname = "/dashboard/projects";
-    getUser.mockReturnValue({ token: "t", email: "a@b.c", fullName: "Ana", role: "USER" });
   });
 
-  it("renderiza los ítems de navegación para usuario normal", () => {
+  it("redirige a /login cuando no hay usuario autenticado", () => {
+    getUser.mockReturnValue(null);
+    render(<Sidebar />);
+    expect(push).toHaveBeenCalledWith("/login");
+  });
+
+  it("usuario FREE ve solo opciones empresariales", () => {
+    mockUser("FREE");
+    render(<Sidebar />);
+
+    expect(screen.getAllByText("Mis Proyectos").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Nuevo Proyecto").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Analytics").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Sobre KIN").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Mi Salud")).toBeNull();
+    expect(screen.queryByText("Triaje Digital")).toBeNull();
+    expect(screen.queryByText("Portal Médico")).toBeNull();
+    expect(screen.queryByText("Administración")).toBeNull();
+  });
+
+  it("usuario normal (USER legacy) ve opciones empresariales", () => {
+    mockUser("USER");
     render(<Sidebar />);
 
     expect(screen.getAllByText("Mis Proyectos").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Nuevo Proyecto").length).toBeGreaterThan(0);
     expect(screen.queryByText("Administración")).toBeNull();
+    expect(screen.queryByText("Mi Salud")).toBeNull();
+    expect(screen.queryByText("Triaje Digital")).toBeNull();
+  });
+
+  it("paciente ve solo opciones de salud", () => {
+    mockUser("PATIENT");
+    render(<Sidebar />);
+
+    expect(screen.getAllByText("Mi Salud").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Triaje Digital").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Mensajes").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Citas").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Mis Proyectos")).toBeNull();
+    expect(screen.queryByText("Analytics")).toBeNull();
+    expect(screen.queryByText("Portal Médico")).toBeNull();
+  });
+
+  it("médico ve solo su portal", () => {
+    mockUser("PHYSICIAN");
+    render(<Sidebar />);
+
+    expect(screen.getAllByText("Portal Médico").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Mensajes").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Citas").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Mis Proyectos")).toBeNull();
+    expect(screen.queryByText("Mi Salud")).toBeNull();
+    expect(screen.queryByText("Triaje Digital")).toBeNull();
+  });
+
+  it("administrador ve menú completo", () => {
+    mockUser("ADMIN");
+    render(<Sidebar />);
+
+    expect(screen.getAllByText("Mis Proyectos").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Analytics").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Mi Salud").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Triaje Digital").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Portal Médico").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Mensajes").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Citas").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Administración").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Sobre KIN").length).toBeGreaterThan(0);
   });
 
   it("incluye el ítem 'Sobre KIN' enlazando a /sobre-kin", () => {
+    mockUser("FREE");
     render(<Sidebar />);
     const links = screen.getAllByText("Sobre KIN");
     expect(links.length).toBeGreaterThan(0);
@@ -45,20 +112,14 @@ describe("Sidebar", () => {
 
   it("marca activo 'Sobre KIN' cuando el pathname es /sobre-kin", () => {
     pathname = "/sobre-kin";
+    mockUser("FREE");
     render(<Sidebar />);
     const link = screen.getAllByText("Sobre KIN")[0].closest("a");
     expect(link?.className).toContain("bg-primary-600");
   });
 
-  it("muestra el ítem de administración para ADMIN", () => {
-    getUser.mockReturnValue({ token: "t", email: "a@b.c", fullName: "Admin", role: "ADMIN" });
-
-    render(<Sidebar />);
-
-    expect(screen.getAllByText("Administración").length).toBeGreaterThan(0);
-  });
-
   it("marca activo el enlace de proyectos según pathname", () => {
+    mockUser("FREE");
     render(<Sidebar />);
 
     const active = screen.getAllByText("Mis Proyectos")[0].closest("a");
@@ -67,6 +128,7 @@ describe("Sidebar", () => {
 
   it("cierra sesión y navega a /login", async () => {
     const user = userEvent.setup();
+    mockUser("FREE");
     render(<Sidebar />);
 
     await user.click(screen.getAllByText("Cerrar sesión")[0]);
@@ -77,6 +139,7 @@ describe("Sidebar", () => {
 
   it("abre y cierra el menú móvil (aria-label accesible)", async () => {
     const user = userEvent.setup();
+    mockUser("FREE");
     render(<Sidebar />);
 
     const toggle = screen.getByRole("button", { name: "Abrir menú" });

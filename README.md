@@ -1119,6 +1119,22 @@ Bounded context `com.kinplatform.kin.health.pilot`:
   (`components/health/FeedbackButton`). Apunta a `NEXT_PUBLIC_FEEDBACK_URL`
   (formulario configurable); si está vacío usa `mailto:soporte@kin-platform.com`.
 
+### Navegación lateral por rol
+
+El menú lateral (`components/layout/Sidebar.tsx`) se segmenta según el rol del
+usuario autenticado (leído de la sesión local, `authService.getUser()`):
+
+| Rol | Opciones |
+|-----|----------|
+| `FREE` / `PREMIUM` / `FACILITADOR` | Empresarial: Mis Proyectos, Nuevo Proyecto, Analytics, Insights, Recomendaciones, Reportes, Planes, Suscripción, Configuración, Sobre KIN |
+| `PATIENT` | Salud: Mi Salud, Triaje Digital, Mensajes, Citas, Configuración |
+| `PHYSICIAN` | Portal Médico, Mensajes, Citas, Configuración |
+| `ADMIN` | Menú completo (empresarial + salud + portal médico + Administración) |
+
+Un usuario empresarial no ve opciones de salud y viceversa. Sin usuario
+autenticado, el componente redirige a `/login` (el middleware `src/proxy.ts`
+ya protege `/dashboard`).
+
 ### Documentación operativa
 
 | Documento | Contenido |
