@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authService } from "@/services/auth";
+import { homePathForRole } from "@/utils/roles";
 import { useEffect, useState } from "react";
 
 interface NavItem {
@@ -89,6 +90,7 @@ export default function Sidebar() {
   }, [user, router]);
 
   const allItems = getRoleItems(role);
+  const homeHref = homePathForRole(role);
 
   const handleLogout = async () => {
     await authService.logout();
@@ -148,7 +150,7 @@ export default function Sidebar() {
             </svg>
           </div>
           <Link
-            href="/dashboard/projects"
+            href={homeHref}
             className="text-lg font-bold tracking-tight"
           >
             KIN
@@ -186,7 +188,7 @@ export default function Sidebar() {
 
       <nav className="lg:hidden flex items-center justify-between border-b border-neutral-200 bg-white px-4 py-3 shrink-0">
         <Link
-          href="/dashboard/projects"
+          href={homeHref}
           className="text-lg font-bold tracking-tight flex items-center gap-2"
         >
           <div className="w-6 h-6 rounded-md bg-primary-600 flex items-center justify-center shrink-0">

@@ -1135,6 +1135,23 @@ Un usuario empresarial no ve opciones de salud y viceversa. Sin usuario
 autenticado, el componente redirige a `/login` (el middleware `src/proxy.ts`
 ya protege `/dashboard`).
 
+### Verticales y hubs del dashboard
+
+La plataforma separa **dos verticales** (Empresa y Salud) más **Admin**. El
+home de cada usuario según su rol (`src/utils/roles.ts`):
+
+| Vertical | Home | Roles |
+|----------|------|-------|
+| Empresa | `/dashboard/empresa` | FREE, PREMIUM, FACILITADOR |
+| Salud | `/dashboard/salud` | PATIENT, PHYSICIAN |
+| Admin | `/dashboard/admin` | ADMIN |
+
+El acceso por ruta se enforceda en dos capas: **middleware** (`src/proxy.ts`,
+server-side, resuelve el rol vía `/auth/me`) y **`RoleGuard`** (client-side, en
+el layout del dashboard). Así, un paciente no puede abrir
+`/dashboard/empresa/analytics` ni un empresario `/dashboard/patient/health`.
+La raíz `/dashboard` redirige al home del rol.
+
 ### Documentación operativa
 
 | Documento | Contenido |

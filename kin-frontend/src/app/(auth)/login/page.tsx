@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authService } from "@/services/auth";
 import { api } from "@/services/api";
 import { checkForceLogout, setPendingEmail } from "@/services/session";
 import { PasswordInput } from "@/components/auth/PasswordInput";
+import { homePathForRole } from "@/utils/roles";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const verticalSalud = searchParams.get("vertical") === "salud";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -23,8 +26,12 @@ export default function LoginPage() {
     }
 
     // Con cookie HttpOnly, verificamos la sesión llamando directamente a /auth/me
-    api.get("/auth/me")
-      .then(() => router.push("/dashboard/projects"))
+    api
+      .get("/auth/me")
+      .then((me) => {
+        const role = (me as { role?: string } | null)?.role;
+        router.push(homePathForRole(role));
+      })
       .catch(() => {
         // Si falla, no hay sesión válida
       })
@@ -47,7 +54,7 @@ export default function LoginPage() {
         setError(result.error);
         return;
       }
-      router.push("/dashboard/projects");
+      router.push(homePathForRole(result.data?.role));
     } finally {
       setLoading(false);
     }
@@ -68,6 +75,13 @@ export default function LoginPage() {
         className="w-full max-w-sm flex flex-col gap-4"
       >
         <h1 className="text-2xl font-bold text-center mb-2">Iniciar sesion</h1>
+
+        {verticalSalud && (
+          <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-lg">
+            Acceso al portal de salud. Las cuentas de pacientes y médicos las
+            crea tu institución o el administrador del piloto.
+          </p>
+        )}
 
         {error && (
           <p className="text-sm text-red-600 bg-red-50 px-4 py-2 rounded-lg">
@@ -123,5 +137,13 @@ export default function LoginPage() {
         </p>
       </form>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

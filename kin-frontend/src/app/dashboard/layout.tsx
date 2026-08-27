@@ -1,7 +1,8 @@
 import Sidebar from "@/components/layout/Sidebar";
 import SessionGuard from "@/components/auth/SessionGuard";
+import RoleGuard from "@/components/auth/RoleGuard";
 import ToastProvider from "@/components/ui/ToastProvider";
-import OnboardingChecklist from "@/components/onboarding/OnboardingChecklist";
+import MaybeOnboarding from "@/components/layout/MaybeOnboarding";
 
 export default function DashboardLayout({
   children,
@@ -10,15 +11,17 @@ export default function DashboardLayout({
 }) {
   return (
     <SessionGuard>
-      <ToastProvider>
-        <div className="flex flex-col lg:flex-row min-h-screen">
-          <Sidebar />
-          <div className="flex-1 flex flex-col">
-            <OnboardingChecklist />
-            <main className="flex-1 flex flex-col">{children}</main>
+      <RoleGuard>
+        <ToastProvider>
+          <div className="flex flex-col lg:flex-row min-h-screen">
+            <Sidebar />
+            <div className="flex-1 flex flex-col">
+              <MaybeOnboarding />
+              <main className="flex-1 flex flex-col">{children}</main>
+            </div>
           </div>
-        </div>
-      </ToastProvider>
+        </ToastProvider>
+      </RoleGuard>
     </SessionGuard>
   );
 }
