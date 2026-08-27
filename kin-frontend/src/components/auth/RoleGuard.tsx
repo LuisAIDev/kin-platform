@@ -3,18 +3,32 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { authService } from "@/services/auth";
+import { api } from "@/services/api";
+import { storeSession } from "@/services/session";
 import { canAccessPath, homePathForRole, isAccountUnderReview } from "@/utils/roles";
 import AccountReviewScreen from "@/components/auth/AccountReviewScreen";
+
+interface MePayload {
+  role?: string;
+  email?: string;
+  fullName?: string;
+  emailVerified?: boolean;
+  verificationStatus?: string | null;
+}
 
 /**
  * Guard de rutas por rol/vertical (client-side).
  *
- * Complementa al middleware (`src/proxy.ts`) que aplica la misma lógica en el
- * servidor:
- * - Sin sesión → `/login`.
- * - Médico con la cuenta pendiente/rechazada → pantalla de espera "en revisión".
- * - Ruta fuera de la vertical → home del rol (p. ej. paciente no puede abrir
- *   `/dashboard/empresa/analytics`).
+ * El middleware (`src/proxy.ts`) es la autoridad de autenticación (cookie
+ * HttpOnly). Este guard aplica la segmentación por rol:
+ * - Médico pendiente/rechazado → pantalla de espera "en revisión".
+ * - Ruta fuera de la vertical → home del rol.
+ *
+ * Si el espejo local (`kin_user_v2`) se perdió pero la cookie existe, se
+ * **re-sincroniza** desde `/auth/me` en lugar de rebotar a `/login`; esto evita
+ * el bucle de redirección (middleware /login ⇄ guard) que hace parpadear la
+ * página de login. Solo se redirige a `/login` si el servidor confirma que no
+ * hay sesión.
  */
 export default function RoleGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -24,13 +38,43 @@ export default function RoleGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!user) {
-      router.replace("/login");
+
+    if (user) {
+      if (!canAccessPath(role, pathname)) {
+        router.replace(homePathForRole(role));
+      }
       return;
     }
-    if (!canAccessPath(role, pathname)) {
-      router.replace(homePathForRole(role));
-    }
+
+    // Sin espejo local: verificar contra el servidor antes de decidir.
+    let cancelled = false;
+    api
+      .get<MePayload>("/auth/me")
+      .then((me) => {
+        if (cancelled) return;
+        if (!me?.role) {
+          router.replace("/login");
+          return;
+        }
+        storeSession({
+          token: null,
+          email: me.email ?? "",
+          fullName: me.fullName ?? "",
+          role: me.role,
+          emailVerified: me.emailVerified ?? true,
+          verificationStatus: me.verificationStatus ?? null,
+        });
+        if (!canAccessPath(me.role, pathname)) {
+          router.replace(homePathForRole(me.role));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) router.replace("/login");
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [role, pathname, router, user]);
 
   if (typeof window !== "undefined" && user && isAccountUnderReview(user)) {

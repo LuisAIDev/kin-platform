@@ -1142,7 +1142,10 @@ usuario autenticado (leído de la sesión local, `authService.getUser()`):
 
 Un usuario empresarial no ve opciones de salud y viceversa. Sin usuario
 autenticado, el componente redirige a `/login` (el middleware `src/proxy.ts`
-ya protege `/dashboard`).
+ya protege `/dashboard`). Si el espejo local (`kin_user_v2`) se pierde pero la
+cookie `kin_token_v2` existe, `RoleGuard` **re-sincroniza la sesión desde
+`/auth/me`** en lugar de redirigir, evitando el bucle `/login ⇄ /dashboard`
+(parpadeo del login).
 
 ### Verticales y hubs del dashboard
 

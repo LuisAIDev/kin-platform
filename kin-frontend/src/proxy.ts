@@ -39,7 +39,10 @@ async function checkSession(token: string): Promise<MeInfo> {
     meCache.set(token, { ...result, expiresAt: now + ME_TTL_MS });
     return result;
   } catch {
-    const result = { ok: true, verified: true, role: null };
+    // Error de red al validar la sesión: NO asumir autenticado (evitar falsos
+    // positivos que redirigirían /login → /dashboard en bucle). Se trata como
+    // no-autenticado: el middleware dejará pasar a /login y/o forzará logout.
+    const result = { ok: false, verified: false, role: null };
     meCache.set(token, { ...result, expiresAt: now + ME_TTL_MS });
     return result;
   }

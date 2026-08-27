@@ -74,11 +74,18 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserDTO> me(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+    public ResponseEntity<UserDTO> me(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @CookieValue(value = TOKEN_COOKIE, required = false) String cookieToken) {
+        String token = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        } else if (cookieToken != null && !cookieToken.isBlank()) {
+            token = cookieToken;
+        }
+        if (token == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        var token = authHeader.substring(7);
         var user = authService.getCurrentUser(token);
         return ResponseEntity.ok(user);
     }

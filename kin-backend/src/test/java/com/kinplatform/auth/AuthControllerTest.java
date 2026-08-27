@@ -168,6 +168,22 @@ class AuthControllerTest {
     }
 
     @Test
+    void me_conCookieToken_deberiaResponder200() throws Exception {
+        when(authService.getCurrentUser("cookie-token"))
+                .thenReturn(UserDTO.builder()
+                        .id(UUID.randomUUID())
+                        .email("b@kin.com")
+                        .fullName("B")
+                        .role("PATIENT")
+                        .build());
+
+        mockMvc.perform(get("/auth/me").cookie(new jakarta.servlet.http.Cookie("kin_token_v2", "cookie-token")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("b@kin.com"))
+                .andExpect(jsonPath("$.role").value("PATIENT"));
+    }
+
+    @Test
     void login_deberiaEstablecerCookieHttpOnly() throws Exception {
         when(authService.login(any()))
                 .thenReturn(AuthResponse.builder()

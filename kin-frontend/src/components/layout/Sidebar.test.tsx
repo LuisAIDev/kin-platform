@@ -31,12 +31,6 @@ describe("Sidebar", () => {
     pathname = "/dashboard/projects";
   });
 
-  it("redirige a /login cuando no hay usuario autenticado", () => {
-    getUser.mockReturnValue(null);
-    render(<Sidebar />);
-    expect(push).toHaveBeenCalledWith("/login");
-  });
-
   it("usuario FREE ve solo opciones empresariales", () => {
     mockUser("FREE");
     render(<Sidebar />);

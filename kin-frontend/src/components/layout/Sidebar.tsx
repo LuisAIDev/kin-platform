@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authService } from "@/services/auth";
 import { homePathForRole } from "@/utils/roles";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface NavItem {
   label: string;
@@ -83,12 +83,6 @@ export default function Sidebar() {
   const router = useRouter();
   const user = typeof window !== "undefined" ? authService.getUser() : null;
   const role = user?.role;
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && !user) {
-      router.push("/login");
-    }
-  }, [user, router]);
 
   const allItems = getRoleItems(role);
   const homeHref = homePathForRole(role);
