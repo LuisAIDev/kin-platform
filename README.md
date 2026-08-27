@@ -814,6 +814,7 @@ Todos los endpoints se sirven bajo el prefijo global **`/api/v1`** (`server.serv
 | `POST` | `/admin/users/physicians/{userId}/reject` | ADMIN | Rechazar cédula de un médico |
 | `GET` | `/admin/health/email/diagnostic?to=...` | ADMIN | Diagnóstico SMTP (conexión + correo de prueba) |
 | `POST` | `/admin/users/{userId}/verify` | ADMIN | Marcar email como verificado manualmente |
+| `POST` | `/admin/security/rate-limit/reset?ip=...` | ADMIN | Desbloquear una IP del rate limiting |
 
 ---
 
@@ -1263,6 +1264,30 @@ Si un usuario se registra pero **no recibe el correo de verificación**:
 7. **Logs de envío:** cada intento registra `Correo de {tipo} ACEPTADO POR SMTP`
    (éxito) o `Fallo SMTP al enviar ...` (error con destinatario y asunto). El
    contenido completo del correo se loguea en DEBUG solo en perfiles `dev`/`test`.
+
+### Rate limiting (auth y salud)
+
+El filtro `RateLimitingFilter` limita por IP con ventanas deslizantes por
+prefijo de ruta (en memoria; un reinicio limpia el estado):
+
+| Prefijo | Límite |
+|---------|--------|
+| `/auth/login` | **10 / min** |
+| `/auth/resend-verification` | **5 / min** |
+| `/auth/` (resto) | 10 / min |
+| `/health/triage/` | 30 / min |
+| `/health/differential/` | 30 / min |
+| `/health/telemedicine/` | 60 / min |
+
+- **Whitelist de IPs**: `RATE_LIMIT_WHITELIST` (comma-separated) exime a IPs
+  concretas (administradores, entorno de pruebas). También `RATE_LIMIT_ENABLED`
+  (default true) y `RATE_LIMIT_TRUST_PROXY_HEADERS` (default false; activar solo
+  tras proxy de confianza para usar `X-Forwarded-For`).
+- **Desbloqueo (ADMIN)**: `POST /admin/security/rate-limit/reset?ip=<ip>`
+  limpia los buckets de esa IP (o la de la propia solicitud si se omite).
+- **UX**: el frontend muestra "Demasiados intentos de inicio de sesión. Espera
+  60 segundos..." cuando recibe un 429 (`code: RATE_LIMITED`); el backend añade
+  el header `Retry-After`.
 
 ---
 

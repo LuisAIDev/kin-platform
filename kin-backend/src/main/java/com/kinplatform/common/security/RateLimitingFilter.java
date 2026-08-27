@@ -5,11 +5,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -18,28 +17,20 @@ import org.springframework.web.filter.OncePerRequestFilter;
  *
  * <p>Aplica ventanas deslizantes configurables por prefijo de ruta en
  * endpoints críticos: autenticación, triaje, diagnóstico diferencial y
- * telemedicina. Cada prefijo mantiene buckets independientes por IP. Por
- * defecto deshabilitado en tests ({@code app.rate-limit.enabled=false});
- * los límites se configuran en {@code application.yml}.</p>
+ * telemedicina. Cada prefijo mantiene buckets independientes por IP y se usa
+ * el prefijo <b>más específico</b> (p. ej. {@code /auth/login} antes que
+ * {@code /auth/}). Config en {@code RateLimitProperties}
+ * ({@code app.rate-limit.*}).</p>
  *
- * <p>{@code trust-proxy-headers}: solo activar tras un proxy de confianza
- * (Render/Vercel); por defecto se usa la IP del peer directo (no falseable).</p>
+ * <p>Las IPs de {@code RATE_LIMIT_WHITELIST} quedan exentas. Los
+ * administradores pueden desbloquear una IP con
+ * {@code POST /admin/security/rate-limit/reset?ip=...}.</p>
  */
 @Component
+@RequiredArgsConstructor
 public class RateLimitingFilter extends OncePerRequestFilter {
 
-    /** Límites por defecto: auth 5/min, salud 30/min, telemedicina 60/min. */
-    private static final Map<String, RateLimitConfig> DEFAULT_LIMITS = Map.of(
-            "/auth/", new RateLimitConfig("/auth/", 5, Duration.ofMinutes(1)),
-            "/health/triage/", new RateLimitConfig("/health/triage/", 30, Duration.ofMinutes(1)),
-            "/health/differential/", new RateLimitConfig("/health/differential/", 30, Duration.ofMinutes(1)),
-            "/health/telemedicine/", new RateLimitConfig("/health/telemedicine/", 60, Duration.ofMinutes(1)));
-
-    @Value("${app.rate-limit.enabled:true}")
-    private boolean rateLimitEnabled = true;
-
-    @Value("${app.rate-limit.trust-proxy-headers:false}")
-    private boolean trustProxyHeaders;
+    private final RateLimitProperties properties;
 
     private final Map<String, RateLimitState> buckets = new ConcurrentHashMap<>();
 
@@ -47,34 +38,45 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        if (!properties.isEnabled()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String path = request.getRequestURI();
         String contextPath = request.getContextPath();
-        if (!rateLimitEnabled) {
-            filterChain.doFilter(request, response);
-            return;
-        }
         String p = path.startsWith(contextPath) ? path.substring(contextPath.length()) : path;
-        RateLimitConfig config = matchConfig(p);
+        Map.Entry<String, RateLimitProperties.Limit> match = matchLimit(p);
 
-        if (config == null) {
+        if (match == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String ip = getClientIP(request, trustProxyHeaders);
-        RateLimitState state = buckets.computeIfAbsent(ip + "|" + config.prefix(), k -> new RateLimitState());
+        String ip = getClientIP(request, properties.isTrustProxyHeaders());
+        if (isWhitelisted(ip)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        RateLimitProperties.Limit limit = match.getValue();
+        RateLimitState state = buckets.computeIfAbsent(ip + "|" + match.getKey(), k -> new RateLimitState());
 
         synchronized (state) {
             Instant now = Instant.now();
-            if (state.windowStart.plus(config.window()).isBefore(now)) {
+            if (state.windowStart.plus(limit.getWindow()).isBefore(now)) {
                 state.windowStart = now;
                 state.count = 0;
             }
             state.count++;
-            if (state.count > config.maxRequests()) {
+            if (state.count > limit.getMax()) {
                 response.setStatus(429);
                 response.setContentType("application/json");
-                response.getWriter().write("{\"error\":\"Demasiadas solicitudes. Intenta de nuevo.\"}");
+                response.setHeader(
+                        "Retry-After", String.valueOf(limit.getWindow().toSeconds()));
+                response.getWriter()
+                        .write("{\"error\":\"Demasiadas solicitudes. Espera un momento antes de "
+                                + "intentar de nuevo.\",\"code\":\"RATE_LIMITED\"}");
                 return;
             }
         }
@@ -82,19 +84,23 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private static RateLimitConfig matchConfig(String path) {
-        for (Map.Entry<String, RateLimitConfig> entry : DEFAULT_LIMITS.entrySet()) {
-            if (path.startsWith(entry.getKey())) {
-                return new RateLimitConfig(
-                        entry.getKey(),
-                        entry.getValue().maxRequests(),
-                        entry.getValue().window());
+    private Map.Entry<String, RateLimitProperties.Limit> matchLimit(String path) {
+        Map.Entry<String, RateLimitProperties.Limit> best = null;
+        for (Map.Entry<String, RateLimitProperties.Limit> entry :
+                properties.getLimits().entrySet()) {
+            if (path.startsWith(entry.getKey())
+                    && (best == null || entry.getKey().length() > best.getKey().length())) {
+                best = entry;
             }
         }
-        return null;
+        return best;
     }
 
-    private static String getClientIP(HttpServletRequest request, boolean trustProxyHeaders) {
+    private boolean isWhitelisted(String ip) {
+        return properties.getWhitelist() != null && properties.getWhitelist().contains(ip);
+    }
+
+    static String getClientIP(HttpServletRequest request, boolean trustProxyHeaders) {
         if (trustProxyHeaders) {
             String xff = request.getHeader("X-Forwarded-For");
             if (xff != null && !xff.isBlank()) {
@@ -104,8 +110,26 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         return request.getRemoteAddr();
     }
 
-    /** Configuración de límite y ventana para un prefijo de ruta. */
-    public record RateLimitConfig(String prefix, int maxRequests, Duration window) {}
+    /** IP del cliente, con la misma lógica del filtro (usada por el endpoint admin). */
+    public String resolveClientIp(HttpServletRequest request) {
+        return getClientIP(request, properties.isTrustProxyHeaders());
+    }
+
+    /**
+     * Elimina los buckets de rate limiting de una IP (todas las rutas). Útil
+     * para desbloquear a un usuario legítimo (endpoint ADMIN).
+     *
+     * @return número de buckets eliminados.
+     */
+    public int reset(String ip) {
+        if (ip == null || ip.isBlank()) {
+            return 0;
+        }
+        String prefix = ip + "|";
+        int before = buckets.size();
+        buckets.keySet().removeIf(k -> k.startsWith(prefix));
+        return before - buckets.size();
+    }
 
     private static class RateLimitState {
         Instant windowStart = Instant.now();

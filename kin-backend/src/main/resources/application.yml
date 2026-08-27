@@ -365,6 +365,27 @@ springdotenv:
   directory: ${SPRINGDOTENV_DIRECTORY:../}
 
 # -----------------------------------------------------------
+# Rate limiting (RateLimitingFilter)
+# -----------------------------------------------------------
+app:
+  rate-limit:
+    # Master switch del filtro.
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    # Solo activar tras un proxy de confianza (Render/Vercel): usa X-Forwarded-For.
+    trust-proxy-headers: ${RATE_LIMIT_TRUST_PROXY_HEADERS:false}
+    # IPs exentas del rate limiting (comma-separated): p. ej. IPs de administradores
+    # o del entorno de pruebas.
+    whitelist: ${RATE_LIMIT_WHITELIST:}
+    # Límites por prefijo (máximo y ventana). Si no se configura, se usan los
+    # valores por defecto del código: /auth/login 10/min, /auth/resend-verification
+    # 5/min, /auth/ 10/min, /health/triage/ 30/min, /health/differential/ 30/min,
+    # /health/telemedicine/ 60/min.
+    # limits:
+    #   /auth/login:
+    #     max: 10
+    #     window: 60s
+
+# -----------------------------------------------------------
 # Logging
 # -----------------------------------------------------------
 logging:

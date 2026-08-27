@@ -51,6 +51,10 @@ function LoginForm() {
           router.push(`/verify-email?email=${encodeURIComponent(email)}`);
           return;
         }
+        if (result.code === "RATE_LIMITED") {
+          setError("Demasiados intentos de inicio de sesión. Espera 60 segundos antes de intentar de nuevo.");
+          return;
+        }
         setError(result.error);
         return;
       }
