@@ -39,11 +39,23 @@ test.describe('Cambio de vertical (Empresa ↔ Salud) para un mismo usuario', ()
     // Sin vertical previa → Empresa (comportamiento seguro por defecto).
     await page.waitForURL(/\/dashboard\/empresa/);
 
-    // 2) El usuario tiene un proyecto EXISTENTE en Empresa.
-    const created = await page.request.post(`${API_URL}/projects`, {
-      data: { title: 'Proyecto Vertical E2E', description: 'Contexto Empresa', category: 'EMPRESARIAL' },
-    });
-    expect(created.ok()).toBeTruthy();
+    // 2) El usuario tiene un proyecto EXISTENTE en Empresa. Se crea desde el
+    // contexto autenticado del navegador (credentials: 'include') para
+    // reutilizar la cookie HttpOnly de la sesión, en lugar de page.request.
+    const created = await page.evaluate(async (apiUrl) => {
+      const res = await fetch(`${apiUrl}/projects`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: 'Proyecto Vertical E2E',
+          description: 'Contexto Empresa',
+          category: 'EMPRESARIAL',
+        }),
+      });
+      return { ok: res.ok, status: res.status };
+    }, API_URL);
+    expect(created.ok).toBeTruthy();
     await page.reload();
     await expect(page.getByText('Proyecto Vertical E2E')).toBeVisible();
 
