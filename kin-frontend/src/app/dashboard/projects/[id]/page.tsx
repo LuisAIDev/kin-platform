@@ -460,7 +460,7 @@ const lastUserMessageRef = useRef<string>("");
                     : "text-neutral-400"
                 }`}
               >
-                {input.length.toLocaleString()} / {MAX_CHAT_MESSAGE_LENGTH.toLocaleString()}
+                {input.length.toLocaleString()} / {MAX_CHAT_MESSAGE_LENGTH.toLocaleString("es-ES")}
               </span>
             </div>
           </div>
