@@ -49,7 +49,7 @@ jobs:
           cp -r kin-frontend/.next artifacts/next-build
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: KIN ${{ github.ref_name }}
           body: |
