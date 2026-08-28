@@ -119,6 +119,9 @@ jobs:
           export SPRING_DATASOURCE_URL=jdbc:postgresql://127.0.0.1:5432/kin_e2e
           export SPRING_DATASOURCE_USERNAME=kin_e2e
           export SPRING_DATASOURCE_PASSWORD=kin_e2e
+          # CORS E2E: el frontend de Playwright corre en :3100; sin este origen el
+          # navegador bloquea las llamadas a la API (Failed to fetch).
+          export APP_CORS_ALLOWED_ORIGINS=http://localhost:3100,http://127.0.0.1:3100
           nohup java -jar target/*.jar --spring.profiles.active=test --springdotenv.enabled=false > backend.log 2>&1 &
           # Espera hasta que el backend responda saludable. Si no responde tras
           # 60 intentos, imprime el log real de Spring Boot y falla el step.
