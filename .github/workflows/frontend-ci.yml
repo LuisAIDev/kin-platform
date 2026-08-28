@@ -115,14 +115,27 @@ jobs:
           # valor hardcodeado o de un repo secret). El test profile espera una
           # clave base64; cualquier valor aleatorio es valido para los E2E.
           export JWT_SECRET=$(openssl rand -base64 48)
-          export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/kin_e2e
+          export SPRING_DATASOURCE_URL=jdbc:postgresql://127.0.0.1:5432/kin_e2e
           export SPRING_DATASOURCE_USERNAME=kin_e2e
           export SPRING_DATASOURCE_PASSWORD=kin_e2e
           nohup java -jar target/*.jar --spring.profiles.active=test --springdotenv.enabled=false > backend.log 2>&1 &
+          # Espera hasta que el backend responda saludable. Si no responde tras
+          # 60 intentos, imprime el log real de Spring Boot y falla el step.
+          healthy=0
           for i in $(seq 1 60); do
-            if curl -sf http://localhost:8080/api/v1/actuator/health > /dev/null; then break; fi
+            if curl -sf http://127.0.0.1:8080/api/v1/actuator/health > /dev/null; then
+              healthy=1
+              break
+            fi
             sleep 2
           done
+          if [ "$healthy" -ne 1 ]; then
+            echo "::error::Backend E2E no respondio en /api/v1/actuator/health tras 60 intentos."
+            echo "----- backend.log -----"
+            cat backend.log 2>/dev/null || true
+            exit 1
+          fi
+          echo "Backend E2E healthy."
 
       - name: Setup Node LTS
         uses: actions/setup-node@v4
