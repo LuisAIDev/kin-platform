@@ -140,6 +140,7 @@ jobs:
       - name: Run Playwright tests
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
+          NODE_OPTIONS: "--dns-result-order=ipv4first"
           CI: "true"
         run: npx playwright test
 
