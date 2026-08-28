@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  // Solo dev: permite que el harness E2E acceda al dev server desde
+  // http://127.0.0.1:3100 (same-site con la API 127.0.0.1:8080). Sin efecto
+  // en el build de producción.
+  allowedDevOrigins: ["http://127.0.0.1:3100"],
 };
 
 export default nextConfig;
