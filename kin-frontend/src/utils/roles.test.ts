@@ -8,6 +8,7 @@ import {
   isAdminRole,
   isBusinessRole,
   isHealthRole,
+  resolveVertical,
   verticalForRole,
 } from "./roles";
 
@@ -38,6 +39,51 @@ describe("roles utils", () => {
       expect(homePathForRole("PATIENT")).toBe("/dashboard/salud");
       expect(homePathForRole("PHYSICIAN")).toBe("/dashboard/salud");
       expect(homePathForRole("ADMIN")).toBe("/dashboard/admin");
+    });
+  });
+
+  describe("resolveVertical (ROLE ≠ VERTICAL)", () => {
+    it("sin selección conserva el comportamiento previo (vertical del rol)", () => {
+      expect(resolveVertical("FREE")).toBe("empresa");
+      expect(resolveVertical("PATIENT")).toBe("salud");
+      expect(resolveVertical("PHYSICIAN")).toBe("salud");
+      expect(resolveVertical("ADMIN")).toBe("admin");
+      expect(resolveVertical("FREE", null)).toBe("empresa");
+      expect(resolveVertical("FREE", undefined)).toBe("empresa");
+    });
+
+    it("roles empresariales respetan la selección de vertical", () => {
+      expect(resolveVertical("FREE", "salud")).toBe("salud");
+      expect(resolveVertical("PREMIUM", "salud")).toBe("salud");
+      expect(resolveVertical("FACILITADOR", "salud")).toBe("salud");
+      expect(resolveVertical("FREE", "empresa")).toBe("empresa");
+    });
+
+    it("ADMIN ignora la selección (mantiene su hub)", () => {
+      expect(resolveVertical("ADMIN", "salud")).toBe("admin");
+      expect(resolveVertical("ADMIN", "empresa")).toBe("admin");
+    });
+
+    it("roles de salud ignoran la selección", () => {
+      expect(resolveVertical("PATIENT", "empresa")).toBe("salud");
+      expect(resolveVertical("PHYSICIAN", "empresa")).toBe("salud");
+    });
+
+    it("valores inválidos no se aceptan", () => {
+      expect(resolveVertical("FREE", "admin" as never)).toBe("empresa");
+    });
+  });
+
+  describe("homePathForRole con vertical seleccionada", () => {
+    it("FREE + salud → /dashboard/salud; FREE + empresa → /dashboard/empresa", () => {
+      expect(homePathForRole("FREE", "salud")).toBe("/dashboard/salud");
+      expect(homePathForRole("FREE", "empresa")).toBe("/dashboard/empresa");
+      expect(homePathForRole("PREMIUM", "salud")).toBe("/dashboard/salud");
+    });
+
+    it("sin selección conserva el home del rol", () => {
+      expect(homePathForRole("FREE")).toBe("/dashboard/empresa");
+      expect(homePathForRole("PATIENT")).toBe("/dashboard/salud");
     });
   });
 
@@ -107,6 +153,46 @@ describe("roles utils", () => {
     it("la raíz /dashboard se permite (el hub decide el redirect)", () => {
       expect(canAccessPath("FREE", "/dashboard")).toBe(true);
       expect(canAccessPath("PATIENT", "/dashboard")).toBe(true);
+    });
+  });
+
+  describe("canAccessPath con vertical seleccionada (empresario en Salud)", () => {
+    it("FREE + salud accede al hub y a la subárea de paciente", () => {
+      expect(canAccessPath("FREE", "/dashboard/salud", "salud")).toBe(true);
+      expect(canAccessPath("FREE", "/dashboard/patient/health", "salud")).toBe(true);
+      expect(canAccessPath("FREE", "/dashboard/patient/triage", "salud")).toBe(true);
+      expect(canAccessPath("FREE", "/dashboard/patient/messages", "salud")).toBe(true);
+      expect(canAccessPath("FREE", "/dashboard/patient/appointments", "salud")).toBe(true);
+      expect(canAccessPath("FREE", "/dashboard/settings", "salud")).toBe(true);
+    });
+
+    it("PREMIUM/FACILITADOR + salud acceden a la subárea de paciente", () => {
+      expect(canAccessPath("PREMIUM", "/dashboard/salud", "salud")).toBe(true);
+      expect(canAccessPath("FACILITADOR", "/dashboard/patient/health", "salud")).toBe(true);
+    });
+
+    it("FREE + salud NO accede a rutas physician ni admin (sin elevación)", () => {
+      expect(canAccessPath("FREE", "/dashboard/physician", "salud")).toBe(false);
+      expect(canAccessPath("FREE", "/dashboard/physician/messages", "salud")).toBe(false);
+      expect(canAccessPath("FREE", "/dashboard/admin", "salud")).toBe(false);
+      expect(canAccessPath("FREE", "/dashboard/admin/pricing", "salud")).toBe(false);
+    });
+
+    it("FREE + salud NO accede a rutas empresariales (contexto aislado)", () => {
+      expect(canAccessPath("FREE", "/dashboard/empresa", "salud")).toBe(false);
+      expect(canAccessPath("FREE", "/dashboard/projects", "salud")).toBe(false);
+      expect(canAccessPath("FREE", "/dashboard/analytics", "salud")).toBe(false);
+    });
+
+    it("PHYSICIAN conserva sus restricciones (no accede a subárea de paciente)", () => {
+      expect(canAccessPath("PHYSICIAN", "/dashboard/physician", "salud")).toBe(true);
+      expect(canAccessPath("PHYSICIAN", "/dashboard/patient/health", "salud")).toBe(false);
+      expect(canAccessPath("PHYSICIAN", "/dashboard/projects", "salud")).toBe(false);
+    });
+
+    it("sin selección, un empresario sigue sin acceder a Salud", () => {
+      expect(canAccessPath("FREE", "/dashboard/salud")).toBe(false);
+      expect(canAccessPath("FREE", "/dashboard/patient/health")).toBe(false);
     });
   });
 

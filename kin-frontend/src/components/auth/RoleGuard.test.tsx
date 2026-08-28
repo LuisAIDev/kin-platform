@@ -1,10 +1,14 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { SelectedVertical } from "@/services/session";
 import RoleGuard from "@/components/auth/RoleGuard";
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 const { fetchCurrentUser } = vi.hoisted(() => ({ fetchCurrentUser: vi.fn() }));
+const { getSelectedVertical } = vi.hoisted(() => ({
+  getSelectedVertical: vi.fn<() => SelectedVertical | null>(() => null),
+}));
 
 let pathname = "/dashboard/empresa";
 
@@ -13,10 +17,10 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: push }),
 }));
 vi.mock("@/services/auth", () => ({ authService: { getUser, fetchCurrentUser } }));
-vi.mock("@/services/session", () => ({
-  storeSession: (user: unknown) =>
-    localStorage.setItem("kin_user_v2", JSON.stringify(user)),
-}));
+vi.mock("@/services/session", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/services/session")>();
+  return { ...actual, getSelectedVertical };
+});
 vi.mock("@/components/auth/AccountReviewScreen", () => ({
   default: () => <div data-testid="review">Cuenta en revisión</div>,
 }));
@@ -26,6 +30,8 @@ describe("RoleGuard", () => {
     getUser.mockReset();
     fetchCurrentUser.mockReset();
     push.mockReset();
+    getSelectedVertical.mockReset();
+    getSelectedVertical.mockReturnValue(null);
     pathname = "/dashboard/empresa";
     localStorage.clear();
     // getUser lee del espejo local (como el real).
@@ -85,5 +91,47 @@ describe("RoleGuard", () => {
     render(<RoleGuard>contenido</RoleGuard>);
 
     expect(screen.getByTestId("review")).toBeInTheDocument();
+  });
+
+  it("empresario con vertical seleccionada salud permanece en /dashboard/salud (sin redirect)", () => {
+    localStorage.setItem("kin_user_v2", JSON.stringify({ role: "FREE", email: "a@b.c" }));
+    getSelectedVertical.mockReturnValue("salud");
+    pathname = "/dashboard/salud";
+
+    render(<RoleGuard>contenido</RoleGuard>);
+
+    expect(screen.getByText("contenido")).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("empresario con vertical salud puede acceder a la subárea de paciente", () => {
+    localStorage.setItem("kin_user_v2", JSON.stringify({ role: "FREE", email: "a@b.c" }));
+    getSelectedVertical.mockReturnValue("salud");
+    pathname = "/dashboard/patient/health";
+
+    render(<RoleGuard>contenido</RoleGuard>);
+
+    expect(screen.getByText("contenido")).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("empresario SIN vertical seleccionada en subárea de paciente redirige a Empresa", () => {
+    localStorage.setItem("kin_user_v2", JSON.stringify({ role: "FREE", email: "a@b.c" }));
+    getSelectedVertical.mockReturnValue(null);
+    pathname = "/dashboard/patient/health";
+
+    render(<RoleGuard>contenido</RoleGuard>);
+
+    expect(push).toHaveBeenCalledWith("/dashboard/empresa");
+  });
+
+  it("empresario con vertical salud NO accede al portal médico (sin elevación)", () => {
+    localStorage.setItem("kin_user_v2", JSON.stringify({ role: "FREE", email: "a@b.c" }));
+    getSelectedVertical.mockReturnValue("salud");
+    pathname = "/dashboard/physician";
+
+    render(<RoleGuard>contenido</RoleGuard>);
+
+    expect(push).toHaveBeenCalledWith("/dashboard/salud");
   });
 });

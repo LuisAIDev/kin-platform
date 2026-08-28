@@ -9,6 +9,11 @@
  * PATIENT, PHYSICIAN (salud) y ADMIN.
  */
 
+import {
+  isSelectedVertical,
+  type SelectedVertical,
+} from "@/services/session";
+
 export type UserRole =
   | "FREE"
   | "PREMIUM"
@@ -22,7 +27,7 @@ export type Vertical = "empresa" | "salud" | "admin";
 
 const HEALTH_ROLES: string[] = ["PATIENT", "PHYSICIAN"];
 
-/** Vertical a la que pertenece un rol. Sin rol (o legacy "USER") → empresa. */
+/** Vertical por defecto según el rol (cuando no hay selección explícita). */
 export function verticalForRole(role?: string | null): Vertical {
   if (!role) return "empresa";
   if (role === "ADMIN") return "admin";
@@ -30,9 +35,32 @@ export function verticalForRole(role?: string | null): Vertical {
   return "empresa";
 }
 
-/** Página de inicio del usuario según su rol/vertical. */
-export function homePathForRole(role?: string | null): string {
-  const vertical = verticalForRole(role);
+/**
+ * Resuelve la vertical de NAVEGACIÓN a partir del rol y la vertical
+ * seleccionada por el usuario.
+ *
+ * ROLE ≠ VERTICAL: el rol determina autorización; la selección determina el
+ * módulo/hub en el que trabaja el usuario.
+ * - ADMIN → admin (ignora selección; mantiene su hub).
+ * - Roles de salud (PATIENT/PHYSICIAN) → salud (ignoran selección).
+ * - Roles empresariales → respetan la selección explícita (empresa/salud);
+ *   sin selección conservan el comportamiento previo (empresa).
+ */
+export function resolveVertical(
+  role?: string | null,
+  selected?: SelectedVertical | null,
+): Vertical {
+  const base = verticalForRole(role);
+  if (base === "admin" || base === "salud") return base;
+  return isSelectedVertical(selected) ? selected : "empresa";
+}
+
+/** Página de inicio según rol y vertical de navegación seleccionada. */
+export function homePathForRole(
+  role?: string | null,
+  selected?: SelectedVertical | null,
+): string {
+  const vertical = resolveVertical(role, selected);
   if (vertical === "admin") return "/dashboard/admin";
   if (vertical === "salud") return "/dashboard/salud";
   return "/dashboard/empresa";
@@ -91,8 +119,12 @@ export function isAccountUnderReview(user?: RoleContext | null): boolean {
  * - Segmentos empresariales (projects, analytics, insights, recommendations,
  *   reports, pricing, subscription) solo para la vertical empresa.
  */
-export function canAccessPath(role: string | null | undefined, pathname: string): boolean {
-  const vertical = verticalForRole(role);
+export function canAccessPath(
+  role: string | null | undefined,
+  pathname: string,
+  selected?: SelectedVertical | null,
+): boolean {
+  const vertical = resolveVertical(role, selected);
   if (vertical === "admin") return true;
 
   const rest = pathname.replace(/^\/dashboard\/?/, "");
@@ -102,7 +134,10 @@ export function canAccessPath(role: string | null | undefined, pathname: string)
   if (segment === "settings") return true;
   if (segment === "empresa") return vertical === "empresa";
   if (segment === "salud") return vertical === "salud";
-  if (segment === "patient") return vertical === "salud" && role === "PATIENT";
+  // Subárea de paciente: permitida en la vertical Salud a todo rol que no sea
+  // PHYSICIAN (el backend ya la autoriza para roles empresariales).
+  if (segment === "patient") return vertical === "salud" && role !== "PHYSICIAN";
+  // Portal médico: exclusivo del rol PHYSICIAN (o ADMIN, ya resuelto arriba).
   if (segment === "physician") return vertical === "salud" && role === "PHYSICIAN";
   if (segment === "admin") return false;
 

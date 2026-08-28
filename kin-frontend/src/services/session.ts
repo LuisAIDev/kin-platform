@@ -4,6 +4,43 @@ let _forceLogoutInProgress = false;
 
 const COOKIE_OPTIONS = "path=/; max-age=86400; SameSite=Lax";
 
+/**
+ * Vertical de navegación seleccionada por el usuario (contexto, no identidad).
+ * Solo se permiten "empresa" y "salud". El rol (JWT) sigue siendo la autoridad
+ * de autorización; esta selección SOLO determina el módulo/hub actual.
+ */
+export const SELECTED_VERTICALS = ["empresa", "salud"] as const;
+export type SelectedVertical = (typeof SELECTED_VERTICALS)[number];
+
+const VERTICAL_KEY = "kin_vertical";
+
+/** Valida que un valor sea una vertical seleccionable (función pura). */
+export function isSelectedVertical(value: unknown): value is SelectedVertical {
+  return value === "empresa" || value === "salud";
+}
+
+/** Vertical de navegación seleccionada, o null si no hay selección previa. */
+export function getSelectedVertical(): SelectedVertical | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(VERTICAL_KEY);
+  return isSelectedVertical(raw) ? raw : null;
+}
+
+/** Persiste la vertical seleccionada (localStorage + cookie para el middleware). */
+export function setSelectedVertical(vertical: SelectedVertical): void {
+  if (!isSelectedVertical(vertical)) return;
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(VERTICAL_KEY, vertical);
+  document.cookie = `${VERTICAL_KEY}=${vertical}; ${COOKIE_OPTIONS}`;
+}
+
+/** Limpia la selección de vertical (localStorage + cookie). */
+export function clearSelectedVertical(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(VERTICAL_KEY);
+  document.cookie = `${VERTICAL_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
+}
+
 function clearAllCookies() {
   const cookies = document.cookie.split("; ");
   for (const cookie of cookies) {
@@ -29,6 +66,7 @@ export function clearSession() {
   localStorage.clear();
   sessionStorage.clear();
   clearAllCookies();
+  clearSelectedVertical();
 }
 
 export function getToken(): string | null {

@@ -4,7 +4,13 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authService } from "@/services/auth";
-import { checkForceLogout, setPendingEmail, storeSession } from "@/services/session";
+import {
+  checkForceLogout,
+  getSelectedVertical,
+  setPendingEmail,
+  setSelectedVertical,
+  storeSession,
+} from "@/services/session";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { homePathForRole } from "@/utils/roles";
 
@@ -24,6 +30,10 @@ function LoginForm() {
       sessionStorage.clear();
     }
 
+    // El parámetro ?vertical=salud es parte del flujo de selección de vertical:
+    // solo fija el contexto de navegación, nunca otorga permisos.
+    if (verticalSalud) setSelectedVertical("salud");
+
     // Con cookie HttpOnly, verificamos la sesión con un fetch raw (un 401 aquí
     // es esperado si no hay sesión: NO debe disparar forceLogout ni recargar).
     authService
@@ -31,11 +41,11 @@ function LoginForm() {
       .then((me) => {
         if (me) {
           storeSession(me);
-          router.push(homePathForRole(me.role));
+          router.push(homePathForRole(me.role, getSelectedVertical()));
         }
       })
       .finally(() => setChecking(false));
-  }, [router]);
+  }, [router, verticalSalud]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +75,10 @@ function LoginForm() {
         }
         return;
       }
-      router.push(homePathForRole(result.data?.role));
+      // La vertical seleccionada (o el parámetro ?vertical=salud) determina el
+      // hub de destino; el rol solo autoriza, no decide el módulo.
+      if (verticalSalud) setSelectedVertical("salud");
+      router.push(homePathForRole(result.data?.role, getSelectedVertical()));
     } catch (err) {
       // Defensivo: authService.login nunca lanza (devuelve {error}), pero si
       // algo inesperado ocurre, mostrarlo en vez de dejar el botón "mudo".

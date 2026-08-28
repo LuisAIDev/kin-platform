@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authService } from "@/services/auth";
-import { homePathForRole } from "@/utils/roles";
+import { getSelectedVertical, setSelectedVertical, type SelectedVertical } from "@/services/session";
+import { homePathForRole, isBusinessRole, resolveVertical } from "@/utils/roles";
 import { useState } from "react";
 
 interface NavItem {
@@ -65,17 +66,19 @@ const ADMIN_ITEMS: NavItem[] = [
   { label: "Sobre KIN", href: "/sobre-kin" },
 ];
 
-function getRoleItems(role: string | undefined): NavItem[] {
-  switch (role) {
-    case "ADMIN":
-      return ADMIN_ITEMS;
-    case "PATIENT":
-      return PATIENT_ITEMS;
-    case "PHYSICIAN":
-      return PHYSICIAN_ITEMS;
-    default:
-      return BUSINESS_ITEMS;
-  }
+/**
+ * Menú según rol + vertical de navegación seleccionada.
+ * - ADMIN → menú completo.
+ * - PHYSICIAN → portal médico (siempre en Salud).
+ * - Vertical Salud → menú de paciente (para PATIENT y para roles empresariales
+ *   que seleccionaron Salud; el backend ya autoriza esos endpoints).
+ * - Vertical Empresa → menú empresarial.
+ */
+function getRoleItems(role: string | undefined, vertical: string): NavItem[] {
+  if (role === "ADMIN") return ADMIN_ITEMS;
+  if (role === "PHYSICIAN") return PHYSICIAN_ITEMS;
+  if (vertical === "salud") return PATIENT_ITEMS;
+  return BUSINESS_ITEMS;
 }
 
 export default function Sidebar() {
@@ -83,16 +86,55 @@ export default function Sidebar() {
   const router = useRouter();
   const user = typeof window !== "undefined" ? authService.getUser() : null;
   const role = user?.role;
+  const selected = typeof window !== "undefined" ? getSelectedVertical() : null;
+  const vertical = resolveVertical(role, selected);
+  const showVerticalSelector = isBusinessRole(role);
 
-  const allItems = getRoleItems(role);
-  const homeHref = homePathForRole(role);
+  const allItems = getRoleItems(role, vertical);
+  const homeHref = homePathForRole(role, selected);
 
   const handleLogout = async () => {
     await authService.logout();
     router.push("/login");
   };
 
+  const switchVertical = (next: SelectedVertical) => {
+    setSelectedVertical(next);
+    router.push(homePathForRole(role, next));
+  };
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const verticalSelector = (
+    <div className="flex rounded-lg border border-neutral-200 bg-neutral-50 p-0.5 gap-0.5">
+      <button
+        type="button"
+        onClick={() => switchVertical("empresa")}
+        aria-pressed={vertical === "empresa"}
+        aria-label="Vertical Empresa"
+        className={`flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition ${
+          vertical === "empresa"
+            ? "bg-primary-600 text-white shadow-sm"
+            : "text-neutral-600 hover:bg-white"
+        }`}
+      >
+        Empresa
+      </button>
+      <button
+        type="button"
+        onClick={() => switchVertical("salud")}
+        aria-pressed={vertical === "salud"}
+        aria-label="Vertical Salud"
+        className={`flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition ${
+          vertical === "salud"
+            ? "bg-emerald-600 text-white shadow-sm"
+            : "text-neutral-600 hover:bg-white"
+        }`}
+      >
+        Salud
+      </button>
+    </div>
+  );
 
   const isActive = (href: string) => {
     if (href === "/dashboard/projects/new") {
@@ -151,6 +193,13 @@ export default function Sidebar() {
             KIN
           </Link>
         </div>
+
+        {showVerticalSelector && (
+          <div className="px-3 pb-3">
+            {verticalSelector}
+            <p className="mt-1.5 text-[10px] text-neutral-400">Contexto de navegación</p>
+          </div>
+        )}
 
         <nav className="flex-1 px-3 space-y-1">
           {allItems.map((item) => {
@@ -214,6 +263,9 @@ export default function Sidebar() {
 
       {mobileMenuOpen && (
         <div className="lg:hidden border-b border-neutral-200 bg-white px-4 py-3 space-y-1">
+          {showVerticalSelector && (
+            <div className="pb-2">{verticalSelector}</div>
+          )}
           {allItems.map((item) => {
             const active = isActive(item.href);
             return (

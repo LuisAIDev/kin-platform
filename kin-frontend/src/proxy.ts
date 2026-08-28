@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { canAccessPath, homePathForRole } from "./utils/roles";
+import { isSelectedVertical } from "./services/session";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
 const ME_TTL_MS = 30_000;
@@ -55,6 +56,10 @@ function buildLoginRedirect(request: NextRequest) {
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("kin_token_v2")?.value;
+  // Vertical de navegación seleccionada (contexto, no identidad). La escribe el
+  // cliente en localStorage + cookie (SameSite=Lax) del ORIGEN del frontend.
+  const verticalCookie = request.cookies.get("kin_vertical")?.value;
+  const selected = isSelectedVertical(verticalCookie) ? verticalCookie : null;
 
   if (pathname.startsWith("/dashboard")) {
     // La cookie HttpOnly (kin_token_v2) la establece el BACKEND en su propio
@@ -87,17 +92,21 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/verify-email", request.url));
     }
 
-    // Segmentación por vertical: bloquea acceso a rutas de otra vertical y
-    // redirige la raíz `/dashboard` al home del rol.
-    if (pathname === "/dashboard" || !canAccessPath(role, pathname)) {
-      return NextResponse.redirect(new URL(homePathForRole(role), request.url));
+    // Segmentación por vertical de NAVEGACIÓN (rol + selección): bloquea rutas
+    // de otra vertical y redirige la raíz `/dashboard` al hub correspondiente.
+    if (pathname === "/dashboard" || !canAccessPath(role, pathname, selected)) {
+      return NextResponse.redirect(
+        new URL(homePathForRole(role, selected), request.url),
+      );
     }
   }
 
   if (pathname === "/login" && token) {
     const { ok, role } = await checkSession(token);
     if (ok) {
-      return NextResponse.redirect(new URL(homePathForRole(role), request.url));
+      return NextResponse.redirect(
+        new URL(homePathForRole(role, selected), request.url),
+      );
     }
   }
 

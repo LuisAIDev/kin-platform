@@ -1,11 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { SelectedVertical } from "@/services/session";
 import Sidebar from "@/components/layout/Sidebar";
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 const { getUser } = vi.hoisted(() => ({ getUser: vi.fn() }));
 const { logout } = vi.hoisted(() => ({ logout: vi.fn() }));
+const { getSelectedVertical, setSelectedVertical } = vi.hoisted(() => ({
+  getSelectedVertical: vi.fn<() => SelectedVertical | null>(() => null),
+  setSelectedVertical: vi.fn<(v: SelectedVertical) => void>(),
+}));
 
 let pathname = "/dashboard/projects";
 vi.mock("next/navigation", () => ({
@@ -18,6 +23,10 @@ vi.mock("next/link", () => ({
   ),
 }));
 vi.mock("@/services/auth", () => ({ authService: { getUser, logout } }));
+vi.mock("@/services/session", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/services/session")>();
+  return { ...actual, getSelectedVertical, setSelectedVertical };
+});
 
 function mockUser(role: string) {
   getUser.mockReturnValue({ token: "t", email: "a@b.c", fullName: "Ana", role });
@@ -28,6 +37,9 @@ describe("Sidebar", () => {
     getUser.mockReset();
     logout.mockReset();
     push.mockReset();
+    getSelectedVertical.mockReset();
+    getSelectedVertical.mockReturnValue(null);
+    setSelectedVertical.mockReset();
     pathname = "/dashboard/projects";
   });
 
@@ -144,5 +156,69 @@ describe("Sidebar", () => {
 
     await user.click(screen.getByRole("button", { name: "Cerrar menú" }));
     expect(screen.queryByRole("button", { name: "Cerrar menú" })).toBeNull();
+  });
+
+  describe("selector de vertical (contexto de navegación)", () => {
+    it("empresario con vertical salud ve menú de Salud, no proyectos", () => {
+      mockUser("FREE");
+      getSelectedVertical.mockReturnValue("salud");
+      render(<Sidebar />);
+
+      expect(screen.getAllByText("Mi Salud").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Triaje Digital").length).toBeGreaterThan(0);
+      expect(screen.queryByText("Mis Proyectos")).toBeNull();
+      expect(screen.queryByText("Analytics")).toBeNull();
+      expect(screen.queryByText("Portal Médico")).toBeNull();
+    });
+
+    it("el selector refleja la vertical seleccionada (Salud activo)", () => {
+      mockUser("FREE");
+      getSelectedVertical.mockReturnValue("salud");
+      render(<Sidebar />);
+
+      const saludBtn = screen.getByRole("button", { name: "Vertical Salud" });
+      const empresaBtn = screen.getByRole("button", { name: "Vertical Empresa" });
+      expect(saludBtn).toHaveAttribute("aria-pressed", "true");
+      expect(empresaBtn).toHaveAttribute("aria-pressed", "false");
+    });
+
+    it("cambiar a Salud guarda la selección y navega a /dashboard/salud", async () => {
+      const user = userEvent.setup();
+      mockUser("FREE");
+      render(<Sidebar />);
+
+      await user.click(screen.getByRole("button", { name: "Vertical Salud" }));
+
+      expect(setSelectedVertical).toHaveBeenCalledWith("salud");
+      expect(push).toHaveBeenCalledWith("/dashboard/salud");
+    });
+
+    it("cambiar a Empresa guarda la selección y navega a /dashboard/empresa", async () => {
+      const user = userEvent.setup();
+      mockUser("FREE");
+      getSelectedVertical.mockReturnValue("salud");
+      render(<Sidebar />);
+
+      await user.click(screen.getByRole("button", { name: "Vertical Empresa" }));
+
+      expect(setSelectedVertical).toHaveBeenCalledWith("empresa");
+      expect(push).toHaveBeenCalledWith("/dashboard/empresa");
+    });
+
+    it("no muestra el selector a PATIENT, PHYSICIAN ni ADMIN", () => {
+      mockUser("PATIENT");
+      const { unmount: unmountPatient } = render(<Sidebar />);
+      expect(screen.queryByRole("button", { name: "Vertical Salud" })).toBeNull();
+      unmountPatient();
+
+      mockUser("PHYSICIAN");
+      const { unmount: unmountPhysician } = render(<Sidebar />);
+      expect(screen.queryByRole("button", { name: "Vertical Salud" })).toBeNull();
+      unmountPhysician();
+
+      mockUser("ADMIN");
+      render(<Sidebar />);
+      expect(screen.queryByRole("button", { name: "Vertical Salud" })).toBeNull();
+    });
   });
 });

@@ -1,5 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { checkForceLogout, clearSession, forceLogout, storeSession } from "@/services/session";
+import {
+  checkForceLogout,
+  clearSelectedVertical,
+  clearSession,
+  forceLogout,
+  getSelectedVertical,
+  isSelectedVertical,
+  setSelectedVertical,
+  storeSession,
+} from "@/services/session";
 
 describe("session", () => {
   beforeEach(() => {
@@ -61,5 +70,49 @@ describe("session", () => {
     const hrefAfterFirst = location.href;
     await forceLogout();
     expect(location.href).toBe(hrefAfterFirst);
+  });
+
+  describe("vertical de navegación (kin_vertical)", () => {
+    it("isSelectedVertical solo acepta 'empresa' y 'salud'", () => {
+      expect(isSelectedVertical("empresa")).toBe(true);
+      expect(isSelectedVertical("salud")).toBe(true);
+      expect(isSelectedVertical("admin")).toBe(false);
+      expect(isSelectedVertical("")).toBe(false);
+      expect(isSelectedVertical(null)).toBe(false);
+      expect(isSelectedVertical(undefined)).toBe(false);
+      expect(isSelectedVertical("EMPRESA")).toBe(false);
+    });
+
+    it("setSelectedVertical guarda empresa y la recupera", () => {
+      setSelectedVertical("empresa");
+      expect(getSelectedVertical()).toBe("empresa");
+    });
+
+    it("setSelectedVertical guarda salud y la recupera", () => {
+      setSelectedVertical("salud");
+      expect(getSelectedVertical()).toBe("salud");
+    });
+
+    it("sin selección previa devuelve null", () => {
+      expect(getSelectedVertical()).toBeNull();
+    });
+
+    it("rechaza valores inválidos (no guarda)", () => {
+      setSelectedVertical("admin" as never);
+      expect(getSelectedVertical()).toBeNull();
+      expect(localStorage.getItem("kin_vertical")).toBeNull();
+    });
+
+    it("clearSelectedVertical limpia la selección", () => {
+      setSelectedVertical("salud");
+      clearSelectedVertical();
+      expect(getSelectedVertical()).toBeNull();
+    });
+
+    it("clearSession limpia también la vertical", () => {
+      setSelectedVertical("salud");
+      clearSession();
+      expect(getSelectedVertical()).toBeNull();
+    });
   });
 });
