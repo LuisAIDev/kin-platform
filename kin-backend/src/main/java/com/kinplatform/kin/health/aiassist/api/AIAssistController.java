@@ -69,13 +69,19 @@ public class AIAssistController {
     public ResponseEntity<List<AIAssistRequest>> history(
             Authentication authentication, @PathVariable UUID patientId) {
         User user = AuthenticatedUsers.require(userRepository, authentication);
-        return ResponseEntity.ok(assistService.getHistory(patientId));
+        return ResponseEntity.ok(assistService.getHistory(user.getId(), patientId));
+    }
+
+    @GetMapping("/my/history")
+    public ResponseEntity<List<AIAssistRequest>> myHistory(Authentication authentication) {
+        User user = AuthenticatedUsers.require(userRepository, authentication);
+        return ResponseEntity.ok(assistService.getMyHistory(user.getId()));
     }
 
     @DeleteMapping("/requests/{id}")
     public ResponseEntity<Void> deleteRequest(
             Authentication authentication, @PathVariable UUID id) {
-        assistService.getHistory(AuthenticatedUsers.require(userRepository, authentication).getId());
+        AuthenticatedUsers.require(userRepository, authentication);
         return ResponseEntity.noContent().build();
     }
 

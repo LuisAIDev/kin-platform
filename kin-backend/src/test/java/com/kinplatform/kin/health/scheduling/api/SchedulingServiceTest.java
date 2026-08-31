@@ -90,9 +90,10 @@ class SchedulingServiceTest {
         service().setAvailability(PHYSICIAN, DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(11, 0), 30, true);
     }
 
+    private static final LocalDate TEST_MONDAY = LocalDate.of(2030, 1, 7); // lunes futuro determinista
+
     private OffsetDateTime slot(int minute) {
-        LocalDate nextMonday = LocalDate.now().plusDays((8 - LocalDate.now().getDayOfWeek().getValue()) % 7);
-        return nextMonday.atTime(9, minute).atZone(java.time.ZoneId.systemDefault()).toOffsetDateTime();
+        return TEST_MONDAY.atTime(9, minute).atZone(java.time.ZoneId.systemDefault()).toOffsetDateTime();
     }
 
     // ---------- Disponibilidad ----------
@@ -310,8 +311,6 @@ class SchedulingServiceTest {
     }
 
     private static LocalDate nextMonday() {
-        int today = LocalDate.now().getDayOfWeek().getValue(); // MONDAY=1
-        int daysUntilMonday = (8 - today) % 7;
-        return LocalDate.now().plusDays(daysUntilMonday);
+        return TEST_MONDAY;
     }
 }

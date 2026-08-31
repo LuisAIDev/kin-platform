@@ -159,8 +159,16 @@ public class AIAssistService {
     }
 
     @Transactional(readOnly = true)
-    public List<AIAssistRequest> getHistory(UUID patientId) {
+    public List<AIAssistRequest> getHistory(UUID physicianId, UUID patientId) {
+        requireEnabled();
+        accessValidator.requireActiveRelationship(physicianId, patientId);
         return assistRepository.findByPatientId(patientId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AIAssistRequest> getMyHistory(UUID userId) {
+        requireEnabled();
+        return assistRepository.findByUserId(userId);
     }
 
     @Transactional(readOnly = true)
