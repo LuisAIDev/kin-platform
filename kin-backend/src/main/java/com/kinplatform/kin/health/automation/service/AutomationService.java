@@ -38,9 +38,10 @@ public class AutomationService {
 
     // --- Gestión de reglas ---
 
-    public AutomationRule createRule(UUID physicianId, String name, String description,
+    public AutomationRule createRule(User actor, String name, String description,
                                      TriggerEvent triggerEvent, String conditions,
                                      ActionType action, String actionParams) {
+        var physicianId = actor.getId();
         var user = userRepository.findById(physicianId)
                 .orElseThrow(() -> new IllegalArgumentException("Médico no encontrado: " + physicianId));
 
@@ -64,14 +65,14 @@ public class AutomationService {
         return saved;
     }
 
-    public AutomationRule updateRule(UUID ruleId, String name, String description,
+    public AutomationRule updateRule(User actor, UUID ruleId, String name, String description,
                                      TriggerEvent triggerEvent, String conditions,
                                      ActionType action, String actionParams, boolean enabled) {
         var rule = ruleRepository.findById(ruleId)
                 .orElseThrow(() -> new IllegalArgumentException("Regla no encontrada: " + ruleId));
 
         // Validar que el médico solo puede editar sus propias reglas
-        if (!rule.createdBy().equals(ruleId) && !isAdmin()) {
+        if (!rule.createdBy().equals(actor.getId()) && !isAdmin(actor)) {
             throw new SecurityException("No tiene permiso para editar esta regla");
         }
 
@@ -86,11 +87,11 @@ public class AutomationService {
         return saved;
     }
 
-    public void toggleRule(UUID ruleId, boolean enabled) {
+    public void toggleRule(User actor, UUID ruleId, boolean enabled) {
         var rule = ruleRepository.findById(ruleId)
                 .orElseThrow(() -> new IllegalArgumentException("Regla no encontrada: " + ruleId));
 
-        if (!rule.createdBy().equals(ruleId) && !isAdmin()) {
+        if (!rule.createdBy().equals(actor.getId()) && !isAdmin(actor)) {
             throw new SecurityException("No tiene permiso para activar/desactivar esta regla");
         }
 
@@ -104,15 +105,18 @@ public class AutomationService {
                 Map.of("enabled", enabled));
     }
 
-    public List<AutomationRule> listRules(UUID physicianId) {
+    public List<AutomationRule> listRules(User actor, UUID requestedPhysicianId) {
+        var physicianId = requestedPhysicianId != null && isAdmin(actor)
+                ? requestedPhysicianId
+                : actor.getId();
         return ruleRepository.findByCreatedBy(physicianId);
     }
 
-    public void deleteRule(UUID ruleId) {
+    public void deleteRule(User actor, UUID ruleId) {
         var rule = ruleRepository.findById(ruleId)
                 .orElseThrow(() -> new IllegalArgumentException("Regla no encontrada: " + ruleId));
 
-        if (!rule.createdBy().equals(ruleId) && !isAdmin()) {
+        if (!rule.createdBy().equals(actor.getId()) && !isAdmin(actor)) {
             throw new SecurityException("No tiene permiso para eliminar esta regla");
         }
 
@@ -137,7 +141,7 @@ public class AutomationService {
             if (!rule.enabled()) continue;
 
             // Verificar que el médico tiene permisos sobre el evento (solo si regla es del médico)
-            if (!rule.createdBy().equals(eventPhysicianId) && !isAdmin()) {
+            if (!rule.createdBy().equals(eventPhysicianId)) {
                 continue;
             }
 
@@ -303,9 +307,8 @@ public class AutomationService {
 
     // --- Utilidades ---
 
-    private boolean isAdmin() {
-        // Esto sería inyectado desde el contexto de seguridad
-        return false; // Placeholder - se inyectaría el rol del usuario actual
+    private boolean isAdmin(User actor) {
+        return actor != null && actor.getRole() == com.kinplatform.user.UserRole.ADMIN;
     }
 
     private void auditLog(AuditAction action, AuditResourceType resource, UUID resourceId,

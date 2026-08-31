@@ -6,8 +6,10 @@ import com.kinplatform.kin.health.automation.domain.*;
 import com.kinplatform.kin.health.automation.service.AutomationService;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
+import com.kinplatform.user.UserRole;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/health/automation")
+@RequestMapping("/health/automation")
 public class AutomationController {
 
     private final AutomationService automationService;
@@ -32,9 +34,9 @@ public class AutomationController {
     @PostMapping("/rules")
     public ResponseEntity<AutomationRule> createRule(
             Authentication authentication, @Valid @RequestBody AutomationRuleRequest request) {
-        User user = AuthenticatedUsers.require(userRepository, authentication);
+        User user = requirePhysicianOrAdmin(authentication);
         var rule = automationService.createRule(
-                user.getId(), request.name(), request.description(),
+                user, request.name(), request.description(),
                 TriggerEvent.valueOf(request.triggerEvent()), request.conditions(),
                 ActionType.valueOf(request.action()), request.actionParams());
         return ResponseEntity.ok(rule);
@@ -44,9 +46,8 @@ public class AutomationController {
     public ResponseEntity<List<AutomationRuleResponse>> listRules(
             Authentication authentication,
             @RequestParam(required = false) UUID physicianId) {
-        User user = AuthenticatedUsers.require(userRepository, authentication);
-        var physician = physicianId != null ? physicianId : user.getId();
-        var rules = automationService.listRules(physician);
+        User user = requirePhysicianOrAdmin(authentication);
+        var rules = automationService.listRules(user, physicianId);
         var responses = rules.stream()
                 .map(r -> new AutomationRuleResponse(
                         r.id(), r.name(), r.description(),
@@ -61,8 +62,8 @@ public class AutomationController {
     public ResponseEntity<AutomationRule> updateRule(
             Authentication authentication, @PathVariable UUID id,
             @Valid @RequestBody AutomationRuleRequest request) {
-        User user = AuthenticatedUsers.require(userRepository, authentication);
-        automationService.updateRule(id, request.name(), request.description(),
+        User user = requirePhysicianOrAdmin(authentication);
+        automationService.updateRule(user, id, request.name(), request.description(),
                 TriggerEvent.valueOf(request.triggerEvent()), request.conditions(),
                 ActionType.valueOf(request.action()), request.actionParams(), request.enabled());
         return ResponseEntity.ok().build();
@@ -72,16 +73,16 @@ public class AutomationController {
     public ResponseEntity<Void> toggleRule(
             Authentication authentication, @PathVariable UUID id,
             @RequestParam boolean enabled) {
-        User user = AuthenticatedUsers.require(userRepository, authentication);
-        automationService.toggleRule(id, enabled);
+        User user = requirePhysicianOrAdmin(authentication);
+        automationService.toggleRule(user, id, enabled);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/rules/{id}")
     public ResponseEntity<Void> deleteRule(
             Authentication authentication, @PathVariable UUID id) {
-        User user = AuthenticatedUsers.require(userRepository, authentication);
-        automationService.deleteRule(id);
+        User user = requirePhysicianOrAdmin(authentication);
+        automationService.deleteRule(user, id);
         return ResponseEntity.ok().build();
     }
 
@@ -98,6 +99,14 @@ public class AutomationController {
     }
 
     // --- Records para requests/response ---
+
+    private User requirePhysicianOrAdmin(Authentication authentication) {
+        User user = AuthenticatedUsers.require(userRepository, authentication);
+        if (user.getRole() != UserRole.PHYSICIAN && user.getRole() != UserRole.ADMIN) {
+            throw new AccessDeniedException("Se requiere rol de médico o administrador para esta operación");
+        }
+        return user;
+    }
 
     public record AutomationRuleRequest(
             String name,
