@@ -1,5 +1,7 @@
 package com.kinplatform.kin.health.physician.adapter;
 
+import com.kinplatform.kin.health.physician.domain.ClinicalAlert.AlertSeverity;
+import com.kinplatform.kin.health.physician.domain.ClinicalAlert.AlertStatus;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,5 +12,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ClinicalAlertJpaRepository extends JpaRepository<ClinicalAlertEntity, UUID> {
 
     List<ClinicalAlertEntity> findByPhysicianIdAndStatusOrderByCreatedAtDesc(
-            UUID physicianId, com.kinplatform.kin.health.physician.domain.ClinicalAlert.AlertStatus status);
+            UUID physicianId, AlertStatus status);
+
+    long countByPhysicianIdAndStatusAndSeverity(UUID physicianId, AlertStatus status, AlertSeverity severity);
 }

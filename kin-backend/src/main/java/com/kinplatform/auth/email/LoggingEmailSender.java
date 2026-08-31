@@ -107,6 +107,51 @@ public class LoggingEmailSender implements EmailSender {
         }
     }
 
+    @Override
+    public void sendInvitationEmail(
+            String to,
+            String patientName,
+            String physicianName,
+            String specialty,
+            String message,
+            String invitationLink) {
+        attemptsCounter.increment();
+        Timer.Sample sample = Timer.start();
+        try {
+            log.warn(
+                    "[email-invitation][dev/no-smtp] destinatario={} medico={} enlace={}",
+                    maskEmail(to),
+                    physicianName,
+                    invitationLink);
+            successCounter.increment();
+        } catch (Exception e) {
+            failureCounter.increment();
+            throw new IllegalStateException("No se pudo procesar el correo de invitación (logging)", e);
+        } finally {
+            sample.stop(latencyTimer);
+        }
+    }
+
+    @Override
+    public void sendAppointmentReminderEmail(
+            String to, String patientName, String physicianName, String scheduledAtText) {
+        attemptsCounter.increment();
+        Timer.Sample sample = Timer.start();
+        try {
+            log.warn(
+                    "[appointment-reminder][dev/no-smtp] destinatario={} medico={} fecha={}",
+                    maskEmail(to),
+                    physicianName,
+                    scheduledAtText);
+            successCounter.increment();
+        } catch (Exception e) {
+            failureCounter.increment();
+            throw new IllegalStateException("No se pudo procesar el correo de recordatorio (logging)", e);
+        } finally {
+            sample.stop(latencyTimer);
+        }
+    }
+
     private static String maskEmail(String email) {
         if (email == null || !email.contains("@")) {
             return "invalid";

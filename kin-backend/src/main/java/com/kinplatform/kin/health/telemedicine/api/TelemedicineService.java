@@ -1,7 +1,10 @@
 package com.kinplatform.kin.health.telemedicine.api;
 
 import com.kinplatform.kin.event.DomainEventBus;
-import com.kinplatform.kin.health.physician.port.PhysicianPatientRepository;
+import com.kinplatform.kin.health.audit.api.AuditService;
+import com.kinplatform.kin.health.audit.domain.AuditAction;
+import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
 import com.kinplatform.kin.health.telemedicine.config.TelemedicineProperties;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment.AppointmentStatus;
@@ -35,29 +38,33 @@ public class TelemedicineService {
 
     private final MessageRepository messageRepository;
     private final AppointmentRepository appointmentRepository;
-    private final PhysicianPatientRepository patientAssignmentRepository;
+    private final RelationshipAccessValidator accessValidator;
     private final TelemedicineProperties properties;
     private final DomainEventBus eventBus;
+    private final AuditService auditService;
 
     public TelemedicineService(
             MessageRepository messageRepository,
             AppointmentRepository appointmentRepository,
-            PhysicianPatientRepository patientAssignmentRepository,
-            TelemedicineProperties properties) {
-        this(messageRepository, appointmentRepository, patientAssignmentRepository, properties, null);
+            RelationshipAccessValidator accessValidator,
+            TelemedicineProperties properties,
+            AuditService auditService) {
+        this(messageRepository, appointmentRepository, accessValidator, properties, auditService, null);
     }
 
     @Autowired
     public TelemedicineService(
             MessageRepository messageRepository,
             AppointmentRepository appointmentRepository,
-            PhysicianPatientRepository patientAssignmentRepository,
+            RelationshipAccessValidator accessValidator,
             TelemedicineProperties properties,
+            AuditService auditService,
             DomainEventBus eventBus) {
         this.messageRepository = messageRepository;
         this.appointmentRepository = appointmentRepository;
-        this.patientAssignmentRepository = patientAssignmentRepository;
+        this.accessValidator = accessValidator;
         this.properties = properties;
+        this.auditService = auditService;
         this.eventBus = eventBus;
     }
 
@@ -83,6 +90,8 @@ public class TelemedicineService {
                 false,
                 OffsetDateTime.now());
         Message saved = messageRepository.save(message);
+        auditService.logAccess(senderId, AuditAction.SEND_MESSAGE, AuditResourceType.MENSAJE, saved.id(), null,
+                java.util.Map.of("conversationId", saved.conversationId()));
         if (eventBus != null) {
             eventBus.publish(TelemedicineEvent.message(senderId, saved.id()));
         }
@@ -109,6 +118,8 @@ public class TelemedicineService {
             throw new TelemedicineDisabledException();
         }
         List<Message> messages = conversationMessages(userId, otherId);
+        auditService.logAccess(userId, AuditAction.READ_MESSAGES, AuditResourceType.MENSAJE, null, null,
+                java.util.Map.of("conversationWith", otherId));
         for (Message message : messages) {
             if (!message.read() && message.receiverId().equals(userId)) {
                 messageRepository.save(Message.of(
@@ -170,6 +181,8 @@ public class TelemedicineService {
                 AppointmentStatus.PENDIENTE,
                 OffsetDateTime.now());
         Appointment saved = appointmentRepository.save(appointment);
+        auditService.logAccess(patientId, AuditAction.REQUEST_APPOINTMENT, AuditResourceType.CITA, saved.id(),
+                patientId, java.util.Map.of());
         log.info("TelemedicineService: cita solicitada paciente {} → médico {}", patientId, physicianId);
         return saved;
     }
@@ -202,10 +215,21 @@ public class TelemedicineService {
                 appointment.createdAt());
         log.info("TelemedicineService: cita {} → {} por médico {}", appointmentId, status, physicianId);
         Appointment saved = appointmentRepository.save(updated);
+        auditService.logAccess(physicianId, auditActionFor(status), AuditResourceType.CITA, saved.id(),
+                saved.patientId(), java.util.Map.of());
         if (eventBus != null) {
             eventBus.publish(TelemedicineEvent.appointment(physicianId, saved.id()));
         }
         return saved;
+    }
+
+    private static AuditAction auditActionFor(AppointmentStatus status) {
+        return switch (status) {
+            case CONFIRMADA -> AuditAction.CONFIRM_APPOINTMENT;
+            case CANCELADA -> AuditAction.CANCEL_APPOINTMENT;
+            case COMPLETADA -> AuditAction.COMPLETE_APPOINTMENT;
+            default -> AuditAction.REQUEST_APPOINTMENT;
+        };
     }
 
     /**
@@ -232,13 +256,11 @@ public class TelemedicineService {
     }
 
     /**
-     * La asignación es simétrica: un mensaje/cita es válido si el médico está
-     * asignado al paciente en cualquiera de las direcciones.
+     * La relación es simétrica: un mensaje/cita es válido solo si existe una
+     * relación ACTIVA en cualquiera de las direcciones (Área 5 — permisos por
+     * estado de relación).
      */
     private void requireAssigned(UUID a, UUID b) {
-        if (patientAssignmentRepository.isAssigned(a, b) || patientAssignmentRepository.isAssigned(b, a)) {
-            return;
-        }
-        throw new TelemedicineAssignmentException(a, b);
+        accessValidator.requireActiveRelationshipBetween(a, b);
     }
 }

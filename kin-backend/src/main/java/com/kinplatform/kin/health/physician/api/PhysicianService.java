@@ -2,10 +2,15 @@ package com.kinplatform.kin.health.physician.api;
 
 import com.kinplatform.kin.health.dashboard.domain.PatientProfile;
 import com.kinplatform.kin.health.dashboard.port.DashboardRepository;
+import com.kinplatform.kin.health.audit.api.AuditService;
+import com.kinplatform.kin.health.audit.domain.AuditAction;
+import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
 import com.kinplatform.kin.health.physician.domain.ClinicalAlert;
 import com.kinplatform.kin.health.physician.domain.PatientSummary;
 import com.kinplatform.kin.health.physician.domain.PhysicianPatientAssignment;
+import com.kinplatform.kin.health.physician.domain.RelationshipStatus;
 import com.kinplatform.kin.health.physician.port.ClinicalAlertRepository;
 import com.kinplatform.kin.health.physician.port.PhysicianPatientRepository;
 import com.kinplatform.kin.health.triage.domain.TriageConditionResult;
@@ -49,6 +54,8 @@ public class PhysicianService {
     private final DashboardRepository dashboardRepository;
     private final UserRepository userRepository;
     private final PhysicianProperties properties;
+    private final RelationshipAccessValidator accessValidator;
+    private final AuditService auditService;
 
     public PhysicianService(
             PhysicianPatientRepository patientRepository,
@@ -56,25 +63,54 @@ public class PhysicianService {
             TriageConsultationRepository consultationRepository,
             DashboardRepository dashboardRepository,
             UserRepository userRepository,
-            PhysicianProperties properties) {
+            PhysicianProperties properties,
+            RelationshipAccessValidator accessValidator,
+            AuditService auditService) {
         this.patientRepository = patientRepository;
         this.alertRepository = alertRepository;
         this.consultationRepository = consultationRepository;
         this.dashboardRepository = dashboardRepository;
         this.userRepository = userRepository;
         this.properties = properties;
+        this.accessValidator = accessValidator;
+        this.auditService = auditService;
     }
 
     @Transactional(readOnly = true)
     public Page<PatientSummary> listPatients(UUID physicianId, Pageable pageable) {
+        return listPatients(physicianId, RelationshipStatus.ACTIVE, pageable);
+    }
+
+    /**
+     * Lista de pacientes del médico con filtro por estado de relación.
+     * {@code ACTIVE} devuelve la cartera actual (resumen clínico); {@code PENDING}
+     * devuelve las invitaciones pendientes (solo identidad, sin datos clínicos);
+     * {@code null} devuelve ambas.
+     */
+    @Transactional(readOnly = true)
+    public Page<PatientSummary> listPatients(UUID physicianId, RelationshipStatus status, Pageable pageable) {
         if (!properties.isEnabled()) {
             throw new PhysicianDisabledException();
         }
-        List<UUID> patientIds = patientRepository.findPatientIdsByPhysician(physicianId);
-        List<PatientSummary> summaries = patientIds.stream()
-                .sorted()
-                .map(id -> summarizePatient(physicianId, id))
-                .toList();
+        List<PatientSummary> summaries = new java.util.ArrayList<>();
+        if (status == null) {
+            List<UUID> patientIds = patientRepository.findPatientIdsByPhysician(physicianId);
+            patientIds.stream().sorted().forEach(id -> summaries.add(summarizePatient(physicianId, id)));
+            patientRepository
+                    .findByPhysicianIdAndStatus(physicianId, RelationshipStatus.PENDING)
+                    .forEach(a -> summaries.add(PatientSummary.pending(a.patientId(), patientName(a.patientId()))));
+        } else {
+            patientRepository
+                    .findByPhysicianIdAndStatus(physicianId, status)
+                    .forEach(a -> {
+                        if (status == RelationshipStatus.ACTIVE) {
+                            summaries.add(summarizePatient(physicianId, a.patientId()));
+                        } else {
+                            summaries.add(PatientSummary.pending(a.patientId(), patientName(a.patientId())));
+                        }
+                    });
+        }
+        summaries.sort(java.util.Comparator.comparing(PatientSummary::patientName, String.CASE_INSENSITIVE_ORDER));
         int start = (int) pageable.getOffset();
         int end = Math.min(start + pageable.getPageSize(), summaries.size());
         List<PatientSummary> page = start > summaries.size() ? List.of() : summaries.subList(start, end);
@@ -87,6 +123,8 @@ public class PhysicianService {
             throw new PhysicianDisabledException();
         }
         requireAssigned(physicianId, patientId);
+        auditService.logAccess(physicianId, AuditAction.VIEW_SUMMARY, AuditResourceType.PACIENTE, patientId, patientId,
+                java.util.Map.of());
         return summarizePatient(physicianId, patientId);
     }
 
@@ -96,6 +134,8 @@ public class PhysicianService {
             throw new PhysicianDisabledException();
         }
         requireAssigned(physicianId, patientId);
+        auditService.logAccess(physicianId, AuditAction.VIEW_HISTORY, AuditResourceType.PACIENTE, patientId, patientId,
+                java.util.Map.of());
         return consultationRepository.findByUserId(patientId);
     }
 
@@ -115,6 +155,10 @@ public class PhysicianService {
         ClinicalAlert alert = alertRepository
                 .findByIdAndPhysician(alertId, physicianId)
                 .orElseThrow(() -> new PhysicianAlertNotFoundException(alertId));
+        // Solo una relación ACTIVE permite gestionar alertas del paciente.
+        accessValidator.requireActiveRelationship(physicianId, alert.patientId());
+        auditService.logAccess(physicianId, AuditAction.ACKNOWLEDGE_ALERT, AuditResourceType.ALERTA, alert.id(),
+                alert.patientId(), java.util.Map.of());
         if (alert.isActive()) {
             ClinicalAlert acknowledged = ClinicalAlert.of(
                     alert.id(),
@@ -175,9 +219,8 @@ public class PhysicianService {
     }
 
     private void requireAssigned(UUID physicianId, UUID patientId) {
-        if (!patientRepository.isAssigned(physicianId, patientId)) {
-            throw new PhysicianPatientNotFoundException(patientId);
-        }
+        // Solo una relación ACTIVE habilita el acceso clínico (Área 5).
+        accessValidator.requireActiveRelationship(physicianId, patientId);
     }
 
     private PatientSummary summarizePatient(UUID physicianId, UUID patientId) {
@@ -195,7 +238,7 @@ public class PhysicianService {
                 .filter(a -> a.patientId().equals(patientId))
                 .map(a -> 1)
                 .reduce(0, Integer::sum);
-        return new PatientSummary(
+        return PatientSummary.active(
                 patientId,
                 patientName(patientId),
                 activeConditions,

@@ -1,12 +1,13 @@
 package com.kinplatform.kin.health.physician.api;
 
 import com.kinplatform.kin.health.physician.domain.PatientSummary;
+import com.kinplatform.kin.health.physician.domain.RelationshipStatus;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * Resumen clínico de un paciente en el portal de médicos (ADR-031).
+ * Resumen de un paciente en el portal de médicos (ADR-031 + estado V30).
  */
 public record PatientSummaryResponse(
         UUID patientId,
@@ -16,7 +17,8 @@ public record PatientSummaryResponse(
         List<String> chronicConditions,
         int totalTriages,
         OffsetDateTime lastTriageAt,
-        int activeAlerts) {
+        int activeAlerts,
+        RelationshipStatus relationshipStatus) {
 
     public static PatientSummaryResponse from(PatientSummary summary) {
         return new PatientSummaryResponse(
@@ -27,6 +29,7 @@ public record PatientSummaryResponse(
                 summary.chronicConditions(),
                 summary.totalTriages(),
                 summary.lastTriageAt(),
-                summary.activeAlerts());
+                summary.activeAlerts(),
+                summary.relationshipStatus());
     }
 }

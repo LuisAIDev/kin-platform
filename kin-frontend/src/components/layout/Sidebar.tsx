@@ -5,11 +5,42 @@ import { usePathname, useRouter } from "next/navigation";
 import { authService } from "@/services/auth";
 import { getSelectedVertical, setSelectedVertical, type SelectedVertical } from "@/services/session";
 import { homePathForRole, isBusinessRole, resolveVertical } from "@/utils/roles";
+import { useNotificationCounts } from "@/hooks/useNotificationCounts";
+import type { NotificationCounts } from "@/services/notifications";
+import NotificationBadge from "@/components/layout/NotificationBadge";
 import { useState } from "react";
 
 interface NavItem {
   label: string;
   href: string;
+}
+
+/** Contador de novedades asociado a cada ítem del menú (según el rol). */
+export function countForNavItem(href: string, counts: NotificationCounts | null): number {
+  if (!counts) return 0;
+  switch (href) {
+    case "/dashboard/patient/invitations":
+      return counts.invitations;
+    case "/dashboard/patient/messages":
+    case "/dashboard/physician/messages":
+      return counts.unreadMessages;
+    case "/dashboard/patient/appointments":
+      return counts.upcomingAppointments;
+    case "/dashboard/physician/appointments":
+      return counts.pendingAppointments;
+    case "/dashboard/physician":
+      return counts.highUrgencyAlerts;
+    case "/dashboard/patient/followup":
+      return counts.pendingTasks;
+    case "/dashboard/physician/followup":
+      return counts.overdueTasks;
+    case "/dashboard/patient/schedule":
+      return counts.upcomingAppointments;
+    case "/dashboard/physician/schedule":
+      return counts.pendingAppointments;
+    default:
+      return 0;
+  }
 }
 
 // ---- Menús por rol ----
@@ -32,8 +63,12 @@ const BUSINESS_ITEMS: NavItem[] = [
 const PATIENT_ITEMS: NavItem[] = [
   { label: "Mi Salud", href: "/dashboard/patient/health" },
   { label: "Triaje Digital", href: "/dashboard/patient/triage" },
+  { label: "Invitaciones", href: "/dashboard/patient/invitations" },
   { label: "Mensajes", href: "/dashboard/patient/messages" },
   { label: "Citas", href: "/dashboard/patient/appointments" },
+  { label: "Reservar cita", href: "/dashboard/patient/schedule" },
+  { label: "Seguimiento", href: "/dashboard/patient/followup" },
+  { label: "Historial de accesos", href: "/dashboard/patient/audit" },
   { label: "Configuración", href: "/dashboard/settings" },
 ];
 
@@ -41,7 +76,9 @@ const PATIENT_ITEMS: NavItem[] = [
 const PHYSICIAN_ITEMS: NavItem[] = [
   { label: "Portal Médico", href: "/dashboard/physician" },
   { label: "Mensajes", href: "/dashboard/physician/messages" },
+  { label: "Agenda", href: "/dashboard/physician/schedule" },
   { label: "Citas", href: "/dashboard/physician/appointments" },
+  { label: "Seguimiento", href: "/dashboard/physician/followup" },
   { label: "Configuración", href: "/dashboard/settings" },
 ];
 
@@ -55,11 +92,15 @@ const ADMIN_ITEMS: NavItem[] = [
   { label: "Reportes", href: "/dashboard/reports" },
   { label: "Mi Salud", href: "/dashboard/patient/health" },
   { label: "Triaje Digital", href: "/dashboard/patient/triage" },
+  { label: "Invitaciones", href: "/dashboard/patient/invitations" },
   { label: "Portal Médico", href: "/dashboard/physician" },
   { label: "Mensajes", href: "/dashboard/patient/messages" },
   { label: "Citas", href: "/dashboard/patient/appointments" },
+  { label: "Reservar cita", href: "/dashboard/patient/schedule" },
+  { label: "Seguimiento", href: "/dashboard/patient/followup" },
   { label: "Administración", href: "/dashboard/admin/pricing" },
   { label: "Verificación de médicos", href: "/dashboard/admin/physicians" },
+  { label: "Auditoría", href: "/dashboard/admin/audit" },
   { label: "Planes", href: "/dashboard/pricing" },
   { label: "Suscripción", href: "/dashboard/subscription" },
   { label: "Configuración", href: "/dashboard/settings" },
@@ -92,6 +133,7 @@ export default function Sidebar() {
 
   const allItems = getRoleItems(role, vertical);
   const homeHref = homePathForRole(role, selected);
+  const counts = useNotificationCounts(role);
 
   const handleLogout = async () => {
     await authService.logout();
@@ -149,6 +191,27 @@ export default function Sidebar() {
     if (href === "/dashboard/patient/messages") {
       return pathname === "/dashboard/patient/messages";
     }
+    if (href === "/dashboard/patient/invitations") {
+      return pathname === "/dashboard/patient/invitations";
+    }
+    if (href === "/dashboard/patient/followup") {
+      return pathname === "/dashboard/patient/followup";
+    }
+    if (href === "/dashboard/physician/followup") {
+      return pathname === "/dashboard/physician/followup";
+    }
+    if (href === "/dashboard/patient/schedule") {
+      return pathname === "/dashboard/patient/schedule";
+    }
+    if (href === "/dashboard/physician/schedule") {
+      return pathname === "/dashboard/physician/schedule";
+    }
+    if (href === "/dashboard/patient/audit") {
+      return pathname === "/dashboard/patient/audit";
+    }
+    if (href === "/dashboard/admin/audit") {
+      return pathname === "/dashboard/admin/audit";
+    }
     if (href === "/dashboard/patient/appointments") {
       return pathname === "/dashboard/patient/appointments";
     }
@@ -204,17 +267,19 @@ export default function Sidebar() {
         <nav className="flex-1 px-3 space-y-1">
           {allItems.map((item) => {
             const active = isActive(item.href);
+            const badgeCount = countForNavItem(item.href, counts);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`block rounded-lg px-3 py-2 text-sm font-medium transition ${
+                className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
                   active
                     ? "bg-primary-600 text-white"
                     : "text-neutral-600 hover:bg-primary-50 hover:text-primary-700"
                 }`}
               >
-                {item.label}
+                <span>{item.label}</span>
+                <NotificationBadge count={badgeCount} />
               </Link>
             );
           })}
@@ -268,18 +333,20 @@ export default function Sidebar() {
           )}
           {allItems.map((item) => {
             const active = isActive(item.href);
+            const badgeCount = countForNavItem(item.href, counts);
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block rounded-lg px-3 py-3 text-sm font-medium transition min-h-11 flex items-center ${
+                className={`block rounded-lg px-3 py-3 text-sm font-medium transition min-h-11 flex items-center justify-between gap-2 ${
                   active
                     ? "bg-primary-600 text-white"
                     : "text-neutral-600 hover:bg-primary-50 hover:text-primary-700"
                 }`}
               >
-                {item.label}
+                <span>{item.label}</span>
+                <NotificationBadge count={badgeCount} />
               </Link>
             );
           })}

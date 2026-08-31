@@ -18,4 +18,7 @@ public interface ClinicalAlertRepository {
     Optional<ClinicalAlert> findByIdAndPhysician(UUID id, UUID physicianId);
 
     List<ClinicalAlert> findActiveByPhysician(UUID physicianId);
+
+    /** Alertas activas de ALTA urgencia del médico (contador de notificaciones). */
+    long countActiveHighUrgencyByPhysician(UUID physicianId);
 }

@@ -2,30 +2,44 @@
 
 import { useEffect, useState } from "react";
 import AlertList from "@/components/physician/AlertList";
+import AIProgressIndicator from "@/components/AIProgressIndicator";
+import AIResultModal from "@/components/AIResultModal";
 import FeedbackButton from "@/components/health/FeedbackButton";
+import InvitePatientModal from "@/components/physician/InvitePatientModal";
 import PatientDetailView from "@/components/physician/PatientDetailView";
 import PatientList from "@/components/physician/PatientList";
+import { aiassistService } from "@/services/aiassist";
 import { physicianService } from "@/services/physician";
 import type { ClinicalAlert, PhysicianPatientSummary } from "@/services/physician";
 import type { PageResponse } from "@/types";
 import type { TriageHistoryEntry } from "@/services/triage";
 
+type PatientFilter = "ACTIVE" | "PENDING" | "ALL";
+
+const FILTERS: { value: PatientFilter; label: string }[] = [
+  { value: "ACTIVE", label: "Activos" },
+  { value: "PENDING", label: "Pendientes" },
+  { value: "ALL", label: "Todos" },
+];
+
 export default function PhysicianDashboard() {
+  const [filter, setFilter] = useState<PatientFilter>("ACTIVE");
   const [page, setPage] = useState<PageResponse<PhysicianPatientSummary> | null>(null);
   const [alerts, setAlerts] = useState<ClinicalAlert[]>([]);
   const [selectedSummary, setSelectedSummary] = useState<PhysicianPatientSummary | null>(null);
   const [selectedHistory, setSelectedHistory] = useState<TriageHistoryEntry[]>([]);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [error, setError] = useState("");
 
-  const load = (pageNumber: number) =>
+  const load = (pageNumber: number, status: PatientFilter) =>
     Promise.all([
-      physicianService.patients(pageNumber, 10),
+      physicianService.patients(pageNumber, 10, status),
       physicianService.alerts(),
     ]);
 
   useEffect(() => {
     let cancelled = false;
-    load(0)
+    load(0, filter)
       .then(([patients, alertsData]) => {
         if (cancelled) return;
         setPage(patients);
@@ -37,17 +51,19 @@ export default function PhysicianDashboard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [filter]);
 
   const handlePageChange = async (pageNumber: number) => {
     if (pageNumber < 0) return;
     try {
-      const [patients] = await load(pageNumber);
+      const [patients] = await load(pageNumber, filter);
       setPage(patients);
     } catch (err) {
       setError((err as Error).message);
     }
   };
+
+  const [aiResult, setAiResult] = useState<{ type: string; response: string } | null>(null);
 
   const handleSelect = async (patientId: string) => {
     try {
@@ -62,10 +78,50 @@ export default function PhysicianDashboard() {
     }
   };
 
+  const handleAiAssist = async (type: string, patientId: string) => {
+    setAiResult(null);
+    try {
+      let response: any;
+      switch (type) {
+        case "summary":
+          response = await aiassistService.generateSummary(
+            physicianService.getCurrentPhysicianId() || "",
+            patientId
+          );
+          break;
+        case "prepare":
+          response = await aiassistService.prepareConsultation(
+            physicianService.getCurrentPhysicianId() || "",
+            patientId
+          );
+          break;
+        case "draft":
+          response = await aiassistService.draftMessage(
+            physicianService.getCurrentPhysicianId() || "",
+            patientId,
+            selectedSummary?.recommendation || ""
+          );
+          break;
+      }
+      setAiResult({ type, response: response.response });
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
   const handleAcknowledge = async (alertId: string) => {
     try {
       await physicianService.acknowledgeAlert(alertId);
       setAlerts((prev) => prev.filter((a) => a.id !== alertId));
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  const handleInvited = async () => {
+    try {
+      const [patients] = await load(0, filter);
+      setPage(patients);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -81,7 +137,33 @@ export default function PhysicianDashboard() {
               Pacientes asignados, resúmenes clínicos y alertas de alta urgencia.
             </p>
           </div>
-          <FeedbackButton label="Dar feedback" />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleAiAssist("summary", selectedSummary?.id || "")}
+              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition disabled:opacity-50"
+              disabled={!selectedSummary}
+            >
+              Generar resumen
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAiAssist("prepare", selectedSummary?.id || "")}
+              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition disabled:opacity-50"
+              disabled={!selectedSummary}
+            >
+              Preparar consulta
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAiAssist("draft", selectedSummary?.id || "")}
+              className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-700 transition disabled:opacity-50"
+              disabled={!selectedSummary}
+            >
+              Redactar mensaje
+            </button>
+            <FeedbackButton label="Dar feedback" />
+          </div>
         </div>
 
         <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
@@ -99,7 +181,26 @@ export default function PhysicianDashboard() {
         </section>
 
         <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">Mis pacientes</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Mis pacientes</h2>
+            <div className="flex rounded-lg border border-neutral-200 bg-neutral-50 p-0.5 gap-0.5">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => setFilter(f.value)}
+                  aria-pressed={filter === f.value}
+                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                    filter === f.value
+                      ? "bg-primary-600 text-white shadow-sm"
+                      : "text-neutral-600 hover:bg-white"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
           {page && (
             <PatientList page={page} onPageChange={handlePageChange} onSelect={handleSelect} />
           )}
@@ -113,6 +214,23 @@ export default function PhysicianDashboard() {
           onClose={() => setSelectedSummary(null)}
         />
       )}
+
+      {showInviteModal && (
+        <InvitePatientModal onClose={() => setShowInviteModal(false)} onInvited={handleInvited} />
+      )}
+
+      {aiResult && (
+        <AIResultModal
+          open={true}
+          onClose={() => setAiResult(null)}
+          type={aiResult.type as any}
+          title="Resultado de IA"
+          response={aiResult.response}
+          onCopy={() => {/* copiar al portapapeles */}}
+        />
+      )}
+
+      <AIProgressIndicator visible={/* loading state */} onComplete={() => {}} />
     </main>
   );
 }

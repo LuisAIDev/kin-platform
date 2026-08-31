@@ -1,0 +1,367 @@
+package com.kinplatform.kin.health.automation.service;
+
+import com.kinplatform.kin.health.automation.config.AutomationProperties;
+import com.kinplatform.kin.health.automation.domain.*;
+import com.kinplatform.kin.health.automation.port.*;
+import com.kinplatform.kin.health.audit.api.AuditService;
+import com.kinplatform.kin.health.audit.domain.AuditAction;
+import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.kin.health.alert.api.AlertService;
+import com.kinplatform.kin.health.notification.api.NotificationService;
+import com.kinplatform.kin.health.email.api.EmailSender;
+import com.kinplatform.kin.health.followup.api.FollowUpService;
+import com.kinplatform.user.User;
+import com.kinplatform.user.UserRepository;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+@Service
+@RequiredArgsConstructor
+public class AutomationService {
+
+    private static final Logger log = LoggerFactory.getLogger(AutomationService.class);
+
+    private final AutomationRuleRepository ruleRepository;
+    final RuleExecutionLogRepository executionLogRepository;
+    private final AutomationProperties properties;
+    private final UserRepository userRepository;
+    private final AuditService auditService;
+    private final AlertService alertService;
+    private final NotificationService notificationService;
+    private final EmailSender emailSender;
+    private final FollowUpService followUpService;
+
+    public AutomationService(
+            AutomationRuleRepository ruleRepository,
+            RuleExecutionLogRepository executionLogRepository,
+            AutomationProperties properties,
+            UserRepository userRepository,
+            AuditService auditService,
+            AlertService alertService,
+            NotificationService notificationService,
+            EmailSender emailSender,
+            FollowUpService followUpService) {
+        this.ruleRepository = ruleRepository;
+        this.executionLogRepository = executionLogRepository;
+        this.properties = properties;
+        this.userRepository = userRepository;
+        this.auditService = auditService;
+        this.alertService = alertService;
+        this.notificationService = notificationService;
+        this.emailSender = emailSender;
+        this.followUpService = followUpService;
+    }
+
+    // --- Gestión de reglas ---
+
+    public AutomationRule createRule(UUID physicianId, String name, String description,
+                                     TriggerEvent triggerEvent, String conditions,
+                                     ActionType action, String actionParams) {
+        var user = userRepository.findById(physicianId)
+                .orElseThrow(() -> new IllegalArgumentException("Médico no encontrado: " + physicianId));
+
+        if (!properties.isEnabled()) {
+            throw new IllegalStateException("Módulo de automatizaciones deshabilitado");
+        }
+
+        if (countRulesByPhysician(physicianId) >= properties.getMaxRulesPerPhysician()) {
+            throw new IllegalStateException("Límite de reglas alcanzado para este médico (" +
+                    properties.getMaxRulesPerPhysician() + ")");
+        }
+
+        var rule = AutomationRule.of(name, description, triggerEvent, conditions, action, actionParams,
+                true, physicianId);
+
+        var saved = ruleRepository.save(rule);
+
+        auditLog(AuditAction.CREATE, AuditResourceType.AUTOMATION_RULE, saved.id(), physicianId,
+                Map.of("triggerEvent", triggerEvent.name(), "action", action.name()));
+
+        return saved;
+    }
+
+    public AutomationRule updateRule(UUID ruleId, String name, String description,
+                                     TriggerEvent triggerEvent, String conditions,
+                                     ActionType action, String actionParams, boolean enabled) {
+        var rule = ruleRepository.findById(ruleId)
+                .orElseThrow(() -> new IllegalArgumentException("Regla no encontrada: " + ruleId));
+
+        // Validar que el médico solo puede editar sus propias reglas
+        if (!rule.createdBy().equals(ruleId) && !isAdmin()) {
+            throw new SecurityException("No tiene permiso para editar esta regla");
+        }
+
+        var updated = AutomationRule.of(name, description, triggerEvent, conditions, action, actionParams,
+                enabled, rule.createdBy());
+
+        var saved = ruleRepository.update(updated);
+
+        auditLog(AuditAction.UPDATE, AuditResourceType.AUTOMATION_RULE, saved.id(), rule.createdBy(),
+                Map.of("triggerEvent", triggerEvent.name(), "action", action.name()));
+
+        return saved;
+    }
+
+    public void toggleRule(UUID ruleId, boolean enabled) {
+        var rule = ruleRepository.findById(ruleId)
+                .orElseThrow(() -> new IllegalArgumentException("Regla no encontrada: " + ruleId));
+
+        if (!rule.createdBy().equals(ruleId) && !isAdmin()) {
+            throw new SecurityException("No tiene permiso para activar/desactivar esta regla");
+        }
+
+        var updated = AutomationRule.of(
+                rule.name(), rule.description(), rule.triggerEvent(), rule.conditions(),
+                rule.action(), rule.actionParams(), enabled, rule.createdBy());
+
+        ruleRepository.update(updated);
+
+        auditLog(AuditAction.TOGGLE, AuditResourceType.AUTOMATION_RULE, rule.id(), rule.createdBy(),
+                Map.of("enabled", enabled));
+    }
+
+    public List<AutomationRule> listRules(UUID physicianId) {
+        return ruleRepository.findByCreatedBy(physicianId);
+    }
+
+    public void deleteRule(UUID ruleId) {
+        var rule = ruleRepository.findById(ruleId)
+                .orElseThrow(() -> new IllegalArgumentException("Regla no encontrada: " + ruleId));
+
+        if (!rule.createdBy().equals(ruleId) && !isAdmin()) {
+            throw new SecurityException("No tiene permiso para eliminar esta regla");
+        }
+
+        auditLog(AuditAction.DELETE, AuditResourceType.AUTOMATION_RULE, ruleId, rule.createdBy(),
+                Map.of());
+
+        ruleRepository.deleteById(ruleId);
+    }
+
+    public long countRulesByPhysician(UUID physicianId) {
+        return ruleRepository.countByCreatedByAndEnabled(physicianId, true);
+    }
+
+    // --- Motor de evaluación ---
+
+    @Transactional
+    public void evaluateAndExecute(TriggerEvent event, UUID eventId, UUID eventPhysicianId,
+                                   String eventPayloadJson) {
+        var enabledRules = ruleRepository.findByTriggerEventAndEnabled(event, true);
+
+        for (var rule : enabledRules) {
+            if (!rule.enabled()) continue;
+
+            // Verificar que el médico tiene permisos sobre el evento (solo si regla es del médico)
+            if (!rule.createdBy().equals(eventPhysicianId) && !isAdmin()) {
+                continue;
+            }
+
+            // Evaluar condiciones
+            if (!evaluateConditions(rule.conditions(), eventPayloadJson)) {
+                continue;
+            }
+
+            // Ejecutar acción
+            try {
+                executeAction(rule.action(), rule.actionParams(), eventPhysicianId, eventId, rule.createdBy());
+                
+                // Registrar ejecución exitosa
+                var log = RuleExecutionLog.of(rule.id(), eventId);
+                executionLogRepository.save(log);
+
+                auditLog(AuditAction.EXECUTE, AuditResourceType.AUTOMATION_RULE_EXECUTION,
+                        log.id(), rule.createdBy(),
+                        Map.of("ruleId", rule.id().toString(), "eventId", eventId.toString(),
+                                "action", rule.action().name()));
+            } catch (Exception e) {
+                // Registrar ejecución fallida
+                var log = RuleExecutionLog.of(rule.id(), eventId);
+                log = new RuleExecutionLog(log.id(), log.ruleId(), log.eventId(), log.triggeredAt(),
+                        false, e.getMessage(), null);
+                executionLogRepository.save(log);
+
+                log.error("Error executing automation rule {}: {}", rule.id(), e.getMessage());
+            }
+        }
+    }
+
+    private boolean evaluateConditions(String conditionsJson, String eventPayloadJson) {
+        try {
+            // Parsear condiciones simples: {"field": "urgency", "operator": "EQ", "value": "HIGH"}
+            var conditions = parseJson(conditionsJson);
+            var payload = parseJson(eventPayloadJson);
+
+            var field = getJsonValue(conditions, "field");
+            var operator = getJsonValue(conditions, "operator");
+            var expectedValue = getJsonValue(conditions, "value");
+
+            if (field == null || operator == null || expectedValue == null) {
+                return false;
+            }
+
+            var actualValue = getFieldFromPayload(payload, field);
+
+            return compareValues(actualValue, operator, expectedValue);
+        } catch (Exception e) {
+            log.warn("Error evaluating conditions: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private String getFieldFromPayload(Object payload, String field) {
+        // Navegación simple por puntos (ej. "urgency" o "patient.age")
+        if (field.contains(".")) {
+            var parts = field.split("\\.");
+            var obj = payload;
+            for (var part : parts) {
+                if (obj instanceof java.util.Map) {
+                    obj = ((java.util.Map<?, ?>) obj).get(part);
+                } else {
+                    return null;
+                }
+            }
+            return obj != null ? obj.toString() : null;
+        } else {
+            if (payload instanceof java.util.Map) {
+                return ((java.util.Map<?, ?>) payload).get(field) != null ?
+                        ((java.util.Map<?, ?>) payload).get(field).toString() : null;
+            }
+            return null;
+        }
+    }
+
+    private boolean compareValues(String actual, String operator, String expected) {
+        switch (operator.toUpperCase()) {
+            case "EQ":
+                return actual.equals(expected);
+            case "NE":
+                return !actual.equals(expected);
+            case "GT":
+                return doubleCompare(actual, expected) > 0;
+            case "GTE":
+                return doubleCompare(actual, expected) >= 0;
+            case "LT":
+                return doubleCompare(actual, expected) < 0;
+            case "LTE":
+                return doubleCompare(actual, expected) <= 0;
+            default:
+                return false;
+        }
+    }
+
+    private double doubleCompare(String a, String b) {
+        try {
+            return Double.parseDouble(a) - Double.parseDouble(b);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object parseJson(String json) {
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper().readValue(json, Object.class);
+        } catch (Exception e) {
+            log.warn("Invalid JSON: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private String getJsonValue(Object obj, String key) {
+        if (obj instanceof java.util.Map) {
+            return ((java.util.Map<String, Object>) obj).get(key) != null ?
+                    ((java.util.Map<String, Object>) obj).get(key).toString() : null;
+        }
+        return null;
+    }
+
+    // --- Ejecutar acciones ---
+
+    @Transactional
+    private void executeAction(ActionType action, String actionParams, UUID physicianId,
+                               UUID eventId, UUID executedBy) {
+        switch (action) {
+            case CREATE_ALERT:
+                executeCreateAlert(actionParams, physicianId, eventId, executedBy);
+                break;
+            case SEND_NOTIFICATION:
+                executeSendNotification(actionParams, physicianId, eventId, executedBy);
+                break;
+            case SEND_EMAIL:
+                executeSendEmail(actionParams, physicianId, eventId, executedBy);
+                break;
+            case CREATE_TASK:
+                executeCreateTask(actionParams, physicianId, eventId, executedBy);
+                break;
+            default:
+                throw new IllegalArgumentException("Acción no soportada: " + action);
+        }
+    }
+
+    private void executeCreateAlert(String params, UUID physicianId, UUID eventId, UUID executedBy) {
+        // Extraer mensaje y tipo de alerta de params JSON
+        var paramsMap = parseJson(params);
+        var message = getJsonValue(paramsMap, "message");
+        var alertType = getJsonValue(paramsMap, "alertType", "URGENT");
+
+        if (message != null) {
+            alertService.createAlert(alertType, message, executedBy, null);
+        }
+    }
+
+    private void executeSendNotification(String params, UUID physicianId, UUID eventId, UUID executedBy) {
+        var paramsMap = parseJson(params);
+        var to = getJsonValue(paramsMap, "to");
+        var message = getJsonValue(paramsMap, "message");
+
+        if (to != null && message != null) {
+            notificationService.send(to, message, "automation");
+        }
+    }
+
+    private void executeSendEmail(String params, UUID physicianId, UUID eventId, UUID executedBy) {
+        var paramsMap = parseJson(params);
+        var to = getJsonValue(paramsMap, "to");
+        var subject = getJsonValue(paramsMap, "subject");
+        var template = getJsonValue(paramsMap, "template");
+
+        if (to != null && subject != null && template != null) {
+            emailSender.send(to, subject, template, Map.of("eventId", eventId.toString()));
+        }
+    }
+
+    private void executeCreateTask(String params, UUID physicianId, UUID eventId, UUID executedBy) {
+        var paramsMap = parseJson(params);
+        var title = getJsonValue(paramsMap, "title");
+        var description = getJsonValue(paramsMap, "description");
+
+        if (title != null) {
+            followUpService.addTask(physicianId, executedBy, title, description != null ? description : "",
+                    null, null);
+        }
+    }
+
+    // --- Utilidades ---
+
+    private boolean isAdmin() {
+        // Esto sería inyectado desde el contexto de seguridad
+        return false; // Placeholder - se inyectaría el rol del usuario actual
+    }
+
+    private void auditLog(AuditAction action, AuditResourceType resource, UUID resourceId,
+                          UUID userId, java.util.Map<String, Object> details) {
+        if (auditService != null) {
+            auditService.logAccess(userId, action, resource, resourceId, userId, details);
+        }
+    }
+}

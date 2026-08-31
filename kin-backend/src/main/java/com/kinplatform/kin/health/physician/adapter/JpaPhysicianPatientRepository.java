@@ -2,17 +2,22 @@ package com.kinplatform.kin.health.physician.adapter;
 
 import com.kinplatform.kin.health.physician.adapter.PhysicianPatientAssignmentEntity.AssignmentId;
 import com.kinplatform.kin.health.physician.domain.PhysicianPatientAssignment;
+import com.kinplatform.kin.health.physician.domain.RelationshipStatus;
 import com.kinplatform.kin.health.physician.port.PhysicianPatientRepository;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Adaptador JPA del puerto {@link PhysicianPatientRepository} (ADR-031).
+ * Adaptador JPA del puerto {@link PhysicianPatientRepository} (ADR-031 + V30).
  *
- * <p>Consulta las asignaciones desde la tabla
- * {@code physician_patient_assignments} (clave compuesta médico-paciente).</p>
+ * <p>Consulta las relaciones desde la tabla
+ * {@code physician_patient_assignments} (clave compuesta médico-paciente) con
+ * su estado de ciclo de vida. {@code isAssigned} solo es {@code true} para
+ * relaciones {@code ACTIVE}: el acceso clínico, la mensajería y las citas
+ * requieren relación activa.</p>
  */
 @Component
 public class JpaPhysicianPatientRepository implements PhysicianPatientRepository {
@@ -29,7 +34,7 @@ public class JpaPhysicianPatientRepository implements PhysicianPatientRepository
         if (physicianId == null) {
             return List.of();
         }
-        return repository.findByIdPhysicianId(physicianId).stream()
+        return repository.findByIdPhysicianIdAndStatus(physicianId, RelationshipStatus.ACTIVE).stream()
                 .map(e -> e.getId().getPatientId())
                 .toList();
     }
@@ -40,7 +45,7 @@ public class JpaPhysicianPatientRepository implements PhysicianPatientRepository
         if (patientId == null) {
             return List.of();
         }
-        return repository.findByIdPatientId(patientId).stream()
+        return repository.findByIdPatientIdAndStatus(patientId, RelationshipStatus.ACTIVE).stream()
                 .map(e -> e.getId().getPhysicianId())
                 .toList();
     }
@@ -49,6 +54,7 @@ public class JpaPhysicianPatientRepository implements PhysicianPatientRepository
     @Transactional(readOnly = true)
     public List<UUID> findAllPatientIds() {
         return repository.findAll().stream()
+                .filter(e -> e.getStatus() == RelationshipStatus.ACTIVE)
                 .map(e -> e.getId().getPatientId())
                 .distinct()
                 .toList();
@@ -56,8 +62,58 @@ public class JpaPhysicianPatientRepository implements PhysicianPatientRepository
 
     @Override
     @Transactional(readOnly = true)
+    public List<PhysicianPatientAssignment> findByPhysicianIdAndStatus(UUID physicianId, RelationshipStatus status) {
+        if (physicianId == null || status == null) {
+            return List.of();
+        }
+        return repository.findByIdPhysicianIdAndStatus(physicianId, status).stream()
+                .map(JpaPhysicianPatientRepository::toDomain)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PhysicianPatientAssignment> findByPatientIdAndStatus(UUID patientId, RelationshipStatus status) {
+        if (patientId == null || status == null) {
+            return List.of();
+        }
+        return repository.findByIdPatientIdAndStatus(patientId, status).stream()
+                .map(JpaPhysicianPatientRepository::toDomain)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<PhysicianPatientAssignment> findByPhysicianIdAndPatientId(UUID physicianId, UUID patientId) {
+        if (physicianId == null || patientId == null) {
+            return Optional.empty();
+        }
+        return repository.findByIdPhysicianIdAndIdPatientId(physicianId, patientId).map(
+                JpaPhysicianPatientRepository::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<PhysicianPatientAssignment> findPendingInvitation(UUID physicianId, UUID patientId) {
+        return findByPhysicianIdAndPatientId(physicianId, patientId)
+                .filter(PhysicianPatientAssignment::isPending);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public boolean isAssigned(UUID physicianId, UUID patientId) {
-        return repository.existsByIdPhysicianIdAndIdPatientId(physicianId, patientId);
+        return repository.existsByIdPhysicianIdAndIdPatientIdAndStatus(
+                physicianId, patientId, RelationshipStatus.ACTIVE);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByPhysicianIdAndPatientIdAndStatus(
+            UUID physicianId, UUID patientId, RelationshipStatus status) {
+        if (physicianId == null || patientId == null || status == null) {
+            return false;
+        }
+        return repository.existsByIdPhysicianIdAndIdPatientIdAndStatus(physicianId, patientId, status);
     }
 
     @Override
@@ -66,10 +122,7 @@ public class JpaPhysicianPatientRepository implements PhysicianPatientRepository
         if (assignment == null) {
             throw new IllegalArgumentException("assignment no puede ser null");
         }
-        var entity = new PhysicianPatientAssignmentEntity();
-        entity.setId(new AssignmentId(assignment.physicianId(), assignment.patientId()));
-        entity.setAssignedAt(assignment.assignedAt());
-        repository.save(entity);
+        repository.save(toEntity(assignment));
         return assignment;
     }
 
@@ -77,5 +130,31 @@ public class JpaPhysicianPatientRepository implements PhysicianPatientRepository
     @Transactional
     public void unassign(UUID physicianId, UUID patientId) {
         repository.deleteById(new AssignmentId(physicianId, patientId));
+    }
+
+    private static PhysicianPatientAssignmentEntity toEntity(PhysicianPatientAssignment a) {
+        PhysicianPatientAssignmentEntity entity = new PhysicianPatientAssignmentEntity();
+        entity.setId(new AssignmentId(a.physicianId(), a.patientId()));
+        entity.setAssignedAt(a.assignedAt());
+        entity.setStatus(a.status());
+        entity.setInvitedBy(a.invitedBy());
+        entity.setInvitedAt(a.invitedAt());
+        entity.setAcceptedAt(a.acceptedAt());
+        entity.setEndedAt(a.endedAt());
+        entity.setEndedReason(a.endedReason());
+        return entity;
+    }
+
+    private static PhysicianPatientAssignment toDomain(PhysicianPatientAssignmentEntity e) {
+        return new PhysicianPatientAssignment(
+                e.getId().getPhysicianId(),
+                e.getId().getPatientId(),
+                e.getAssignedAt(),
+                e.getStatus(),
+                e.getInvitedBy(),
+                e.getInvitedAt(),
+                e.getAcceptedAt(),
+                e.getEndedAt(),
+                e.getEndedReason());
     }
 }

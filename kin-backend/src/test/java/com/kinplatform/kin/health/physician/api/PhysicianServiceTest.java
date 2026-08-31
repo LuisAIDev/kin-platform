@@ -6,7 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.kinplatform.kin.health.dashboard.InMemoryDashboardRepository;
+import com.kinplatform.kin.health.audit.api.AuditService;
+import com.kinplatform.kin.health.audit.config.AuditProperties;
 import com.kinplatform.kin.health.physician.InMemoryPhysicianRepositories;
+import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
+import com.kinplatform.kin.health.physician.access.RelationshipNotActiveException;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
 import com.kinplatform.kin.health.physician.domain.ClinicalAlert;
 import com.kinplatform.kin.health.triage.InMemoryTriageConsultationRepository;
@@ -76,6 +80,12 @@ class PhysicianServiceTest {
         return repo;
     }
 
+    private static AuditService auditService() {
+        var props = new AuditProperties();
+        props.setEnabled(false);
+        return new AuditService(null, null, null, props);
+    }
+
     private PhysicianService service(boolean enabled, InMemoryPhysicianRepositories repos) {
         return new PhysicianService(
                 repos.patientRepository(),
@@ -83,7 +93,9 @@ class PhysicianServiceTest {
                 consultations(),
                 new InMemoryDashboardRepository(),
                 userRepository,
-                properties(enabled));
+                properties(enabled),
+                new RelationshipAccessValidator(repos.patientRepository()),
+                auditService());
     }
 
     @Test
@@ -103,8 +115,29 @@ class PhysicianServiceTest {
     void patientSummary_deberiaRechazarPacienteNoAsignado() {
         var service = service(true, new InMemoryPhysicianRepositories());
 
-        assertThrows(PhysicianPatientNotFoundException.class, () -> service.patientSummary(PHYSICIAN, PATIENT));
-        assertThrows(PhysicianPatientNotFoundException.class, () -> service.patientHistory(PHYSICIAN, PATIENT));
+        assertThrows(RelationshipNotActiveException.class, () -> service.patientSummary(PHYSICIAN, PATIENT));
+        assertThrows(RelationshipNotActiveException.class, () -> service.patientHistory(PHYSICIAN, PATIENT));
+    }
+
+    @Test
+    void patientSummary_conRelacionPendiente_deberiaRechazar() {
+        var repos = new InMemoryPhysicianRepositories();
+        repos.patientRepository().assign(InMemoryPhysicianRepositories.pendingAssignment(PHYSICIAN, PATIENT));
+        var service = service(true, repos);
+
+        assertThrows(RelationshipNotActiveException.class, () -> service.patientSummary(PHYSICIAN, PATIENT));
+        assertThrows(RelationshipNotActiveException.class, () -> service.patientHistory(PHYSICIAN, PATIENT));
+    }
+
+    @Test
+    void patientSummary_conRelacionFinalizada_deberiaRechazar() {
+        var repos = new InMemoryPhysicianRepositories();
+        repos.patientRepository().assign(
+                InMemoryPhysicianRepositories.pendingAssignment(PHYSICIAN, PATIENT)
+                        .ended(OffsetDateTime.now(), "REJECTED_BY_PATIENT"));
+        var service = service(true, repos);
+
+        assertThrows(RelationshipNotActiveException.class, () -> service.patientSummary(PHYSICIAN, PATIENT));
     }
 
     @Test
@@ -166,6 +199,22 @@ class PhysicianServiceTest {
 
         assertThrows(
                 PhysicianAlertNotFoundException.class, () -> service.acknowledgeAlert(UUID.randomUUID(), alert.id()));
+    }
+
+    @Test
+    void acknowledgeAlert_conRelacionFinalizada_deberiaRechazar() {
+        var repos = new InMemoryPhysicianRepositories();
+        repos.patientRepository().assign(InMemoryPhysicianRepositories.assignment(PHYSICIAN, PATIENT));
+        var service = service(true, repos);
+        service.createHighUrgencyAlerts(PATIENT, List.of("dolor"), List.of("Angina de pecho"));
+        var alert = service.activeAlerts(PHYSICIAN).get(0);
+
+        // La relación se termina después de crear la alerta: el médico ya no puede gestionarla.
+        repos.patientRepository().assign(
+                InMemoryPhysicianRepositories.assignment(PHYSICIAN, PATIENT)
+                        .ended(OffsetDateTime.now(), "ENDED_BY_ADMIN"));
+
+        assertThrows(RelationshipNotActiveException.class, () -> service.acknowledgeAlert(PHYSICIAN, alert.id()));
     }
 
     @Test

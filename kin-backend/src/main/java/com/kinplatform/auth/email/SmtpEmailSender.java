@@ -150,6 +150,47 @@ public class SmtpEmailSender implements EmailSender {
                         + "Si no solicitaste este cambio, ignora este mensaje.");
     }
 
+    @Override
+    public void sendInvitationEmail(
+            String to,
+            String patientName,
+            String physicianName,
+            String specialty,
+            String message,
+            String invitationLink) {
+        String specialtySuffix = (specialty == null || specialty.isBlank()) ? "" : " (" + specialty + ")";
+        String optionalMessage = (message == null || message.isBlank()) ? "" : "\n" + message + "\n";
+        sendEmail(
+                "invitation",
+                to,
+                patientName,
+                invitationLink,
+                "Has recibido una invitación de tu médico en KIN Salud",
+                "Hola " + patientName + ",\n\n"
+                        + "El médico " + physicianName + specialtySuffix
+                        + " te ha invitado a conectarte a través de KIN Salud."
+                        + optionalMessage + "\n"
+                        + "Para aceptar o rechazar esta invitación, haz clic en el siguiente enlace:\n\n"
+                        + invitationLink + "\n\n"
+                        + "Si no reconoces a este médico, puedes ignorar este mensaje.");
+    }
+
+    @Override
+    public void sendAppointmentReminderEmail(
+            String to, String patientName, String physicianName, String scheduledAtText) {
+        sendEmail(
+                "appointment-reminder",
+                to,
+                patientName,
+                "https://kin-platform.com/dashboard/patient/schedule",
+                "Recordatorio de tu cita en KIN Salud",
+                "Hola " + patientName + ",\n\n"
+                        + "Tienes una cita confirmada con " + physicianName + " el " + scheduledAtText + ".\n\n"
+                        + "Puedes ver y gestionar tu cita en tu panel de KIN Salud:\n"
+                        + "https://kin-platform.com/dashboard/patient/schedule\n\n"
+                        + "Si no puedes asistir, cancela o reprograma con anticipación.");
+    }
+
     private void sendEmail(String type, String to, String fullName, String link, String subject, String text) {
         attemptsCounter.increment();
         Timer.Sample sample = Timer.start();

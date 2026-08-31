@@ -2,8 +2,10 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import PatientList from "@/components/physician/PatientList";
+import type { PageResponse } from "@/types";
+import type { PhysicianPatientSummary } from "@/services/physician";
 
-const PAGE = {
+const PAGE: PageResponse<PhysicianPatientSummary> = {
   content: [
     {
       patientId: "p1",
@@ -14,6 +16,7 @@ const PAGE = {
       totalTriages: 3,
       lastTriageAt: "2026-08-20T10:00:00Z",
       activeAlerts: 1,
+      relationshipStatus: "ACTIVE",
     },
   ],
   totalElements: 1,
@@ -51,6 +54,33 @@ describe("PatientList", () => {
       />,
     );
 
-    expect(screen.getByText("No tienes pacientes asignados.")).toBeInTheDocument();
+    expect(screen.getByText("No tienes pacientes con este estado.")).toBeInTheDocument();
+  });
+
+  it("muestra badge PENDING y oculta la acción clínica para invitaciones pendientes", () => {
+    const PENDING_PAGE: PageResponse<PhysicianPatientSummary> = {
+      content: [
+        {
+          patientId: "p2",
+          patientName: "Paciente Pendiente",
+          activeConditions: [],
+          riskFactors: [],
+          chronicConditions: [],
+          totalTriages: 0,
+          lastTriageAt: null,
+          activeAlerts: 0,
+          relationshipStatus: "PENDING",
+        },
+      ],
+      totalElements: 1,
+      totalPages: 1,
+      currentPage: 0,
+      size: 10,
+    };
+
+    render(<PatientList page={PENDING_PAGE} onPageChange={vi.fn()} onSelect={vi.fn()} />);
+
+    expect(screen.getByText("Pendiente de aceptación")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ver resumen" })).not.toBeInTheDocument();
   });
 });

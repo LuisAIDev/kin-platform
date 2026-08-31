@@ -9,8 +9,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.kin.health.physician.domain.ClinicalAlert;
 import com.kinplatform.kin.health.physician.domain.PatientSummary;
+import com.kinplatform.kin.health.physician.domain.PhysicianPatientAssignment;
+import com.kinplatform.kin.health.physician.domain.RelationshipStatus;
 import com.kinplatform.kin.health.triage.domain.Severity;
 import com.kinplatform.kin.health.triage.domain.TriageConditionResult;
 import com.kinplatform.kin.health.triage.domain.TriageConsultation;
@@ -31,12 +34,13 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 /**
- * Test del endpoint REST del portal de médicos con MockMvc (ADR-031).
+ * Test del endpoint REST del portal de médicos con MockMvc (ADR-031 + V30).
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -50,12 +54,17 @@ class PhysicianControllerTest {
     private PhysicianService physicianService;
 
     @Mock
+    private RelationshipService relationshipService;
+
+    @Mock
     private UserRepository userRepository;
 
     @Mock
     private Authentication authentication;
 
     private MockMvc mockMvc;
+    private final ObjectMapper objectMapper =
+            new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
 
     @BeforeEach
     void setUp() {
@@ -66,7 +75,7 @@ class PhysicianControllerTest {
                 .build();
         lenient().when(authentication.getName()).thenReturn(EMAIL);
         lenient().when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        mockMvc = MockMvcBuilders.standaloneSetup(new PhysicianController(physicianService, userRepository))
+        mockMvc = MockMvcBuilders.standaloneSetup(new PhysicianController(physicianService, relationshipService, userRepository))
                 .setCustomArgumentResolvers(new org.springframework.data.web.PageableHandlerMethodArgumentResolver())
                 .defaultRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request(
                                 org.springframework.http.HttpMethod.GET, "/")
@@ -81,7 +90,7 @@ class PhysicianControllerTest {
     void patients_deberiaDevolverListaPaginada() throws Exception {
         when(physicianService.listPatients(eq(PHYSICIAN), any()))
                 .thenReturn(new PageImpl<>(
-                        List.of(new PatientSummary(
+                        List.of(PatientSummary.active(
                                 PATIENT,
                                 "Paciente Test",
                                 List.of("Gripe"),
@@ -98,13 +107,52 @@ class PhysicianControllerTest {
                 .andExpect(jsonPath("$.content[0].patientName").value("Paciente Test"))
                 .andExpect(jsonPath("$.content[0].totalTriages").value(3))
                 .andExpect(jsonPath("$.content[0].activeAlerts").value(1))
+                .andExpect(jsonPath("$.content[0].relationshipStatus").value("ACTIVE"))
                 .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void patients_conStatusPending_deberiaFiltrarPorEstado() throws Exception {
+        when(physicianService.listPatients(eq(PHYSICIAN), eq(RelationshipStatus.PENDING), any()))
+                .thenReturn(new PageImpl<>(
+                        List.of(PatientSummary.pending(PATIENT, "Paciente Test")),
+                        PageRequest.of(0, 10),
+                        1));
+
+        mockMvc.perform(get("/health/physician/patients").param("status", "PENDING"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].relationshipStatus").value("PENDING"))
+                .andExpect(jsonPath("$.content[0].patientName").value("Paciente Test"));
+    }
+
+    @Test
+    void invite_deberiaInvocarInvitacion() throws Exception {
+        UUID invited = UUID.randomUUID();
+        PhysicianPatientAssignment invitation = PhysicianPatientAssignment.invitation(
+                PHYSICIAN, invited, PHYSICIAN, OffsetDateTime.now());
+        when(relationshipService.invitePatient(PHYSICIAN, "paciente@kin.com", "Hola"))
+                .thenReturn(invitation);
+        when(userRepository.findById(invited))
+                .thenReturn(Optional.of(User.builder()
+                        .id(invited)
+                        .email("paciente@kin.com")
+                        .role(UserRole.PATIENT)
+                        .build()));
+
+        mockMvc.perform(post("/health/physician/patients/invite")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new PhysicianController.InviteRequest("paciente@kin.com", "Hola"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.patientId").value(invited.toString()))
+                .andExpect(jsonPath("$.patientEmail").value("paciente@kin.com"));
     }
 
     @Test
     void patientSummary_deberiaDevolverResumen() throws Exception {
         when(physicianService.patientSummary(PHYSICIAN, PATIENT))
-                .thenReturn(new PatientSummary(
+                .thenReturn(PatientSummary.active(
                         PATIENT,
                         "Paciente Test",
                         List.of("Gripe"),

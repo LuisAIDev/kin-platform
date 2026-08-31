@@ -1,8 +1,11 @@
 package com.kinplatform.kin.health.physician.adapter;
 
+import com.kinplatform.kin.health.physician.domain.RelationshipStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.OffsetDateTime;
@@ -14,9 +17,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Entidad JPA de asignación médico-paciente (tabla
- * {@code physician_patient_assignments}, ADR-031). Clave compuesta
- * (physicianId, patientId).
+ * Entidad JPA de relación médico-paciente (tabla
+ * {@code physician_patient_assignments}, ADR-031 + ciclo de vida V30). Clave
+ * compuesta (physicianId, patientId).
  */
 @Entity
 @Table(name = "physician_patient_assignments")
@@ -31,6 +34,25 @@ public class PhysicianPatientAssignmentEntity {
 
     @Column(name = "assigned_at", nullable = false)
     private OffsetDateTime assignedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private RelationshipStatus status;
+
+    @Column(name = "invited_by")
+    private UUID invitedBy;
+
+    @Column(name = "invited_at")
+    private OffsetDateTime invitedAt;
+
+    @Column(name = "accepted_at")
+    private OffsetDateTime acceptedAt;
+
+    @Column(name = "ended_at")
+    private OffsetDateTime endedAt;
+
+    @Column(name = "ended_reason")
+    private String endedReason;
 
     @Data
     @NoArgsConstructor

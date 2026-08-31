@@ -58,6 +58,7 @@ public record ClinicalAlert(
 
     public enum AlertType {
         HIGH_URGENCY_TRIAGE,
+        EVOLUTION_STALE,
         GENERAL
     }
 

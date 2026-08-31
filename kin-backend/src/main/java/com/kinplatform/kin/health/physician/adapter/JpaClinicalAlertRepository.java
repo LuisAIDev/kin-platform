@@ -68,6 +68,16 @@ public class JpaClinicalAlertRepository implements ClinicalAlertRepository {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public long countActiveHighUrgencyByPhysician(UUID physicianId) {
+        if (physicianId == null) {
+            return 0;
+        }
+        return repository.countByPhysicianIdAndStatusAndSeverity(
+                physicianId, ClinicalAlert.AlertStatus.PENDING, ClinicalAlert.AlertSeverity.ALTA);
+    }
+
     private ClinicalAlert toDomain(ClinicalAlertEntity entity) {
         if (entity == null) {
             return null;

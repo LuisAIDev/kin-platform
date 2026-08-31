@@ -12,6 +12,28 @@ function formatDate(iso: string | null) {
   });
 }
 
+function StatusBadge({ status }: { status: string }) {
+  if (status === "PENDING") {
+    return (
+      <span className="rounded-full bg-amber-100 text-amber-700 px-2.5 py-0.5 text-xs font-bold">
+        Pendiente de aceptación
+      </span>
+    );
+  }
+  if (status === "SUSPENDED" || status === "ENDED") {
+    return (
+      <span className="rounded-full bg-neutral-200 text-neutral-600 px-2.5 py-0.5 text-xs font-bold">
+        {status === "SUSPENDED" ? "Suspendida" : "Finalizada"}
+      </span>
+    );
+  }
+  return (
+    <span className="rounded-full bg-emerald-100 text-emerald-700 px-2.5 py-0.5 text-xs font-bold">
+      Activa
+    </span>
+  );
+}
+
 export default function PatientList({
   page,
   onPageChange,
@@ -26,7 +48,7 @@ export default function PatientList({
   if (content.length === 0) {
     return (
       <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center text-sm text-neutral-500">
-        No tienes pacientes asignados.
+        No tienes pacientes con este estado.
       </div>
     );
   }
@@ -38,6 +60,7 @@ export default function PatientList({
           <thead className="bg-neutral-50 text-left text-xs uppercase text-neutral-400">
             <tr>
               <th className="px-4 py-3 font-medium">Paciente</th>
+              <th className="px-4 py-3 font-medium">Estado</th>
               <th className="px-4 py-3 font-medium">Último triaje</th>
               <th className="px-4 py-3 font-medium">Condiciones</th>
               <th className="px-4 py-3 font-medium">Alertas</th>
@@ -48,6 +71,9 @@ export default function PatientList({
             {content.map((p) => (
               <tr key={p.patientId} className="hover:bg-neutral-50">
                 <td className="px-4 py-3 font-medium text-neutral-800">{p.patientName}</td>
+                <td className="px-4 py-3">
+                  <StatusBadge status={p.relationshipStatus ?? "ACTIVE"} />
+                </td>
                 <td className="px-4 py-3 text-neutral-600">{formatDate(p.lastTriageAt)}</td>
                 <td className="px-4 py-3 text-neutral-600">
                   {p.activeConditions.slice(0, 2).join(", ") || "—"}
@@ -62,13 +88,17 @@ export default function PatientList({
                   )}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <button
-                    type="button"
-                    onClick={() => onSelect(p.patientId)}
-                    className="rounded-lg border border-primary-200 text-primary-700 px-3 py-1.5 text-xs font-medium hover:bg-primary-50 transition"
-                  >
-                    Ver resumen
-                  </button>
+                  {p.relationshipStatus === "ACTIVE" ? (
+                    <button
+                      type="button"
+                      onClick={() => onSelect(p.patientId)}
+                      className="rounded-lg border border-primary-200 text-primary-700 px-3 py-1.5 text-xs font-medium hover:bg-primary-50 transition"
+                    >
+                      Ver resumen
+                    </button>
+                  ) : (
+                    <span className="text-xs text-neutral-400">—</span>
+                  )}
                 </td>
               </tr>
             ))}

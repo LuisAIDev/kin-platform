@@ -1,0 +1,72 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< com.kinplatform:kin-backend >---------------------
+[INFO] Building kin-backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.12:prepare-agent (default) @ kin-backend ---
+[INFO] argLine set to -javaagent:C:\\Users\\Lenovo\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.12\\org.jacoco.agent-0.8.12-runtime.jar=destfile=C:\\Users\\Lenovo\\proyecto-kin\\kin-backend\\target\\jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ kin-backend ---
+[INFO] Copying 8 resources from src\main\resources to target\classes
+[INFO] Copying 38 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ kin-backend ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ kin-backend ---
+[INFO] skip non existing resourceDirectory C:\Users\Lenovo\proyecto-kin\kin-backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ kin-backend ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 482 source files with javac [debug release 17] to target\test-classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistControllerTest.java:[48,13] cannot find symbol
+  symbol:   class AIAssistService
+  location: class com.kinplatform.kin.health.aiassist.api.AIAssistControllerTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[26,41] cannot find symbol
+  symbol:   class InMemoryTriageRepositories
+  location: package com.kinplatform.kin.health.triage
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[31,46] cannot find symbol
+  symbol:   class TriageRepository
+  location: package com.kinplatform.kin.health.triage.port
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[45,13] cannot find symbol
+  symbol:   class InMemoryTriageRepositories
+  location: class com.kinplatform.kin.health.aiassist.api.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[47,13] cannot find symbol
+  symbol:   class AIAssistService
+  location: class com.kinplatform.kin.health.aiassist.api.AIAssistServiceTest
+[INFO] 5 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  13.092 s
+[INFO] Finished at: 2026-08-30T21:46:00-05:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:testCompile (default-testCompile) on project kin-backend: Compilation failure: Compilation failure: 
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistControllerTest.java:[48,13] cannot find symbol
+[ERROR]   symbol:   class AIAssistService
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.api.AIAssistControllerTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[26,41] cannot find symbol
+[ERROR]   symbol:   class InMemoryTriageRepositories
+[ERROR]   location: package com.kinplatform.kin.health.triage
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[31,46] cannot find symbol
+[ERROR]   symbol:   class TriageRepository
+[ERROR]   location: package com.kinplatform.kin.health.triage.port
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[45,13] cannot find symbol
+[ERROR]   symbol:   class InMemoryTriageRepositories
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.api.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[47,13] cannot find symbol
+[ERROR]   symbol:   class AIAssistService
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.api.AIAssistServiceTest
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

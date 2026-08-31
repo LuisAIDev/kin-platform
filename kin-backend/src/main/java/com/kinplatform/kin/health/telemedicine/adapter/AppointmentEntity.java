@@ -38,6 +38,9 @@ public class AppointmentEntity {
     @Column(name = "scheduled_at", nullable = false)
     private OffsetDateTime scheduledAt;
 
+    @Column(name = "duration_minutes", nullable = false)
+    private int durationMinutes;
+
     @Column(name = "reason", nullable = false, length = 500)
     private String reason;
 
@@ -47,6 +50,18 @@ public class AppointmentEntity {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
+
+    @Column(name = "rescheduled_from")
+    private UUID rescheduledFrom;
+
+    @Column(name = "cancellation_reason", length = 300)
+    private String cancellationReason;
+
+    @Column(name = "availability_slot_id")
+    private UUID availabilitySlotId;
+
+    @Column(name = "reminder_sent", nullable = false)
+    private boolean reminderSent;
 
     @PrePersist
     protected void onCreate() {

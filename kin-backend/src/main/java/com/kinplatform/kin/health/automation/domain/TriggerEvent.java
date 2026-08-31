@@ -1,0 +1,13 @@
+package com.kinplatform.kin.health.automation.domain;
+
+public enum TriggerEvent {
+    TRIAGE_PERFORMED,
+    APPOINTMENT_CONFIRMED,
+    TASK_COMPLETED,
+    DOCUMENT_UPLOADED,
+    APPOINTMENT_REMINDER_SENT,
+    TRIAGE_URGENT_DETECTED,
+    DIFFERENTIAL_DIAGNOSED,
+    PATIENT_REGISTERED,
+    PHYSICIAN_ASSIGNED
+}

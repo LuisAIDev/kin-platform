@@ -1,0 +1,171 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< com.kinplatform:kin-backend >---------------------
+[INFO] Building kin-backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.12:prepare-agent (default) @ kin-backend ---
+[INFO] argLine set to -javaagent:C:\\Users\\Lenovo\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.12\\org.jacoco.agent-0.8.12-runtime.jar=destfile=C:\\Users\\Lenovo\\proyecto-kin\\kin-backend\\target\\jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ kin-backend ---
+[INFO] Copying 8 resources from src\main\resources to target\classes
+[INFO] Copying 38 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ kin-backend ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 976 source files with javac [debug release 17] to target\classes
+[INFO] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/main/java/com/kinplatform/common/security/JwtService.java: C:\Users\Lenovo\proyecto-kin\kin-backend\src\main\java\com\kinplatform\common\security\JwtService.java uses or overrides a deprecated API.
+[INFO] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/main/java/com/kinplatform/common/security/JwtService.java: Recompile with -Xlint:deprecation for details.
+[INFO] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/main/java/com/kinplatform/kin/event/InMemoryDomainEventBus.java: C:\Users\Lenovo\proyecto-kin\kin-backend\src\main\java\com\kinplatform\kin\event\InMemoryDomainEventBus.java uses unchecked or unsafe operations.
+[INFO] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/main/java/com/kinplatform/kin/event/InMemoryDomainEventBus.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ kin-backend ---
+[INFO] skip non existing resourceDirectory C:\Users\Lenovo\proyecto-kin\kin-backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ kin-backend ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 485 source files with javac [debug release 17] to target\test-classes
+[INFO] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/enterprise/web/EnterpriseApiExceptionHandlerTest.java: C:\Users\Lenovo\proyecto-kin\kin-backend\src\test\java\com\kinplatform\kin\enterprise\web\EnterpriseApiExceptionHandlerTest.java uses or overrides a deprecated API.
+[INFO] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/enterprise/web/EnterpriseApiExceptionHandlerTest.java: Recompile with -Xlint:deprecation for details.
+[INFO] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/ai/knowledge/adapter/KnowledgeColombiaSourcesTest.java: Some input files use unchecked or unsafe operations.
+[INFO] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/ai/knowledge/adapter/KnowledgeColombiaSourcesTest.java: Recompile with -Xlint:unchecked for details.
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistControllerTest.java:[40,1] duplicate class: com.kinplatform.kin.health.aiassist.api.AIAssistControllerTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistControllerTest.java:[36,13] cannot find symbol
+  symbol:   class AIAssistService
+  location: class com.kinplatform.kin.health.aiassist.api.AIAssistControllerTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistServiceTest.java:[40,13] cannot find symbol
+  symbol:   class RelationshipAccessValidator
+  location: class com.kinplatform.kin.health.aiassist.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[26,41] cannot find symbol
+  symbol:   class InMemoryTriageRepositories
+  location: package com.kinplatform.kin.health.triage
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[31,46] cannot find symbol
+  symbol:   class TriageRepository
+  location: package com.kinplatform.kin.health.triage.port
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[45,13] cannot find symbol
+  symbol:   class InMemoryTriageRepositories
+  location: class com.kinplatform.kin.health.aiassist.api.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[47,13] cannot find symbol
+  symbol:   class AIAssistService
+  location: class com.kinplatform.kin.health.aiassist.api.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistControllerTest.java:[51,17] cannot find symbol
+  symbol:   variable Optional
+  location: class com.kinplatform.kin.health.aiassist.api.AIAssistControllerTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistServiceTest.java:[57,14] cannot find symbol
+  symbol:   variable provider
+  location: class com.kinplatform.kin.health.aiassist.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistServiceTest.java:[65,9] cannot find symbol
+  symbol:   method verify(com.kinplatform.kin.health.aiassist.port.AIAssistRepository)
+  location: class com.kinplatform.kin.health.aiassist.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistServiceTest.java:[66,9] cannot find symbol
+  symbol:   method verify(com.kinplatform.kin.health.audit.api.AuditService)
+  location: class com.kinplatform.kin.health.aiassist.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistServiceTest.java:[81,14] cannot find symbol
+  symbol:   variable provider
+  location: class com.kinplatform.kin.health.aiassist.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistServiceTest.java:[90,9] cannot find symbol
+  symbol:   method verify(com.kinplatform.kin.health.aiassist.port.AIAssistRepository)
+  location: class com.kinplatform.kin.health.aiassist.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[53,27] cannot find symbol
+  symbol:   class InMemoryTriageRepositories
+  location: class com.kinplatform.kin.health.aiassist.api.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[58,35] incompatible types: com.kinplatform.kin.health.aiassist.port.AIProviderPort is not a functional interface
+    multiple non-overriding abstract methods found in interface com.kinplatform.kin.health.aiassist.port.AIProviderPort
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[65,23] cannot find symbol
+  symbol:   class AIAssistService
+  location: class com.kinplatform.kin.health.aiassist.api.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[69,53] cannot find symbol
+  symbol:   method appointmentRepository()
+  location: class com.kinplatform.kin.health.scheduling.InMemorySchedulingRepositories
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[97,23] cannot find symbol
+  symbol:   class AIAssistService
+  location: class com.kinplatform.kin.health.aiassist.api.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[102,53] cannot find symbol
+  symbol:   method appointmentRepository()
+  location: class com.kinplatform.kin.health.scheduling.InMemorySchedulingRepositories
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[142,43] cannot find symbol
+  symbol:   method of(java.util.List<java.lang.Object>,java.util.List<java.lang.Object>,double,java.lang.String,java.lang.String,java.lang.String)
+  location: class com.kinplatform.kin.health.triage.domain.TriageResult
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistIntegrationTest.java:[53,40] cannot find symbol
+  symbol:   variable List
+  location: class com.kinplatform.kin.health.aiassist.AIAssistIntegrationTest
+[INFO] 21 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  34.014 s
+[INFO] Finished at: 2026-08-30T21:43:49-05:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:testCompile (default-testCompile) on project kin-backend: Compilation failure: Compilation failure: 
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistControllerTest.java:[40,1] duplicate class: com.kinplatform.kin.health.aiassist.api.AIAssistControllerTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistControllerTest.java:[36,13] cannot find symbol
+[ERROR]   symbol:   class AIAssistService
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.api.AIAssistControllerTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistServiceTest.java:[40,13] cannot find symbol
+[ERROR]   symbol:   class RelationshipAccessValidator
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[26,41] cannot find symbol
+[ERROR]   symbol:   class InMemoryTriageRepositories
+[ERROR]   location: package com.kinplatform.kin.health.triage
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[31,46] cannot find symbol
+[ERROR]   symbol:   class TriageRepository
+[ERROR]   location: package com.kinplatform.kin.health.triage.port
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[45,13] cannot find symbol
+[ERROR]   symbol:   class InMemoryTriageRepositories
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.api.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[47,13] cannot find symbol
+[ERROR]   symbol:   class AIAssistService
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.api.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistControllerTest.java:[51,17] cannot find symbol
+[ERROR]   symbol:   variable Optional
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.api.AIAssistControllerTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistServiceTest.java:[57,14] cannot find symbol
+[ERROR]   symbol:   variable provider
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistServiceTest.java:[65,9] cannot find symbol
+[ERROR]   symbol:   method verify(com.kinplatform.kin.health.aiassist.port.AIAssistRepository)
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistServiceTest.java:[66,9] cannot find symbol
+[ERROR]   symbol:   method verify(com.kinplatform.kin.health.audit.api.AuditService)
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistServiceTest.java:[81,14] cannot find symbol
+[ERROR]   symbol:   variable provider
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistServiceTest.java:[90,9] cannot find symbol
+[ERROR]   symbol:   method verify(com.kinplatform.kin.health.aiassist.port.AIAssistRepository)
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[53,27] cannot find symbol
+[ERROR]   symbol:   class InMemoryTriageRepositories
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.api.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[58,35] incompatible types: com.kinplatform.kin.health.aiassist.port.AIProviderPort is not a functional interface
+[ERROR]     multiple non-overriding abstract methods found in interface com.kinplatform.kin.health.aiassist.port.AIProviderPort
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[65,23] cannot find symbol
+[ERROR]   symbol:   class AIAssistService
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.api.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[69,53] cannot find symbol
+[ERROR]   symbol:   method appointmentRepository()
+[ERROR]   location: class com.kinplatform.kin.health.scheduling.InMemorySchedulingRepositories
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[97,23] cannot find symbol
+[ERROR]   symbol:   class AIAssistService
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.api.AIAssistServiceTest
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[102,53] cannot find symbol
+[ERROR]   symbol:   method appointmentRepository()
+[ERROR]   location: class com.kinplatform.kin.health.scheduling.InMemorySchedulingRepositories
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/api/AIAssistServiceTest.java:[142,43] cannot find symbol
+[ERROR]   symbol:   method of(java.util.List<java.lang.Object>,java.util.List<java.lang.Object>,double,java.lang.String,java.lang.String,java.lang.String)
+[ERROR]   location: class com.kinplatform.kin.health.triage.domain.TriageResult
+[ERROR] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/health/aiassist/AIAssistIntegrationTest.java:[53,40] cannot find symbol
+[ERROR]   symbol:   variable List
+[ERROR]   location: class com.kinplatform.kin.health.aiassist.AIAssistIntegrationTest
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

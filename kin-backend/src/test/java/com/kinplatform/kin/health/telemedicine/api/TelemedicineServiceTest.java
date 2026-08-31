@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.kinplatform.kin.health.physician.InMemoryPhysicianRepositories;
+import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
+import com.kinplatform.kin.health.physician.access.RelationshipNotActiveException;
 import com.kinplatform.kin.health.physician.domain.PhysicianPatientAssignment;
 import com.kinplatform.kin.health.telemedicine.InMemoryTelemedicineRepositories;
 import com.kinplatform.kin.health.telemedicine.config.TelemedicineProperties;
@@ -28,11 +30,14 @@ class TelemedicineServiceTest {
 
     private static TelemedicineService service(
             boolean enabled, InMemoryPhysicianRepositories physicians, InMemoryTelemedicineRepositories repos) {
+        var auditProps = new com.kinplatform.kin.health.audit.config.AuditProperties();
+        auditProps.setEnabled(false);
         return new TelemedicineService(
                 repos.messageRepository(),
                 repos.appointmentRepository(),
-                physicians.patientRepository(),
-                properties(enabled));
+                new RelationshipAccessValidator(physicians.patientRepository()),
+                properties(enabled),
+                new com.kinplatform.kin.health.audit.api.AuditService(null, null, null, auditProps));
     }
 
     private static InMemoryPhysicianRepositories assignedPhysicians() {
@@ -62,7 +67,27 @@ class TelemedicineServiceTest {
     void sendMessage_sinAsignacion_deberiaLanzar() {
         var service = service(true, new InMemoryPhysicianRepositories(), new InMemoryTelemedicineRepositories());
 
-        assertThrows(TelemedicineAssignmentException.class, () -> service.sendMessage(PATIENT, PHYSICIAN, "hola"));
+        assertThrows(RelationshipNotActiveException.class, () -> service.sendMessage(PATIENT, PHYSICIAN, "hola"));
+    }
+
+    @Test
+    void sendMessage_conRelacionPendiente_deberiaLanzar() {
+        var physicians = new InMemoryPhysicianRepositories();
+        physicians.patientRepository().assign(InMemoryPhysicianRepositories.pendingAssignment(PHYSICIAN, PATIENT));
+        var service = service(true, physicians, new InMemoryTelemedicineRepositories());
+
+        assertThrows(RelationshipNotActiveException.class, () -> service.sendMessage(PATIENT, PHYSICIAN, "hola"));
+    }
+
+    @Test
+    void sendMessage_conRelacionFinalizada_deberiaLanzar() {
+        var physicians = new InMemoryPhysicianRepositories();
+        physicians.patientRepository().assign(
+                InMemoryPhysicianRepositories.pendingAssignment(PHYSICIAN, PATIENT)
+                        .ended(OffsetDateTime.now(), "REJECTED_BY_PATIENT"));
+        var service = service(true, physicians, new InMemoryTelemedicineRepositories());
+
+        assertThrows(RelationshipNotActiveException.class, () -> service.sendMessage(PHYSICIAN, PATIENT, "hola"));
     }
 
     @Test
@@ -125,7 +150,7 @@ class TelemedicineServiceTest {
         var service = service(true, new InMemoryPhysicianRepositories(), new InMemoryTelemedicineRepositories());
 
         assertThrows(
-                TelemedicineAssignmentException.class,
+                RelationshipNotActiveException.class,
                 () -> service.requestAppointment(
                         PATIENT, PHYSICIAN, OffsetDateTime.now().plusDays(1), "motivo"));
     }

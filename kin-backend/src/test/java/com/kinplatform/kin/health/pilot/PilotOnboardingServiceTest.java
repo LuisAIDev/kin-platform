@@ -58,13 +58,18 @@ class PilotOnboardingServiceTest {
     }
 
     private PilotOnboardingService service() {
+        var auditProps = new com.kinplatform.kin.health.audit.config.AuditProperties();
+        auditProps.setEnabled(false);
         var physicianService = new PhysicianService(
                 physicianRepos.patientRepository(),
                 physicianRepos.alertRepository(),
                 null,
                 null,
                 userRepository,
-                new PhysicianProperties());
+                new PhysicianProperties(),
+                new com.kinplatform.kin.health.physician.access.RelationshipAccessValidator(
+                        physicianRepos.patientRepository()),
+                new com.kinplatform.kin.health.audit.api.AuditService(null, null, null, auditProps));
         return new PilotOnboardingService(userRepository, passwordEncoder, physicianService);
     }
 

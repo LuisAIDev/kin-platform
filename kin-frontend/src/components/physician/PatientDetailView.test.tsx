@@ -11,6 +11,7 @@ const SUMMARY = {
   totalTriages: 2,
   lastTriageAt: "2026-08-20T10:00:00Z",
   activeAlerts: 0,
+  relationshipStatus: "ACTIVE" as const,
 };
 
 const HISTORY = [

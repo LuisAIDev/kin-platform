@@ -5,6 +5,7 @@ import com.kinplatform.kin.health.telemedicine.domain.Appointment.AppointmentSta
 import com.kinplatform.kin.health.telemedicine.domain.Message;
 import com.kinplatform.kin.health.telemedicine.port.AppointmentRepository;
 import com.kinplatform.kin.health.telemedicine.port.MessageRepository;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -96,6 +97,84 @@ public class InMemoryTelemedicineRepositories {
             @Override
             public List<Appointment> findByStatus(AppointmentStatus status) {
                 return appointments.stream().filter(a -> a.status() == status).toList();
+            }
+
+            @Override
+            public long countPendingByPhysician(UUID physicianId) {
+                return appointments.stream()
+                        .filter(a -> a.physicianId().equals(physicianId) && a.status() == AppointmentStatus.PENDIENTE)
+                        .count();
+            }
+
+            @Override
+            public long countUpcomingByPatient(UUID patientId, OffsetDateTime from) {
+                return appointments.stream()
+                        .filter(a -> a.patientId().equals(patientId))
+                        .filter(a -> a.status() == AppointmentStatus.PENDIENTE
+                                || a.status() == AppointmentStatus.CONFIRMADA)
+                        .filter(a -> a.scheduledAt() != null
+                                && (from == null || !a.scheduledAt().isBefore(from)))
+                        .count();
+            }
+
+            @Override
+            public List<Appointment> findByPhysicianIdAndScheduledAtBetween(
+                    UUID physicianId, OffsetDateTime from, OffsetDateTime to) {
+                return appointments.stream()
+                        .filter(a -> a.physicianId().equals(physicianId))
+                        .filter(a -> a.scheduledAt() != null
+                                && (from == null || !a.scheduledAt().isBefore(from))
+                                && (to == null || !a.scheduledAt().isAfter(to)))
+                        .toList();
+            }
+
+            @Override
+            public List<Appointment> findByPatientIdAndScheduledAtBetween(
+                    UUID patientId, OffsetDateTime from, OffsetDateTime to) {
+                return appointments.stream()
+                        .filter(a -> a.patientId().equals(patientId))
+                        .filter(a -> a.scheduledAt() != null
+                                && (from == null || !a.scheduledAt().isBefore(from))
+                                && (to == null || !a.scheduledAt().isAfter(to)))
+                        .toList();
+            }
+
+            @Override
+            public List<Appointment> findConfirmedByScheduledAtBetween(OffsetDateTime from, OffsetDateTime to) {
+                return appointments.stream()
+                        .filter(a -> a.status() == AppointmentStatus.CONFIRMADA)
+                        .filter(a -> a.scheduledAt() != null
+                                && (from == null || !a.scheduledAt().isBefore(from))
+                                && (to == null || !a.scheduledAt().isAfter(to)))
+                        .toList();
+            }
+
+            @Override
+            public List<Appointment> findPendingByCreatedAtBefore(OffsetDateTime before) {
+                return appointments.stream()
+                        .filter(a -> a.status() == AppointmentStatus.PENDIENTE)
+                        .filter(a -> a.createdAt() != null && a.createdAt().isBefore(before))
+                        .toList();
+            }
+
+            @Override
+            public List<Appointment> findUpcomingByPatientId(UUID patientId, OffsetDateTime now) {
+                return appointments.stream()
+                        .filter(a -> a.patientId().equals(patientId))
+                        .filter(Appointment::isOpen)
+                        .filter(a -> a.scheduledAt() != null && (now == null || !a.scheduledAt().isBefore(now)))
+                        .sorted(Comparator.comparing(Appointment::scheduledAt))
+                        .toList();
+            }
+
+            @Override
+            public List<Appointment> findUpcomingByPhysicianId(UUID physicianId, OffsetDateTime now) {
+                return appointments.stream()
+                        .filter(a -> a.physicianId().equals(physicianId))
+                        .filter(Appointment::isOpen)
+                        .filter(a -> a.scheduledAt() != null && (now == null || !a.scheduledAt().isBefore(now)))
+                        .sorted(Comparator.comparing(Appointment::scheduledAt))
+                        .toList();
             }
         };
     }
