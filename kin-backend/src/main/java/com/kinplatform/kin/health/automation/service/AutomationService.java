@@ -6,9 +6,7 @@ import com.kinplatform.kin.health.automation.port.*;
 import com.kinplatform.kin.health.audit.api.AuditService;
 import com.kinplatform.kin.health.audit.domain.AuditAction;
 import com.kinplatform.kin.health.audit.domain.AuditResourceType;
-import com.kinplatform.kin.health.alert.api.AlertService;
-import com.kinplatform.kin.health.notification.api.NotificationService;
-import com.kinplatform.kin.health.email.api.EmailSender;
+import com.kinplatform.auth.email.EmailSender;
 import com.kinplatform.kin.health.followup.api.FollowUpService;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -19,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,35 +29,12 @@ public class AutomationService {
     private static final Logger log = LoggerFactory.getLogger(AutomationService.class);
 
     private final AutomationRuleRepository ruleRepository;
-    final RuleExecutionLogRepository executionLogRepository;
+    public final RuleExecutionLogRepository executionLogRepository;
     private final AutomationProperties properties;
     private final UserRepository userRepository;
     private final AuditService auditService;
-    private final AlertService alertService;
-    private final NotificationService notificationService;
     private final EmailSender emailSender;
     private final FollowUpService followUpService;
-
-    public AutomationService(
-            AutomationRuleRepository ruleRepository,
-            RuleExecutionLogRepository executionLogRepository,
-            AutomationProperties properties,
-            UserRepository userRepository,
-            AuditService auditService,
-            AlertService alertService,
-            NotificationService notificationService,
-            EmailSender emailSender,
-            FollowUpService followUpService) {
-        this.ruleRepository = ruleRepository;
-        this.executionLogRepository = executionLogRepository;
-        this.properties = properties;
-        this.userRepository = userRepository;
-        this.auditService = auditService;
-        this.alertService = alertService;
-        this.notificationService = notificationService;
-        this.emailSender = emailSender;
-        this.followUpService = followUpService;
-    }
 
     // --- Gestión de reglas ---
 
@@ -184,10 +160,10 @@ public class AutomationService {
                                 "action", rule.action().name()));
             } catch (Exception e) {
                 // Registrar ejecución fallida
-                var log = RuleExecutionLog.of(rule.id(), eventId);
-                log = new RuleExecutionLog(log.id(), log.ruleId(), log.eventId(), log.triggeredAt(),
+                var executionLog = RuleExecutionLog.of(rule.id(), eventId);
+                executionLog = new RuleExecutionLog(executionLog.id(), executionLog.ruleId(), executionLog.eventId(), executionLog.triggeredAt(),
                         false, e.getMessage(), null);
-                executionLogRepository.save(log);
+                executionLogRepository.save(executionLog);
 
                 log.error("Error executing automation rule {}: {}", rule.id(), e.getMessage());
             }
@@ -309,46 +285,20 @@ public class AutomationService {
     }
 
     private void executeCreateAlert(String params, UUID physicianId, UUID eventId, UUID executedBy) {
-        // Extraer mensaje y tipo de alerta de params JSON
-        var paramsMap = parseJson(params);
-        var message = getJsonValue(paramsMap, "message");
-        var alertType = getJsonValue(paramsMap, "alertType", "URGENT");
-
-        if (message != null) {
-            alertService.createAlert(alertType, message, executedBy, null);
-        }
+        throw new UnsupportedOperationException("CREATE_ALERT no implementado: AlertService no disponible");
     }
 
     private void executeSendNotification(String params, UUID physicianId, UUID eventId, UUID executedBy) {
-        var paramsMap = parseJson(params);
-        var to = getJsonValue(paramsMap, "to");
-        var message = getJsonValue(paramsMap, "message");
-
-        if (to != null && message != null) {
-            notificationService.send(to, message, "automation");
-        }
+        throw new UnsupportedOperationException("SEND_NOTIFICATION no implementado: NotificationService no disponible");
     }
 
     private void executeSendEmail(String params, UUID physicianId, UUID eventId, UUID executedBy) {
-        var paramsMap = parseJson(params);
-        var to = getJsonValue(paramsMap, "to");
-        var subject = getJsonValue(paramsMap, "subject");
-        var template = getJsonValue(paramsMap, "template");
-
-        if (to != null && subject != null && template != null) {
-            emailSender.send(to, subject, template, Map.of("eventId", eventId.toString()));
-        }
+        throw new UnsupportedOperationException("SEND_EMAIL no implementado: EmailSender contract not compatible");
     }
 
     private void executeCreateTask(String params, UUID physicianId, UUID eventId, UUID executedBy) {
-        var paramsMap = parseJson(params);
-        var title = getJsonValue(paramsMap, "title");
-        var description = getJsonValue(paramsMap, "description");
-
-        if (title != null) {
-            followUpService.addTask(physicianId, executedBy, title, description != null ? description : "",
-                    null, null);
-        }
+        throw new UnsupportedOperationException(
+                "CREATE_TASK no implementado: requiere un planId valido de FollowUpPlan no resoluble desde el dominio de Automation");
     }
 
     // --- Utilidades ---

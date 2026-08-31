@@ -6,6 +6,7 @@ import com.kinplatform.kin.health.automation.port.AutomationRuleRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
+import java.time.OffsetDateTime;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -34,7 +35,7 @@ public class JpaAutomationRuleRepository implements AutomationRuleRepository {
                 .setParameter("id", id)
                 .getResultStream()
                 .findFirst()
-                .map(this::toDomain);
+                .map(log -> toDomain(log));
     }
 
     @Override
@@ -44,7 +45,7 @@ public class JpaAutomationRuleRepository implements AutomationRuleRepository {
                 .setParameter("physicianId", physicianId)
                 .getResultList()
                 .stream()
-                .map(this::toDomain)
+                .map(log -> toDomain(log))
                 .toList();
     }
 
@@ -56,7 +57,7 @@ public class JpaAutomationRuleRepository implements AutomationRuleRepository {
                 .setParameter("enabled", enabled)
                 .getResultList()
                 .stream()
-                .map(this::toDomain)
+                .map(log -> toDomain(log))
                 .toList();
     }
 

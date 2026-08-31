@@ -19,6 +19,18 @@ public class JpaRuleExecutionLogRepository implements RuleExecutionLogRepository
     private EntityManager entityManager;
 
     @Override
+    public List<RuleExecutionLog> findByRuleIdAndExecuted(UUID ruleId, boolean executed) {
+        return entityManager.createQuery(
+                "SELECT e FROM RuleExecutionLogEntity e WHERE e.ruleId = :ruleId AND e.executed = :executed", RuleExecutionLogEntity.class)
+                .setParameter("ruleId", ruleId)
+                .setParameter("executed", executed)
+                .getResultList()
+                .stream()
+                .map(log -> toDomain(log))
+                .toList();
+    }
+
+    @Override
     @Transactional
     public RuleExecutionLog save(RuleExecutionLog log) {
         RuleExecutionLogEntity entity = toEntity(log);
@@ -33,7 +45,7 @@ public class JpaRuleExecutionLogRepository implements RuleExecutionLogRepository
                 .setParameter("id", id)
                 .getResultStream()
                 .findFirst()
-                .map(this::toDomain);
+                .map(log -> toDomain(log));
     }
 
     @Override
@@ -43,7 +55,7 @@ public class JpaRuleExecutionLogRepository implements RuleExecutionLogRepository
                 .setParameter("ruleId", ruleId)
                 .getResultList()
                 .stream()
-                .map(this::toDomain)
+                .map(log -> toDomain(log))
                 .toList();
     }
 
@@ -54,7 +66,7 @@ public class JpaRuleExecutionLogRepository implements RuleExecutionLogRepository
                 .setParameter("eventId", eventId)
                 .getResultList()
                 .stream()
-                .map(this::toDomain)
+                .map(log -> toDomain(log))
                 .toList();
     }
 
@@ -64,7 +76,7 @@ public class JpaRuleExecutionLogRepository implements RuleExecutionLogRepository
                 "SELECT e FROM RuleExecutionLogEntity e WHERE e.executed = false ORDER BY e.triggeredAt DESC", RuleExecutionLogEntity.class)
                 .getResultList()
                 .stream()
-                .map(this::toDomain)
+                .map(log -> toDomain(log))
                 .toList();
     }
 

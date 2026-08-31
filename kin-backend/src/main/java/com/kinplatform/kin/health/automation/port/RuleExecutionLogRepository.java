@@ -18,4 +18,6 @@ public interface RuleExecutionLogRepository {
     List<RuleExecutionLog> findByExecutedFalseOrderByTriggeredAtDesc();
 
     long countByRuleIdAndExecuted(UUID ruleId, boolean executed);
+
+    List<RuleExecutionLog> findByRuleIdAndExecuted(UUID ruleId, boolean executed);
 }

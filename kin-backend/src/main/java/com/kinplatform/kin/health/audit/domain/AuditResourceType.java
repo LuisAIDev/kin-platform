@@ -11,5 +11,7 @@ public enum AuditResourceType {
     TAREA,
     EVOLUCION,
     ALERTA,
-    DOCUMENTO
+    DOCUMENTO,
+    AUTOMATION_RULE,
+    AUTOMATION_RULE_EXECUTION
 }
