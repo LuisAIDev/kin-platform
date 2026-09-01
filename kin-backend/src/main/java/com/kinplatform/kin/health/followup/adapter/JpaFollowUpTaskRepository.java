@@ -1,7 +1,6 @@
 package com.kinplatform.kin.health.followup.adapter;
 
 import com.kinplatform.kin.health.followup.domain.FollowUpTask;
-import com.kinplatform.kin.health.followup.domain.FollowUpTaskStatus;
 import com.kinplatform.kin.health.followup.port.FollowUpTaskRepository;
 import java.time.OffsetDateTime;
 import java.util.Collection;

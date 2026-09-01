@@ -5,15 +5,11 @@ import com.kinplatform.kin.engine.EngineMetadata;
 import com.kinplatform.kin.engine.EnginePhase;
 import com.kinplatform.kin.engine.EngineType;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
-import com.kinplatform.kin.knowledge.SourceTrust;
-
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -39,11 +35,7 @@ public class DeduplicationEngine implements DomainEngine<DeduplicationInput, Ded
     }
 
     private static List<DeduplicationStrategy> defaultStrategies() {
-        return List.of(
-                new ExactMatchStrategy(),
-                new FuzzyMatchStrategy(0.85),
-                new SemanticMatchStrategy(0.90)
-        );
+        return List.of(new ExactMatchStrategy(), new FuzzyMatchStrategy(0.85), new SemanticMatchStrategy(0.90));
     }
 
     @Override
@@ -55,7 +47,7 @@ public class DeduplicationEngine implements DomainEngine<DeduplicationInput, Ded
                 EnginePhase.KNOWLEDGE,
                 EngineType.DOMAIN,
                 55 // Priority después de KnowledgeEngine (50)
-        );
+                );
     }
 
     @Override
@@ -74,9 +66,8 @@ public class DeduplicationEngine implements DomainEngine<DeduplicationInput, Ded
                             input.candidates().size(),
                             0,
                             1.0,
-                            List.of(new StrategyMetric("DISABLED", input.candidates().size(), 0, 0, 1.0))
-                    )
-            );
+                            List.of(new StrategyMetric(
+                                    "DISABLED", input.candidates().size(), 0, 0, 1.0))));
         }
 
         List<KnowledgeFact> remaining = new ArrayList<>(input.candidates());
@@ -93,14 +84,14 @@ public class DeduplicationEngine implements DomainEngine<DeduplicationInput, Ded
             remaining = result.remaining();
             duplicateGroups.putAll(result.duplicateGroups());
 
-            metricsByStrategy.put(strategy.strategyName(),
+            metricsByStrategy.put(
+                    strategy.strategyName(),
                     new StrategyMetric(
                             strategy.strategyName(),
                             result.inputSize(),
                             result.duplicatesFound(),
                             result.duplicatesRemoved(),
-                            result.confidence()
-                    ));
+                            result.confidence()));
         }
 
         // Calcular métricas globales
@@ -118,21 +109,21 @@ public class DeduplicationEngine implements DomainEngine<DeduplicationInput, Ded
                 uniqueCount,
                 totalRemoved,
                 avgConfidence,
-                metricsByStrategy.values().stream().toList()
-        );
+                metricsByStrategy.values().stream().toList());
 
         return new DeduplicationResult(remaining, Map.copyOf(duplicateGroups), metrics);
     }
 
-    private StrategyResult applyStrategy(DeduplicationStrategy strategy, List<KnowledgeFact> candidates, double fuzzyThreshold) {
+    private StrategyResult applyStrategy(
+            DeduplicationStrategy strategy, List<KnowledgeFact> candidates, double fuzzyThreshold) {
         List<KnowledgeFact> remaining = new ArrayList<>(candidates);
         Map<KnowledgeFact, List<KnowledgeFact>> groups = new LinkedHashMap<>();
         int duplicatesFound = 0;
         int duplicatesRemoved = 0;
 
         // Agrupar por sourceId + category para reducir comparaciones
-        Map<String, List<KnowledgeFact>> bySourceAndCategory = candidates.stream()
-                .collect(Collectors.groupingBy(f -> f.sourceId() + "|" + f.category()));
+        Map<String, List<KnowledgeFact>> bySourceAndCategory =
+                candidates.stream().collect(Collectors.groupingBy(f -> f.sourceId() + "|" + f.category()));
 
         for (List<KnowledgeFact> group : bySourceAndCategory.values()) {
             if (group.size() <= 1) {

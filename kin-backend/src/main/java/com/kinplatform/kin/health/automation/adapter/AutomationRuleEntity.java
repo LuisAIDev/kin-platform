@@ -1,12 +1,10 @@
 package com.kinplatform.kin.health.automation.adapter;
 
+import com.kinplatform.kin.health.automation.domain.ActionType;
+import com.kinplatform.kin.health.automation.domain.TriggerEvent;
+import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
-
-import com.kinplatform.kin.health.automation.domain.AutomationRule;
-import com.kinplatform.kin.health.automation.domain.TriggerEvent;
-import com.kinplatform.kin.health.automation.domain.ActionType;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

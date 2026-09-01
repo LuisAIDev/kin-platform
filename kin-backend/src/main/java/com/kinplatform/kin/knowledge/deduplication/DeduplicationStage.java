@@ -1,10 +1,8 @@
 package com.kinplatform.kin.knowledge.deduplication;
 
 import com.kinplatform.kin.engine.DomainEngine;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
-
 import java.util.function.Predicate;
 
 /**
@@ -23,11 +21,15 @@ public class DeduplicationStage implements PipelineStage {
     private final Predicate<PipelineContext> supportsPredicate;
 
     public DeduplicationStage(DomainEngine<DeduplicationInput, DeduplicationResult> deduplicationEngine) {
-        this(deduplicationEngine, context -> context.knowledgeResult() != null && !context.knowledgeResult().isEmpty());
+        this(
+                deduplicationEngine,
+                context -> context.knowledgeResult() != null
+                        && !context.knowledgeResult().isEmpty());
     }
 
-    public DeduplicationStage(DomainEngine<DeduplicationInput, DeduplicationResult> deduplicationEngine,
-                              Predicate<PipelineContext> supportsPredicate) {
+    public DeduplicationStage(
+            DomainEngine<DeduplicationInput, DeduplicationResult> deduplicationEngine,
+            Predicate<PipelineContext> supportsPredicate) {
         this.deduplicationEngine = deduplicationEngine;
         this.supportsPredicate = supportsPredicate;
     }
@@ -53,7 +55,7 @@ public class DeduplicationStage implements PipelineStage {
                 context.knowledgeResult().facts(),
                 DeduplicationPolicy.EXACT_THEN_FUZZY, // TODO: leer de config
                 0.85 // fuzzy threshold
-        );
+                );
 
         var result = deduplicationEngine.evaluate(input);
 

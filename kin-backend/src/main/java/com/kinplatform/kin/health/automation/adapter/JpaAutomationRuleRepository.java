@@ -7,12 +7,10 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import java.time.OffsetDateTime;
-import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public class JpaAutomationRuleRepository implements AutomationRuleRepository {
@@ -30,8 +28,8 @@ public class JpaAutomationRuleRepository implements AutomationRuleRepository {
 
     @Override
     public Optional<AutomationRule> findById(UUID id) {
-        return entityManager.createQuery(
-                "SELECT e FROM AutomationRuleEntity e WHERE e.id = :id", AutomationRuleEntity.class)
+        return entityManager
+                .createQuery("SELECT e FROM AutomationRuleEntity e WHERE e.id = :id", AutomationRuleEntity.class)
                 .setParameter("id", id)
                 .getResultStream()
                 .findFirst()
@@ -40,8 +38,10 @@ public class JpaAutomationRuleRepository implements AutomationRuleRepository {
 
     @Override
     public List<AutomationRule> findByCreatedBy(UUID physicianId) {
-        return entityManager.createQuery(
-                "SELECT e FROM AutomationRuleEntity e WHERE e.createdBy = :physicianId AND e.enabled = true", AutomationRuleEntity.class)
+        return entityManager
+                .createQuery(
+                        "SELECT e FROM AutomationRuleEntity e WHERE e.createdBy = :physicianId AND e.enabled = true",
+                        AutomationRuleEntity.class)
                 .setParameter("physicianId", physicianId)
                 .getResultList()
                 .stream()
@@ -51,8 +51,10 @@ public class JpaAutomationRuleRepository implements AutomationRuleRepository {
 
     @Override
     public List<AutomationRule> findByTriggerEventAndEnabled(TriggerEvent event, boolean enabled) {
-        return entityManager.createQuery(
-                "SELECT e FROM AutomationRuleEntity e WHERE e.triggerEvent = :event AND e.enabled = :enabled", AutomationRuleEntity.class)
+        return entityManager
+                .createQuery(
+                        "SELECT e FROM AutomationRuleEntity e WHERE e.triggerEvent = :event AND e.enabled = :enabled",
+                        AutomationRuleEntity.class)
                 .setParameter("event", event)
                 .setParameter("enabled", enabled)
                 .getResultList()
@@ -63,8 +65,10 @@ public class JpaAutomationRuleRepository implements AutomationRuleRepository {
 
     @Override
     public long countByCreatedByAndEnabled(UUID physicianId, boolean enabled) {
-        return entityManager.createQuery(
-                "SELECT COUNT(e) FROM AutomationRuleEntity e WHERE e.createdBy = :physicianId AND e.enabled = :enabled", Long.class)
+        return entityManager
+                .createQuery(
+                        "SELECT COUNT(e) FROM AutomationRuleEntity e WHERE e.createdBy = :physicianId AND e.enabled = :enabled",
+                        Long.class)
                 .setParameter("physicianId", physicianId)
                 .setParameter("enabled", enabled)
                 .getSingleResult();

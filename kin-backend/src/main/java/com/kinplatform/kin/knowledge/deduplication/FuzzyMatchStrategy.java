@@ -1,8 +1,6 @@
 package com.kinplatform.kin.knowledge.deduplication;
 
 import com.kinplatform.kin.knowledge.KnowledgeFact;
-import com.kinplatform.kin.knowledge.SourceTrust;
-
 import java.text.Normalizer;
 import java.util.Locale;
 
@@ -141,9 +139,8 @@ public class FuzzyMatchStrategy implements DeduplicationStrategy {
             }
         }
 
-        double jaro = (matches / (double) len1
-                + matches / (double) len2
-                + (matches - transpositions / 2.0) / matches) / 3.0;
+        double jaro =
+                (matches / (double) len1 + matches / (double) len2 + (matches - transpositions / 2.0) / matches) / 3.0;
 
         // Winkler adjustment: boost prefix matches up to 4 chars
         int prefixLength = 0;

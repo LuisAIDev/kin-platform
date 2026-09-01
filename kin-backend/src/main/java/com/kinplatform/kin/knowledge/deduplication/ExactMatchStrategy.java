@@ -3,9 +3,6 @@ package com.kinplatform.kin.knowledge.deduplication;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
 import com.kinplatform.kin.knowledge.SourceTrust;
 
-import java.util.Arrays;
-import java.util.Comparator;
-
 /**
  * Estrategia de coincidencia exacta: dos hechos son duplicados si tienen
  * el mismo sourceId, category, claim normalizado y mismo hash de valor.

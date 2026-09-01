@@ -1,17 +1,14 @@
 package com.kinplatform.kin.admin;
 
 import com.kinplatform.kin.eventbus.domain.OutboxRecord;
-import com.kinplatform.kin.eventbus.domain.OutboxStatus;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * Endpoints de administración para la Dead Letter Queue del Outbox (PR 4).
@@ -42,7 +39,8 @@ public class OutboxAdminController {
             @RequestParam(required = false) UUID aggregateId,
             @RequestParam(required = false) String eventType) {
 
-        StringBuilder sql = new StringBuilder("""
+        StringBuilder sql = new StringBuilder(
+                """
             SELECT id, aggregate_id, event_type, payload, metadata, status,
                    retry_count, created_at, published_at, last_error
             FROM domain_event_outbox
@@ -63,21 +61,20 @@ public class OutboxAdminController {
         params.add(size);
         params.add(page * size);
 
-        List<OutboxRecord> records = jdbcTemplate.query(sql.toString(),
+        List<OutboxRecord> records = jdbcTemplate.query(
+                sql.toString(),
                 new com.kinplatform.kin.infrastructure.outbox.OutboxRecordRowMapper(),
                 params.toArray());
 
         long total = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM domain_event_outbox WHERE status = 'DEAD_LETTER'",
-                Long.class);
+                "SELECT COUNT(*) FROM domain_event_outbox WHERE status = 'DEAD_LETTER'", Long.class);
 
         return ResponseEntity.ok(Map.of(
                 "content", records,
                 "totalElements", total,
                 "totalPages", (total + size - 1) / size,
                 "page", page,
-                "size", size
-        ));
+                "size", size));
     }
 
     /**
@@ -85,11 +82,13 @@ public class OutboxAdminController {
      */
     @PostMapping("/{id}/retry")
     public ResponseEntity<Map<String, String>> retryDeadLetter(@PathVariable UUID id) {
-        int updated = jdbcTemplate.update("""
+        int updated = jdbcTemplate.update(
+                """
             UPDATE domain_event_outbox
             SET status = 'PENDING', retry_count = 0, last_error = NULL
             WHERE id = ? AND status = 'DEAD_LETTER'
-            """, id);
+            """,
+                id);
 
         if (updated == 0) {
             return ResponseEntity.notFound().build();
@@ -103,8 +102,8 @@ public class OutboxAdminController {
      */
     @PostMapping("/{id}/delete")
     public ResponseEntity<Map<String, String>> deleteDeadLetter(@PathVariable UUID id) {
-        int deleted = jdbcTemplate.update(
-                "DELETE FROM domain_event_outbox WHERE id = ? AND status = 'DEAD_LETTER'", id);
+        int deleted =
+                jdbcTemplate.update("DELETE FROM domain_event_outbox WHERE id = ? AND status = 'DEAD_LETTER'", id);
 
         if (deleted == 0) {
             return ResponseEntity.notFound().build();
@@ -121,17 +120,13 @@ public class OutboxAdminController {
             @RequestParam(defaultValue = "false") boolean confirm) {
 
         if (!confirm) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Debe confirmar la eliminación con confirm=true"
-            ));
+            return ResponseEntity.badRequest().body(Map.of("error", "Debe confirmar la eliminación con confirm=true"));
         }
 
         int deleted = jdbcTemplate.update("DELETE FROM domain_event_outbox WHERE status = 'DEAD_LETTER'");
 
-        return ResponseEntity.ok(Map.of(
-                "message", "Eventos en DEAD_LETTER eliminados",
-                "deletedCount", String.valueOf(deleted)
-        ));
+        return ResponseEntity.ok(
+                Map.of("message", "Eventos en DEAD_LETTER eliminados", "deletedCount", String.valueOf(deleted)));
     }
 
     /**
@@ -142,7 +137,8 @@ public class OutboxAdminController {
         long deadLetterCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM domain_event_outbox WHERE status = 'DEAD_LETTER'", Long.class);
 
-        var byType = jdbcTemplate.queryForList("""
+        var byType = jdbcTemplate.queryForList(
+                """
             SELECT event_type, COUNT(*) as count
             FROM domain_event_outbox
             WHERE status = 'DEAD_LETTER'
@@ -150,7 +146,8 @@ public class OutboxAdminController {
             ORDER BY count DESC
             """);
 
-        var byAggregate = jdbcTemplate.queryForList("""
+        var byAggregate = jdbcTemplate.queryForList(
+                """
             SELECT aggregate_id, COUNT(*) as count
             FROM domain_event_outbox
             WHERE status = 'DEAD_LETTER'
@@ -162,7 +159,6 @@ public class OutboxAdminController {
         return ResponseEntity.ok(Map.of(
                 "deadLetterCount", deadLetterCount,
                 "byEventType", byType,
-                "topAggregates", byAggregate
-        ));
+                "topAggregates", byAggregate));
     }
 }

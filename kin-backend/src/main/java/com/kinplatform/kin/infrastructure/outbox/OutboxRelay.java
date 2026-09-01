@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.eventbus.domain.OutboxRecord;
-import com.kinplatform.kin.eventbus.domain.OutboxStatus;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -16,10 +18,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
 
 @Component
 @ConditionalOnProperty(name = "kin.outbox.enabled", havingValue = "true", matchIfMissing = true)
@@ -38,11 +36,12 @@ public class OutboxRelay {
     private final Timer relayDurationTimer;
 
     @Autowired
-    public OutboxRelay(JdbcTemplate jdbcTemplate,
-                       DomainEventBus domainEventBus,
-                       ObjectMapper objectMapper,
-                       OutboxRelayProperties properties,
-                       MeterRegistry meterRegistry) {
+    public OutboxRelay(
+            JdbcTemplate jdbcTemplate,
+            DomainEventBus domainEventBus,
+            ObjectMapper objectMapper,
+            OutboxRelayProperties properties,
+            MeterRegistry meterRegistry) {
         this.jdbcTemplate = jdbcTemplate;
         this.domainEventBus = domainEventBus;
         this.objectMapper = objectMapper;
@@ -114,7 +113,8 @@ public class OutboxRelay {
      * Obtiene un lote de eventos pendientes con bloqueo optimista (SKIP LOCKED).
      */
     private List<OutboxRecord> fetchPendingBatch() {
-        String sql = """
+        String sql =
+                """
             SELECT id, aggregate_id, event_type, payload, metadata, status, retry_count,
                    created_at, published_at, last_error
             FROM domain_event_outbox
@@ -134,8 +134,12 @@ public class OutboxRelay {
         try {
             event = objectMapper.readValue(record.payload(), DomainEvent.class);
         } catch (Exception e) {
-            log.error("Error deserializando evento del outbox: id={}, aggregateId={}, error={}",
-                    record.id(), record.aggregateId(), e.getMessage(), e);
+            log.error(
+                    "Error deserializando evento del outbox: id={}, aggregateId={}, error={}",
+                    record.id(),
+                    record.aggregateId(),
+                    e.getMessage(),
+                    e);
             // Error de deserialización no recuperable -> DEAD_LETTER
             markDeadLetter(record, "Error deserializando: " + e.getMessage());
             return;
@@ -145,8 +149,13 @@ public class OutboxRelay {
         String correlationId = extractMetadataValue(record.metadata(), "correlationId");
         String userId = extractMetadataValue(record.metadata(), "userId");
 
-        log.debug("Publicando evento: id={}, type={}, aggregateId={}, correlationId={}, userId={}",
-                record.id(), record.eventType(), record.aggregateId(), correlationId, userId);
+        log.debug(
+                "Publicando evento: id={}, type={}, aggregateId={}, correlationId={}, userId={}",
+                record.id(),
+                record.eventType(),
+                record.aggregateId(),
+                correlationId,
+                userId);
 
         // Publicar en el bus de eventos
         domainEventBus.publish(event);
@@ -168,18 +177,29 @@ public class OutboxRelay {
         if (newRetryCount >= properties.getMaxRetries()) {
             markDeadLetter(record, errorMessage);
             deadLetterCounter.increment();
-            log.error("Evento movido a DEAD_LETTER tras {} reintentos: id={}, aggregateId={}, eventType={}, lastError={}",
-                    properties.getMaxRetries(), record.id(), record.aggregateId(), record.eventType(), errorMessage);
+            log.error(
+                    "Evento movido a DEAD_LETTER tras {} reintentos: id={}, aggregateId={}, eventType={}, lastError={}",
+                    properties.getMaxRetries(),
+                    record.id(),
+                    record.aggregateId(),
+                    record.eventType(),
+                    errorMessage);
         } else {
             markFailed(record, newRetryCount, errorMessage);
             failedCounter.increment();
-            log.warn("Fallo al procesar evento (intento {}/{}): id={}, aggregateId={}, error={}",
-                    newRetryCount, properties.getMaxRetries(), record.id(), record.aggregateId(), errorMessage);
+            log.warn(
+                    "Fallo al procesar evento (intento {}/{}): id={}, aggregateId={}, error={}",
+                    newRetryCount,
+                    properties.getMaxRetries(),
+                    record.id(),
+                    record.aggregateId(),
+                    errorMessage);
         }
     }
 
     private void markPublished(OutboxRecord record) {
-        String sql = """
+        String sql =
+                """
             UPDATE domain_event_outbox
             SET status = 'PUBLISHED', published_at = ?
             WHERE id = ?
@@ -188,7 +208,8 @@ public class OutboxRelay {
     }
 
     private void markFailed(OutboxRecord record, int newRetryCount, String errorMessage) {
-        String sql = """
+        String sql =
+                """
             UPDATE domain_event_outbox
             SET status = 'FAILED', retry_count = ?, last_error = ?
             WHERE id = ?
@@ -197,7 +218,8 @@ public class OutboxRelay {
     }
 
     private void markDeadLetter(OutboxRecord record, String errorMessage) {
-        String sql = """
+        String sql =
+                """
             UPDATE domain_event_outbox
             SET status = 'DEAD_LETTER', retry_count = ?, last_error = ?
             WHERE id = ?

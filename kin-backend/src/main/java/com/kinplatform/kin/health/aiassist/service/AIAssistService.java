@@ -8,16 +8,15 @@ import com.kinplatform.kin.health.aiassist.port.AIProviderPort;
 import com.kinplatform.kin.health.audit.api.AuditService;
 import com.kinplatform.kin.health.audit.domain.AuditAction;
 import com.kinplatform.kin.health.audit.domain.AuditResourceType;
-import com.kinplatform.kin.health.documents.port.ClinicalDocumentRepository;
 import com.kinplatform.kin.health.documents.domain.ClinicalDocument;
+import com.kinplatform.kin.health.documents.port.ClinicalDocumentRepository;
 import com.kinplatform.kin.health.followup.domain.FollowUpPlan;
 import com.kinplatform.kin.health.followup.port.FollowUpPlanRepository;
 import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
-import com.kinplatform.kin.health.physician.access.RelationshipNotActiveException;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment;
 import com.kinplatform.kin.health.telemedicine.port.AppointmentRepository;
-import com.kinplatform.kin.health.triage.domain.TriageConsultation;
 import com.kinplatform.kin.health.triage.domain.TriageConditionResult;
+import com.kinplatform.kin.health.triage.domain.TriageConsultation;
 import com.kinplatform.kin.health.triage.domain.TriageResult;
 import com.kinplatform.kin.health.triage.port.TriageConsultationRepository;
 import java.time.OffsetDateTime;
@@ -74,18 +73,26 @@ public class AIAssistService {
         List<TriageConsultation> triages = triageRepository.findByUserId(patientId);
         List<FollowUpPlan> plans = followUpRepository.findByPatientIdAndPhysicianId(patientId, physicianId);
         List<Appointment> appointments = appointmentRepository.findByPatientIdAndScheduledAtBetween(
-                patientId, OffsetDateTime.now().minusDays(30), OffsetDateTime.now().plusDays(90));
-        List<ClinicalDocument> documents = documentRepository.findActiveByPatientIdAndPhysicianId(patientId, physicianId);
+                patientId,
+                OffsetDateTime.now().minusDays(30),
+                OffsetDateTime.now().plusDays(90));
+        List<ClinicalDocument> documents =
+                documentRepository.findActiveByPatientIdAndPhysicianId(patientId, physicianId);
 
         String inputData = buildSummaryData(triages, plans, appointments, documents);
         String prompt = buildSummaryPrompt(inputData);
         String response = aiProvider.generate(prompt);
 
-        AIAssistRequest request = AIAssistRequest.of(AIAssistType.SUMMARY, inputData, response,
-                physicianId, patientId, "resumen previo a consulta");
+        AIAssistRequest request = AIAssistRequest.of(
+                AIAssistType.SUMMARY, inputData, response, physicianId, patientId, "resumen previo a consulta");
         assistRepository.save(request);
-        auditService.logAccess(physicianId, AuditAction.VIEW_SUMMARY, AuditResourceType.DOCUMENTO,
-                request.id(), patientId, Map.of("type", "AI_SUMMARY"));
+        auditService.logAccess(
+                physicianId,
+                AuditAction.VIEW_SUMMARY,
+                AuditResourceType.DOCUMENTO,
+                request.id(),
+                patientId,
+                Map.of("type", "AI_SUMMARY"));
         log.info("AIAssistService: resumen generado para paciente {} por medico {}", patientId, physicianId);
         return request;
     }
@@ -93,18 +100,24 @@ public class AIAssistService {
     @Transactional
     public AIAssistRequest organizeSymptoms(UUID patientId, UUID triageId) {
         requireEnabled();
-        TriageConsultation consultation = triageRepository.findByIdAndUserId(triageId, patientId)
+        TriageConsultation consultation = triageRepository
+                .findByIdAndUserId(triageId, patientId)
                 .orElseThrow(() -> new IllegalArgumentException("Triaje no encontrado: " + triageId));
 
         String inputData = buildSymptomsData(consultation);
         String prompt = buildOrganizePrompt(inputData);
         String response = aiProvider.generate(prompt);
 
-        AIAssistRequest request = AIAssistRequest.of(AIAssistType.ORGANIZE, inputData, response,
-                patientId, patientId, "organizacion de sintomas");
+        AIAssistRequest request = AIAssistRequest.of(
+                AIAssistType.ORGANIZE, inputData, response, patientId, patientId, "organizacion de sintomas");
         assistRepository.save(request);
-        auditService.logAccess(patientId, AuditAction.VIEW_SUMMARY, AuditResourceType.DOCUMENTO,
-                request.id(), patientId, Map.of("type", "AI_ORGANIZE"));
+        auditService.logAccess(
+                patientId,
+                AuditAction.VIEW_SUMMARY,
+                AuditResourceType.DOCUMENTO,
+                request.id(),
+                patientId,
+                Map.of("type", "AI_ORGANIZE"));
         return request;
     }
 
@@ -118,11 +131,16 @@ public class AIAssistService {
         String prompt = buildPreparePrompt(inputData);
         String response = aiProvider.generate(prompt);
 
-        AIAssistRequest request = AIAssistRequest.of(AIAssistType.PREPARE, inputData, response,
-                physicianId, patientId, "preparacion de consulta");
+        AIAssistRequest request = AIAssistRequest.of(
+                AIAssistType.PREPARE, inputData, response, physicianId, patientId, "preparacion de consulta");
         assistRepository.save(request);
-        auditService.logAccess(physicianId, AuditAction.VIEW_HISTORY, AuditResourceType.DOCUMENTO,
-                request.id(), patientId, Map.of("type", "AI_PREPARE"));
+        auditService.logAccess(
+                physicianId,
+                AuditAction.VIEW_HISTORY,
+                AuditResourceType.DOCUMENTO,
+                request.id(),
+                patientId,
+                Map.of("type", "AI_PREPARE"));
         return request;
     }
 
@@ -133,11 +151,16 @@ public class AIAssistService {
         String prompt = buildExplainPrompt(inputData);
         String response = aiProvider.generate(prompt);
 
-        AIAssistRequest request = AIAssistRequest.of(AIAssistType.EXPLAIN, inputData, response,
-                patientId, patientId, "explicacion diagnostico");
+        AIAssistRequest request = AIAssistRequest.of(
+                AIAssistType.EXPLAIN, inputData, response, patientId, patientId, "explicacion diagnostico");
         assistRepository.save(request);
-        auditService.logAccess(patientId, AuditAction.VIEW_SUMMARY, AuditResourceType.DOCUMENTO,
-                request.id(), patientId, Map.of("type", "AI_EXPLAIN"));
+        auditService.logAccess(
+                patientId,
+                AuditAction.VIEW_SUMMARY,
+                AuditResourceType.DOCUMENTO,
+                request.id(),
+                patientId,
+                Map.of("type", "AI_EXPLAIN"));
         return request;
     }
 
@@ -150,11 +173,16 @@ public class AIAssistService {
         String prompt = buildDraftPrompt(inputData);
         String response = aiProvider.generate(prompt);
 
-        AIAssistRequest request = AIAssistRequest.of(AIAssistType.DRAFT, inputData, response,
-                physicianId, patientId, "redaccion de mensaje");
+        AIAssistRequest request = AIAssistRequest.of(
+                AIAssistType.DRAFT, inputData, response, physicianId, patientId, "redaccion de mensaje");
         assistRepository.save(request);
-        auditService.logAccess(physicianId, AuditAction.SEND_MESSAGE, AuditResourceType.MENSAJE,
-                request.id(), patientId, Map.of("type", "AI_DRAFT"));
+        auditService.logAccess(
+                physicianId,
+                AuditAction.SEND_MESSAGE,
+                AuditResourceType.MENSAJE,
+                request.id(),
+                patientId,
+                Map.of("type", "AI_DRAFT"));
         return request;
     }
 
@@ -173,7 +201,9 @@ public class AIAssistService {
 
     @Transactional(readOnly = true)
     public AIAssistRequest getLastRequest(UUID patientId, AIAssistType type) {
-        return assistRepository.findByPatientIdAndType(patientId, type).stream().findFirst().orElse(null);
+        return assistRepository.findByPatientIdAndType(patientId, type).stream()
+                .findFirst()
+                .orElse(null);
     }
 
     private void requireEnabled() {
@@ -182,8 +212,11 @@ public class AIAssistService {
         }
     }
 
-    private String buildSummaryData(List<TriageConsultation> triages, List<FollowUpPlan> plans,
-                                     List<Appointment> appointments, List<ClinicalDocument> documents) {
+    private String buildSummaryData(
+            List<TriageConsultation> triages,
+            List<FollowUpPlan> plans,
+            List<Appointment> appointments,
+            List<ClinicalDocument> documents) {
         StringBuilder sb = new StringBuilder();
         sb.append("### Triajes realizados:\n");
         for (TriageConsultation t : triages) {
@@ -199,8 +232,11 @@ public class AIAssistService {
         }
         sb.append("\n### Citas:\n");
         for (Appointment a : appointments) {
-            sb.append("- ").append(a.scheduledAt().toString().substring(0, 16)).append(" [")
-                    .append(a.status()).append("]\n");
+            sb.append("- ")
+                    .append(a.scheduledAt().toString().substring(0, 16))
+                    .append(" [")
+                    .append(a.status())
+                    .append("]\n");
         }
         sb.append("\n### Documentos compartidos:\n");
         for (ClinicalDocument d : documents) {
@@ -217,9 +253,17 @@ public class AIAssistService {
         }
         sb.append("\nCondiciones detectadas:\n");
         for (TriageConditionResult r : consultation.results()) {
-            sb.append("- ").append(r.name()).append(" (probabilidad: ").append(r.probability()).append(")\n");
+            sb.append("- ")
+                    .append(r.name())
+                    .append(" (probabilidad: ")
+                    .append(r.probability())
+                    .append(")\n");
             sb.append("  Descripcion: ").append(r.description()).append("\n");
-            sb.append("  Severidad: ").append(r.severity()).append(", Urgencia: ").append(r.urgency()).append("\n");
+            sb.append("  Severidad: ")
+                    .append(r.severity())
+                    .append(", Urgencia: ")
+                    .append(r.urgency())
+                    .append("\n");
         }
         return sb.toString();
     }
@@ -228,8 +272,11 @@ public class AIAssistService {
         StringBuilder sb = new StringBuilder();
         sb.append("Historial de triajes del paciente:\n");
         for (TriageConsultation t : triages) {
-            sb.append("- ").append(t.createdAt()).append(": sintomas [")
-                    .append(String.join(", ", t.symptoms())).append("]\n");
+            sb.append("- ")
+                    .append(t.createdAt())
+                    .append(": sintomas [")
+                    .append(String.join(", ", t.symptoms()))
+                    .append("]\n");
         }
         return sb.toString();
     }
@@ -239,7 +286,11 @@ public class AIAssistService {
         sb.append("Resultados del diagnostico diferencial:\n");
         sb.append("Confianza: ").append(result.confidence()).append("\n");
         for (TriageConditionResult r : result.results()) {
-            sb.append("- ").append(r.name()).append(": ").append(r.probability()).append("\n");
+            sb.append("- ")
+                    .append(r.name())
+                    .append(": ")
+                    .append(r.probability())
+                    .append("\n");
             sb.append("  ").append(r.description()).append("\n");
         }
         return sb.toString();
@@ -252,7 +303,8 @@ public class AIAssistService {
             NO generes, modifiques ni interpretes datos clinicos. Solo presenta los datos que ya existen.
 
             %s
-            """.formatted(data);
+            """
+                .formatted(data);
     }
 
     private String buildOrganizePrompt(String data) {
@@ -262,7 +314,8 @@ public class AIAssistService {
             NO generes ni modifiques datos clinicos.
 
             %s
-            """.formatted(data);
+            """
+                .formatted(data);
     }
 
     private String buildPreparePrompt(String data) {
@@ -272,7 +325,8 @@ public class AIAssistService {
             NO sugerencias de tratamiento ni diagnostico. Solo preguntas.
 
             %s
-            """.formatted(data);
+            """
+                .formatted(data);
     }
 
     private String buildExplainPrompt(String data) {
@@ -284,7 +338,8 @@ public class AIAssistService {
             Recuerda al paciente que debe consultar a su medico para cualquier decision.
 
             %s
-            """.formatted(data);
+            """
+                .formatted(data);
     }
 
     private String buildDraftPrompt(String data) {
@@ -295,6 +350,7 @@ public class AIAssistService {
             El medico puede editar o descartar el mensaje en cualquier momento.
 
             Recomendacion: %s
-            """.formatted(data);
+            """
+                .formatted(data);
     }
 }

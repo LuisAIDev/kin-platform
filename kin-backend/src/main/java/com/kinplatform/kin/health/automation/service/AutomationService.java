@@ -1,26 +1,23 @@
 package com.kinplatform.kin.health.automation.service;
 
-import com.kinplatform.kin.health.automation.config.AutomationProperties;
-import com.kinplatform.kin.health.automation.domain.*;
-import com.kinplatform.kin.health.automation.port.*;
+import com.kinplatform.auth.email.EmailSender;
 import com.kinplatform.kin.health.audit.api.AuditService;
 import com.kinplatform.kin.health.audit.domain.AuditAction;
 import com.kinplatform.kin.health.audit.domain.AuditResourceType;
-import com.kinplatform.auth.email.EmailSender;
+import com.kinplatform.kin.health.automation.config.AutomationProperties;
+import com.kinplatform.kin.health.automation.domain.*;
+import com.kinplatform.kin.health.automation.port.*;
 import com.kinplatform.kin.health.followup.api.FollowUpService;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import jakarta.transaction.Transactional;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -38,11 +35,17 @@ public class AutomationService {
 
     // --- Gestión de reglas ---
 
-    public AutomationRule createRule(User actor, String name, String description,
-                                     TriggerEvent triggerEvent, String conditions,
-                                     ActionType action, String actionParams) {
+    public AutomationRule createRule(
+            User actor,
+            String name,
+            String description,
+            TriggerEvent triggerEvent,
+            String conditions,
+            ActionType action,
+            String actionParams) {
         var physicianId = actor.getId();
-        var user = userRepository.findById(physicianId)
+        var user = userRepository
+                .findById(physicianId)
                 .orElseThrow(() -> new IllegalArgumentException("Médico no encontrado: " + physicianId));
 
         if (!properties.isEnabled()) {
@@ -50,25 +53,37 @@ public class AutomationService {
         }
 
         if (countRulesByPhysician(physicianId) >= properties.getMaxRulesPerPhysician()) {
-            throw new IllegalStateException("Límite de reglas alcanzado para este médico (" +
-                    properties.getMaxRulesPerPhysician() + ")");
+            throw new IllegalStateException(
+                    "Límite de reglas alcanzado para este médico (" + properties.getMaxRulesPerPhysician() + ")");
         }
 
-        var rule = AutomationRule.of(name, description, triggerEvent, conditions, action, actionParams,
-                true, physicianId);
+        var rule =
+                AutomationRule.of(name, description, triggerEvent, conditions, action, actionParams, true, physicianId);
 
         var saved = ruleRepository.save(rule);
 
-        auditLog(AuditAction.CREATE, AuditResourceType.AUTOMATION_RULE, saved.id(), physicianId,
+        auditLog(
+                AuditAction.CREATE,
+                AuditResourceType.AUTOMATION_RULE,
+                saved.id(),
+                physicianId,
                 Map.of("triggerEvent", triggerEvent.name(), "action", action.name()));
 
         return saved;
     }
 
-    public AutomationRule updateRule(User actor, UUID ruleId, String name, String description,
-                                     TriggerEvent triggerEvent, String conditions,
-                                     ActionType action, String actionParams, boolean enabled) {
-        var rule = ruleRepository.findById(ruleId)
+    public AutomationRule updateRule(
+            User actor,
+            UUID ruleId,
+            String name,
+            String description,
+            TriggerEvent triggerEvent,
+            String conditions,
+            ActionType action,
+            String actionParams,
+            boolean enabled) {
+        var rule = ruleRepository
+                .findById(ruleId)
                 .orElseThrow(() -> new IllegalArgumentException("Regla no encontrada: " + ruleId));
 
         // Validar que el médico solo puede editar sus propias reglas
@@ -76,19 +91,24 @@ public class AutomationService {
             throw new SecurityException("No tiene permiso para editar esta regla");
         }
 
-        var updated = AutomationRule.of(name, description, triggerEvent, conditions, action, actionParams,
-                enabled, rule.createdBy());
+        var updated = AutomationRule.of(
+                name, description, triggerEvent, conditions, action, actionParams, enabled, rule.createdBy());
 
         var saved = ruleRepository.update(updated);
 
-        auditLog(AuditAction.UPDATE, AuditResourceType.AUTOMATION_RULE, saved.id(), rule.createdBy(),
+        auditLog(
+                AuditAction.UPDATE,
+                AuditResourceType.AUTOMATION_RULE,
+                saved.id(),
+                rule.createdBy(),
                 Map.of("triggerEvent", triggerEvent.name(), "action", action.name()));
 
         return saved;
     }
 
     public void toggleRule(User actor, UUID ruleId, boolean enabled) {
-        var rule = ruleRepository.findById(ruleId)
+        var rule = ruleRepository
+                .findById(ruleId)
                 .orElseThrow(() -> new IllegalArgumentException("Regla no encontrada: " + ruleId));
 
         if (!rule.createdBy().equals(actor.getId()) && !isAdmin(actor)) {
@@ -96,32 +116,40 @@ public class AutomationService {
         }
 
         var updated = AutomationRule.of(
-                rule.name(), rule.description(), rule.triggerEvent(), rule.conditions(),
-                rule.action(), rule.actionParams(), enabled, rule.createdBy());
+                rule.name(),
+                rule.description(),
+                rule.triggerEvent(),
+                rule.conditions(),
+                rule.action(),
+                rule.actionParams(),
+                enabled,
+                rule.createdBy());
 
         ruleRepository.update(updated);
 
-        auditLog(AuditAction.TOGGLE, AuditResourceType.AUTOMATION_RULE, rule.id(), rule.createdBy(),
+        auditLog(
+                AuditAction.TOGGLE,
+                AuditResourceType.AUTOMATION_RULE,
+                rule.id(),
+                rule.createdBy(),
                 Map.of("enabled", enabled));
     }
 
     public List<AutomationRule> listRules(User actor, UUID requestedPhysicianId) {
-        var physicianId = requestedPhysicianId != null && isAdmin(actor)
-                ? requestedPhysicianId
-                : actor.getId();
+        var physicianId = requestedPhysicianId != null && isAdmin(actor) ? requestedPhysicianId : actor.getId();
         return ruleRepository.findByCreatedBy(physicianId);
     }
 
     public void deleteRule(User actor, UUID ruleId) {
-        var rule = ruleRepository.findById(ruleId)
+        var rule = ruleRepository
+                .findById(ruleId)
                 .orElseThrow(() -> new IllegalArgumentException("Regla no encontrada: " + ruleId));
 
         if (!rule.createdBy().equals(actor.getId()) && !isAdmin(actor)) {
             throw new SecurityException("No tiene permiso para eliminar esta regla");
         }
 
-        auditLog(AuditAction.DELETE, AuditResourceType.AUTOMATION_RULE, ruleId, rule.createdBy(),
-                Map.of());
+        auditLog(AuditAction.DELETE, AuditResourceType.AUTOMATION_RULE, ruleId, rule.createdBy(), Map.of());
 
         ruleRepository.deleteById(ruleId);
     }
@@ -133,8 +161,7 @@ public class AutomationService {
     // --- Motor de evaluación ---
 
     @Transactional
-    public void evaluateAndExecute(TriggerEvent event, UUID eventId, UUID eventPhysicianId,
-                                   String eventPayloadJson) {
+    public void evaluateAndExecute(TriggerEvent event, UUID eventId, UUID eventPhysicianId, String eventPayloadJson) {
         var enabledRules = ruleRepository.findByTriggerEventAndEnabled(event, true);
 
         for (var rule : enabledRules) {
@@ -153,20 +180,34 @@ public class AutomationService {
             // Ejecutar acción
             try {
                 executeAction(rule.action(), rule.actionParams(), eventPhysicianId, eventId, rule.createdBy());
-                
+
                 // Registrar ejecución exitosa
                 var log = RuleExecutionLog.of(rule.id(), eventId);
                 executionLogRepository.save(log);
 
-                auditLog(AuditAction.EXECUTE, AuditResourceType.AUTOMATION_RULE_EXECUTION,
-                        log.id(), rule.createdBy(),
-                        Map.of("ruleId", rule.id().toString(), "eventId", eventId.toString(),
-                                "action", rule.action().name()));
+                auditLog(
+                        AuditAction.EXECUTE,
+                        AuditResourceType.AUTOMATION_RULE_EXECUTION,
+                        log.id(),
+                        rule.createdBy(),
+                        Map.of(
+                                "ruleId",
+                                rule.id().toString(),
+                                "eventId",
+                                eventId.toString(),
+                                "action",
+                                rule.action().name()));
             } catch (Exception e) {
                 // Registrar ejecución fallida
                 var executionLog = RuleExecutionLog.of(rule.id(), eventId);
-                executionLog = new RuleExecutionLog(executionLog.id(), executionLog.ruleId(), executionLog.eventId(), executionLog.triggeredAt(),
-                        false, e.getMessage(), null);
+                executionLog = new RuleExecutionLog(
+                        executionLog.id(),
+                        executionLog.ruleId(),
+                        executionLog.eventId(),
+                        executionLog.triggeredAt(),
+                        false,
+                        e.getMessage(),
+                        null);
                 executionLogRepository.save(executionLog);
 
                 log.error("Error executing automation rule {}: {}", rule.id(), e.getMessage());
@@ -212,8 +253,9 @@ public class AutomationService {
             return obj != null ? obj.toString() : null;
         } else {
             if (payload instanceof java.util.Map) {
-                return ((java.util.Map<?, ?>) payload).get(field) != null ?
-                        ((java.util.Map<?, ?>) payload).get(field).toString() : null;
+                return ((java.util.Map<?, ?>) payload).get(field) != null
+                        ? ((java.util.Map<?, ?>) payload).get(field).toString()
+                        : null;
             }
             return null;
         }
@@ -259,8 +301,9 @@ public class AutomationService {
     @SuppressWarnings("unchecked")
     private String getJsonValue(Object obj, String key) {
         if (obj instanceof java.util.Map) {
-            return ((java.util.Map<String, Object>) obj).get(key) != null ?
-                    ((java.util.Map<String, Object>) obj).get(key).toString() : null;
+            return ((java.util.Map<String, Object>) obj).get(key) != null
+                    ? ((java.util.Map<String, Object>) obj).get(key).toString()
+                    : null;
         }
         return null;
     }
@@ -268,8 +311,8 @@ public class AutomationService {
     // --- Ejecutar acciones ---
 
     @Transactional
-    private void executeAction(ActionType action, String actionParams, UUID physicianId,
-                               UUID eventId, UUID executedBy) {
+    private void executeAction(
+            ActionType action, String actionParams, UUID physicianId, UUID eventId, UUID executedBy) {
         switch (action) {
             case CREATE_ALERT:
                 executeCreateAlert(actionParams, physicianId, eventId, executedBy);
@@ -311,8 +354,12 @@ public class AutomationService {
         return actor != null && actor.getRole() == com.kinplatform.user.UserRole.ADMIN;
     }
 
-    private void auditLog(AuditAction action, AuditResourceType resource, UUID resourceId,
-                          UUID userId, java.util.Map<String, Object> details) {
+    private void auditLog(
+            AuditAction action,
+            AuditResourceType resource,
+            UUID resourceId,
+            UUID userId,
+            java.util.Map<String, Object> details) {
         if (auditService != null) {
             auditService.logAccess(userId, action, resource, resourceId, userId, details);
         }

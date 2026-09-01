@@ -1,10 +1,8 @@
 package com.kinplatform.kin.health.automation.adapter;
 
+import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
-
-import com.kinplatform.kin.health.automation.domain.RuleExecutionLog;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

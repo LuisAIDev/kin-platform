@@ -1,6 +1,5 @@
 package com.kinplatform.kin.health.followup.adapter;
 
-import com.kinplatform.kin.health.followup.domain.FollowUpTaskStatus;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -37,7 +36,8 @@ public interface FollowUpTaskJpaRepository extends JpaRepository<FollowUpTaskEnt
     List<FollowUpTaskEntity> findOpenDueBefore(
             @Param("planIds") Collection<UUID> planIds, @Param("now") OffsetDateTime now);
 
-    @Query("select count(t) from FollowUpTaskEntity t "
-            + "where t.planId in :planIds and t.status = com.kinplatform.kin.health.followup.domain.FollowUpTaskStatus.PENDING")
+    @Query(
+            "select count(t) from FollowUpTaskEntity t "
+                    + "where t.planId in :planIds and t.status = com.kinplatform.kin.health.followup.domain.FollowUpTaskStatus.PENDING")
     long countPendingByPlanIdIn(@Param("planIds") Collection<UUID> planIds);
 }

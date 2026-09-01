@@ -2,7 +2,6 @@ package com.kinplatform.kin.health.automation.port;
 
 import com.kinplatform.kin.health.automation.domain.AutomationRule;
 import com.kinplatform.kin.health.automation.domain.TriggerEvent;
-import com.kinplatform.kin.health.automation.domain.RuleExecutionLog;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

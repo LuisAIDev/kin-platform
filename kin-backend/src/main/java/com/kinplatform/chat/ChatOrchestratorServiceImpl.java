@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,10 +110,19 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
             AiBudgetControlService budgetControlService,
             ReservationContext reservationContext,
             ExportChatIntentService exportChatIntentService) {
-        this(chatService, projectRepository, objectMapper, conversationOrchestrator,
-                promptGuardrail, reportRepository, subscriptionValidator,
-                budgetControlService, reservationContext, exportChatIntentService,
-                defaultPipelineExecutor(), false);
+        this(
+                chatService,
+                projectRepository,
+                objectMapper,
+                conversationOrchestrator,
+                promptGuardrail,
+                reportRepository,
+                subscriptionValidator,
+                budgetControlService,
+                reservationContext,
+                exportChatIntentService,
+                defaultPipelineExecutor(),
+                false);
     }
 
     /**
@@ -250,7 +258,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         }
     }
 
-@Override
+    @Override
     public SseEmitter processMessageStream(UUID userId, UUID projectId, ChatRequest request) {
         var project = findProject(userId, projectId);
         if (isBlocked(request.getContent())) {
@@ -359,7 +367,8 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                                 emitter.send(SseEmitter.event()
                                         .name("error")
                                         .data(objectMapper.writeValueAsString(Map.of(
-                                                "error", error != null ? error.getMessage() : "Unknown stream error"))));
+                                                "error",
+                                                error != null ? error.getMessage() : "Unknown stream error"))));
                             } catch (IOException e) {
                                 log.error("Failed to send SSE error event. projectId={}", projectId, e);
                             }
@@ -397,7 +406,9 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                             }
 
                             if (!emitterCompleted.compareAndSet(false, true)) {
-                                log.warn("=== SSE EMITTER ALREADY COMPLETED — se omite done === projectId={}", projectId);
+                                log.warn(
+                                        "=== SSE EMITTER ALREADY COMPLETED — se omite done === projectId={}",
+                                        projectId);
                                 return;
                             }
 
@@ -410,8 +421,10 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                             try {
                                 var donePayload = new java.util.LinkedHashMap<String, Object>();
                                 donePayload.put("done", true);
-                                donePayload.put("userMessageId", userMessage.getId().toString());
-                                donePayload.put("assistantMessageId", assistantMessageId != null ? assistantMessageId : "");
+                                donePayload.put(
+                                        "userMessageId", userMessage.getId().toString());
+                                donePayload.put(
+                                        "assistantMessageId", assistantMessageId != null ? assistantMessageId : "");
                                 donePayload.put("content", finalContent);
                                 donePayload.put("tokensUsed", tokensUsed);
                                 if (streamAction != null) {
@@ -419,7 +432,10 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                                             "action",
                                             Map.of(
                                                     "type", streamAction.type(),
-                                                    "format", streamAction.format().name(),
+                                                    "format",
+                                                            streamAction
+                                                                    .format()
+                                                                    .name(),
                                                     "templateDocumentId",
                                                             streamAction.templateDocumentId() == null
                                                                     ? null
@@ -428,8 +444,9 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                                                                             .toString(),
                                                     "templateDocumentName", streamAction.templateDocumentName()));
                                 }
-                                emitter.send(
-                                        SseEmitter.event().name("done").data(objectMapper.writeValueAsString(donePayload)));
+                                emitter.send(SseEmitter.event()
+                                        .name("done")
+                                        .data(objectMapper.writeValueAsString(donePayload)));
                                 doneSent = true;
                             } catch (Exception e) {
                                 log.error(
@@ -458,11 +475,11 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                                                         "format",
                                                         streamAction.format().name(),
                                                         "templateDocumentId",
-                                                                streamAction.templateDocumentId() == null
-                                                                        ? null
-                                                                        : streamAction
-                                                                                .templateDocumentId()
-                                                                                .toString(),
+                                                        streamAction.templateDocumentId() == null
+                                                                ? null
+                                                                : streamAction
+                                                                        .templateDocumentId()
+                                                                        .toString(),
                                                         "templateDocumentName",
                                                         streamAction.templateDocumentName()));
                                     }
@@ -493,16 +510,19 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                             }
                         });
             } catch (Exception e) {
-                log.error("=== PIPELINE EXECUTION ERROR === projectId={}, errorType={}, message={}",
-                        projectId, e.getClass().getSimpleName(), e.getMessage());
+                log.error(
+                        "=== PIPELINE EXECUTION ERROR === projectId={}, errorType={}, message={}",
+                        projectId,
+                        e.getClass().getSimpleName(),
+                        e.getMessage());
                 if (!emitterCompleted.compareAndSet(false, true)) {
                     return;
                 }
                 try {
                     emitter.send(SseEmitter.event()
                             .name("error")
-                            .data(objectMapper.writeValueAsString(Map.of(
-                                    "error", "Error interno del pipeline: " + e.getMessage()))));
+                            .data(objectMapper.writeValueAsString(
+                                    Map.of("error", "Error interno del pipeline: " + e.getMessage()))));
                 } catch (IOException ex) {
                     log.error("Failed to send pipeline error event. projectId={}", projectId, ex);
                 }
@@ -523,41 +543,46 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         return emitter;
     }
 
-    private void keepAliveExecutor(SseEmitter emitter,
-                                    java.util.concurrent.atomic.AtomicBoolean emitterCompleted,
-                                    java.util.concurrent.atomic.AtomicBoolean pipelineCompleted,
-                                    java.util.concurrent.atomic.AtomicBoolean keepAliveCancelled,
-                                    UUID projectId) {
-        new Thread(() -> {
-            while (!emitterCompleted.get() && !keepAliveCancelled.get()) {
-                try {
-                    Thread.sleep(15_000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-                if (emitterCompleted.get() || keepAliveCancelled.get()) {
-                    break;
-                }
-                if (pipelineCompleted.get()) {
-                    break;
-                }
-                try {
-                    emitter.send(SseEmitter.event()
-                            .name("keepalive")
-                            .data(objectMapper.writeValueAsString(Map.of("status", "processing"))));
-                } catch (IOException e) {
-                    log.debug("Keep-alive send failed, client may have disconnected. projectId={}", projectId);
-                    break;
-                }
-            }
-        }, "kin-keepalive-" + projectId).start();
+    private void keepAliveExecutor(
+            SseEmitter emitter,
+            java.util.concurrent.atomic.AtomicBoolean emitterCompleted,
+            java.util.concurrent.atomic.AtomicBoolean pipelineCompleted,
+            java.util.concurrent.atomic.AtomicBoolean keepAliveCancelled,
+            UUID projectId) {
+        new Thread(
+                        () -> {
+                            while (!emitterCompleted.get() && !keepAliveCancelled.get()) {
+                                try {
+                                    Thread.sleep(15_000);
+                                } catch (InterruptedException e) {
+                                    Thread.currentThread().interrupt();
+                                    break;
+                                }
+                                if (emitterCompleted.get() || keepAliveCancelled.get()) {
+                                    break;
+                                }
+                                if (pipelineCompleted.get()) {
+                                    break;
+                                }
+                                try {
+                                    emitter.send(SseEmitter.event()
+                                            .name("keepalive")
+                                            .data(objectMapper.writeValueAsString(Map.of("status", "processing"))));
+                                } catch (IOException e) {
+                                    log.debug(
+                                            "Keep-alive send failed, client may have disconnected. projectId={}",
+                                            projectId);
+                                    break;
+                                }
+                            }
+                        },
+                        "kin-keepalive-" + projectId)
+                .start();
     }
 
-    private void sendEvent(SseEmitter emitter, String eventName, Map<String, Object> data, UUID projectId) throws IOException {
-        emitter.send(SseEmitter.event()
-                .name(eventName)
-                .data(objectMapper.writeValueAsString(data)));
+    private void sendEvent(SseEmitter emitter, String eventName, Map<String, Object> data, UUID projectId)
+            throws IOException {
+        emitter.send(SseEmitter.event().name(eventName).data(objectMapper.writeValueAsString(data)));
     }
 
     private boolean isBlocked(String content) {

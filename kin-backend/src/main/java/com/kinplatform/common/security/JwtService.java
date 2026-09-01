@@ -52,10 +52,10 @@ public class JwtService {
         }
         boolean isProd = environment.acceptsProfiles("prod", "production");
         if (isProd
-                && (secret.equals(
-                                "a2luLXBsYXRmb3JtLXNlY3VyZS1qd3Qtc2VjcmV0LWZvci1wcm9kdWN0aW9uLWNlcnRpZmljYXRpb24tMjAyNi0wMTIzNDU2Nzg5YWJjZGVm")
-                        || secret.equals(
-                                "kin-platform-secure-jwt-secret-for-production-certification-2026-0123456789abcdef"))) {
+                && ("a2luLXBsYXRmb3JtLXNlY3VyZS1qd3Qtc2VjcmV0LWZvci1wcm9kdWN0aW9uLWNlcnRpZmljYXRpb24tMjAyNi0wMTIzNDU2Nzg5YWJjZGVm"
+                                .equals(secret)
+                        || "kin-platform-secure-jwt-secret-for-production-certification-2026-0123456789abcdef"
+                                .equals(secret))) {
             throw new IllegalStateException("JWT_SECRET en producción no puede usar el valor de prueba por defecto. "
                     + "Genera un secreto único con: openssl rand -base64 32");
         }

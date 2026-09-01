@@ -2,7 +2,6 @@ package com.kinplatform.kin.health.aiassist.api;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.aiassist.domain.AIAssistRequest;
-import com.kinplatform.kin.health.aiassist.domain.AIAssistType;
 import com.kinplatform.kin.health.aiassist.service.AIAssistService;
 import com.kinplatform.kin.health.triage.domain.TriageResult;
 import com.kinplatform.user.User;
@@ -50,7 +49,8 @@ public class AIAssistController {
 
     @PostMapping("/patients/{patientId}/draft-message")
     public ResponseEntity<AIAssistRequest> draftMessage(
-            Authentication authentication, @PathVariable UUID patientId,
+            Authentication authentication,
+            @PathVariable UUID patientId,
             @RequestBody @Valid MessageDraftRequest request) {
         User user = AuthenticatedUsers.require(userRepository, authentication);
         AIAssistRequest response = assistService.draftMessage(user.getId(), patientId, request.recommendation());
@@ -66,8 +66,7 @@ public class AIAssistController {
     }
 
     @GetMapping("/patients/{patientId}/history")
-    public ResponseEntity<List<AIAssistRequest>> history(
-            Authentication authentication, @PathVariable UUID patientId) {
+    public ResponseEntity<List<AIAssistRequest>> history(Authentication authentication, @PathVariable UUID patientId) {
         User user = AuthenticatedUsers.require(userRepository, authentication);
         return ResponseEntity.ok(assistService.getHistory(user.getId(), patientId));
     }
@@ -79,8 +78,7 @@ public class AIAssistController {
     }
 
     @DeleteMapping("/requests/{id}")
-    public ResponseEntity<Void> deleteRequest(
-            Authentication authentication, @PathVariable UUID id) {
+    public ResponseEntity<Void> deleteRequest(Authentication authentication, @PathVariable UUID id) {
         AuthenticatedUsers.require(userRepository, authentication);
         return ResponseEntity.noContent().build();
     }

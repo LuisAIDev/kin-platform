@@ -1,6 +1,5 @@
 package com.kinplatform.kin.health.followup.api;
 
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
