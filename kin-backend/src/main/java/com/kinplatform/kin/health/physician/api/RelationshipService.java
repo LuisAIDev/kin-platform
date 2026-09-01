@@ -153,6 +153,28 @@ public class RelationshipService {
         return patientRepository.findByPatientIdAndStatus(patientId, RelationshipStatus.PENDING);
     }
 
+    /**
+     * Devuelve los usuarios con relación {@code ACTIVE} con el usuario indicado:
+     * si es PHYSICIAN, sus pacientes ACTIVE; si es PATIENT, sus médicos ACTIVE.
+     * Se usa para iniciar conversaciones y reservar citas sin depender de mensajes previos.
+     */
+    @Transactional(readOnly = true)
+    public List<ContactResponse> activeContactsFor(UUID userId, UserRole role) {
+        if (userId == null) {
+            return List.of();
+        }
+        List<UUID> ids = role == UserRole.PHYSICIAN
+                ? patientRepository.findPatientIdsByPhysician(userId)
+                : patientRepository.findPhysicianIdsByPatient(userId);
+        return ids.stream()
+                .map(id -> userRepository.findById(id).orElse(null))
+                .filter(java.util.Objects::nonNull)
+                .map(u -> new ContactResponse(u.getId(), u.getFullName(), u.getRole()))
+                .toList();
+    }
+
+    public record ContactResponse(UUID id, String name, UserRole role) {}
+
     private PhysicianPatientAssignment pending(UUID patientId, UUID physicianId) {
         return patientRepository
                 .findPendingInvitation(physicianId, patientId)

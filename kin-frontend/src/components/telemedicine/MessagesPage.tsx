@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { telemedicineService, type Conversation } from "@/services/telemedicine";
+import { telemedicineService, type Conversation, type Contact } from "@/services/telemedicine";
 import ChatView from "@/components/telemedicine/ChatView";
 
 function formatDate(iso: string) {
@@ -16,6 +16,9 @@ function formatDate(iso: string) {
 export default function MessagesPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selected, setSelected] = useState<Conversation | null>(null);
+  const [newContact, setNewContact] = useState<Contact | null>(null);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [showNew, setShowNew] = useState(false);
   const [unread, setUnread] = useState(0);
   const [error, setError] = useState("");
 
@@ -48,6 +51,17 @@ export default function MessagesPage() {
     };
   }, []);
 
+  const openNewConversation = async () => {
+    setShowNew(true);
+    setError("");
+    try {
+      const data = await telemedicineService.contacts();
+      setContacts(data);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
   return (
     <main className="flex-1 flex items-start justify-center px-6 pt-10 pb-12">
       <div className="w-full max-w-5xl flex flex-col gap-6">
@@ -58,15 +72,62 @@ export default function MessagesPage() {
               Comunicación segura con tu equipo de salud.
             </p>
           </div>
-          {unread > 0 && (
-            <span className="rounded-full bg-primary-600 text-white px-3 py-1 text-sm font-medium">
-              {unread} no leídos
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={openNewConversation}
+              className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 transition"
+            >
+              Nueva conversación
+            </button>
+            {unread > 0 && (
+              <span className="rounded-full bg-primary-600 text-white px-3 py-1 text-sm font-medium">
+                {unread} no leídos
+              </span>
+            )}
+          </div>
         </div>
 
         {error && (
           <p className="text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-lg">{error}</p>
+        )}
+
+        {showNew && (
+          <div className="rounded-xl border border-neutral-200 bg-white p-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Iniciar nueva conversación</h2>
+              <button
+                type="button"
+                onClick={() => setShowNew(false)}
+                aria-label="Cerrar"
+                className="text-neutral-400 hover:text-neutral-600 text-xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            {contacts.length === 0 ? (
+              <p className="text-sm text-neutral-400">
+                No tienes contactos con relación activa. Un médico o paciente debe vincularte primero.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {contacts.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => {
+                      setNewContact(c);
+                      setSelected(null);
+                      setShowNew(false);
+                    }}
+                    className="rounded-lg border border-neutral-200 px-3 py-2 text-sm text-left hover:bg-neutral-50 transition"
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -80,7 +141,10 @@ export default function MessagesPage() {
               <button
                 key={c.otherId}
                 type="button"
-                onClick={() => setSelected(c)}
+                onClick={() => {
+                  setSelected(c);
+                  setNewContact(null);
+                }}
                 className={`w-full text-left px-4 py-3 border-b border-neutral-100 hover:bg-neutral-50 transition flex items-start justify-between gap-2 ${
                   selected?.otherId === c.otherId ? "bg-primary-50" : ""
                 }`}
@@ -105,6 +169,13 @@ export default function MessagesPage() {
                 otherId={selected.otherId}
                 onUnreadChange={() => {
                   setUnread((prev) => Math.max(0, prev - 1));
+                  loadConversations();
+                }}
+              />
+            ) : newContact ? (
+              <ChatView
+                otherId={newContact.id}
+                onUnreadChange={() => {
                   loadConversations();
                 }}
               />

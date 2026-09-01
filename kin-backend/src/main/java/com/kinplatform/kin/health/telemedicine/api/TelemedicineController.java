@@ -1,6 +1,7 @@
 package com.kinplatform.kin.health.telemedicine.api;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
+import com.kinplatform.kin.health.physician.api.RelationshipService;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment.AppointmentStatus;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -54,13 +55,22 @@ public class TelemedicineController {
 
     private final TelemedicineService telemedicineService;
     private final UserRepository userRepository;
+    private final RelationshipService relationshipService;
 
-    public TelemedicineController(TelemedicineService telemedicineService, UserRepository userRepository) {
+    public TelemedicineController(TelemedicineService telemedicineService, UserRepository userRepository,
+            RelationshipService relationshipService) {
         this.telemedicineService = telemedicineService;
         this.userRepository = userRepository;
+        this.relationshipService = relationshipService;
     }
 
     // ---------- Mensajería ----------
+
+    @GetMapping("/contacts")
+    public ResponseEntity<List<RelationshipService.ContactResponse>> contacts(Authentication authentication) {
+        User user = AuthenticatedUsers.require(userRepository, authentication);
+        return ResponseEntity.ok(relationshipService.activeContactsFor(user.getId(), user.getRole()));
+    }
 
     @PostMapping("/messages")
     public ResponseEntity<MessageResponse> sendMessage(

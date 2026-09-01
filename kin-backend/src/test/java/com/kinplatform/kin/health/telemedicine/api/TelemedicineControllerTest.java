@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.kinplatform.kin.health.physician.api.RelationshipService;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment.AppointmentStatus;
 import com.kinplatform.kin.health.telemedicine.domain.Message;
@@ -52,6 +53,9 @@ class TelemedicineControllerTest {
     private UserRepository userRepository;
 
     @Mock
+    private RelationshipService relationshipService;
+
+    @Mock
     private Authentication authentication;
 
     private MockMvc mockMvc;
@@ -62,7 +66,8 @@ class TelemedicineControllerTest {
         var user = User.builder().id(USER).email(EMAIL).role(UserRole.PATIENT).build();
         lenient().when(authentication.getName()).thenReturn(EMAIL);
         lenient().when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        mockMvc = MockMvcBuilders.standaloneSetup(new TelemedicineController(telemedicineService, userRepository))
+        mockMvc = MockMvcBuilders.standaloneSetup(
+                        new TelemedicineController(telemedicineService, userRepository, relationshipService))
                 .setCustomArgumentResolvers(new org.springframework.data.web.PageableHandlerMethodArgumentResolver())
                 .defaultRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request(
                                 org.springframework.http.HttpMethod.GET, "/")

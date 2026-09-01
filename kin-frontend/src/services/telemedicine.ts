@@ -19,6 +19,12 @@ export interface Conversation {
   unread: number;
 }
 
+export interface Contact {
+  id: string;
+  name: string;
+  role: string;
+}
+
 export type AppointmentStatus = "PENDIENTE" | "CONFIRMADA" | "CANCELADA" | "COMPLETADA";
 
 export interface Appointment {
@@ -33,6 +39,8 @@ export interface Appointment {
 
 export const telemedicineService = {
   conversations: () => api.get<Conversation[]>("/health/telemedicine/conversations"),
+
+  contacts: () => api.get<Contact[]>("/health/telemedicine/contacts"),
 
   messages: (withId: string) =>
     api.get<TelemedicineMessage[]>(`/health/telemedicine/messages?with=${withId}`),
