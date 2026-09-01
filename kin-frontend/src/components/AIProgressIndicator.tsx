@@ -17,27 +17,24 @@ export default function AIProgressIndicator({ visible, onComplete }: AIProgressI
       return;
     }
     setActive(true);
-    let progress: NodeJS.Timeout;
 
-    if (visible && active) {
-      let width = 0;
-      const interval = setInterval(() => {
-        width += 2;
-        setPercentage(width);
-        if (width >= 100) {
-          clearInterval(interval);
-          setPercentage(100);
-          if (onComplete) {
-            onComplete();
-          }
+    let width = 0;
+    const interval = setInterval(() => {
+      width += 2;
+      setPercentage(width);
+      if (width >= 100) {
+        clearInterval(interval);
+        setPercentage(100);
+        if (onComplete) {
+          onComplete();
         }
-      }, 30);
-    }
+      }
+    }, 30);
 
     return () => {
       clearInterval(interval);
     };
-  }, [visible, active, onComplete]);
+  }, [visible, onComplete]);
 
   if (!active) {
     return null;

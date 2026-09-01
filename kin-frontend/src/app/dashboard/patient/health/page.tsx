@@ -1,15 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AIProgressIndicator from "@/components/AIProgressIndicator";
-import AIResultModal from "@/components/AIResultModal";
 import CarePlanView from "@/components/health/CarePlanView";
 import FeedbackButton from "@/components/health/FeedbackButton";
 import HealthSummaryCards from "@/components/health/HealthSummaryCards";
 import HistoryList from "@/components/health/HistoryList";
 import ProfileEditor from "@/components/health/ProfileEditor";
 import SymptomEvolutionChart from "@/components/health/SymptomEvolutionChart";
-import { aiassistService } from "@/services/aiassist";
 import { dashboardService } from "@/services/dashboard";
 import type { CarePlan, HealthSummary } from "@/services/dashboard";
 import type { PageResponse } from "@/types";
@@ -21,7 +18,6 @@ export default function PatientHealthPage() {
   const [page, setPage] = useState<PageResponse<TriageHistoryEntry> | null>(null);
   const [history, setHistory] = useState<TriageHistoryEntry[]>([]);
   const [selected, setSelected] = useState<TriageHistoryEntry | null>(null);
-  const [aiResult, setAiResult] = useState<{ type: string; response: string } | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -56,19 +52,6 @@ export default function PatientHealthPage() {
     }
   };
 
-  const handleAiExplain = async (patientId: string, triageId: string) => {
-    setAiResult(null);
-    try {
-      const response = await aiassistService.explainDifferential(
-        patientId,
-        { id: triageId, results: [], confidence: 0.5 }
-      );
-      setAiResult({ type: "EXPLAIN", response: response.response });
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  };
-
   return (
     <main className="flex-1 flex items-start justify-center px-6 pt-10 pb-12">
       <div className="w-full max-w-5xl flex flex-col gap-6">
@@ -80,14 +63,6 @@ export default function PatientHealthPage() {
             </p>
           </div>
           <FeedbackButton label="Dar feedback" />
-          <button
-            type="button"
-            onClick={() => handleAiExplain(selected?.id || "", selected?.id || "")}
-            className="rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-700 transition disabled:opacity-50"
-            disabled={!selected}
-          >
-            Explicar en lenguaje sencillo
-          </button>
         </div>
 
         <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
@@ -178,18 +153,6 @@ export default function PatientHealthPage() {
         </div>
       )}
 
-      {aiResult && (
-        <AIResultModal
-          open={true}
-          onClose={() => setAiResult(null)}
-          type={aiResult.type as any}
-          title="Explicación de IA"
-          response={aiResult.response}
-          onCopy={() => {/* copiar al portapapeles */}}
-        />
-      )}
-
-      <AIProgressIndicator visible={false} onComplete={() => {}} />
     </main>
   );
 }

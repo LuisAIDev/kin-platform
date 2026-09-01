@@ -64,6 +64,7 @@ export default function PhysicianDashboard() {
   };
 
   const [aiResult, setAiResult] = useState<{ type: string; response: string } | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const handleSelect = async (patientId: string) => {
     try {
@@ -80,32 +81,28 @@ export default function PhysicianDashboard() {
 
   const handleAiAssist = async (type: string, patientId: string) => {
     setAiResult(null);
+    setAiLoading(true);
     try {
       let response: any;
       switch (type) {
         case "summary":
-          response = await aiassistService.generateSummary(
-            physicianService.getCurrentPhysicianId() || "",
-            patientId
-          );
+          response = await aiassistService.generateSummary(patientId);
           break;
         case "prepare":
-          response = await aiassistService.prepareConsultation(
-            physicianService.getCurrentPhysicianId() || "",
-            patientId
-          );
+          response = await aiassistService.prepareConsultation(patientId);
           break;
         case "draft":
           response = await aiassistService.draftMessage(
-            physicianService.getCurrentPhysicianId() || "",
             patientId,
-            selectedSummary?.recommendation || ""
+            ""
           );
           break;
       }
       setAiResult({ type, response: response.response });
     } catch (err) {
       setError((err as Error).message);
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -140,7 +137,7 @@ export default function PhysicianDashboard() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => handleAiAssist("summary", selectedSummary?.id || "")}
+              onClick={() => handleAiAssist("summary", selectedSummary?.patientId || "")}
               className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition disabled:opacity-50"
               disabled={!selectedSummary}
             >
@@ -148,7 +145,7 @@ export default function PhysicianDashboard() {
             </button>
             <button
               type="button"
-              onClick={() => handleAiAssist("prepare", selectedSummary?.id || "")}
+              onClick={() => handleAiAssist("prepare", selectedSummary?.patientId || "")}
               className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition disabled:opacity-50"
               disabled={!selectedSummary}
             >
@@ -156,7 +153,7 @@ export default function PhysicianDashboard() {
             </button>
             <button
               type="button"
-              onClick={() => handleAiAssist("draft", selectedSummary?.id || "")}
+              onClick={() => handleAiAssist("draft", selectedSummary?.patientId || "")}
               className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-700 transition disabled:opacity-50"
               disabled={!selectedSummary}
             >
@@ -230,7 +227,7 @@ export default function PhysicianDashboard() {
         />
       )}
 
-      <AIProgressIndicator visible={/* loading state */} onComplete={() => {}} />
+      <AIProgressIndicator visible={aiLoading} onComplete={() => setAiLoading(false)} />
     </main>
   );
 }

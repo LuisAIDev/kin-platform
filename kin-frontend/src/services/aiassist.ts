@@ -21,21 +21,21 @@ export interface AIAssistResponse {
 }
 
 export const aiassistService = {
-  async generateSummary(physicianId: string, patientId: string): Promise<AIAssistResponse> {
+  async generateSummary(patientId: string): Promise<AIAssistResponse> {
     return api.post<AIAssistResponse>(
       `/health/aiassist/patients/${patientId}/summary`,
       { type: "SUMMARY", patientId, context: "resumen previo a consulta" }
     );
   },
 
-  async prepareConsultation(physicianId: string, patientId: string): Promise<AIAssistResponse> {
+  async prepareConsultation(patientId: string): Promise<AIAssistResponse> {
     return api.post<AIAssistResponse>(
       `/health/aiassist/patients/${patientId}/consultation-prep`,
       { type: "PREPARE", patientId, context: "preparacion de consulta" }
     );
   },
 
-  async draftMessage(physicianId: string, patientId: string, recommendation: string): Promise<AIAssistResponse> {
+  async draftMessage(patientId: string, recommendation: string): Promise<AIAssistResponse> {
     return api.post<AIAssistResponse>(
       `/health/aiassist/patients/${patientId}/draft-message`,
       { type: "DRAFT", patientId, context: "redaccion de mensaje", recommendation }
