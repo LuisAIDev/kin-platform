@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { schedulingService } from "@/services/scheduling";
 import { telemedicineService } from "@/services/telemedicine";
 import type { SchedulingAppointment } from "@/services/scheduling";
-import type { Conversation } from "@/services/telemedicine";
+import type { Contact } from "@/services/telemedicine";
 
 function formatDate(iso: string | null | undefined) {
   if (!iso) return "—";
@@ -32,7 +32,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function PatientSchedulePage() {
-  const [physicians, setPhysicians] = useState<Conversation[]>([]);
+  const [physicians, setPhysicians] = useState<Contact[]>([]);
   const [selectedPhysician, setSelectedPhysician] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [slots, setSlots] = useState<string[]>([]);
@@ -57,11 +57,11 @@ export default function PatientSchedulePage() {
   useEffect(() => {
     let cancelled = false;
     telemedicineService
-      .conversations()
-      .then((convos) => {
+      .contacts()
+      .then((contacts) => {
         if (cancelled) return;
-        setPhysicians(convos);
-        if (convos.length > 0) setSelectedPhysician(convos[0].otherId);
+        setPhysicians(contacts);
+        if (contacts.length > 0) setSelectedPhysician(contacts[0].id);
       })
       .catch((err) => {
         if (!cancelled) setError((err as Error).message);
@@ -149,8 +149,8 @@ export default function PatientSchedulePage() {
             >
               {physicians.length === 0 && <option value="">Sin médicos asignados</option>}
               {physicians.map((p) => (
-                <option key={p.otherId} value={p.otherId}>
-                  {p.otherName}
+                <option key={p.id} value={p.id}>
+                  {p.name}
                 </option>
               ))}
             </select>

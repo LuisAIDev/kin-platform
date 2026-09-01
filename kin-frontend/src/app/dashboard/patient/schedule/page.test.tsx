@@ -15,7 +15,7 @@ vi.mock("@/services/scheduling", () => ({
 
 vi.mock("@/services/telemedicine", () => ({
   telemedicineService: {
-    conversations: vi.fn(),
+    contacts: vi.fn(),
   },
 }));
 
@@ -26,8 +26,8 @@ const SLOT = "2026-09-07T09:00:00-05:00";
 
 describe("PatientSchedulePage", () => {
   it("muestra los slots del médico y permite solicitar una cita", async () => {
-    (telemedicineService.conversations as ReturnType<typeof vi.fn>).mockResolvedValue([
-      { otherId: "m1", otherName: "Dr. Ana García", lastMessage: "", lastMessageAt: "", unread: 0 },
+    (telemedicineService.contacts as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: "m1", name: "Dr. Ana García", role: "PHYSICIAN" },
     ]);
     (schedulingService.slotsForPhysician as ReturnType<typeof vi.fn>).mockResolvedValue([SLOT]);
     (schedulingService.upcomingAppointments as ReturnType<typeof vi.fn>).mockResolvedValue([]);
@@ -54,8 +54,8 @@ describe("PatientSchedulePage", () => {
   });
 
   it("muestra estado sin horarios disponibles", async () => {
-    (telemedicineService.conversations as ReturnType<typeof vi.fn>).mockResolvedValue([
-      { otherId: "m1", otherName: "Dr. Test", lastMessage: "", lastMessageAt: "", unread: 0 },
+    (telemedicineService.contacts as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: "m1", name: "Dr. Test", role: "PHYSICIAN" },
     ]);
     (schedulingService.slotsForPhysician as ReturnType<typeof vi.fn>).mockResolvedValue([]);
     (schedulingService.upcomingAppointments as ReturnType<typeof vi.fn>).mockResolvedValue([]);
