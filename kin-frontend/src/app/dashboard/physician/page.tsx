@@ -159,6 +159,13 @@ export default function PhysicianDashboard() {
             >
               Redactar mensaje
             </button>
+            <button
+              type="button"
+              onClick={() => setShowInviteModal(true)}
+              className="rounded-lg bg-neutral-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-900 transition"
+            >
+              Invitar paciente
+            </button>
             <FeedbackButton label="Dar feedback" />
           </div>
         </div>
