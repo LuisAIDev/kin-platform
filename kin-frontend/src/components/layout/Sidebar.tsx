@@ -68,6 +68,7 @@ const PATIENT_ITEMS: NavItem[] = [
   { label: "Citas", href: "/dashboard/patient/appointments" },
   { label: "Reservar cita", href: "/dashboard/patient/schedule" },
   { label: "Seguimiento", href: "/dashboard/patient/followup" },
+  { label: "Documentos", href: "/dashboard/patient/documents" },
   { label: "Historial de accesos", href: "/dashboard/patient/audit" },
   { label: "Configuración", href: "/dashboard/settings" },
 ];
@@ -79,6 +80,7 @@ const PHYSICIAN_ITEMS: NavItem[] = [
   { label: "Agenda", href: "/dashboard/physician/schedule" },
   { label: "Citas", href: "/dashboard/physician/appointments" },
   { label: "Seguimiento", href: "/dashboard/physician/followup" },
+  { label: "Documentos", href: "/dashboard/physician/documents" },
   { label: "Configuración", href: "/dashboard/settings" },
 ];
 
@@ -196,6 +198,12 @@ export default function Sidebar() {
     }
     if (href === "/dashboard/patient/followup") {
       return pathname === "/dashboard/patient/followup";
+    }
+    if (href === "/dashboard/patient/documents") {
+      return pathname === "/dashboard/patient/documents";
+    }
+    if (href === "/dashboard/physician/documents") {
+      return pathname === "/dashboard/physician/documents";
     }
     if (href === "/dashboard/physician/followup") {
       return pathname === "/dashboard/physician/followup";
