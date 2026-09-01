@@ -134,6 +134,25 @@ export default function PhysicianSchedulePage() {
     }
   };
 
+  const [reschedulingId, setReschedulingId] = useState("");
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTime, setRescheduleTime] = useState("");
+
+  const handleReschedule = async (id: string) => {
+    if (!rescheduleDate || !rescheduleTime) return;
+    setError("");
+    try {
+      const newScheduledAt = new Date(`${rescheduleDate}T${rescheduleTime}:00`).toISOString();
+      await schedulingService.rescheduleAppointment(id, newScheduledAt, "Reprogramada por el médico");
+      setReschedulingId("");
+      setRescheduleDate("");
+      setRescheduleTime("");
+      await load();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
   return (
     <main className="flex-1 flex items-start justify-center px-6 pt-10 pb-12">
       <div className="w-full max-w-5xl flex flex-col gap-6">
@@ -241,6 +260,41 @@ export default function PhysicianSchedulePage() {
                     >
                       Confirmar
                     </button>
+                  )}
+                  {a.status === "CONFIRMADA" && (
+                    <button
+                      type="button"
+                      onClick={() => setReschedulingId(reschedulingId === a.id ? "" : a.id)}
+                      className="rounded-lg border border-blue-200 text-blue-700 px-3 py-1.5 text-xs font-medium hover:bg-blue-50 transition"
+                    >
+                      Reprogramar
+                    </button>
+                  )}
+                  {reschedulingId === a.id && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        type="date"
+                        value={rescheduleDate}
+                        onChange={(e) => setRescheduleDate(e.target.value)}
+                        aria-label="Nueva fecha"
+                        className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      />
+                      <input
+                        type="time"
+                        value={rescheduleTime}
+                        onChange={(e) => setRescheduleTime(e.target.value)}
+                        aria-label="Nueva hora"
+                        className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleReschedule(a.id)}
+                        disabled={!rescheduleDate || !rescheduleTime}
+                        className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition disabled:bg-blue-300"
+                      >
+                        Guardar reprogramación
+                      </button>
+                    </div>
                   )}
                   {(a.status === "PENDIENTE" || a.status === "CONFIRMADA") && (
                     <>
