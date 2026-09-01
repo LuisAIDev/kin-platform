@@ -2,6 +2,8 @@ package com.kinplatform.kin.health.scheduling.adapter;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.DayOfWeek;
@@ -32,6 +34,7 @@ public class PhysicianAvailabilityEntity {
     @Column(name = "physician_id", nullable = false)
     private UUID physicianId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "day_of_week", nullable = false, length = 12)
     private DayOfWeek dayOfWeek;
 
