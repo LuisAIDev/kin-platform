@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { telemedicineService } from "@/services/telemedicine";
+import { useEffect, useState } from "react";
+import { telemedicineService, type Contact } from "@/services/telemedicine";
 
 export default function AppointmentForm({
   physicianId,
@@ -10,6 +10,8 @@ export default function AppointmentForm({
   physicianId?: string;
   onCreated: () => void;
 }) {
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [selectedPhysicianId, setSelectedPhysicianId] = useState(physicianId ?? "");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [reason, setReason] = useState("");
@@ -17,19 +19,28 @@ export default function AppointmentForm({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (physicianId) {
+      setSelectedPhysicianId(physicianId);
+      return;
+    }
+    telemedicineService
+      .contacts()
+      .then((data) => {
+        setContacts(data);
+        if (data.length > 0) setSelectedPhysicianId(data[0].id);
+      })
+      .catch((err) => setError((err as Error).message));
+  }, [physicianId]);
+
   const handleSubmit = async () => {
-    if (!date || !time || !reason.trim()) return;
+    if (!selectedPhysicianId || !date || !time || !reason.trim()) return;
     setSaving(true);
     setMessage("");
     setError("");
     try {
       const scheduledAt = new Date(`${date}T${time}:00`).toISOString();
-      if (physicianId) {
-        await telemedicineService.requestAppointment(physicianId, scheduledAt, reason.trim());
-      } else {
-        // Sin médico específico: el frontend del paciente elige de su lista
-        throw new Error("Se requiere seleccionar un médico.");
-      }
+      await telemedicineService.requestAppointment(selectedPhysicianId, scheduledAt, reason.trim());
       setMessage("Cita solicitada. Espera la confirmación del médico.");
       setDate("");
       setTime("");
@@ -45,6 +56,32 @@ export default function AppointmentForm({
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-6 flex flex-col gap-4">
       <h2 className="text-base font-semibold">Solicitar cita</h2>
+
+      {!physicianId && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="appt-physician" className="text-sm font-medium">
+            Médico
+          </label>
+          {contacts.length === 0 ? (
+            <p className="text-sm text-neutral-500">
+              No tienes médicos con relación activa.
+            </p>
+          ) : (
+            <select
+              id="appt-physician"
+              value={selectedPhysicianId}
+              onChange={(e) => setSelectedPhysicianId(e.target.value)}
+              className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              {contacts.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
@@ -99,7 +136,7 @@ export default function AppointmentForm({
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={saving || !date || !time || !reason.trim()}
+          disabled={saving || !selectedPhysicianId || !date || !time || !reason.trim()}
           className="rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-primary-700 transition disabled:bg-primary-300"
         >
           {saving ? "Solicitando..." : "Solicitar cita"}
