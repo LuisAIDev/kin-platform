@@ -15,6 +15,10 @@ COPY --from=build /app/target/*.jar app.jar
 
 # Usuario no-root (seguridad cloud)
 RUN addgroup -S app && adduser -S app -G app
+# Directorio de almacenamiento de documentos clínicos (ADR-036). Se crea y se
+# asigna al usuario no-root para que el contenedor pueda escribir en él al arrancar
+# (filesystem efímero en Render; la persistencia externa se decide en fase posterior).
+RUN mkdir -p /app/storage/documents && chown -R app:app /app/storage
 USER app
 
 EXPOSE 8080
