@@ -5,6 +5,7 @@ import com.kinplatform.kin.export.renderer.ExportRendererFactory;
 import com.kinplatform.kin.export.model.ExportDocument;
 import jakarta.annotation.PostConstruct;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -55,7 +56,7 @@ public class TriageExportAssembler {
     }
 
     private java.util.Map<String, Object> buildHeaderSection(TriageExportDocument doc) {
-        var map = java.util.LinkedHashMap<String, Object>();
+        Map<String, Object> map = new java.util.LinkedHashMap<String, Object>();
         map.put("type", "header");
         map.put("title", "INFORME DE TRIAJE KIN");
         map.put("code", doc.triageId != null ? doc.triageId.toString() : "—");
@@ -64,7 +65,7 @@ public class TriageExportAssembler {
     }
 
     private java.util.Map<String, Object> buildPatientSection(TriageExportDocument doc) {
-        var map = java.util.LinkedHashMap<String, Object>();
+        Map<String, Object> map = new java.util.LinkedHashMap<String, Object>();
         map.put("type", "patient-info");
         map.put("label", "Paciente");
         map.put("value", doc.patientName != null ? doc.patientName : "—");
@@ -72,7 +73,7 @@ public class TriageExportAssembler {
     }
 
     private java.util.Map<String, Object> buildTriageSection(TriageExportDocument doc) {
-        var map = java.util.LinkedHashMap<String, Object>();
+        Map<String, Object> map = new java.util.LinkedHashMap<String, Object>();
         map.put("type", "triage-info");
         var sb = new java.lang.StringBuilder();
         if (doc.symptoms != null && !doc.symptoms.isEmpty()) {
@@ -92,14 +93,14 @@ public class TriageExportAssembler {
     }
 
     private java.util.Map<String, Object> buildAdvisorySection(TriageExportDocument doc) {
-        var map = java.util.LinkedHashMap<String, Object>();
+        Map<String, Object> map = new java.util.LinkedHashMap<String, Object>();
         map.put("type", "advisory");
         map.put("content", "\\n\\nAdvertencia: Este informe no constituye un diagnóstico médico. Es una herramienta de apoyo informativa. Siempre consulta a un profesional de la salud para decisiones clínicas.");
         return map;
     }
 
     private java.util.Map<String, Object> buildMetadataSection(TriageExportDocument doc) {
-        var map = java.util.LinkedHashMap<String, Object>();
+        Map<String, Object> map = new java.util.LinkedHashMap<String, Object>();
         map.put("type", "metadata");
         map.put("label", "Información del informe");
         map.put("dateGenerated", doc.generatedAt != null ? dateFormatter.format(doc.generatedAt) : "—");
