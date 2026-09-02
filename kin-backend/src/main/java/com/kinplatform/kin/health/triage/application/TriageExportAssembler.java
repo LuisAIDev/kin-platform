@@ -20,8 +20,8 @@ public class TriageExportAssembler {
     private final ExportRendererFactory rendererFactory;
     private final DateTimeFormatter datetimeFormatter;
 
-    public TriageExportAssembler(ExportRendererFactory rendererFactory) {
-        this.rendererFactory = rendererFactory;
+    public TriageExportAssembler() {
+        this.rendererFactory = new ExportRendererFactory();
         this.datetimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     }
 
