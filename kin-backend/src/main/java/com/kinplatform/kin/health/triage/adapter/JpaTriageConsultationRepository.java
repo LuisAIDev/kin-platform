@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.kin.health.triage.domain.TriageConditionResult;
 import com.kinplatform.kin.health.triage.domain.TriageConsultation;
 import com.kinplatform.kin.health.triage.port.TriageConsultationRepository;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -77,6 +78,15 @@ public class JpaTriageConsultationRepository implements TriageConsultationReposi
             return Optional.empty();
         }
         return repository.findById(id).filter(e -> userId.equals(e.getUserId())).map(this::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countByUserIdAndCreatedAtBetween(UUID userId, OffsetDateTime start, OffsetDateTime end) {
+        if (userId == null || start == null || end == null) {
+            return 0;
+        }
+        return repository.countByUserIdAndCreatedAtBetween(userId, start, end);
     }
 
     private TriageConsultation toDomain(TriageConsultationEntity entity) {

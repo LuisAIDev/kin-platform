@@ -1,5 +1,7 @@
 package com.kinplatform.kin.health.triage.api;
 
+import com.kinplatform.kin.health.common.exception.QuotaExceededException;
+import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
 import com.kinplatform.kin.health.triage.config.TriageProperties;
 import com.kinplatform.kin.health.triage.domain.Symptom;
 import com.kinplatform.kin.health.triage.domain.TriageCatalog;
@@ -35,16 +37,19 @@ public class TriageService {
     private final TriageKnowledgeRepository knowledgeRepository;
     private final TriageConsultationRepository consultationRepository;
     private final TriageProperties properties;
+    private final HealthQuotaPort healthQuotaPort;
 
     public TriageService(
             TriageEngine engine,
             TriageKnowledgeRepository knowledgeRepository,
             TriageConsultationRepository consultationRepository,
-            TriageProperties properties) {
+            TriageProperties properties,
+            HealthQuotaPort healthQuotaPort) {
         this.engine = engine;
         this.knowledgeRepository = knowledgeRepository;
         this.consultationRepository = consultationRepository;
         this.properties = properties;
+        this.healthQuotaPort = healthQuotaPort;
     }
 
     /**
@@ -61,6 +66,15 @@ public class TriageService {
         }
         if (userId == null) {
             throw new IllegalArgumentException("userId no puede ser null");
+        }
+        Integer limit = healthQuotaPort.getMaxTriagesPerMonth(userId);
+        if (limit != null) {
+            OffsetDateTime startOfMonth = OffsetDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+            OffsetDateTime endOfMonth = startOfMonth.plusMonths(1);
+            long count = consultationRepository.countByUserIdAndCreatedAtBetween(userId, startOfMonth, endOfMonth);
+            if (count >= limit) {
+                throw new QuotaExceededException("Has alcanzado el límite de triajes de tu plan.");
+            }
         }
         TriageCatalog catalog = knowledgeRepository.loadCatalog();
         TriageResult result = engine.evaluate(TriageInput.of(symptoms), catalog);

@@ -26,9 +26,15 @@ public class PricingPlan {
     /**
      * Identificador comercial estable del plan: {@code FREE}, {@code STANDARD}
      * o {@code PREMIUM}. No depende del nombre (que es solo cosmético).
+     * Único dentro de cada {@link ProductVertical} (compuesto con vertical).
      */
-    @Column(length = 20, unique = true)
+    @Column(length = 20)
     private String code;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "vertical", nullable = false, length = 30)
+    @Builder.Default
+    private ProductVertical vertical = ProductVertical.EMPRESAS;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -58,6 +64,27 @@ public class PricingPlan {
     @Column(name = "ai_budget_usd", precision = 10, scale = 2)
     private BigDecimal aiBudgetUsd;
 
+    /**
+     * Máximo de triajes por mes (KIN Salud Personal).
+     * {@code null} = ilimitado (plan pago PERSONAL_PLUS).
+     */
+    @Column(name = "max_triages_per_month")
+    private Integer maxTriagesPerMonth;
+
+    /**
+     * Días de prueba gratuita (KIN Salud Profesional).
+     * {@code null} = sin trial (plan pago PROFESSIONAL).
+     */
+    @Column(name = "trial_days")
+    private Integer trialDays;
+
+    /**
+     * Máximo de pacientes propios (KIN Salud Profesional pago).
+     * {@code null} = ilimitado.
+     */
+    @Column(name = "max_patients")
+    private Integer maxPatients;
+
     @Column(name = "advanced_ai", nullable = false)
     @Builder.Default
     private Boolean advancedAI = false;
@@ -75,6 +102,10 @@ public class PricingPlan {
     @Column(name = "viability_scoring_detail", nullable = false, length = 20)
     @Builder.Default
     private ViabilityScoringDetail viabilityScoringDetail = ViabilityScoringDetail.BASIC;
+
+    @Column(name = "triage_sharing", nullable = false)
+    @Builder.Default
+    private Boolean triageSharing = false;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default

@@ -6,6 +6,8 @@ import com.kinplatform.kin.health.audit.api.AuditService;
 import com.kinplatform.kin.health.audit.domain.AuditAction;
 import com.kinplatform.kin.health.audit.domain.AuditResourceType;
 import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
+import com.kinplatform.kin.health.common.exception.QuotaExceededException;
+import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
 import com.kinplatform.kin.health.physician.domain.ClinicalAlert;
 import com.kinplatform.kin.health.physician.domain.PatientSummary;
@@ -56,6 +58,7 @@ public class PhysicianService {
     private final PhysicianProperties properties;
     private final RelationshipAccessValidator accessValidator;
     private final AuditService auditService;
+    private final HealthQuotaPort healthQuotaPort;
 
     public PhysicianService(
             PhysicianPatientRepository patientRepository,
@@ -65,7 +68,8 @@ public class PhysicianService {
             UserRepository userRepository,
             PhysicianProperties properties,
             RelationshipAccessValidator accessValidator,
-            AuditService auditService) {
+            AuditService auditService,
+            HealthQuotaPort healthQuotaPort) {
         this.patientRepository = patientRepository;
         this.alertRepository = alertRepository;
         this.consultationRepository = consultationRepository;
@@ -74,6 +78,7 @@ public class PhysicianService {
         this.properties = properties;
         this.accessValidator = accessValidator;
         this.auditService = auditService;
+        this.healthQuotaPort = healthQuotaPort;
     }
 
     @Transactional(readOnly = true)
@@ -180,6 +185,13 @@ public class PhysicianService {
     public PhysicianPatientAssignment assignPatient(UUID physicianId, UUID patientId) {
         if (!properties.isEnabled()) {
             throw new PhysicianDisabledException();
+        }
+        Integer limit = healthQuotaPort.getMaxPatients(physicianId);
+        if (limit != null) {
+            long currentPatients = patientRepository.findPatientIdsByPhysician(physicianId).size();
+            if (currentPatients >= limit) {
+                throw new QuotaExceededException("Has alcanzado el límite de pacientes de tu plan.");
+            }
         }
         PhysicianPatientAssignment assignment =
                 PhysicianPatientAssignment.of(physicianId, patientId, OffsetDateTime.now());

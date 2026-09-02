@@ -26,4 +26,6 @@ public interface TriageConsultationRepository {
     Page<TriageConsultation> findByUserId(UUID userId, Pageable pageable);
 
     Optional<TriageConsultation> findByIdAndUserId(UUID id, UUID userId);
+
+    long countByUserIdAndCreatedAtBetween(UUID userId, java.time.OffsetDateTime start, java.time.OffsetDateTime end);
 }

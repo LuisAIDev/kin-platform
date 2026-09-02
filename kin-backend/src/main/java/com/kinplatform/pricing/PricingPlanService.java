@@ -13,8 +13,6 @@ public interface PricingPlanService {
 
     List<PricingPlan> getActivePlans();
 
-    PricingPlanResponse getById(UUID id);
-
     Optional<PricingPlan> getPlanByName(String name);
 
     Optional<PricingPlan> getPlanByCode(String code);
@@ -24,4 +22,8 @@ public interface PricingPlanService {
     PricingPlanResponse update(UUID id, UpdatePricingPlanRequest request);
 
     void deactivate(UUID id);
+
+    PricingPlanResponse getById(UUID id);
+
+    List<PricingPlanResponse> getByVertical(ProductVertical vertical);
 }

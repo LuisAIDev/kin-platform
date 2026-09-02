@@ -1,5 +1,6 @@
 package com.kinplatform.pricing;
 
+import com.kinplatform.pricing.ProductVertical;
 import com.kinplatform.pricing.dto.CreatePricingPlanRequest;
 import com.kinplatform.pricing.dto.PricingPlanResponse;
 import com.kinplatform.pricing.dto.UpdatePricingPlanRequest;
@@ -25,6 +26,11 @@ public class PricingPlanController {
     @GetMapping("/pricing-plans")
     public ResponseEntity<List<PricingPlanResponse>> getAll() {
         return ResponseEntity.ok(pricingPlanService.getAllActive());
+    }
+
+    @GetMapping("/pricing-plans/vertical/{vertical}")
+    public ResponseEntity<List<PricingPlanResponse>> getByVertical(@PathVariable ProductVertical vertical) {
+        return ResponseEntity.ok(pricingPlanService.getByVertical(vertical));
     }
 
     @GetMapping("/pricing-plans/{id}")

@@ -1,0 +1,62 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< com.kinplatform:kin-backend >---------------------
+[INFO] Building kin-backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.12:prepare-agent (default) @ kin-backend ---
+[INFO] argLine set to -javaagent:C:\\Users\\Lenovo\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.12\\org.jacoco.agent-0.8.12-runtime.jar=destfile=C:\\Users\\Lenovo\\proyecto-kin\\kin-backend\\target\\jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ kin-backend ---
+[INFO] Copying 8 resources from src\main\resources to target\classes
+[INFO] Copying 40 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ kin-backend ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ kin-backend ---
+[INFO] skip non existing resourceDirectory C:\Users\Lenovo\proyecto-kin\kin-backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ kin-backend ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 484 source files with javac [debug release 17] to target\test-classes
+[INFO] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/enterprise/web/EnterpriseApiExceptionHandlerTest.java: C:\Users\Lenovo\proyecto-kin\kin-backend\src\test\java\com\kinplatform\kin\enterprise\web\EnterpriseApiExceptionHandlerTest.java uses or overrides a deprecated API.
+[INFO] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/kin/enterprise/web/EnterpriseApiExceptionHandlerTest.java: Recompile with -Xlint:deprecation for details.
+[INFO] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/ai/knowledge/adapter/KnowledgeColombiaSourcesTest.java: Some input files use unchecked or unsafe operations.
+[INFO] /C:/Users/Lenovo/proyecto-kin/kin-backend/src/test/java/com/kinplatform/ai/knowledge/adapter/KnowledgeColombiaSourcesTest.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ kin-backend ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.kinplatform.kin.health.physician.api.PhysicianServiceTest
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+17:40:53.015 [main] INFO com.kinplatform.kin.health.physician.api.PhysicianService -- PhysicianService: alerta ALTA creada para paciente 7ed77fb2-78ab-46fc-9441-d5649dda87f5 ? mÚdico 78a8b69b-39a1-4a89-9f6d-4eaabc773898
+17:40:53.071 [main] INFO com.kinplatform.kin.health.physician.api.PhysicianService -- PhysicianService: alerta 757050de-de3b-48b3-8a34-7ad584467747 atendida por mÚdico 78a8b69b-39a1-4a89-9f6d-4eaabc773898
+17:40:53.097 [main] INFO com.kinplatform.kin.health.physician.api.PhysicianService -- PhysicianService: alerta ALTA creada para paciente 7ed77fb2-78ab-46fc-9441-d5649dda87f5 ? mÚdico 78a8b69b-39a1-4a89-9f6d-4eaabc773898
+17:40:53.199 [main] INFO com.kinplatform.kin.health.physician.api.PhysicianService -- PhysicianService: alerta ALTA creada para paciente 7ed77fb2-78ab-46fc-9441-d5649dda87f5 ? mÚdico 78a8b69b-39a1-4a89-9f6d-4eaabc773898
+17:40:53.205 [main] INFO com.kinplatform.kin.health.physician.api.PhysicianService -- PhysicianService: alerta ALTA creada para paciente 7ed77fb2-78ab-46fc-9441-d5649dda87f5 ? mÚdico 78a8b69b-39a1-4a89-9f6d-4eaabc773898
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.967 s -- in com.kinplatform.kin.health.physician.api.PhysicianServiceTest
+[INFO] Running com.kinplatform.kin.health.triage.api.TriageServiceTest
+17:40:53.496 [main] INFO com.kinplatform.kin.health.triage.api.TriageService -- TriageService: userId=4f6eb27f-caf0-4cab-81d7-ea8c6ec86bdb -> 1 condici¾n(es), top=Gripe
+17:40:53.500 [main] INFO com.kinplatform.kin.health.triage.api.TriageService -- TriageService: userId=4f6eb27f-caf0-4cab-81d7-ea8c6ec86bdb -> 1 condici¾n(es), top=Gripe
+17:40:53.501 [main] INFO com.kinplatform.kin.health.triage.api.TriageService -- TriageService: userId=d9793148-a4e4-49f6-aed7-e2198a472b96 -> 1 condici¾n(es), top=Gripe
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.295 s -- in com.kinplatform.kin.health.triage.api.TriageServiceTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 18, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jacoco:0.8.12:report (report) @ kin-backend ---
+[INFO] Loading execution data file C:\Users\Lenovo\proyecto-kin\kin-backend\target\jacoco.exec
+[INFO] Analyzed bundle 'kin-backend' with 941 classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  41.935 s
+[INFO] Finished at: 2026-09-02T17:40:58-05:00
+[INFO] ------------------------------------------------------------------------

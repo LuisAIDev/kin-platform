@@ -3,6 +3,7 @@ package com.kinplatform.pricing.dto;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.pricing.PricingPlan;
+import com.kinplatform.pricing.ProductVertical;
 import com.kinplatform.pricing.SupportLevel;
 import com.kinplatform.pricing.ViabilityScoringDetail;
 import java.math.BigDecimal;
@@ -37,6 +38,11 @@ public class PricingPlanResponse {
     private Boolean isActive;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
+    private ProductVertical vertical;
+    private Integer maxTriagesPerMonth;
+    private Integer trialDays;
+    private Integer maxPatients;
+    private Boolean triageSharing;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -65,6 +71,11 @@ public class PricingPlanResponse {
                 .isActive(plan.getIsActive())
                 .createdAt(plan.getCreatedAt())
                 .updatedAt(plan.getUpdatedAt())
+                .vertical(plan.getVertical())
+                .maxTriagesPerMonth(plan.getMaxTriagesPerMonth())
+                .trialDays(plan.getTrialDays())
+                .maxPatients(plan.getMaxPatients())
+                .triageSharing(plan.getTriageSharing())
                 .build();
     }
 }

@@ -52,6 +52,15 @@ public class PricingPlanServiceImpl implements PricingPlanService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<PricingPlanResponse> getByVertical(ProductVertical vertical) {
+        log.debug("Fetching active pricing plans by vertical: {}", vertical);
+        return repository.findByVerticalAndIsActiveTrueOrderByPriceAsc(vertical).stream()
+                .map(PricingPlanResponse::fromEntity)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PricingPlanResponse getById(UUID id) {
         log.debug("Fetching pricing plan by id: {}", id);
         var plan = repository

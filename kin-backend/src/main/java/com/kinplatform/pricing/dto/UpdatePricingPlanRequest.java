@@ -1,5 +1,6 @@
 package com.kinplatform.pricing.dto;
 
+import com.kinplatform.pricing.ProductVertical;
 import com.kinplatform.pricing.SupportLevel;
 import com.kinplatform.pricing.ViabilityScoringDetail;
 import jakarta.validation.constraints.NotBlank;
@@ -40,6 +41,15 @@ public class UpdatePricingPlanRequest {
 
     private ViabilityScoringDetail viabilityScoringDetail;
 
-    @NotNull(message = "Active status is required")
     private Boolean isActive;
+
+    private ProductVertical vertical;
+
+    private Integer maxTriagesPerMonth;
+
+    private Integer trialDays;
+
+    private Integer maxPatients;
+
+    private Boolean triageSharing;
 }
