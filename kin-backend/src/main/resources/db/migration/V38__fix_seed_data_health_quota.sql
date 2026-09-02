@@ -1,36 +1,10 @@
 -- ============================================================
--- V37: agregar vertical (producto) a pricing_plans + límites
--- específicos para KIN Salud (Personal / Profesional)
+-- V38: fix seed data en pricing_plans (columna viability_scoring_detail NOT NULL)
+-- Migración de reparación después del fallo de V37 por columnas NO NULL
 -- ============================================================
 
--- 1. Columna vertical con default EMPRESAS (planes existentes)
-ALTER TABLE pricing_plans
-    ADD COLUMN IF NOT EXISTS vertical VARCHAR(30) NOT NULL DEFAULT 'EMPRESAS';
-
--- 2. Quitar unicidad global de code (índice único uq_pricing_plans_code)
-DROP INDEX IF EXISTS uq_pricing_plans_code;
-
--- 3. Unicidad compuesta (code, vertical) - permite FREE en EMPRESAS y FREE en SALUD_PERSONAL
-CREATE UNIQUE INDEX IF NOT EXISTS uq_pricing_plan_code_vertical
-    ON pricing_plans (code, vertical);
-
--- 4. Columnas de límites Salud
-ALTER TABLE pricing_plans
-    ADD COLUMN IF NOT EXISTS max_triages_per_month INTEGER,
-    ADD COLUMN IF NOT EXISTS trial_days INTEGER,
-    ADD COLUMN IF NOT EXISTS max_patients INTEGER,
-    ADD COLUMN IF NOT EXISTS triage_sharing BOOLEAN NOT NULL DEFAULT FALSE;
-
--- 5. Índice para queries por vertical + is_active + price
-CREATE INDEX IF NOT EXISTS idx_pricing_plans_vertical_active
-    ON pricing_plans (vertical, is_active, price);
-
--- 6. Backfill: planes existentes ya tienen vertical='EMPRESAS' por DEFAULT
---    (no-op, incluido por documentación)
-
--- ============================================================
--- SEED: planes KIN Salud (solo si no existen por code+vertical)
--- ============================================================
+-- Insertar planes KIN Salud con todas las columnas NOT NULL requeridas
+-- Los inserts usan WHERE NOT EXISTS para ser idempotentes (safe re-run)
 
 -- Plan Personal Free (3 triajes/mes gratis)
 INSERT INTO pricing_plans (id, name, description, price, currency, billing_period, features, is_popular, display_order, max_triages_per_month, trial_days, max_patients, triage_sharing, viability_scoring_detail, support_level, advanced_ai, pdf_export, is_active, vertical, code, created_at, updated_at)
