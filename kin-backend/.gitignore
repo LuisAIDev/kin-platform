@@ -27,3 +27,5 @@ Desktop.ini
 
 # Logs
 *.log
+output.txt
+output_full.txt
