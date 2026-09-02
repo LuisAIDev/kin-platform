@@ -2,6 +2,8 @@
 
 import type { PageResponse } from "@/types";
 import type { TriageHistoryEntry } from "@/services/triage";
+import { useRouter } from "next/navigation";
+import { API_URL } from "@/services/api";
 
 function formatDate(iso: string | null) {
   if (!iso) return "—";
@@ -40,7 +42,7 @@ export default function HistoryList({
               <th className="px-4 py-3 font-medium">Fecha</th>
               <th className="px-4 py-3 font-medium">Síntomas</th>
               <th className="px-4 py-3 font-medium">Condiciones sugeridas</th>
-              <th className="px-4 py-3 font-medium"></th>
+              <th className="px-4 py-3 font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
@@ -58,43 +60,60 @@ export default function HistoryList({
                   {entry.results.length > 2 ? "…" : ""}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <button
-                    type="button"
-                    onClick={() => onSelect(entry)}
-                    className="rounded-lg border border-primary-200 text-primary-700 px-3 py-1.5 text-xs font-medium hover:bg-primary-50 transition"
-                  >
-                    Ver detalle
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onSelect(entry)}
+                      className="rounded-lg border border-primary-200 text-primary-700 px-3 py-1.5 text-xs font-medium hover:bg-primary-50 transition"
+                    >
+                      Ver detalle
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        window.open(
+                          `${API_URL}/health/triage/${entry.id}/export/pdf`,
+                          "_blank"
+                        )
+                      }
+                      className="rounded-lg border border-success-200 text-success-700 px-3 py-1.5 text-xs font-medium hover:bg-success-50 transition"
+                      title="Descargar informe PDF"
+                    >
+                      PDF
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+    </div>
+  );
 
-      <div className="flex items-center justify-between text-sm text-neutral-500">
-        <span>
-          {totalElements} consulta{totalElements === 1 ? "" : "s"} · Página{" "}
-          {currentPage + 1} de {Math.max(1, totalPages)}
-        </span>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage === 0}
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
-          >
-            Anterior
-          </button>
-          <button
-            type="button"
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage + 1 >= totalPages}
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
-          >
-            Siguiente
-          </button>
-        </div>
+  {totalElements > 0 && (
+    <div className="flex items-center justify-between text-sm text-neutral-500">
+      <span>
+        {totalElements} consulta{totalElements === 1 ? "" : "s"} · Página{" "}
+        {currentPage + 1} de {Math.max(1, totalPages)}
+      </span>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 0}
+          className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
+        >
+          Anterior
+        </button>
+        <button
+          type="button"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage + 1 >= totalPages}
+          className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
+        >
+          Siguiente
+        </button>
       </div>
     </div>
   );
