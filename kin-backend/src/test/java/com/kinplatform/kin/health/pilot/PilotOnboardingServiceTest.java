@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.kinplatform.kin.health.physician.InMemoryPhysicianRepositories;
 import com.kinplatform.kin.health.physician.api.PhysicianService;
+import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -57,6 +58,25 @@ class PilotOnboardingServiceTest {
         return email == null ? "" : email.toLowerCase().trim();
     }
 
+    private static HealthQuotaPort healthQuotaPort() {
+        return new HealthQuotaPort() {
+            @Override
+            public Integer getMaxTriagesPerMonth(UUID userId) {
+                return null;
+            }
+
+            @Override
+            public Integer getMaxPatients(UUID physicianId) {
+                return null;
+            }
+
+            @Override
+            public Integer getTrialDays(UUID userId) {
+                return null;
+            }
+        };
+    }
+
     private PilotOnboardingService service() {
         var auditProps = new com.kinplatform.kin.health.audit.config.AuditProperties();
         auditProps.setEnabled(false);
@@ -69,7 +89,8 @@ class PilotOnboardingServiceTest {
                 new PhysicianProperties(),
                 new com.kinplatform.kin.health.physician.access.RelationshipAccessValidator(
                         physicianRepos.patientRepository()),
-                new com.kinplatform.kin.health.audit.api.AuditService(null, null, null, auditProps));
+                new com.kinplatform.kin.health.audit.api.AuditService(null, null, null, auditProps),
+                healthQuotaPort());
         return new PilotOnboardingService(userRepository, passwordEncoder, physicianService);
     }
 

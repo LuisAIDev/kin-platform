@@ -2,6 +2,7 @@ package com.kinplatform.kin.health.triage;
 
 import com.kinplatform.kin.health.triage.domain.TriageConsultation;
 import com.kinplatform.kin.health.triage.port.TriageConsultationRepository;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -47,6 +48,14 @@ public class InMemoryTriageConsultationRepository implements TriageConsultationR
         return stored.stream()
                 .filter(c -> c.id().equals(id) && c.userId().equals(userId))
                 .findFirst();
+    }
+
+    @Override
+    public long countByUserIdAndCreatedAtBetween(UUID userId, OffsetDateTime start, OffsetDateTime end) {
+        return stored.stream()
+                .filter(c -> c.userId().equals(userId))
+                .filter(c -> !c.createdAt().isBefore(start) && !c.createdAt().isAfter(end))
+                .count();
     }
 
     public List<TriageConsultation> all() {

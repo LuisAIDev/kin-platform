@@ -11,6 +11,7 @@ import com.kinplatform.kin.health.audit.config.AuditProperties;
 import com.kinplatform.kin.health.physician.InMemoryPhysicianRepositories;
 import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
 import com.kinplatform.kin.health.physician.access.RelationshipNotActiveException;
+import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
 import com.kinplatform.kin.health.physician.domain.ClinicalAlert;
 import com.kinplatform.kin.health.triage.InMemoryTriageConsultationRepository;
@@ -61,6 +62,25 @@ class PhysicianServiceTest {
         return props;
     }
 
+    private static HealthQuotaPort healthQuotaPort() {
+        return new HealthQuotaPort() {
+            @Override
+            public Integer getMaxTriagesPerMonth(UUID userId) {
+                return null;
+            }
+
+            @Override
+            public Integer getMaxPatients(UUID physicianId) {
+                return null;
+            }
+
+            @Override
+            public Integer getTrialDays(UUID userId) {
+                return null;
+            }
+        };
+    }
+
     private static InMemoryTriageConsultationRepository consultations() {
         var repo = new InMemoryTriageConsultationRepository();
         repo.save(TriageConsultation.of(
@@ -95,7 +115,8 @@ class PhysicianServiceTest {
                 userRepository,
                 properties(enabled),
                 new RelationshipAccessValidator(repos.patientRepository()),
-                auditService());
+                auditService(),
+                healthQuotaPort());
     }
 
     @Test
@@ -209,7 +230,7 @@ class PhysicianServiceTest {
         service.createHighUrgencyAlerts(PATIENT, List.of("dolor"), List.of("Angina de pecho"));
         var alert = service.activeAlerts(PHYSICIAN).get(0);
 
-        // La relación se termina después de crear la alerta: el médico ya no puede gestionarla.
+        // La relacion se termina despues de crear la alerta: el medico ya no puede gestionarla.
         repos.patientRepository().assign(
                 InMemoryPhysicianRepositories.assignment(PHYSICIAN, PATIENT)
                         .ended(OffsetDateTime.now(), "ENDED_BY_ADMIN"));

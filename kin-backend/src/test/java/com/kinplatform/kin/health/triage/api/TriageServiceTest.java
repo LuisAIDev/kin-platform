@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.kinplatform.kin.health.triage.InMemoryTriageConsultationRepository;
 import com.kinplatform.kin.health.triage.InMemoryTriageKnowledgeRepository;
+import com.kinplatform.kin.health.common.exception.QuotaExceededException;
+import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
 import com.kinplatform.kin.health.triage.config.TriageProperties;
 import com.kinplatform.kin.health.triage.domain.Condition;
 import com.kinplatform.kin.health.triage.domain.Severity;
@@ -47,20 +49,40 @@ class TriageServiceTest {
                 List.of(SymptomConditionRelation.of(fiebre.id(), gripe.id(), 0.9, true))));
     }
 
+    private static HealthQuotaPort healthQuotaPort() {
+        return new HealthQuotaPort() {
+            @Override
+            public Integer getMaxTriagesPerMonth(UUID userId) {
+                return null;
+            }
+
+            @Override
+            public Integer getMaxPatients(UUID physicianId) {
+                return null;
+            }
+
+            @Override
+            public Integer getTrialDays(UUID userId) {
+                return null;
+            }
+        };
+    }
+
     private static TriageService service(boolean enabled) {
         var knowledge = repo();
         return new TriageService(
                 new TriageEngine(knowledge),
                 knowledge,
                 new InMemoryTriageConsultationRepository(),
-                properties(enabled));
+                properties(enabled),
+                healthQuotaPort());
     }
 
     @Test
     void analyze_deberiaPersistirLaConsulta() {
         var knowledge = repo();
         var history = new InMemoryTriageConsultationRepository();
-        var service = new TriageService(new TriageEngine(knowledge), knowledge, history, properties(true));
+        var service = new TriageService(new TriageEngine(knowledge), knowledge, history, properties(true), healthQuotaPort());
 
         var result = service.analyze(USER_ID, List.of("fiebre"));
 
@@ -94,7 +116,7 @@ class TriageServiceTest {
     void history_deberiaDevolverSoloLasConsultasDelUsuario() {
         var knowledge = repo();
         var history = new InMemoryTriageConsultationRepository();
-        var service = new TriageService(new TriageEngine(knowledge), knowledge, history, properties(true));
+        var service = new TriageService(new TriageEngine(knowledge), knowledge, history, properties(true), healthQuotaPort());
         service.analyze(USER_ID, List.of("fiebre"));
         service.analyze(UUID.randomUUID(), List.of("fiebre"));
 
