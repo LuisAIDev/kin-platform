@@ -2,7 +2,6 @@
 
 import type { PageResponse } from "@/types";
 import type { TriageHistoryEntry } from "@/services/triage";
-import { useRouter } from "next/navigation";
 import { API_URL } from "@/services/api";
 
 function formatDate(iso: string | null) {
@@ -88,33 +87,32 @@ export default function HistoryList({
           </tbody>
         </table>
       </div>
-    </div>
-  );
-
-  {totalElements > 0 && (
-    <div className="flex items-center justify-between text-sm text-neutral-500">
-      <span>
-        {totalElements} consulta{totalElements === 1 ? "" : "s"} · Página{" "}
-        {currentPage + 1} de {Math.max(1, totalPages)}
-      </span>
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 0}
-          className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
-        >
-          Anterior
-        </button>
-        <button
-          type="button"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage + 1 >= totalPages}
-          className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
-        >
-          Siguiente
-        </button>
-      </div>
+      {totalElements > 0 && (
+        <div className="flex items-center justify-between text-sm text-neutral-500">
+          <span>
+            {totalElements} consulta{totalElements === 1 ? "" : "s"} · Página{" "}
+            {currentPage + 1} de {Math.max(1, totalPages)}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 0}
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage + 1 >= totalPages}
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
