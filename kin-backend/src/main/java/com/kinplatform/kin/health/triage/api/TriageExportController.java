@@ -80,7 +80,6 @@ public class TriageExportController {
 
     private TriageConsultation loadTriageConsultation(UUID triageId, UUID userId) {
         return consultationRepository.findByIdAndUserId(triageId, userId)
-                .map(TriageConsultation::of)
                 .orElseThrow(() -> new IllegalArgumentException("Triaje no encontrado o acceso denegado: " + triageId));
     }
 
@@ -106,7 +105,7 @@ public class TriageExportController {
 
     private String getPatientName(UUID userId) {
         var user = userRepository.findById(userId).orElse(null);
-        return user != null ? user.getName() : "Paciente";
+        return user != null ? user.getFullName() : "Paciente";
     }
 
     private String formatSymptoms(List<String> symptoms) {
@@ -129,7 +128,7 @@ public class TriageExportController {
                     .append("%, ")
                     .append("urgencia ")
                     .append(r.urgency().name())
-                    .append("\\n");
+                    .append("\n");
         }
         return sb.toString();
     }

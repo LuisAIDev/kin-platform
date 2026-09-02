@@ -1,11 +1,13 @@
 package com.kinplatform.kin.health.triage.application;
 
-import com.kinplatform.kin.export.model.ExportFormat;
+import com.kinplatform.kin.export.model.ExportBlock;
 import com.kinplatform.kin.export.model.ExportDocument;
+import com.kinplatform.kin.export.model.ExportFormat;
+import com.kinplatform.kin.export.model.ExportSection;
 import com.kinplatform.kin.export.renderer.ExportRendererFactory;
 import jakarta.annotation.PostConstruct;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -16,12 +18,10 @@ public class TriageExportAssembler {
     private static final Logger log = LoggerFactory.getLogger(TriageExportAssembler.class);
 
     private final ExportRendererFactory rendererFactory;
-    private final DateTimeFormatter dateFormatter;
     private final DateTimeFormatter datetimeFormatter;
 
     public TriageExportAssembler(ExportRendererFactory rendererFactory) {
         this.rendererFactory = rendererFactory;
-        this.dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         this.datetimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     }
 
@@ -36,75 +36,41 @@ public class TriageExportAssembler {
     }
 
     private ExportDocument buildExportDocument(TriageExportDocument doc) {
-        var sections = java.util.List.of(
-                buildHeaderSection(doc),
-                buildPatientSection(doc),
+        String title = "Informe de Triaje KIN";
+        String subtitle = doc.patientName() != null ? doc.patientName() : "Paciente";
+
+        List<ExportSection> sections = List.of(
                 buildTriageSection(doc),
-                buildAdvisorySection(doc),
+                buildAdvisorySection(),
                 buildMetadataSection(doc)
         );
 
-        var content = new java.util.ArrayList<java.util.Map<String, Object>>();
-        for (var section : sections) {
-            content.add(section);
-        }
-
-        return new ExportDocument(
-                doc.patientName + " — Informe de Triaje",
-                content
-        );
+        return new ExportDocument(title, subtitle, doc.generatedAt(), sections);
     }
 
-    private java.util.Map<String, Object> buildHeaderSection(TriageExportDocument doc) {
-        Map<String, Object> map = new java.util.LinkedHashMap<String, Object>();
-        map.put("type", "header");
-        map.put("title", "INFORME DE TRIAJE KIN");
-        map.put("code", doc.triageId != null ? doc.triageId.toString() : "—");
-        map.put("generatedAt", doc.generatedAt != null ? doc.generatedAt.toString() : "—");
-        return map;
+    private ExportSection buildTriageSection(TriageExportDocument doc) {
+        ExportBlock symptoms = ExportBlock.paragraph("Motivo de consulta / Síntomas reportados: " + valueOr(doc.symptoms()));
+        ExportBlock results = ExportBlock.paragraph("Resultado del triaje: " + valueOr(doc.results()));
+        ExportBlock recommendation = ExportBlock.paragraph("Orientación / Recomendación: " + valueOr(doc.recommendation()));
+        return ExportSection.of("Datos del triaje", List.of(symptoms, results, recommendation));
     }
 
-    private java.util.Map<String, Object> buildPatientSection(TriageExportDocument doc) {
-        Map<String, Object> map = new java.util.LinkedHashMap<String, Object>();
-        map.put("type", "patient-info");
-        map.put("label", "Paciente");
-        map.put("value", doc.patientName != null ? doc.patientName : "—");
-        return map;
+    private ExportSection buildAdvisorySection() {
+        ExportBlock advisory = ExportBlock.highlight(
+                "Este informe no constituye un diagnóstico médico. Es una herramienta de apoyo informativa. "
+                        + "Siempre consulta a un profesional de la salud para decisiones clínicas.");
+        return ExportSection.of("Advertencia", List.of(advisory));
     }
 
-    private java.util.Map<String, Object> buildTriageSection(TriageExportDocument doc) {
-        Map<String, Object> map = new java.util.LinkedHashMap<String, Object>();
-        map.put("type", "triage-info");
-        var sb = new java.lang.StringBuilder();
-        if (doc.symptoms != null && !doc.symptoms.isEmpty()) {
-            sb.append("Motivo de consulta / Síntomas reportados:\\n");
-            sb.append(doc.symptoms).append("\\n\\n");
-        }
-        if (doc.results != null && !doc.results.isEmpty()) {
-            sb.append("Resultado del triaje:\\n");
-            sb.append(doc.results).append("\\n\\n");
-        }
-        if (doc.recommendation != null && !doc.recommendation.isEmpty()) {
-            sb.append("Orientación / Recomendación:\\n");
-            sb.append(doc.recommendation).append("\\n");
-        }
-        map.put("content", sb.toString());
-        return map;
+    private ExportSection buildMetadataSection(TriageExportDocument doc) {
+        ExportBlock code = ExportBlock.bold("Código único del informe: " + valueOr(doc.triageId() != null ? doc.triageId().toString() : "—"));
+        ExportBlock generated = ExportBlock.bold(
+                "Fecha de generación: " + (doc.generatedAt() != null ? datetimeFormatter.format(doc.generatedAt()) : "—"));
+        ExportBlock kin = ExportBlock.bold("Generado por: " + valueOr(doc.kinIdentifier()));
+        return ExportSection.of("Información del informe", List.of(code, generated, kin));
     }
 
-    private java.util.Map<String, Object> buildAdvisorySection(TriageExportDocument doc) {
-        Map<String, Object> map = new java.util.LinkedHashMap<String, Object>();
-        map.put("type", "advisory");
-        map.put("content", "\\n\\nAdvertencia: Este informe no constituye un diagnóstico médico. Es una herramienta de apoyo informativa. Siempre consulta a un profesional de la salud para decisiones clínicas.");
-        return map;
-    }
-
-    private java.util.Map<String, Object> buildMetadataSection(TriageExportDocument doc) {
-        Map<String, Object> map = new java.util.LinkedHashMap<String, Object>();
-        map.put("type", "metadata");
-        map.put("label", "Información del informe");
-        map.put("dateGenerated", doc.generatedAt != null ? dateFormatter.format(doc.generatedAt) : "—");
-        map.put("kinIdentifier", doc.kinIdentifier);
-        return map;
+    private String valueOr(String value) {
+        return value != null && !value.isEmpty() ? value : "—";
     }
 }
