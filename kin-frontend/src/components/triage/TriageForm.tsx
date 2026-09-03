@@ -8,10 +8,6 @@ import {
   type TriageSymptom,
 } from "@/services/triage";
 import DifferentialSection from "@/components/triage/DifferentialSection";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/dialog";
-import { useTranslation } from "next-i18next";
 
 const SEVERITY_COLORS: Record<string, string> = {
   LEVE: "bg-emerald-100 text-emerald-800",
@@ -25,11 +21,7 @@ const URGENCY_COLORS: Record<string, string> = {
   ALTA: "bg-orange-100 text-orange-800",
 };
 
-type QuotaExceededError = {
-  code: "QUOTA_EXCEEDED";
-  message: string;
-  redirectUrl: string;
-};
+const PLANS_URL = "/dashboard/patient/plans";
 
 export default function TriageForm() {
   const [symptoms, setSymptoms] = useState<TriageSymptom[]>([]);
@@ -38,46 +30,22 @@ export default function TriageForm() {
   const [result, setResult] = useState<TriageResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [quotaError, setQuotaError] = useState<QuotaExceededError | null>(null);
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const [quotaReached, setQuotaReached] = useState(false);
 
   useEffect(() => {
-    // Verificar si hay un error de quota en la URL o estado
-    const handleError = (err: any) => {
-      if (err?.code === "QUOTA_EXCEEDED") {
-        setQuotaError({
-          code: "QUOTA_EXCEEDED",
-          message: err.message,
-          redirectUrl: err.redirectUrl || "/dashboard/patient/plans",
-        });
-      } else {
-        setError(err?.message || "Error inesperado");
-      }
-    };
-
+    let cancelled = false;
     triageService
       .listSymptoms()
       .then((data) => {
-        // Síntomas cargados exitosamente, limpiar cualquier error anterior
-        if (quotaError?.code) {
-          setQuotaError(null);
-        }
-        setSymptoms(data);
-      }
-      .catch(handleError);
-    }, [pathname, quotaError]);
-
-  // Efecto para manejar el error de quota cuando cambia
-  useEffect(() => {
-    if (quotaError?.code === "QUOTA_EXCEEDED") {
-      // Redirigir a la página de planes después de un breve delay
-      const timeoutId = setTimeout(() => {
-        window.location.href = quotaError.redirectUrl;
-      }, 3000);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [quotaError]);
+        if (!cancelled) setSymptoms(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError((err as Error).message);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -98,90 +66,71 @@ export default function TriageForm() {
     if (selected.size === 0) return;
     setLoading(true);
     setError("");
-    setQuotaError(null);
+    setQuotaReached(false);
     try {
       const response = await triageService.analyze(Array.from(selected));
       setResult(response);
     } catch (err) {
-      handleAnalyzeError(err);
+      const apiError = err as Error & { code?: string };
+      if (apiError.code === "QUOTA_EXCEEDED") {
+        setQuotaReached(true);
+        setResult(null);
+      } else {
+        setError(apiError.message);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAnalyzeError = (err: any) => {
-    if (err?.code === "QUOTA_EXCEEDED") {
-      setQuotaError({
-        code: "QUOTA_EXCEEDED",
-        message: err.message,
-        redirectUrl: err.redirectUrl || "/dashboard/patient/plans",
-      });
-    } else {
-      setError(err?.message || "Error inesperado");
-    }
-  };
-
-  const toggle = (name: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      return next;
-    });
-  };
+  if (quotaReached) {
+    return (
+      <main className="flex-1 flex items-start justify-center px-6 pt-10 pb-12">
+        <div className="w-full max-w-2xl flex flex-col gap-4">
+          <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-6 flex flex-col gap-4">
+            <div>
+              <h1 className="text-lg font-bold text-yellow-900">
+                Has alcanzado el límite de triajes gratuitos
+              </h1>
+              <p className="text-sm text-yellow-800 mt-1">
+                Contrata el plan Unlimited por $9/mes para continuar realizando
+                consultas de triaje sin límite.
+              </p>
+            </div>
+            <a
+              href={PLANS_URL}
+              className="rounded-lg bg-primary-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary-700 transition"
+            >
+              Ver planes
+            </a>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 flex items-start justify-center px-6 pt-10 pb-12">
       <div className="w-full max-w-3xl flex flex-col gap-6">
-        {/* Mostrar error de quota si existe */}
-        {quotaError && (
-          <div className="mb-6 p-4 rounded-lg bg-yellow-50 border border-yellow-200">
-            <AlertDialog>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    Límite de triajes alcanzado
-                  </AlertDialogTitle>
-                </AlertDialogHeader>
-                <AlertDialogDescription>
-                  {quotaError.message}
-                </AlertDialogDescription>
-              </AlertDialogContent>
-              <AlertDialogFooter>
-                <AlertDialogAction
-                  onClick={() => {
-                    window.location.href = quotaError.redirectUrl;
-                  }}
-                >
-                  Ver planes
-                </AlertDialogAction>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              </AlertDialogFooter>
-            </AlertDialog>
-          </div>
-        )}
+        <div>
+          <h1 className="text-2xl font-bold">Triaje Digital</h1>
+          <p className="text-sm text-neutral-500 mt-1">
+            Selecciona tus síntomas y obtén una orientación inicial de posibles
+            condiciones.
+          </p>
+        </div>
 
-        {!quotaError && (
-          <div>
-            <h1 className="text-2xl font-bold">Triaje Digital</h1>
-            <p className="text-sm text-neutral-500 mt-1">
-              Selecciona tus síntomas y obtén una orientación inicial de posibles
-              condiciones.
-            </p>
-          </div>
-        )}
-
-        {error && !quotaError && (
-          <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800">
-            <p className="text-sm">{error}</p>
-          </div>
-        )}
-
-        <Card className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
           ⚠️ Esta herramienta es informativa y de apoyo a la decisión. No
           sustituye la evaluación ni el diagnóstico de un profesional de la
           salud. Ante síntomas graves o persistentes, consulta a un médico.
         </div>
+
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-lg">
+            {error}
+          </p>
+        )}
 
         <div className="flex flex-col gap-2">
           <label htmlFor="symptom-search" className="text-sm font-medium">
@@ -241,8 +190,79 @@ export default function TriageForm() {
           )}
         </div>
 
+        {result && <Results results={result.results} disclaimer={result.disclaimer} />}
+
         {result && <DifferentialSection symptoms={Array.from(selected)} />}
       </div>
     </main>
+  );
+}
+
+function Results({
+  results,
+  disclaimer,
+}: {
+  results: TriageConditionResult[];
+  disclaimer: string;
+}) {
+  if (results.length === 0) {
+    return (
+      <div className="rounded-lg border border-neutral-200 px-5 py-6 text-center text-sm text-neutral-500">
+        No encontramos condiciones compatibles con los síntomas seleccionados.
+      </div>
+    );
+  }
+
+  return (
+    <section className="flex flex-col gap-4">
+      <h2 className="text-lg font-semibold">Posibles condiciones</h2>
+      <div className="flex flex-col gap-4">
+        {results.map((r) => (
+          <article
+            key={r.conditionId}
+            className="rounded-xl border border-neutral-200 p-5 flex flex-col gap-3"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold">{r.condition}</h3>
+                {r.description && (
+                  <p className="text-sm text-neutral-500 mt-0.5">{r.description}</p>
+                )}
+              </div>
+              <span className="text-lg font-bold text-primary-700 shrink-0">
+                {Math.round(r.probability * 100)}%
+              </span>
+            </div>
+
+            <div className="w-full h-2 rounded-full bg-neutral-100 overflow-hidden">
+              <div
+                className="h-full bg-primary-600"
+                style={{ width: `${Math.round(r.probability * 100)}%` }}
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className={`rounded-full px-2.5 py-1 font-medium ${SEVERITY_COLORS[r.severity]}`}>
+                Severidad: {r.severity}
+              </span>
+              <span className={`rounded-full px-2.5 py-1 font-medium ${URGENCY_COLORS[r.urgency]}`}>
+                Urgencia: {r.urgency}
+              </span>
+            </div>
+
+            {r.recommendation && (
+              <p className="text-sm text-neutral-600">{r.recommendation}</p>
+            )}
+
+            {r.matchedSymptoms.length > 0 && (
+              <p className="text-xs text-neutral-400">
+                Síntomas coincidentes: {r.matchedSymptoms.join(", ")}
+              </p>
+            )}
+          </article>
+        ))}
+      </div>
+      <p className="text-xs text-neutral-400">{disclaimer}</p>
+    </section>
   );
 }

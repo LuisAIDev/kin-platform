@@ -1,199 +1,157 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PatientPlan, patientPlansService } from "@/services/patientPlans";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/dialog";
-import { useTranslation } from "next-i18next";
-
-export const metadata = {
-  title: "Planes | KIN Health",
-  description: "Selecciona tu plan de triaje: Free o Unlimited",
-};
+import {
+  patientPlansService,
+  type PatientPlan,
+} from "@/services/patientPlans";
 
 export default function PatientPlansPage() {
   const [plans, setPlans] = useState<PatientPlan[]>([]);
-  const [currentPlan, setCurrentPlan] = useState<PatientPlan | null>(null);
-  const [remainingTriages, setRemainingTriages] = useState<number | null>(null);
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const hasSuccess = searchParams.get("success") === "true";
-  const hasCanceled = searchParams.get("canceled") === "true";
+  const [error, setError] = useState("");
+  const [banner, setBanner] = useState<"success" | "canceled" | null>(null);
 
   useEffect(() => {
-    fetchPlans();
-  }, [pathname]);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("success") === "true") setBanner("success");
+    else if (params.get("canceled") === "true") setBanner("canceled");
 
-  const fetchPlans = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await patientPlansService.getPatientPlans();
-      setPlans(response.plans);
-      setCurrentPlan(response.currentPlan);
-      setRemainingTriages(response.remainingTriages);
-      setIsSubscribed(!!response.currentPlan);
-    } catch (err) {
-      setError((err as Error).message);
-      console.error("Error fetching patient plans:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    let cancelled = false;
+    patientPlansService
+      .getPatientPlans()
+      .then((data) => {
+        if (!cancelled) setPlans(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError((err as Error).message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSubscribe = async (planId: string) => {
-    setError(null);
+    setError("");
     try {
-      const response = await patientPlansService.createCheckoutSession(planId);
-      window.location.href = response.checkoutUrl;
+      const session = await patientPlansService.createCheckoutSession(planId);
+      window.location.href = session.url;
     } catch (err) {
       setError((err as Error).message);
-      console.error("Error creating checkout session:", err);
     }
   };
 
+  const paidPlan = plans.find(
+    (p) => p.code === "PERSONAL_PLUS" || p.maxTriagesPerMonth === null
+  );
+  const freePlan = plans.find((p) => p.code === "FREE" || p.price === 0);
+
   return (
-    <main className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto py-8 px-4">
+    <main className="flex-1 flex items-start justify-center px-6 pt-10 pb-12">
+      <div className="w-full max-w-4xl flex flex-col gap-6">
+        <div>
+          <h1 className="text-2xl font-bold">Planes de triaje</h1>
+          <p className="text-sm text-neutral-500 mt-1">
+            Elige el plan que mejor se adapte a tus consultas de triaje.
+          </p>
+        </div>
+
+        {banner === "success" && (
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            ¡Tu suscripción ha sido activada! Ya puedes realizar triajes
+            ilimitados.
+          </div>
+        )}
+        {banner === "canceled" && (
+          <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+            El proceso de pago fue cancelado. Puedes intentarlo de nuevo cuando
+            quieras.
+          </div>
+        )}
+
         {error && (
-          <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800">
-            <p className="text-sm">{error}</p>
-          </div>
+          <p className="text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-lg">
+            {error}
+          </p>
         )}
 
-        {hasCanceled && (
-          <div className="mb-6 p-4 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800">
-            <p className="text-sm">
-              El proceso de pago fue cancelado. Puedes intentarlo de nuevo.
-            </p>
-          </div>
-        )}
-
-        {hasSuccess && (
-          <div className="mb-6 p-4 rounded-lg bg-green-50 border border-green-200 text-green-800">
-            <p className="text-sm">
-              ¡Tu suscripción ha sido activada con éxito! Ya puedes disfrutar de triajes ilimitados.
-            </p>
-          </div>
-        )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{currentPlan ? currentPlan.name : "Planes de Triaje"}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <p className="text-sm">Cargando planes...</p>
-            ) : plans.length === 0 ? (
-              <p className="text-sm">No hay planes disponibles.</p>
-            ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {plans.map((plan) => (
-                  <Card key={plan.id} className="p-4">
-                    <CardHeader>
-                      <CardTitle>{plan.name}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-neutral-600 line-clamp-3">
-                        {plan.description}
-                      </p>
-
-                      <div className="mt-4 space-y-2">
-                        <p className="text-xs text-neutral-500">
-                          <strong>Precio:</strong> {plan.price} {plan.currency}/mes
-                        </p>
-
-                        <p className="text-xs text-neutral-500">
-                          <strong>Triajes por mes:</strong>{" "}
-                          {plan.maxTriagesPerMonth !== null
-                            ? plan.maxTriagesPerMonth +
-                                (plan.trialDays !== null
-                                  ? ` (trial de ${plan.trialDays} días)`
-                                  : "")
-                            : "Ilimitados"}
-                        </p>
-
-                        {plan.viabilityScoringDetail === "BASIC" && (
-                          <p className="text-xs text-neutral-500">
-                            <strong>Scoring de viabilidad:</strong> BASIC
-                          </p>
-                        )}
-
-                        {plan.triageSharing && (
-                          <p className="text-xs text-neutral-500">
-                            <strong>Compartir triajes:</strong> Sí
-                          </p>
-                        )}
-
-                        {!plan.isPopular && (
-                          <p className="text-xs text-neutral-500">
-                            <strong>Popular:</strong> No
-                          </p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {currentPlan ? null : (
-          <div className="mt-6">
-            <h3 className="text-sm font-medium text-neutral-600 mb-3">
-              Tu plan actual
-            </h3>
-            {currentPlan ? (
-              <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
-                <p className="text-sm text-blue-800">
-                  <strong>{currentPlan.name}</strong> - {currentPlan.price} {currentPlan.currency}/mes
-                </p>
-                <p className="text-xs text-neutral-500">
-                  Triajes {'%remainingTriages' !== undefined
-                    ? `${remainingTriages}/${currentPlan.maxTriagesPerMonth} utilizados`
-                    : "Ilimitados"}
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-neutral-500">
-                No tienes un plan activo. Contrata un plan para continuar.
-              </p>
-            )}
-          </div>
-        )}
-
-        {currentPlan && currentPlan.code === "FREE" ? (
-          <div className="mt-6 p-4 rounded-lg bg-yellow-50 border border-yellow-200">
-            <p className="text-sm text-yellow-800">
-              Has alcanzado el límite de triajes gratuitos (3 por mes).
-              <br />
-              <strong className="font-medium">Contrata el plan Unlimited por $9/mes</strong> para continuar con triajes ilimitados.
-            </p>
-          </div>
-        ) : null}
-
-        {!currentPlan || currentPlan.code !== "FREE" ? (
-          <div className="mt-6">
-            <h3 className="text-sm font-medium text-neutral-600 mb-3">
-              Disponible para contratar
-            </h3>
-            {plans.some((p) => p.code === "PERSONAL_PLUS") && (
-              <Button
-                onClick={() => handleSubscribe(plans.find((p) => p.code === "PERSONAL_PLUS")!.id)}
-                disabled={isSubscribed}
-                className="w-full"
+        {loading ? (
+          <p className="text-sm text-neutral-500">Cargando planes...</p>
+        ) : plans.length === 0 ? (
+          <p className="text-sm text-neutral-500">
+            No hay planes disponibles por el momento.
+          </p>
+        ) : (
+          <section className="grid gap-4 md:grid-cols-2">
+            {plans.map((plan) => (
+              <div
+                key={plan.id}
+                className="rounded-xl border border-neutral-200 bg-white p-5 flex flex-col gap-3"
               >
-                {isSubscribed ? "Suscrito" : "Contratar Unlimited por $9/mes"}
-              </Button>
-            )}
-          </div>
-        ) : null}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-base font-semibold text-neutral-800">
+                      {plan.name}
+                    </h2>
+                    <p className="text-sm text-neutral-500 mt-0.5">
+                      {plan.description}
+                    </p>
+                  </div>
+                  <span className="text-lg font-bold text-primary-700 shrink-0">
+                    ${plan.price}
+                    <span className="text-xs font-normal text-neutral-400">
+                      /mes
+                    </span>
+                  </span>
+                </div>
+
+                <ul className="flex flex-col gap-1.5 text-sm text-neutral-600">
+                  {plan.features.map((f, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-primary-600">•</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="text-xs text-neutral-500">
+                  {plan.maxTriagesPerMonth !== null
+                    ? `${plan.maxTriagesPerMonth} triajes por mes`
+                    : "Triajes ilimitados"}
+                  {plan.trialDays != null &&
+                    plan.trialDays > 0 &&
+                    ` · ${plan.trialDays} días de prueba`}
+                </p>
+
+                <div className="mt-auto pt-2">
+                  {plan.maxTriagesPerMonth !== null ? (
+                    <div className="rounded-lg bg-neutral-100 px-4 py-2 text-center text-xs font-medium text-neutral-600">
+                      Tu plan actual
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleSubscribe(plan.id)}
+                      disabled={paidPlan?.id !== plan.id}
+                      className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-40"
+                    >
+                      Contratar por ${plan.price}/mes
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </section>
+        )}
+
+        <p className="text-xs text-neutral-400">
+          {freePlan && paidPlan
+            ? `Compara tu plan gratuito (${freePlan.maxTriagesPerMonth ?? 0} triajes/mes) con ${paidPlan.name} ($${paidPlan.price}/mes) para triajes ilimitados.`
+            : "Los pagos se procesan de forma segura a través de Stripe."}
+        </p>
       </div>
     </main>
   );
