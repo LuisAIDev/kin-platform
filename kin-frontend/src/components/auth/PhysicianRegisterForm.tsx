@@ -152,7 +152,11 @@ export default function PhysicianRegisterForm() {
         className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
       />
 
-      <ConsentCheckbox checked={consent} onChange={setConsent} />
+      <ConsentCheckbox
+        checked={consent}
+        onChange={setConsent}
+        text="Acepto los términos de uso de KIN Platform para profesionales de salud y confirmo que la información proporcionada (incluyendo mi cédula profesional) es veraz, conforme a la política de privacidad de KIN."
+      />
 
       <button
         type="submit"
