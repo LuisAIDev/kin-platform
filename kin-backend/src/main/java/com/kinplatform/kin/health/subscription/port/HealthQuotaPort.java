@@ -19,4 +19,7 @@ public interface HealthQuotaPort {
 
     /** Días de prueba gratuita del usuario. {@code null} = sin trial. */
     Integer getTrialDays(UUID userId);
+
+    /** Indica si el usuario tiene una suscripción activa para la vertical dada. */
+    boolean hasActiveSubscription(UUID userId, String vertical);
 }

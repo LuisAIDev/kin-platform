@@ -44,6 +44,14 @@ public class HealthQuotaPortImpl implements HealthQuotaPort {
         return resolvePlan(userId).getTrialDays();
     }
 
+    @Override
+    public boolean hasActiveSubscription(UUID userId, String vertical) {
+        UserSubscription subscription = subscriptionRepository
+                .findByUserIdAndVerticalAndStatus(userId, vertical, SubscriptionStatus.ACTIVE)
+                .orElse(null);
+        return subscription != null;
+    }
+
     private PricingPlan resolvePlan(UUID userId) {
         UserSubscription subscription = subscriptionRepository
                 .findByUserIdAndStatusAndEndDateAfter(userId, SubscriptionStatus.ACTIVE, OffsetDateTime.now())

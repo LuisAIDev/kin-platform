@@ -73,7 +73,10 @@ public class TriageService {
             OffsetDateTime endOfMonth = startOfMonth.plusMonths(1);
             long count = consultationRepository.countByUserIdAndCreatedAtBetween(userId, startOfMonth, endOfMonth);
             if (count >= limit) {
-                throw new QuotaExceededException("Has alcanzado el límite de triajes de tu plan.");
+                throw new QuotaExceededException(
+                        "Has alcanzado el límite de triajes de tu plan.",
+                        "QUOTA_EXCEEDED",
+                        "/dashboard/patient/plans");
             }
         }
         TriageCatalog catalog = knowledgeRepository.loadCatalog();

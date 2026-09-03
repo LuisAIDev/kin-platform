@@ -1,10 +1,12 @@
 package com.kinplatform.common;
 
+import com.kinplatform.kin.health.common.exception.QuotaExceededException;
 import com.kinplatform.auth.EmailVerificationRequiredException;
 import com.kinplatform.auth.PhysicianPendingReviewException;
 import com.kinplatform.pricing.PlanNotFoundException;
 import com.kinplatform.project.ProjectLimitExceededException;
 import com.kinplatform.project.ReportNotFoundException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -118,11 +120,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, String>> handleRuntime(RuntimeException ex) {
-        String errorId = UUID.randomUUID().toString().substring(0, 8);
-        log.error("Unexpected error (errorId={})", errorId, ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Ha ocurrido un error interno", "errorId", errorId));
+    @ExceptionHandler(QuotaExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleQuotaExceeded(QuotaExceededException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", HttpStatus.FORBIDDEN.value());
+        body.put("error", "QUOTA_EXCEEDED");
+        body.put("message", ex.getMessage());
+        body.put("code", ex.getCode());
+        if (ex.getRedirectUrl() != null) {
+            body.put("redirectUrl", ex.getRedirectUrl());
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 }

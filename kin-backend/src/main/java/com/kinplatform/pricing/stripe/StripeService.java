@@ -160,6 +160,111 @@ public class StripeService {
         }
     }
 
+    @Transactional
+    public void handleInvoicePaymentSucceeded(String sessionId) {
+        try {
+            var session = Session.retrieve(sessionId);
+
+            var userId = UUID.fromString(session.getClientReferenceId());
+            var planId = UUID.fromString(session.getMetadata().get("plan_id"));
+
+            var user = userRepository
+                    .findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+            var plan = planRepository
+                    .findById(planId)
+                    .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
+
+            var now = OffsetDateTime.now();
+            var endDate = now.plusMonths(1);
+
+            var existingSubscription = subscriptionRepository
+                    .findByUserIdAndStatusAndEndDateAfter(userId, SubscriptionStatus.ACTIVE, now)
+                    .orElse(null);
+
+            if (existingSubscription != null) {
+                // Suscripción existente: actualizar fechas
+                existingSubscription.setEndDate(endDate);
+                existingSubscription.setMessagesUsed(0);
+                existingSubscription.setLastResetDate(now);
+                subscriptionRepository.save(existingSubscription);
+            } else {
+                // Crear nueva suscripción
+                var subscription = UserSubscription.builder()
+                        .user(user)
+                        .plan(plan)
+                        .startDate(now)
+                        .endDate(endDate)
+                        .status(SubscriptionStatus.ACTIVE)
+                        .messagesUsed(0)
+                        .lastResetDate(now)
+                        .build();
+                var saved = subscriptionRepository.save(subscription);
+                user.setCurrentPlan(plan);
+                user.setSubscription(saved);
+                userRepository.save(user);
+            }
+
+            log.info(
+                    "Subscription renewed after invoice payment: user {} plan {} session {}",
+                    userId,
+                    plan.getName(),
+                    sessionId);
+        } catch (Exception e) {
+            log.error("Failed to process invoice payment succeeded event for session {}", sessionId, e);
+            throw new RuntimeException("Failed to renew subscription", e);
+        }
+    }
+
+    @Transactional
+    public void handleInvoicePaymentFailed(UUID subscriptionId) {
+        try {
+            var subscription = subscriptionRepository
+                    .findById(subscriptionId)
+                    .orElseThrow(() -> new IllegalArgumentException("Subscription not found: " + subscriptionId));
+
+            subscription.setStatus(SubscriptionStatus.PAST_DUE);
+            subscriptionRepository.save(subscription);
+
+            log.info(
+                    "Subscription marked as past due: user {} subscription {}",
+                    subscription.getUser().getId(),
+                    subscriptionId);
+        } catch (Exception e) {
+            log.error("Failed to process invoice payment failed event for subscription {}", subscriptionId, e);
+            throw new RuntimeException("Failed to handle payment failure", e);
+        }
+    }
+
+    @Transactional
+    public void handleSubscriptionDeleted(UUID subscriptionId) {
+        try {
+            var subscription = subscriptionRepository
+                    .findById(subscriptionId)
+                    .orElseThrow(() -> new IllegalArgumentException("Subscription not found: " + subscriptionId));
+
+            var user = subscription.getUser();
+
+            // Cancelar la suscripción y volver al plan gratuito
+            subscription.setStatus(SubscriptionStatus.CANCELLED);
+            subscriptionRepository.save(subscription);
+
+            // Establecer el plan actual del usuario como el plan gratuito
+            var freePlan = planRepository.findFirstByIsActiveTrueOrderByPriceAsc()
+                    .orElseThrow(() -> new RuntimeException("No free plan found"));
+            user.setCurrentPlan(freePlan);
+            user.setSubscription(null);
+            userRepository.save(user);
+
+            log.info(
+                    "Subscription cancelled and user reverted to free plan: user {}",
+                    user.getId());
+        } catch (Exception e) {
+            log.error("Failed to process subscription deleted event for subscription {}", subscriptionId, e);
+            throw new RuntimeException("Failed to handle subscription deletion", e);
+        }
+    }
+
     /**
      * Procesa un evento de webhook de forma idempotente. El registro del evento
      * y su efecto (p. ej. activar la suscripci�n) viven en la misma transacci�n:
@@ -186,7 +291,29 @@ public class StripeService {
                 handleCheckoutCompleted(session.getId());
                 log.info("Checkout session completed: {}", session.getId());
             }
-            case "checkout.session.expired" -> log.warn("Checkout session expired");
+            case "invoice.payment_succeeded" -> {
+                var session = (Session) event.getDataObjectDeserializer()
+                        .getObject()
+                        .orElseThrow(() -> new RuntimeException("Failed to deserialize session"));
+                handleInvoicePaymentSucceeded(session.getId());
+                log.info("Invoice payment succeeded: {}", session.getId());
+            }
+            case "invoice.payment_failed" -> {
+                var subscriptionObj = event.getDataObjectDeserializer()
+                        .getObject()
+                        .orElseThrow(() -> new RuntimeException("Failed to deserialize subscription"));
+                var subscription = (com.stripe.model.Subscription) subscriptionObj;
+                handleInvoicePaymentFailed(UUID.fromString(subscription.getId()));
+                log.info("Invoice payment failed: {}", subscription.getId());
+            }
+            case "customer.subscription.deleted" -> {
+                var subscriptionObj = event.getDataObjectDeserializer()
+                        .getObject()
+                        .orElseThrow(() -> new RuntimeException("Failed to deserialize subscription"));
+                var subscription = (com.stripe.model.Subscription) subscriptionObj;
+                handleSubscriptionDeleted(UUID.fromString(subscription.getId()));
+                log.info("Subscription deleted: {}", subscription.getId());
+            }
             default -> log.debug("Unhandled Stripe event type: {}", event.getType());
         }
         return true;

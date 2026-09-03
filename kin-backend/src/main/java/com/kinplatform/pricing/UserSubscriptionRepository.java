@@ -16,4 +16,7 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
 
     Optional<UserSubscription> findByUserIdAndStatusAndEndDateAfter(
             UUID userId, SubscriptionStatus status, OffsetDateTime date);
+
+    Optional<UserSubscription> findByUserIdAndVerticalAndStatus(
+            UUID userId, String vertical, SubscriptionStatus status);
 }
