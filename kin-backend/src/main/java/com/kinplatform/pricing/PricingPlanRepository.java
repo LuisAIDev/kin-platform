@@ -17,4 +17,6 @@ public interface PricingPlanRepository extends JpaRepository<PricingPlan, UUID> 
     java.util.Optional<PricingPlan> findByCode(String code);
 
     java.util.Optional<PricingPlan> findFirstByIsActiveTrueOrderByPriceAsc();
+
+    java.util.Optional<PricingPlan> findFirstByVerticalAndIsActiveTrueOrderByPriceAsc(ProductVertical vertical);
 }

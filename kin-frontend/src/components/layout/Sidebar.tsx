@@ -76,6 +76,7 @@ const PATIENT_ITEMS: NavItem[] = [
 // Médico: solo su portal (Portal Médico ya incluye la lista de pacientes).
 const PHYSICIAN_ITEMS: NavItem[] = [
   { label: "Portal Médico", href: "/dashboard/physician" },
+  { label: "Planes", href: "/dashboard/physician/plans" },
   { label: "Mensajes", href: "/dashboard/physician/messages" },
   { label: "Agenda", href: "/dashboard/physician/schedule" },
   { label: "Citas", href: "/dashboard/physician/appointments" },
@@ -96,6 +97,7 @@ const ADMIN_ITEMS: NavItem[] = [
   { label: "Triaje Digital", href: "/dashboard/patient/triage" },
   { label: "Invitaciones", href: "/dashboard/patient/invitations" },
   { label: "Portal Médico", href: "/dashboard/physician" },
+  { label: "Planes Médico", href: "/dashboard/physician/plans" },
   { label: "Mensajes", href: "/dashboard/patient/messages" },
   { label: "Citas", href: "/dashboard/patient/appointments" },
   { label: "Reservar cita", href: "/dashboard/patient/schedule" },
@@ -225,6 +227,9 @@ export default function Sidebar() {
     }
     if (href === "/dashboard/physician") {
       return pathname === "/dashboard/physician";
+    }
+    if (href === "/dashboard/physician/plans") {
+      return pathname === "/dashboard/physician/plans";
     }
     if (href === "/dashboard/physician/messages") {
       return pathname === "/dashboard/physician/messages";

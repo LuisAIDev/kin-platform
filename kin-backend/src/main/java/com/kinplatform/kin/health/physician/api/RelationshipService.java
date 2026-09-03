@@ -3,12 +3,16 @@ package com.kinplatform.kin.health.physician.api;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
+import com.kinplatform.kin.health.common.exception.QuotaExceededException;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
 import com.kinplatform.kin.health.physician.domain.PhysicianPatientAssignment;
 import com.kinplatform.kin.health.physician.domain.RelationshipStatus;
 import com.kinplatform.kin.health.physician.event.PatientInvitedEvent;
 import com.kinplatform.kin.health.physician.event.RelationshipAcceptedEvent;
 import com.kinplatform.kin.health.physician.port.PhysicianPatientRepository;
+import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
+import com.kinplatform.pricing.ProductVertical;
+import com.kinplatform.pricing.SubscriptionStatus;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
@@ -45,12 +49,13 @@ public class RelationshipService {
     private final PhysicianProperties properties;
     private final DomainEventBus eventBus;
     private final OutboxEventPublisher outboxEventPublisher;
+    private final HealthQuotaPort healthQuotaPort;
 
     public RelationshipService(
             PhysicianPatientRepository patientRepository,
             UserRepository userRepository,
             PhysicianProperties properties) {
-        this(patientRepository, userRepository, properties, null, null);
+        this(patientRepository, userRepository, properties, null, null, null);
     }
 
     public RelationshipService(
@@ -58,7 +63,16 @@ public class RelationshipService {
             UserRepository userRepository,
             PhysicianProperties properties,
             DomainEventBus eventBus) {
-        this(patientRepository, userRepository, properties, eventBus, null);
+        this(patientRepository, userRepository, properties, eventBus, null, null);
+    }
+
+    public RelationshipService(
+            PhysicianPatientRepository patientRepository,
+            UserRepository userRepository,
+            PhysicianProperties properties,
+            DomainEventBus eventBus,
+            OutboxEventPublisher outboxEventPublisher) {
+        this(patientRepository, userRepository, properties, eventBus, outboxEventPublisher, null);
     }
 
     @Autowired
@@ -67,12 +81,14 @@ public class RelationshipService {
             UserRepository userRepository,
             PhysicianProperties properties,
             DomainEventBus eventBus,
-            OutboxEventPublisher outboxEventPublisher) {
+            OutboxEventPublisher outboxEventPublisher,
+            HealthQuotaPort healthQuotaPort) {
         this.patientRepository = patientRepository;
         this.userRepository = userRepository;
         this.properties = properties;
         this.eventBus = eventBus;
         this.outboxEventPublisher = outboxEventPublisher;
+        this.healthQuotaPort = healthQuotaPort;
     }
 
     /**
@@ -102,6 +118,8 @@ public class RelationshipService {
                         physicianId, patient.getId(), RelationshipStatus.PENDING)) {
             throw new DuplicateRelationshipException(physicianId, patient.getId());
         }
+
+        requirePhysicianCanInvite(physicianId);
 
         PhysicianPatientAssignment invitation =
                 PhysicianPatientAssignment.invitation(physicianId, patient.getId(), physicianId, OffsetDateTime.now());
@@ -193,6 +211,45 @@ public class RelationshipService {
     private void requireInviteEnabled() {
         if (!properties.isEnabled() || !properties.isInviteEnabled()) {
             throw new PhysicianDisabledException();
+        }
+    }
+
+    /**
+     * Valida que el médico puede incorporar pacientes según su plan:
+     * <ul>
+     *   <li>Debe tener una suscripción {@code ACTIVE} o {@code TRIAL} vigente
+     *       del producto SALUD_PROFESIONAL (un médico sin plan o con trial
+     *       expirado no puede invitar pacientes).</li>
+     *   <li>Si el plan de pago tiene un límite de pacientes (maxPatients, p. ej.
+     *       100 en Profesional), no puede excederlo. Solo cuentan las
+     *       relaciones {@code ACTIVE} (la invitación PENDING aún no ocupa cupo).</li>
+     * </ul>
+     */
+    private void requirePhysicianCanInvite(UUID physicianId) {
+        if (healthQuotaPort == null) {
+            // Constructores de test sin HealthQuotaPort: no bloquean.
+            return;
+        }
+        boolean hasPlan = healthQuotaPort.hasEligibleSubscription(
+                physicianId,
+                ProductVertical.SALUD_PROFESIONAL,
+                SubscriptionStatus.ACTIVE,
+                SubscriptionStatus.TRIAL);
+        if (!hasPlan) {
+            throw new QuotaExceededException(
+                    "Tu plan no permite invitar pacientes. Contrata el plan Profesional ($35/mes) o activa tu prueba de 30 días.",
+                    "QUOTA_EXCEEDED",
+                    "/dashboard/physician/plans");
+        }
+        Integer maxPatients = healthQuotaPort.getMaxPatients(physicianId);
+        if (maxPatients != null) {
+            long activePatients = patientRepository.findPatientIdsByPhysician(physicianId).size();
+            if (activePatients >= maxPatients) {
+                throw new QuotaExceededException(
+                        "Has alcanzado el límite de " + maxPatients + " pacientes de tu plan.",
+                        "QUOTA_EXCEEDED",
+                        "/dashboard/physician/plans");
+            }
         }
     }
 

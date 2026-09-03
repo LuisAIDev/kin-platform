@@ -1,11 +1,14 @@
 package com.kinplatform.kin.health.triage.api;
 
-import com.kinplatform.common.security.AuthenticatedUsers;
+import com.kinplatform.kin.health.common.exception.QuotaExceededException;
+import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
 import com.kinplatform.kin.health.triage.application.TriageExportAssembler;
 import com.kinplatform.kin.health.triage.application.TriageExportDocument;
 import com.kinplatform.kin.health.triage.domain.TriageConditionResult;
 import com.kinplatform.kin.health.triage.domain.TriageConsultation;
 import com.kinplatform.kin.health.triage.port.TriageConsultationRepository;
+import com.kinplatform.pricing.ProductVertical;
+import com.kinplatform.pricing.SubscriptionStatus;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import jakarta.validation.constraints.NotNull;
@@ -22,7 +25,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/health/triage")
@@ -33,14 +35,17 @@ public class TriageExportController {
     private final TriageConsultationRepository consultationRepository;
     private final UserRepository userRepository;
     private final TriageExportAssembler exportAssembler;
+    private final HealthQuotaPort healthQuotaPort;
 
     public TriageExportController(
             TriageConsultationRepository consultationRepository,
             UserRepository userRepository,
-            TriageExportAssembler exportAssembler) {
+            TriageExportAssembler exportAssembler,
+            HealthQuotaPort healthQuotaPort) {
         this.consultationRepository = consultationRepository;
         this.userRepository = userRepository;
         this.exportAssembler = exportAssembler;
+        this.healthQuotaPort = healthQuotaPort;
     }
 
     @GetMapping("/{triageId}/export/pdf")
@@ -50,6 +55,19 @@ public class TriageExportController {
 
         UUID userId = extractUserId(principal);
         TriageConsultation consultation = loadTriageConsultation(triageId, userId);
+
+        // La exportación PDF es una funcionalidad del plan de pago Personal+
+        // (pdf_export = FALSE en el plan gratuito). Un paciente en plan FREE se
+        // bloquea aunque todavía tenga triajes gratuitos disponibles este mes.
+        boolean eligible = healthQuotaPort.hasEligibleSubscription(
+                userId, ProductVertical.SALUD_PERSONAL,
+                SubscriptionStatus.ACTIVE);
+        if (!eligible) {
+            throw new QuotaExceededException(
+                    "La exportación PDF del informe de triaje requiere el plan Personal+ ($9/mes).",
+                    "QUOTA_EXCEEDED",
+                    "/dashboard/patient/plans");
+        }
 
         TriageExportDocument doc = buildExportDocument(triageId, userId, consultation);
 

@@ -1,5 +1,7 @@
 package com.kinplatform.kin.health.subscription.port;
 
+import com.kinplatform.pricing.ProductVertical;
+import com.kinplatform.pricing.SubscriptionStatus;
 import java.util.UUID;
 
 /**
@@ -20,6 +22,15 @@ public interface HealthQuotaPort {
     /** Días de prueba gratuita del usuario. {@code null} = sin trial. */
     Integer getTrialDays(UUID userId);
 
-    /** Indica si el usuario tiene una suscripción activa para la vertical dada. */
-    boolean hasActiveSubscription(UUID userId, String vertical);
+    /**
+     * Indica si el usuario tiene una suscripción activa o en trial (vigente)
+     * cuyo plan pertenece a la vertical indicada.
+     *
+     * <p>Método default ({@code false}) para no romper implementaciones y
+     * tests anónimos existentes que no dependen de esta consulta.</p>
+     */
+    default boolean hasEligibleSubscription(
+            UUID userId, ProductVertical vertical, SubscriptionStatus... statuses) {
+        return false;
+    }
 }

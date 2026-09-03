@@ -1,7 +1,9 @@
 package com.kinplatform.kin.health.subscription;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -9,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.PricingPlanRepository;
+import com.kinplatform.pricing.ProductVertical;
 import com.kinplatform.pricing.SubscriptionStatus;
 import com.kinplatform.pricing.UserSubscription;
 import com.kinplatform.pricing.UserSubscriptionRepository;
@@ -90,7 +93,9 @@ class HealthQuotaPortImplTest {
         when(subscriptionRepository.findByUserIdAndStatusAndEndDateAfter(
                 eq(USER_ID), eq(SubscriptionStatus.ACTIVE), any()))
                 .thenReturn(Optional.empty());
-        when(planRepository.findFirstByIsActiveTrueOrderByPriceAsc())
+        when(userRepository.findById(USER_ID))
+                .thenReturn(Optional.of(User.builder().id(USER_ID).role(UserRole.PATIENT).build()));
+        when(planRepository.findFirstByVerticalAndIsActiveTrueOrderByPriceAsc(ProductVertical.SALUD_PERSONAL))
                 .thenReturn(Optional.of(defaultPlan));
 
         assertEquals(5, quotaPort.getMaxTriagesPerMonth(USER_ID));
@@ -152,7 +157,9 @@ class HealthQuotaPortImplTest {
         when(subscriptionRepository.findByUserIdAndStatusAndEndDateAfter(
                 eq(USER_ID), eq(SubscriptionStatus.ACTIVE), any()))
                 .thenReturn(Optional.empty());
-        when(planRepository.findFirstByIsActiveTrueOrderByPriceAsc())
+        when(userRepository.findById(USER_ID))
+                .thenReturn(Optional.of(User.builder().id(USER_ID).role(UserRole.PHYSICIAN).build()));
+        when(planRepository.findFirstByVerticalAndIsActiveTrueOrderByPriceAsc(ProductVertical.SALUD_PROFESIONAL))
                 .thenReturn(Optional.of(defaultPlan));
 
         assertEquals(14, quotaPort.getTrialDays(USER_ID));
@@ -172,9 +179,118 @@ class HealthQuotaPortImplTest {
                 eq(USER_ID), eq(SubscriptionStatus.ACTIVE),
                 argThat(date -> date.isAfter(expiredSub.getEndDate()))))
                 .thenReturn(Optional.empty());
-        when(planRepository.findFirstByIsActiveTrueOrderByPriceAsc())
+        when(userRepository.findById(USER_ID))
+                .thenReturn(Optional.of(User.builder().id(USER_ID).role(UserRole.PATIENT).build()));
+        when(planRepository.findFirstByVerticalAndIsActiveTrueOrderByPriceAsc(ProductVertical.SALUD_PERSONAL))
                 .thenReturn(Optional.of(defaultPlan));
 
         assertEquals(5, quotaPort.getMaxTriagesPerMonth(USER_ID));
+    }
+
+    // ============================================================
+    // REGRESIÓN: el fallback de resolvePlan() debe filtrar por
+    // vertical (rol del usuario), NO devolver el plan más barato de
+    // cualquier vertical. Un médico sin suscripción no debe caer en
+    // el FREE de EMPRESAS ($0, sin límites de SALUD_PROFESIONAL).
+    // ============================================================
+
+    private PricingPlan freePlan(ProductVertical vertical, String code, Integer maxTriages, Integer maxPatients, Integer trialDays) {
+        return PricingPlan.builder()
+                .id(UUID.randomUUID())
+                .code(code)
+                .vertical(vertical)
+                .name(code)
+                .price(BigDecimal.ZERO)
+                .features("[]")
+                .maxTriagesPerMonth(maxTriages)
+                .maxPatients(maxPatients)
+                .trialDays(trialDays)
+                .isActive(true)
+                .build();
+    }
+
+    @Test
+    void getMaxPatients_medicoSinSuscripcion_caeEnPlanDeSuVerticalNoEnEmpresas() {
+        // El médico NO tiene suscripción activa. Antes del fix, el fallback usaba
+        // findFirstByIsActiveTrueOrderByPriceAsc() (plan más barato GLOBAL). En la BD
+        // real hay planes a $0 en las tres verticales (FREE Empresas, Personal Free
+        // SALUD_PERSONAL, Profesional Trial SALUD_PROFESIONAL), por lo que el médico
+        // podía resolver el plan de EMPRESAS (maxPatients=null → "ilimitado").
+        when(subscriptionRepository.findByUserIdAndStatusAndEndDateAfter(
+                eq(PHYSICIAN_ID), eq(SubscriptionStatus.ACTIVE), any()))
+                .thenReturn(Optional.empty());
+        when(userRepository.findById(PHYSICIAN_ID))
+                .thenReturn(Optional.of(User.builder().id(PHYSICIAN_ID).role(UserRole.PHYSICIAN).build()));
+        when(planRepository.findFirstByVerticalAndIsActiveTrueOrderByPriceAsc(
+                com.kinplatform.pricing.ProductVertical.SALUD_PROFESIONAL))
+                .thenReturn(Optional.of(freePlan(
+                        com.kinplatform.pricing.ProductVertical.SALUD_PROFESIONAL,
+                        "TRIAL", null, 100, 30)));
+
+        // Profesional Trial siembra maxPatients=100 (no ilimitado): debe devolver 100.
+        assertEquals(100, quotaPort.getMaxPatients(PHYSICIAN_ID));
+    }
+
+    @Test
+    void getMaxTriagesPerMonth_pacienteSinSuscripcion_caeEnPlanDeSuVerticalNoEnEmpresas() {
+        when(subscriptionRepository.findByUserIdAndStatusAndEndDateAfter(
+                eq(USER_ID), eq(SubscriptionStatus.ACTIVE), any()))
+                .thenReturn(Optional.empty());
+        when(userRepository.findById(USER_ID))
+                .thenReturn(Optional.of(User.builder().id(USER_ID).role(UserRole.PATIENT).build()));
+        when(planRepository.findFirstByVerticalAndIsActiveTrueOrderByPriceAsc(
+                com.kinplatform.pricing.ProductVertical.SALUD_PERSONAL))
+                .thenReturn(Optional.of(freePlan(
+                        com.kinplatform.pricing.ProductVertical.SALUD_PERSONAL,
+                        "FREE", 3, null, null)));
+
+        assertEquals(3, quotaPort.getMaxTriagesPerMonth(USER_ID));
+    }
+
+    @Test
+    void hasEligibleSubscription_activaOMuestraEnTrial_devuelveTrue() {
+        var plan = freePlan(com.kinplatform.pricing.ProductVertical.SALUD_PROFESIONAL, "TRIAL", null, null, 30);
+        var trialSub = UserSubscription.builder()
+                .id(UUID.randomUUID())
+                .user(User.builder().id(PHYSICIAN_ID).role(UserRole.PHYSICIAN).build())
+                .plan(plan)
+                .status(SubscriptionStatus.TRIAL)
+                .endDate(OffsetDateTime.now().plusDays(30))
+                .build();
+        when(subscriptionRepository.findByUserAndPlanVerticalAndStatus(
+                eq(PHYSICIAN_ID), eq(com.kinplatform.pricing.ProductVertical.SALUD_PROFESIONAL),
+                eq(SubscriptionStatus.ACTIVE)))
+                .thenReturn(Optional.empty());
+        when(subscriptionRepository.findByUserAndPlanVerticalAndStatus(
+                eq(PHYSICIAN_ID), eq(com.kinplatform.pricing.ProductVertical.SALUD_PROFESIONAL),
+                eq(SubscriptionStatus.TRIAL)))
+                .thenReturn(Optional.of(trialSub));
+
+        assertTrue(quotaPort.hasEligibleSubscription(
+                PHYSICIAN_ID, com.kinplatform.pricing.ProductVertical.SALUD_PROFESIONAL,
+                SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL));
+    }
+
+    @Test
+    void hasEligibleSubscription_trialExpirado_devuelveFalse() {
+        var expiredTrial = UserSubscription.builder()
+                .id(UUID.randomUUID())
+                .user(User.builder().id(PHYSICIAN_ID).role(UserRole.PHYSICIAN).build())
+                .plan(freePlan(com.kinplatform.pricing.ProductVertical.SALUD_PROFESIONAL, "TRIAL", null, null, 30))
+                .status(SubscriptionStatus.TRIAL)
+                .endDate(OffsetDateTime.now().minusDays(1))
+                .build();
+        when(subscriptionRepository.findByUserAndPlanVerticalAndStatus(
+                eq(PHYSICIAN_ID), eq(com.kinplatform.pricing.ProductVertical.SALUD_PROFESIONAL),
+                eq(SubscriptionStatus.ACTIVE)))
+                .thenReturn(Optional.empty());
+        when(subscriptionRepository.findByUserAndPlanVerticalAndStatus(
+                eq(PHYSICIAN_ID), eq(com.kinplatform.pricing.ProductVertical.SALUD_PROFESIONAL),
+                eq(SubscriptionStatus.TRIAL)))
+                .thenReturn(Optional.of(expiredTrial));
+
+        assertFalse(quotaPort.hasEligibleSubscription(
+                PHYSICIAN_ID, com.kinplatform.pricing.ProductVertical.SALUD_PROFESIONAL,
+                SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL));
     }
 }
