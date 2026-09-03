@@ -29,6 +29,14 @@ public interface PricingPlanRepository extends JpaRepository<PricingPlan, UUID> 
      */
     java.util.Optional<PricingPlan> findByCodeAndVertical(String code, ProductVertical vertical);
 
+    /**
+     * Busca un plan por {@code name} dentro de una vertical concreta. El nombre
+     * no es único global entre verticales (los planes de salud pueden compartir
+     * denominaciones comerciales), por lo que la búsqueda debe filtrar por
+     * vertical.
+     */
+    java.util.Optional<PricingPlan> findByNameAndVertical(String name, ProductVertical vertical);
+
     java.util.Optional<PricingPlan> findFirstByIsActiveTrueOrderByPriceAsc();
 
     java.util.Optional<PricingPlan> findFirstByVerticalAndIsActiveTrueOrderByPriceAsc(ProductVertical vertical);

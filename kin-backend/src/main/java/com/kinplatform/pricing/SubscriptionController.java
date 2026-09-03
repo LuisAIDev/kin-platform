@@ -131,7 +131,7 @@ public class SubscriptionController {
         log.info("Usuario {} iniciando período de prueba", userId);
 
         PricingPlan premiumPlan = pricingPlanService
-                .getPlanByCode("PREMIUM")
+                .getPlanByCodeAndVertical("PREMIUM", ProductVertical.EMPRESAS)
                 .orElseThrow(() -> new PlanNotFoundException("Plan Premium no encontrado"));
 
         SubscriptionResponse response = subscriptionService.startTrial(userId, premiumPlan.getId());

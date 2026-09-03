@@ -52,6 +52,20 @@ public class PricingPlanServiceImpl implements PricingPlanService {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<PricingPlan> getPlanByCodeAndVertical(String code, ProductVertical vertical) {
+        log.debug("Fetching pricing plan by code: {} and vertical: {}", code, vertical);
+        return repository.findByCodeAndVertical(code, vertical);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<PricingPlan> getPlanByNameAndVertical(String name, ProductVertical vertical) {
+        log.debug("Fetching pricing plan by name: {} and vertical: {}", name, vertical);
+        return repository.findByNameAndVertical(name, vertical);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<PricingPlanResponse> getByVertical(ProductVertical vertical) {
         log.debug("Fetching active pricing plans by vertical: {}", vertical);
         return repository.findByVerticalAndIsActiveTrueOrderByPriceAsc(vertical).stream()

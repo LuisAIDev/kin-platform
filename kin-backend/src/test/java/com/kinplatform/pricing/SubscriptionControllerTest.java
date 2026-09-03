@@ -186,7 +186,8 @@ class SubscriptionControllerTest {
     @Test
     void startTrial_deberiaResponder201() throws Exception {
         stubUser();
-        when(pricingPlanService.getPlanByCode("PREMIUM")).thenReturn(Optional.of(plan()));
+        when(pricingPlanService.getPlanByCodeAndVertical("PREMIUM", ProductVertical.EMPRESAS))
+                .thenReturn(Optional.of(plan()));
         when(subscriptionService.startTrial(USER_ID, PLAN_ID)).thenReturn(subscriptionResponse());
 
         mockMvc.perform(post("/subscriptions/trial").principal(principal())).andExpect(status().isCreated());
@@ -195,7 +196,8 @@ class SubscriptionControllerTest {
     @Test
     void startTrial_planNoEncontrado_deberiaFallar() throws Exception {
         stubUser();
-        when(pricingPlanService.getPlanByCode("PREMIUM")).thenReturn(Optional.empty());
+        when(pricingPlanService.getPlanByCodeAndVertical("PREMIUM", ProductVertical.EMPRESAS))
+                .thenReturn(Optional.empty());
 
         mockMvc.perform(post("/subscriptions/trial").principal(principal())).andExpect(status().isNotFound());
     }

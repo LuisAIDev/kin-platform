@@ -17,6 +17,21 @@ public interface PricingPlanService {
 
     Optional<PricingPlan> getPlanByCode(String code);
 
+    /**
+     * Busca un plan por {@code code} dentro de una vertical concreta. Desde V37
+     * el {@code code} es único por vertical (no global), por lo que las
+     * búsquedas de planes de una vertical específica deben filtrar por vertical
+     * para evitar {@code NonUniqueResultException}.
+     */
+    Optional<PricingPlan> getPlanByCodeAndVertical(String code, ProductVertical vertical);
+
+    /**
+     * Busca un plan por {@code name} dentro de una vertical concreta. Mismo
+     * criterio que {@link #getPlanByCodeAndVertical}: {@code name} no es único
+     * global entre verticales.
+     */
+    Optional<PricingPlan> getPlanByNameAndVertical(String name, ProductVertical vertical);
+
     PricingPlanResponse create(CreatePricingPlanRequest request);
 
     PricingPlanResponse update(UUID id, UpdatePricingPlanRequest request);
