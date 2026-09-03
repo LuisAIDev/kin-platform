@@ -12,18 +12,23 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Seed de planes comerciales (Fase 1): GRATIS/STANDARD/PREMIUM.
+ * Seed de planes comerciales de la vertical EMPRESAS (Fase 1):
+ * FREE/STANDARD/PREMIUM.
  *
- * <p>Opera por {@code code} (no por {@code name}): actualiza los planes
- * canónicos si existen (preservando el id y las FKs de suscripciones) y crea
- * los que falten. Los presupuestos de IA provienen de configuración
- * (env {@code KIN_*_AI_BUDGET_USD}) como fuente inicial; el valor operativo
- * vive en {@code PricingPlan.aiBudgetUsd}.</p>
+ * <p>Opera por {@code code} + {@code vertical = EMPRESAS} (no solo por
+ * {@code code}): actualiza los planes canónicos si existen (preservando el id
+ * y las FKs de suscripciones) y crea los que falten. Desde V37 el {@code code}
+ * ya no es único globalmente (los planes de KIN Salud comparten códigos como
+ * {@code FREE}), por lo que la búsqueda debe filtrar por vertical. Los
+ * presupuestos de IA provienen de configuración (env {@code KIN_*_AI_BUDGET_USD})
+ * como fuente inicial; el valor operativo vive en {@code PricingPlan.aiBudgetUsd}.</p>
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
+
+    private static final ProductVertical VERTICAL = ProductVertical.EMPRESAS;
 
     private final PricingPlanRepository repository;
     private final ObjectMapper objectMapper;
@@ -113,7 +118,7 @@ public class DataInitializer implements CommandLineRunner {
             ViabilityScoringDetail detail,
             BigDecimal aiBudget)
             throws Exception {
-        Optional<PricingPlan> existing = repository.findByCode(code);
+        Optional<PricingPlan> existing = repository.findByCodeAndVertical(code, VERTICAL);
         PricingPlan plan;
         if (existing.isPresent()) {
             plan = existing.get();
@@ -134,6 +139,7 @@ public class DataInitializer implements CommandLineRunner {
         } else {
             plan = PricingPlan.builder()
                     .code(code)
+                    .vertical(VERTICAL)
                     .name(name)
                     .description(description)
                     .price(price)
