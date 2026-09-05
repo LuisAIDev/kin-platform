@@ -69,13 +69,25 @@ public class GlobalExceptionHandler {
 
     /**
      * Violación de constraint de BD (p. ej. dos registros concurrentes con el
-     * mismo email). Respuesta genérica: no revela qué constraint se violó.
+     * mismo email). Respuesta genérica: no revela qué constraint se violó, pero
+     * la causa raíz (constraint/columna) se registra en logs para diagnóstico.
      */
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, String>> handleDataIntegrity(
             org.springframework.dao.DataIntegrityViolationException ex) {
+        log.warn("DataIntegrityViolation (respuesta 409 genérica): {}", rootCauseMessage(ex));
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of("error", "No se pudo completar la solicitud. Intenta de nuevo."));
+    }
+
+    /** Mensaje de la causa más profunda (p. ej. el constraint violado). */
+    private static String rootCauseMessage(Throwable ex) {
+        Throwable t = ex;
+        while (t.getCause() != null) {
+            t = t.getCause();
+        }
+        String message = t.getMessage();
+        return (message == null || message.isBlank()) ? ex.getMessage() : message;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
