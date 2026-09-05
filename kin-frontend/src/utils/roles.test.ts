@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canAccessPath,
+  hasPhysicianCapability,
   homePathForRole,
   isAccountPendingReview,
   isAccountRejected,
@@ -8,6 +9,7 @@ import {
   isAdminRole,
   isBusinessRole,
   isHealthRole,
+  isPhysicianRole,
   resolveVertical,
   verticalForRole,
 } from "./roles";
@@ -214,6 +216,81 @@ describe("roles utils", () => {
       expect(isAccountUnderReview({ role: "PHYSICIAN", verificationStatus: "REJECTED" })).toBe(true);
       expect(isAccountUnderReview({ role: "PHYSICIAN", verificationStatus: "APPROVED" })).toBe(false);
       expect(isAccountUnderReview({ role: "PHYSICIAN" })).toBe(false);
+    });
+  });
+
+  describe("capacidad profesional (physicianCapability, Alternativa B)", () => {
+    it("hasPhysicianCapability: usa physicianCapability del backend como fuente de verdad", () => {
+      expect(hasPhysicianCapability({ role: "FREE", physicianCapability: true })).toBe(true);
+      expect(hasPhysicianCapability({ role: "PREMIUM", physicianCapability: true })).toBe(true);
+      expect(hasPhysicianCapability({ role: "PATIENT", physicianCapability: true })).toBe(true);
+      expect(hasPhysicianCapability({ role: "PHYSICIAN", physicianCapability: true })).toBe(true);
+    });
+
+    it("hasPhysicianCapability: PENDING/REJECTED no tienen capacidad aunque role sea el adecuado", () => {
+      expect(hasPhysicianCapability({ role: "FREE", physicianCapability: false })).toBe(false);
+      expect(hasPhysicianCapability({ role: "PHYSICIAN", physicianCapability: false })).toBe(false);
+      expect(hasPhysicianCapability({ role: "FREE", verificationStatus: "PENDING" })).toBe(false);
+    });
+
+    it("hasPhysicianCapability: fallback a role PHYSICIAN si la sesión antigua no trae el campo", () => {
+      expect(hasPhysicianCapability({ role: "PHYSICIAN" })).toBe(true);
+      expect(hasPhysicianCapability({ role: "FREE" })).toBe(false);
+      expect(hasPhysicianCapability(null)).toBe(false);
+      expect(hasPhysicianCapability(undefined)).toBe(false);
+    });
+
+    it("isPhysicianRole con objeto usa la capacidad (no solo role)", () => {
+      expect(isPhysicianRole({ role: "FREE", physicianCapability: true })).toBe(true);
+      expect(isPhysicianRole({ role: "FREE", physicianCapability: false })).toBe(false);
+      expect(isPhysicianRole({ role: "PHYSICIAN", physicianCapability: true })).toBe(true);
+      expect(isPhysicianRole({ role: "PHYSICIAN", physicianCapability: false })).toBe(false);
+    });
+
+    it("isPhysicianRole con string conserva compatibilidad (role === PHYSICIAN)", () => {
+      expect(isPhysicianRole("PHYSICIAN")).toBe(true);
+      expect(isPhysicianRole("FREE")).toBe(false);
+      expect(isPhysicianRole(null)).toBe(false);
+    });
+  });
+
+  describe("canAccessPath con capacidad profesional (FREE+PENDING / FREE+APPROVED / PHYSICIAN legacy)", () => {
+    it("FREE+APPROVED (physicianCapability true) puede acceder al portal médico", () => {
+      const freeApproved = { role: "FREE", physicianCapability: true, verificationStatus: "APPROVED" };
+      expect(canAccessPath(freeApproved, "/dashboard/physician")).toBe(true);
+      expect(canAccessPath(freeApproved, "/dashboard/physician/messages")).toBe(true);
+      expect(canAccessPath(freeApproved, "/dashboard/physician", "salud")).toBe(true);
+    });
+
+    it("FREE+PENDING NO puede acceder al portal médico, pero sí ve su dashboard de Empresas", () => {
+      const freePending = { role: "FREE", physicianCapability: false, verificationStatus: "PENDING" };
+      expect(canAccessPath(freePending, "/dashboard/physician")).toBe(false);
+      expect(canAccessPath(freePending, "/dashboard/physician/messages")).toBe(false);
+      expect(canAccessPath(freePending, "/dashboard/physician", "salud")).toBe(false);
+      expect(canAccessPath(freePending, "/dashboard/empresa")).toBe(true);
+      expect(canAccessPath(freePending, "/dashboard/projects")).toBe(true);
+    });
+
+    it("PHYSICIAN+APPROVED (legacy) puede acceder al portal médico", () => {
+      const legacy = { role: "PHYSICIAN", physicianCapability: true, verificationStatus: "APPROVED" };
+      expect(canAccessPath(legacy, "/dashboard/physician")).toBe(true);
+      expect(canAccessPath(legacy, "/dashboard/salud")).toBe(true);
+      // No accede a la subárea de paciente (rol PHYSICIAN legacy).
+      expect(canAccessPath(legacy, "/dashboard/patient/health")).toBe(false);
+    });
+
+    it("PREMIUM+APPROVED puede acceder al portal médico", () => {
+      const premiumApproved = { role: "PREMIUM", physicianCapability: true, verificationStatus: "APPROVED" };
+      expect(canAccessPath(premiumApproved, "/dashboard/physician")).toBe(true);
+    });
+
+    it("PATIENT+APPROVED puede acceder al portal médico", () => {
+      const patientApproved = { role: "PATIENT", physicianCapability: true, verificationStatus: "APPROVED" };
+      expect(canAccessPath(patientApproved, "/dashboard/physician")).toBe(true);
+    });
+
+    it("sin capacidad, un FREE no accede al portal médico aunque seleccione salud", () => {
+      expect(canAccessPath({ role: "FREE", physicianCapability: false }, "/dashboard/physician", "salud")).toBe(false);
     });
   });
 });

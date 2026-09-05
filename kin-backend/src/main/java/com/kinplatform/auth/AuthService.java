@@ -42,6 +42,10 @@ public interface AuthService {
     /** Verifica un token de correo. Devuelve el desenlace (éxito, inválido, expirado o ya usado). */
     VerifyEmailOutcome verifyEmail(String token);
 
-    /** Reenvía el correo de verificación (respuesta genérica, cooldown, sin enumeración de usuarios). */
-    void resendVerification(String email);
+    /**
+     * Reenvía el correo de verificación y devuelve el resultado real
+     * (SENT/ALREADY_VERIFIED/COOLDOWN/NO_ACCOUNT) para que la UI no afirme
+     * "se envió" cuando no hubo envío. HTTP se mantiene en 200 en el controller.
+     */
+    ResendVerificationStatus resendVerification(String email);
 }

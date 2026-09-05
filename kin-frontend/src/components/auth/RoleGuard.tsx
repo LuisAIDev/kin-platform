@@ -34,7 +34,9 @@ export default function RoleGuard({ children }: { children: React.ReactNode }) {
     if (typeof window === "undefined") return;
 
     if (user) {
-      if (!canAccessPath(role, pathname, selected)) {
+      // canAccessPath recibe el contexto completo del usuario: la capacidad
+      // profesional (physicianCapability) la decide el backend, no role.
+      if (!canAccessPath(user, pathname, selected)) {
         router.replace(homePathForRole(role, selected));
       }
       return;
@@ -54,7 +56,7 @@ export default function RoleGuard({ children }: { children: React.ReactNode }) {
         }
         storeSession(me);
         setResynced(true);
-        if (!canAccessPath(me.role, pathname, selected)) {
+        if (!canAccessPath(me, pathname, selected)) {
           router.replace(homePathForRole(me.role, selected));
         }
       })
@@ -78,6 +80,9 @@ export default function RoleGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // Bloqueo SOLO para médicos legacy cuya cuenta está pendiente/rechazada de
+  // revisión. Una solicitud de un usuario con persona distinta (FREE+PENDING)
+  // NO bloquea su cuenta: se muestra un banner informativo (ver aplicación).
   if (isAccountUnderReview(user)) {
     return <AccountReviewScreen />;
   }

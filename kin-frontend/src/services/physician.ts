@@ -40,6 +40,26 @@ export interface PatientInviteRequest {
   message?: string;
 }
 
+/** Solicitud de capacidad profesional (médico) enviada por un usuario existente. */
+export interface PhysicianApplicationRequest {
+  licenseNumber: string;
+  specialty: string;
+  country: string;
+  phone?: string;
+  healthDataConsent: boolean;
+}
+
+export interface PhysicianApplicationStatus {
+  /** PENDING | APPROVED | REJECTED | NOT_FOUND */
+  status: string;
+  role: string | null;
+  licenseNumber: string | null;
+  specialty: string | null;
+  country: string | null;
+  phone: string | null;
+  physicianVerificationStatus: string | null;
+}
+
 export const physicianService = {
   patients: (page = 0, size = 10, status?: "ACTIVE" | "PENDING" | "ALL") =>
     api.get<PageResponse<PhysicianPatientSummary>>(
@@ -62,4 +82,11 @@ export const physicianService = {
       patientEmail,
       message: message ?? "",
     }),
+
+  // Solicitud de capacidad profesional (accesible a cualquier usuario autenticado).
+  applyAsPhysician: (data: PhysicianApplicationRequest) =>
+    api.post<{ status: string }>("/health/physician/application", data),
+
+  applicationStatus: () =>
+    api.get<PhysicianApplicationStatus>("/health/physician/application"),
 };

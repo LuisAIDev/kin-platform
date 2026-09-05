@@ -82,8 +82,42 @@ export function isPatientRole(role?: string | null): boolean {
   return role === "PATIENT";
 }
 
-export function isPhysicianRole(role?: string | null): boolean {
-  return role === "PHYSICIAN";
+export function isPhysicianRole(
+  roleOrUser?: string | null | PhysicianContext,
+): boolean {
+  if (typeof roleOrUser === "string" || roleOrUser == null) {
+    // Compatibilidad con llamadas existentes que pasan el role (p. ej.
+    // dashboard/salud, Sidebar). Para sesiones nuevas se prefiere el contexto.
+    return roleOrUser === "PHYSICIAN";
+  }
+  return hasPhysicianCapability(roleOrUser);
+}
+
+/** Contexto de rol/capacidad devuelto por el backend (/auth/me, login). */
+export interface PhysicianContext {
+  role?: string | null;
+  verificationStatus?: string | null;
+  /** Capacidad profesional derivada por el backend. Fuente de verdad. */
+  physicianCapability?: boolean;
+}
+
+/**
+ * Determina si el usuario tiene CAPACIDAD profesional (médico).
+ *
+ * Java decide: el valor proviene de {@code physicianCapability} (calculado por
+ * {@code PhysicianAccess} en el backend), NO de {@code role === "PHYSICIAN"}.
+ * FREE/PREMIUM/PATIENT + APPROVED también son médicos.
+ *
+ * Fallback de compatibilidad: si el contexto no trae {@code physicianCapability}
+ * (sesiones antiguas en localStorage), se conserva el comportamiento previo
+ * ({@code role === "PHYSICIAN"}) para no romper sesiones existentes.
+ */
+export function hasPhysicianCapability(user?: PhysicianContext | null): boolean {
+  if (!user) return false;
+  if (user.physicianCapability !== undefined) {
+    return user.physicianCapability === true;
+  }
+  return user.role === "PHYSICIAN";
 }
 
 /** Estado de verificación de identidad de un médico (auto-registro). */
@@ -111,19 +145,27 @@ export function isAccountUnderReview(user?: RoleContext | null): boolean {
 
 /**
  * Determina si un usuario puede acceder a un pathname del dashboard.
+ *
+ * Acepta el role como string (compatibilidad con llamadas existentes) o un
+ * contexto de usuario ({@link PhysicianContext}) que puede incluir
+ * {@code physicianCapability} (fuente de verdad del backend).
+ *
  * Reglas:
  * - ADMIN accede a todo.
  * - `/dashboard/settings` es común a todas las verticales.
  * - Hubs: `/dashboard/empresa` (empresarial), `/dashboard/salud` (salud), `/dashboard/admin` (admin).
- * - `/dashboard/patient/*` solo PATIENT; `/dashboard/physician/*` solo PHYSICIAN.
+ * - `/dashboard/patient/*` solo para la persona paciente (no PHYSICIAN legado).
+ * - `/dashboard/physician/*` requiere CAPACIDAD profesional (physicianCapability),
+ *   no solo `role === "PHYSICIAN"` (FREE/PREMIUM/PATIENT + APPROVED también acceden).
  * - Segmentos empresariales (projects, analytics, insights, recommendations,
  *   reports, pricing, subscription) solo para la vertical empresa.
  */
 export function canAccessPath(
-  role: string | null | undefined,
+  roleOrUser: string | null | undefined | PhysicianContext,
   pathname: string,
   selected?: SelectedVertical | null,
 ): boolean {
+  const role = typeof roleOrUser === "string" || roleOrUser == null ? roleOrUser : roleOrUser.role;
   const vertical = resolveVertical(role, selected);
   if (vertical === "admin") return true;
 
@@ -135,10 +177,14 @@ export function canAccessPath(
   if (segment === "empresa") return vertical === "empresa";
   if (segment === "salud") return vertical === "salud";
   // Subárea de paciente: permitida en la vertical Salud a todo rol que no sea
-  // PHYSICIAN (el backend ya la autoriza para roles empresariales).
+  // el rol PHYSICIAN legado (el backend ya la autoriza para roles empresariales).
   if (segment === "patient") return vertical === "salud" && role !== "PHYSICIAN";
-  // Portal médico: exclusivo del rol PHYSICIAN (o ADMIN, ya resuelto arriba).
-  if (segment === "physician") return vertical === "salud" && role === "PHYSICIAN";
+  // Portal médico: requiere CAPACIDAD profesional (no solo role PHYSICIAN).
+  // Un FREE/PREMIUM/PATIENT con physicianCapability=true (APPROVED) también
+  // accede, independientemente de la vertical de persona seleccionada.
+  if (segment === "physician") return hasPhysicianCapability(
+      typeof roleOrUser === "string" || roleOrUser == null ? { role: roleOrUser } : roleOrUser,
+    );
   if (segment === "admin") return false;
 
   // Segmentos empresariales (projects, analytics, insights, ...).

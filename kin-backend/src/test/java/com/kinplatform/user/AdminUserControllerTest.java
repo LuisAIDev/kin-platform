@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -38,13 +39,14 @@ class AdminUserControllerTest {
     }
 
     @Test
-    void pendingPhysicians_deberiaDevolverLista() throws Exception {
+    void pendingPhysicians_deberiaDevolverListaConRoleOriginal() throws Exception {
         UUID id = UUID.randomUUID();
         when(adminUserService.pendingPhysicians())
                 .thenReturn(List.of(PendingPhysicianResponse.builder()
                         .id(id)
                         .email("medico@kin.com")
                         .fullName("Dr. García")
+                        .role("FREE")
                         .licenseNumber("CEDULA-12345")
                         .specialty("Medicina Interna")
                         .country("España")
@@ -54,6 +56,7 @@ class AdminUserControllerTest {
         mockMvc.perform(get("/admin/users/physicians/pending"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].email").value("medico@kin.com"))
+                .andExpect(jsonPath("$[0].role").value("FREE"))
                 .andExpect(jsonPath("$[0].licenseNumber").value("CEDULA-12345"))
                 .andExpect(jsonPath("$[0].specialty").value("Medicina Interna"));
     }
@@ -68,18 +71,31 @@ class AdminUserControllerTest {
     }
 
     @Test
-    void rejectPhysician_deberiaLlamarAlServicio() throws Exception {
+    void rejectPhysician_conReason_deberiaLlamarAlServicio() throws Exception {
+        UUID id = UUID.randomUUID();
+
+        mockMvc.perform(post("/admin/users/physicians/{userId}/reject", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Documentación insuficiente.\"}"))
+                .andExpect(status().isOk());
+
+        verify(adminUserService)
+                .setVerificationStatus(id, PhysicianVerificationStatus.REJECTED, "Documentación insuficiente.");
+    }
+
+    @Test
+    void rejectPhysician_sinCuerpo_deberiaLlamarAlServicioConReasonNull() throws Exception {
         UUID id = UUID.randomUUID();
 
         mockMvc.perform(post("/admin/users/physicians/{userId}/reject", id)).andExpect(status().isOk());
 
-        verify(adminUserService).setVerificationStatus(id, PhysicianVerificationStatus.REJECTED);
+        verify(adminUserService).setVerificationStatus(id, PhysicianVerificationStatus.REJECTED, null);
     }
 
     @Test
-    void approvePhysician_conUsuarioNoMedico_deberiaDevolver400() throws Exception {
+    void approvePhysician_conUsuarioSinSolicitudPendiente_deberiaDevolver400() throws Exception {
         UUID id = UUID.randomUUID();
-        doThrow(new IllegalArgumentException("El usuario no es un médico"))
+        doThrow(new IllegalArgumentException("El usuario no tiene una solicitud profesional pendiente de revisión"))
                 .when(adminUserService)
                 .setVerificationStatus(eq(id), any(PhysicianVerificationStatus.class));
 

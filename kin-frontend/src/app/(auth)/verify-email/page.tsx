@@ -19,7 +19,9 @@ function VerifyEmailContent() {
     token ? "verifying" : "idle"
   );
   const [error, setError] = useState("");
-  const [resendState, setResendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [resendState, setResendState] = useState<
+    "idle" | "sending" | "sent" | "error" | "already_verified"
+  >("idle");
   const [resendError, setResendError] = useState("");
   const [cooldown, setCooldown] = useState(0);
 
@@ -66,6 +68,25 @@ function VerifyEmailContent() {
         setResendError(res.error);
         return;
       }
+      // El backend indica el resultado REAL: nunca afirmamos envío si no lo hubo.
+      const status = res.data?.status;
+      if (status === "ALREADY_VERIFIED") {
+        setResendState("already_verified");
+        return;
+      }
+      if (status === "COOLDOWN") {
+        setResendState("error");
+        setResendError("Ya has solicitado un reenvío recientemente. Intenta de nuevo en unos segundos.");
+        return;
+      }
+      if (status === "NO_ACCOUNT") {
+        setResendState("error");
+        setResendError(
+          "Si existe una cuenta asociada a este correo y necesita verificación, recibirás un nuevo mensaje.",
+        );
+        return;
+      }
+      // SENT (o ausencia de status por compatibilidad): sí hubo envío.
       setResendState("sent");
       setCooldown(60);
     } catch {
@@ -139,10 +160,10 @@ function VerifyEmailContent() {
 
         {status === "idle" && (
           <p className="text-sm text-neutral-600">
-            Te hemos enviado un correo de verificación a{" "}
-            <span className="font-medium">{email || "tu correo"}</span>. Revisa tu bandeja de
-            entrada y haz clic en el enlace para activar tu cuenta. Si no lo ves, revisa la
-            carpeta de spam.
+            Para activar tu cuenta necesitas verificar tu correo{" "}
+            <span className="font-medium">{email || "asociado"}</span>. Si el correo fue enviado,
+            revisa tu bandeja de entrada (y la carpeta de spam) y haz clic en el enlace. Si no lo
+            recibiste, puedes solicitar un nuevo enlace.
           </p>
         )}
 
@@ -156,8 +177,13 @@ function VerifyEmailContent() {
 
         {resendState === "sent" && (
           <p className="text-sm text-green-700 bg-green-50 px-4 py-2 rounded-lg">
-            Si existe una cuenta asociada a este correo y necesita verificación, recibirás un
-            nuevo mensaje.
+            Te hemos enviado un nuevo correo de verificación. Revisa tu bandeja de entrada.
+          </p>
+        )}
+
+        {resendState === "already_verified" && (
+          <p className="text-sm text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg">
+            Tu cuenta ya está verificada. Inicia sesión.
           </p>
         )}
 

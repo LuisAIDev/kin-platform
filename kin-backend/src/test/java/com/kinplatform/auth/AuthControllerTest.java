@@ -131,15 +131,27 @@ class AuthControllerTest {
     }
 
     @Test
-    void resendVerification_deberiaResponder200Generico() throws Exception {
+    void resendVerification_deberiaResponder200ConStatusYNoForzarEnvio() throws Exception {
+        when(authService.resendVerification("a@kin.com")).thenReturn(ResendVerificationStatus.SENT);
+
         mockMvc.perform(post("/auth/resend-verification")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"a@kin.com\"}"))
                 .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.message")
-                                .value(
-                                        "Si existe una cuenta asociada a este correo y necesita verificación, recibirás un nuevo mensaje."));
+                .andExpect(jsonPath("$.status").value("SENT"))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Te hemos enviado")));
+    }
+
+    @Test
+    void resendVerification_cuentaYaVerificada_deberiaResponder200ConStatus() throws Exception {
+        when(authService.resendVerification("a@kin.com")).thenReturn(ResendVerificationStatus.ALREADY_VERIFIED);
+
+        mockMvc.perform(post("/auth/resend-verification")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"a@kin.com\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ALREADY_VERIFIED"))
+                .andExpect(jsonPath("$.message").value("Tu cuenta ya está verificada. Inicia sesión."));
     }
 
     @Test

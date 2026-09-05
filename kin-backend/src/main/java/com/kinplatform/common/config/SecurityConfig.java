@@ -60,6 +60,10 @@ public class SecurityConfig {
                         .hasRole("ADMIN")
                         .requestMatchers("/knowledge/**")
                         .hasRole("ADMIN")
+                        // Enlace público de compartición de triaje (médico externo sin cuenta).
+                        // Debe ir ANTES de /health/triage/** (que exige rol).
+                        .requestMatchers("/health/triage/share/**")
+                        .permitAll()
                         .requestMatchers("/health/triage/**")
                         .hasAnyRole("FREE", "PREMIUM", "FACILITADOR", "PATIENT", "ADMIN")
                         .requestMatchers("/health/differential/**")
@@ -68,6 +72,11 @@ public class SecurityConfig {
                         .hasAnyRole("FREE", "PREMIUM", "FACILITADOR", "PATIENT", "ADMIN")
                         .requestMatchers("/health/patient/**")
                         .hasAnyRole("PATIENT", "ADMIN")
+                        // Solicitud de capacidad profesional (Alternativa B): accesible para
+                        // CUALQUIER usuario autenticado (FREE/PREMIUM/PATIENT existentes),
+                        // no solo PHYSICIAN. Debe ir ANTES de /health/physician/**.
+                        .requestMatchers("/health/physician/application/**")
+                        .authenticated()
                         .requestMatchers("/health/physician/**")
                         .hasAnyRole("PHYSICIAN", "ADMIN")
                         .requestMatchers("/health/notifications/**")

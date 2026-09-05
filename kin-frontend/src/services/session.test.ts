@@ -36,6 +36,29 @@ describe("session", () => {
     // Nota: document.cookie no es fiable en jsdom; la cookie HttpOnly se verifica en tests E2E
   });
 
+  it("storeSession: persiste physicianCapability y verificationStatus", () => {
+    storeSession({
+      token: null,
+      email: "a@b.c",
+      fullName: "Ana",
+      role: "FREE",
+      emailVerified: true,
+      verificationStatus: "APPROVED",
+      physicianCapability: true,
+    });
+
+    const stored = JSON.parse(localStorage.getItem("kin_user_v2") as string);
+    expect(stored.physicianCapability).toBe(true);
+    expect(stored.verificationStatus).toBe("APPROVED");
+  });
+
+  it("storeSession: sin physicianCapability lo persiste como false (default seguro)", () => {
+    storeSession({ token: null, email: "a@b.c", fullName: "Ana", role: "FREE" });
+
+    const stored = JSON.parse(localStorage.getItem("kin_user_v2") as string);
+    expect(stored.physicianCapability).toBe(false);
+  });
+
   it("clearSession: limpia localStorage, sessionStorage y cookies", () => {
     localStorage.setItem("a", "1");
     sessionStorage.setItem("b", "2");

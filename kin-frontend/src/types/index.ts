@@ -14,6 +14,10 @@ export interface User {
   credits: number;
   avatarUrl: string | null;
   createdAt: string;
+  emailVerified?: boolean;
+  verificationStatus?: string | null;
+  /** Capacidad profesional derivada por el backend (PhysicianAccess). Nunca se infiere en el frontend. */
+  physicianCapability?: boolean;
 }
 
 export interface ChatMessage {

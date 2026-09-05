@@ -4,6 +4,8 @@ export interface PendingPhysician {
   id: string;
   email: string;
   fullName: string;
+  /** Persona/rol ORIGINAL del solicitante (FREE/PREMIUM/PATIENT/PHYSICIAN). */
+  role: string | null;
   licenseNumber: string | null;
   specialty: string | null;
   country: string | null;
@@ -18,6 +20,6 @@ export const adminUsersService = {
   approvePhysician: (userId: string) =>
     api.post<void>(`/admin/users/physicians/${userId}/approve`, {}),
 
-  rejectPhysician: (userId: string) =>
-    api.post<void>(`/admin/users/physicians/${userId}/reject`, {}),
+  rejectPhysician: (userId: string, reason?: string) =>
+    api.post<void>(`/admin/users/physicians/${userId}/reject`, { reason: reason ?? null }),
 };

@@ -80,6 +80,7 @@ export function storeSession(res: {
   role: string;
   emailVerified?: boolean;
   verificationStatus?: string | null;
+  physicianCapability?: boolean;
 }) {
   localStorage.setItem("kin_user_v2", JSON.stringify({
     email: res.email,
@@ -87,6 +88,7 @@ export function storeSession(res: {
     role: res.role,
     emailVerified: res.emailVerified ?? false,
     verificationStatus: res.verificationStatus ?? null,
+    physicianCapability: res.physicianCapability ?? false,
   }));
   // El token se almacena SOLO en la cookie HttpOnly (kin_token_v2) gestionada por el backend.
   // No guardamos el token en localStorage/sessionStorage para evitar exposición a XSS.

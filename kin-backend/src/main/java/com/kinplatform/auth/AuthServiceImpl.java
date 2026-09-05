@@ -10,6 +10,7 @@ import com.kinplatform.auth.email.EmailSender;
 import com.kinplatform.auth.verification.EmailVerificationTokenService;
 import com.kinplatform.auth.verification.VerifyEmailOutcome;
 import com.kinplatform.common.security.JwtService;
+import com.kinplatform.common.security.PhysicianAccess;
 import com.kinplatform.user.PhysicianVerificationStatus;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -103,9 +104,9 @@ public class AuthServiceImpl implements AuthService {
         requireHealthConsent(request.getHealthDataConsent());
         String license = validateLicenseNumber(request.getLicenseNumber());
 
-        if (userRepository.existsByEmail(email)) {
-            return genericRegisterResponse(
-                    email, request.getFullName().trim(), UserRole.PHYSICIAN, PhysicianVerificationStatus.PENDING);
+        User existing = userRepository.findByEmail(email).orElse(null);
+        if (existing != null) {
+            return existingPhysicianStateResponse(existing, request.getFullName().trim());
         }
 
         var user = User.builder()
@@ -127,18 +128,79 @@ public class AuthServiceImpl implements AuthService {
         sendVerification(user);
 
         return genericRegisterResponse(
-                user.getEmail(), user.getFullName(), UserRole.PHYSICIAN, PhysicianVerificationStatus.PENDING);
+                user.getEmail(), user.getFullName(), UserRole.PHYSICIAN, PhysicianVerificationStatus.PENDING,
+                AuthResponse.STATE_NEW_REGISTRATION);
+    }
+
+    /**
+     * Respuesta HTTP 201 para un email YA registrado (anti-enumeración de
+     * código: mismo 201, sin crear cuenta ni enviar correo). El campo
+     * {@code state} refleja el estado real de la cuenta existente para que la
+     * UI no afirme "te enviamos un correo" cuando no se envió.
+     */
+    private static AuthResponse existingPhysicianStateResponse(User existing, String fullName) {
+        String role;
+        String verificationStatus;
+        String state;
+
+        if (existing.getRole() == UserRole.PHYSICIAN
+                || existing.getPhysicianVerificationStatus() == PhysicianVerificationStatus.PENDING
+                || existing.getPhysicianVerificationStatus() == PhysicianVerificationStatus.APPROVED
+                || existing.getPhysicianVerificationStatus() == PhysicianVerificationStatus.REJECTED) {
+            role = UserRole.PHYSICIAN.name();
+            verificationStatus = existing.getPhysicianVerificationStatus() == null
+                    ? null
+                    : existing.getPhysicianVerificationStatus().name();
+            PhysicianVerificationStatus vs = existing.getPhysicianVerificationStatus();
+            if (vs == PhysicianVerificationStatus.APPROVED) {
+                state = AuthResponse.STATE_PHYSICIAN_APPROVED;
+            } else if (vs == PhysicianVerificationStatus.REJECTED) {
+                state = AuthResponse.STATE_PHYSICIAN_REJECTED;
+            } else if (vs == PhysicianVerificationStatus.PENDING) {
+                state = AuthResponse.STATE_PHYSICIAN_PENDING;
+            } else if (existing.getRole() == UserRole.PHYSICIAN) {
+                // Médico legacy sin estado (provisionado/aprobado implícitamente).
+                state = AuthResponse.STATE_PHYSICIAN_APPROVED;
+            } else {
+                state = Boolean.TRUE.equals(existing.getEmailVerified())
+                        ? AuthResponse.STATE_ACCOUNT_ALREADY_VERIFIED
+                        : AuthResponse.STATE_ACCOUNT_NOT_VERIFIED;
+            }
+        } else {
+            role = existing.getRole() == null ? UserRole.FREE.name() : existing.getRole().name();
+            verificationStatus = null;
+            state = Boolean.TRUE.equals(existing.getEmailVerified())
+                    ? AuthResponse.STATE_ACCOUNT_ALREADY_VERIFIED
+                    : AuthResponse.STATE_ACCOUNT_NOT_VERIFIED;
+        }
+
+        return AuthResponse.builder()
+                .email(existing.getEmail())
+                .fullName(fullName)
+                .role(role)
+                .emailVerified(Boolean.TRUE.equals(existing.getEmailVerified()))
+                .verificationStatus(verificationStatus)
+                .physicianCapability(PhysicianAccess.isPhysician(existing))
+                .state(state)
+                .build();
     }
 
     private static AuthResponse genericRegisterResponse(
-            String email, String fullName, UserRole role, PhysicianVerificationStatus verificationStatus) {
+            String email, String fullName, UserRole role, PhysicianVerificationStatus verificationStatus, String state) {
         return AuthResponse.builder()
                 .email(email)
                 .fullName(fullName)
                 .role(role.name())
                 .emailVerified(false)
                 .verificationStatus(verificationStatus == null ? null : verificationStatus.name())
+                .state(state)
                 .build();
+    }
+
+    /** Variante sin {@code state} (registro genérico/patient; no requiere estado especial). */
+    private static AuthResponse genericRegisterResponse(
+            String email, String fullName, UserRole role, PhysicianVerificationStatus verificationStatus) {
+        return genericRegisterResponse(email, fullName, role, verificationStatus, null);
     }
 
     @Override
@@ -188,6 +250,7 @@ public class AuthServiceImpl implements AuthService {
                         user.getPhysicianVerificationStatus() == null
                                 ? null
                                 : user.getPhysicianVerificationStatus().name())
+                .physicianCapability(PhysicianAccess.isPhysician(user))
                 .build();
     }
 
@@ -220,6 +283,7 @@ public class AuthServiceImpl implements AuthService {
                         user.getPhysicianVerificationStatus() == null
                                 ? null
                                 : user.getPhysicianVerificationStatus().name())
+                .physicianCapability(PhysicianAccess.isPhysician(user))
                 .build();
     }
 
@@ -238,22 +302,23 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void resendVerification(String email) {
+    public ResendVerificationStatus resendVerification(String email) {
         if (email == null || email.isBlank()) {
-            return;
+            return ResendVerificationStatus.NO_ACCOUNT;
         }
         var normalized = email.toLowerCase().trim();
         var user = userRepository.findByEmail(normalized).orElse(null);
         if (user == null) {
-            return;
+            return ResendVerificationStatus.NO_ACCOUNT;
         }
         if (Boolean.TRUE.equals(user.getEmailVerified())) {
-            return;
+            return ResendVerificationStatus.ALREADY_VERIFIED;
         }
         if (tokenService.isWithinCooldown(user.getId())) {
-            return;
+            return ResendVerificationStatus.COOLDOWN;
         }
         sendVerification(user);
+        return ResendVerificationStatus.SENT;
     }
 
     private void sendVerification(User user) {

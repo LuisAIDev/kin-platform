@@ -57,7 +57,12 @@ public class SubscriptionAccessFilter extends OncePerRequestFilter {
             return;
         }
 
-        User user = userRepository.findByEmail(auth.getName()).orElse(null);
+        // Reutiliza el User resuelto por JwtAuthenticationFilter (atributo de
+        // request) para evitar una segunda consulta a BD en la misma request.
+        User user = (User) request.getAttribute(JwtAuthenticationFilter.AUTHENTICATED_USER_ATTRIBUTE);
+        if (user == null) {
+            user = userRepository.findByEmail(auth.getName()).orElse(null);
+        }
         if (user == null) {
             log.warn("=== SUBSCRIPTION FILTER === User not found for email={}, passing through", auth.getName());
             filterChain.doFilter(request, response);

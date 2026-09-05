@@ -6,6 +6,7 @@ import FeedbackButton from "@/components/health/FeedbackButton";
 import HealthSummaryCards from "@/components/health/HealthSummaryCards";
 import HistoryList from "@/components/health/HistoryList";
 import ProfileEditor from "@/components/health/ProfileEditor";
+import ShareTriageModal from "@/components/health/ShareTriageModal";
 import SymptomEvolutionChart from "@/components/health/SymptomEvolutionChart";
 import { dashboardService } from "@/services/dashboard";
 import type { CarePlan, HealthSummary } from "@/services/dashboard";
@@ -18,6 +19,7 @@ export default function PatientHealthPage() {
   const [page, setPage] = useState<PageResponse<TriageHistoryEntry> | null>(null);
   const [history, setHistory] = useState<TriageHistoryEntry[]>([]);
   const [selected, setSelected] = useState<TriageHistoryEntry | null>(null);
+  const [sharingTriage, setSharingTriage] = useState<TriageHistoryEntry | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -90,6 +92,7 @@ export default function PatientHealthPage() {
               page={page}
               onPageChange={handlePageChange}
               onSelect={setSelected}
+              onShare={setSharingTriage}
             />
           )}
         </section>
@@ -151,6 +154,13 @@ export default function PatientHealthPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {sharingTriage && (
+        <ShareTriageModal
+          triageId={sharingTriage.id}
+          onClose={() => setSharingTriage(null)}
+        />
       )}
 
     </main>

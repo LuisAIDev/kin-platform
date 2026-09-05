@@ -19,4 +19,12 @@ public class UserDTO {
 
     /** Estado de verificación de identidad (médicos): PENDING/APPROVED/REJECTED o null. */
     private String verificationStatus;
+
+    /**
+     * Capacidad profesional derivada (Alternativa B): {@code true} si el
+     * usuario puede operar como médico ({@code PhysicianAccess.isPhysician}),
+     * INDEPENDIENTEMENTE de {@code role} (FREE/PREMIUM/PATIENT + APPROVED
+     * también pueden ser médicos). Nunca la decide el frontend.
+     */
+    private boolean physicianCapability;
 }

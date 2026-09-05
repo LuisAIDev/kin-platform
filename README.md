@@ -458,6 +458,13 @@ Medidas implementadas en código (`SecurityConfig`, filtros y dominio):
   `PATIENT`, `PHYSICIAN` (vertical Salud); endpoints `/admin/**` y `/actuator/**` solo ADMIN;
   **aislamiento por propietario** de proyecto (404 ante recursos ajenos) e interceptor de
   ownership para `/enterprise/**` (protección IDOR).
+- **Capacidad profesional desacoplada de `users.role`** (ADR-039): una cuenta existente
+  (FREE/PREMIUM/PATIENT) puede solicitar convertirse en médico sin crear una segunda cuenta ni
+  perder su persona/plan/vertical. La capacidad se deriva por request de
+  `physician_verification_status = APPROVED` vía `PhysicianAccess.isPhysician` y se expone como
+  `physicianCapability` en `/auth/me` y login; `POST/GET /health/physician/application` gestionan
+  la solicitud y `POST /admin/users/physicians/{id}/approve|reject` la deciden (cualquier rol,
+  auditado).
 - **Permisos granulares por relación (Área 5)**: en KIN Salud toda operación sobre datos de un
   paciente (mensajes, citas, seguimiento, agenda, documentos, IA, automatizaciones) exige una
   relación médico-paciente `ACTIVE` verificada por `RelationshipAccessValidator`; el paciente
@@ -857,6 +864,8 @@ Todos los endpoints se sirven bajo el prefijo global **`/api/v1`** (`server.serv
 | `GET` | `/health/physician/patients/{patientId}/history` | JWT (PHYSICIAN) | Historial de triajes del paciente |
 | `GET` | `/health/physician/alerts` | JWT (PHYSICIAN) | Alertas activas del médico |
 | `POST` | `/health/physician/alerts/{alertId}/acknowledge` | JWT (PHYSICIAN) | Marcar alerta como atendida |
+| `POST` | `/health/physician/application` | Bearer JWT (cualquier rol) | Solicitar capacidad profesional (ADR-039) |
+| `GET` | `/health/physician/application` | Bearer JWT (cualquier rol) | Estado de la solicitud profesional (PENDING/APPROVED/REJECTED/NOT_FOUND) |
 | `POST` | `/admin/health/physician/assign` | ADMIN | Asignar paciente a médico |
 | `POST` | `/admin/health/catalog/import-from-external` | ADMIN | Importar condiciones/síntomas desde fuentes externas |
 | `GET` | `/admin/health/catalog/coverage` | ADMIN | Informe de cobertura de síntomas por condición |
@@ -869,9 +878,9 @@ Todos los endpoints se sirven bajo el prefijo global **`/api/v1`** (`server.serv
 | `GET` | `/health/telemedicine/appointments` | Bearer JWT | Lista de citas (filtro por rol) |
 | `POST` | `/admin/health/pilot/setup` | ADMIN | Crear/actualizar el grupo piloto (idempotente) |
 | `GET` | `/admin/health/pilot/metrics` | ADMIN | Métricas de éxito anonimizadas del piloto |
-| `GET` | `/admin/users/physicians/pending` | ADMIN | Médicos pendientes de verificación |
-| `POST` | `/admin/users/physicians/{userId}/approve` | ADMIN | Aprobar cédula de un médico |
-| `POST` | `/admin/users/physicians/{userId}/reject` | ADMIN | Rechazar cédula de un médico |
+| `GET` | `/admin/users/physicians/pending` | ADMIN | Solicitudes de capacidad profesional pendientes (cualquier rol) |
+| `POST` | `/admin/users/physicians/{userId}/approve` | ADMIN | Aprobar cédula/solicitud de un profesional |
+| `POST` | `/admin/users/physicians/{userId}/reject` | ADMIN | Rechazar solicitud (acepta motivo opcional, auditado) |
 | `GET` | `/admin/health/email/diagnostic?to=...` | ADMIN | Diagnóstico SMTP (conexión + correo de prueba) |
 | `POST` | `/admin/users/{userId}/verify` | ADMIN | Marcar email como verificado manualmente |
 | `POST` | `/admin/users/{userId}/reset-password-link` | ADMIN | Generar enlace de reset de contraseña sin correo |

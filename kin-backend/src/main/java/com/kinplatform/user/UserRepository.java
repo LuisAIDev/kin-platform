@@ -21,6 +21,15 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findByRoleAndPhysicianVerificationStatus(UserRole role, PhysicianVerificationStatus verificationStatus);
 
     /**
+     * Usuarios con una solicitud profesional en el estado indicado,
+     * INDEPENDIENTEMENTE de su persona/rol ({@code users.role}). Permite al
+     * panel de ADMIN revisar solicitudes de capacidad PHYSICIAN presentadas
+     * por cuentas existentes (FREE/PREMIUM/PATIENT/…) sin exigir
+     * {@code role=PHYSICIAN} (Alternativa B: la capacidad se desacopla del rol).
+     */
+    List<User> findByPhysicianVerificationStatus(PhysicianVerificationStatus verificationStatus);
+
+    /**
      * Incremento ATÓMICO y CONDICIONAL del contador persistente de proyectos
      * completados. Solo incrementa si el usuario no supera el límite
      * ({@code limit} {@code null} = ilimitado). Nunca se decrementa al

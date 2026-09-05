@@ -27,6 +27,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kinplatform.user.PhysicianVerificationStatus;
+import com.kinplatform.kin.health.physician.api.PhysicianApplicationRequest;
+
 /**
  * Endpoints REST del portal de médicos (ADR-031 + ciclo de vida V30).
  *
@@ -37,11 +40,16 @@ import org.springframework.web.bind.annotation.RestController;
  *   <li>{@code GET /api/v1/health/physician/alerts} — alertas activas.</li>
  *   <li>{@code POST /api/v1/health/physician/alerts/{alertId}/acknowledge} — marcar atendida.</li>
  *   <li>{@code POST /api/v1/health/physician/patients/invite} — invitar a un paciente (por email).</li>
+ *   <li>{@code POST /api/v1/health/physician/application} — solicitar capacidad profesional (médico).</li>
+ *   <li>{@code GET /api/v1/health/physician/application} — consultar estado de la solicitud.</li>
  * </ul>
  *
  * <p>Protegido por JWT con rol {@code PHYSICIAN}. El médico solo ve pacientes
  * con relación activa (aislamiento estricto; acceso a un paciente no asignado
  * devuelve 404).</p>
+ * <p>Los endpoints de solicitud ({@code /application}) son accesibles para
+ * cualquier usuario autenticado con email verificado (rol no {@code PHYSICIAN}
+ * necesario para solicitar).</p>
  */
 @RestController
 @RequestMapping("/health/physician")
@@ -52,12 +60,35 @@ public class PhysicianController {
     private final PhysicianService physicianService;
     private final RelationshipService relationshipService;
     private final UserRepository userRepository;
+    private final PhysicianApplicationService applicationService;
 
     public PhysicianController(
-            PhysicianService physicianService, RelationshipService relationshipService, UserRepository userRepository) {
+            PhysicianService physicianService,
+            RelationshipService relationshipService,
+            UserRepository userRepository,
+            PhysicianApplicationService applicationService) {
         this.physicianService = physicianService;
         this.relationshipService = relationshipService;
         this.userRepository = userRepository;
+        this.applicationService = applicationService;
+    }
+
+    @PostMapping("/application")
+    public ResponseEntity<com.kinplatform.user.PhysicianVerificationStatus> requestApplication(
+            Authentication authentication, @Valid @RequestBody PhysicianApplicationRequest request) {
+        UUID userId = AuthenticatedUsers.require(userRepository, authentication).getId();
+        com.kinplatform.user.PhysicianVerificationStatus status = applicationService.requestApplication(userId, request);
+        log.info("=== PHYSICIAN APPLICATION REQUEST === userId={}, status={}", userId, status);
+        return ResponseEntity.ok(status);
+    }
+
+    @GetMapping("/application")
+    public ResponseEntity<PhysicianApplicationService.ApplicationStatusResponse> getApplicationStatus(
+            Authentication authentication) {
+        UUID userId = AuthenticatedUsers.require(userRepository, authentication).getId();
+        PhysicianApplicationService.ApplicationStatusResponse status = applicationService.getApplicationStatus(userId);
+        log.info("=== PHYSICIAN APPLICATION STATUS === userId={}, status={}", userId, status.status());
+        return ResponseEntity.ok(status);
     }
 
     @GetMapping("/patients")

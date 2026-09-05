@@ -134,4 +134,60 @@ describe("RoleGuard", () => {
 
     expect(push).toHaveBeenCalledWith("/dashboard/salud");
   });
+
+  it("FREE+APPROVED (physicianCapability true) puede acceder al portal médico", () => {
+    localStorage.setItem(
+      "kin_user_v2",
+      JSON.stringify({
+        role: "FREE",
+        email: "a@b.c",
+        verificationStatus: "APPROVED",
+        physicianCapability: true,
+      }),
+    );
+    pathname = "/dashboard/physician";
+
+    render(<RoleGuard>contenido</RoleGuard>);
+
+    expect(screen.getByText("contenido")).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("FREE+PENDING NO accede al portal médico y NO bloquea su cuenta (sigue en su dashboard)", () => {
+    localStorage.setItem(
+      "kin_user_v2",
+      JSON.stringify({
+        role: "FREE",
+        email: "a@b.c",
+        verificationStatus: "PENDING",
+        physicianCapability: false,
+      }),
+    );
+    pathname = "/dashboard/physician";
+
+    render(<RoleGuard>contenido</RoleGuard>);
+
+    // No muestra la pantalla de "cuenta en revisión" (no es un médico legacy en revisión).
+    expect(screen.queryByTestId("review")).not.toBeInTheDocument();
+    // Redirige a su dashboard (Empresa) por no poder acceder al portal médico.
+    expect(push).toHaveBeenCalledWith("/dashboard/empresa");
+  });
+
+  it("PHYSICIAN+APPROVED (legacy) puede acceder al portal médico", () => {
+    localStorage.setItem(
+      "kin_user_v2",
+      JSON.stringify({
+        role: "PHYSICIAN",
+        email: "m@kin.com",
+        verificationStatus: "APPROVED",
+        physicianCapability: true,
+      }),
+    );
+    pathname = "/dashboard/physician";
+
+    render(<RoleGuard>contenido</RoleGuard>);
+
+    expect(screen.getByText("contenido")).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
+  });
 });

@@ -17,10 +17,12 @@ export default function HistoryList({
   page,
   onPageChange,
   onSelect,
+  onShare,
 }: {
   page: PageResponse<TriageHistoryEntry>;
   onPageChange: (page: number) => void;
   onSelect: (entry: TriageHistoryEntry) => void;
+  onShare?: (entry: TriageHistoryEntry) => void;
 }) {
   const { content, totalElements, totalPages, currentPage } = page;
 
@@ -59,7 +61,17 @@ export default function HistoryList({
                   {entry.results.length > 2 ? "…" : ""}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 justify-end">
+                    {onShare && (
+                      <button
+                        type="button"
+                        onClick={() => onShare(entry)}
+                        className="rounded-lg border border-violet-200 text-violet-700 px-3 py-1.5 text-xs font-medium hover:bg-violet-50 transition"
+                        title="Compartir el informe con un médico externo"
+                      >
+                        Compartir
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => onSelect(entry)}

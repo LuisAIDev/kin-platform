@@ -39,6 +39,26 @@ export interface AuthResponse {
   role: string;
   emailVerified: boolean;
   verificationStatus?: string | null;
+  /** Capacidad profesional derivada por el backend (PhysicianAccess). Nunca se infiere en el frontend. */
+  physicianCapability?: boolean;
+  /**
+   * Estado real del registro de médico (register/physician): ACCOUNT_ALREADY_VERIFIED,
+   * ACCOUNT_NOT_VERIFIED, PHYSICIAN_PENDING, PHYSICIAN_APPROVED, PHYSICIAN_REJECTED
+   * o NEW_REGISTRATION. Permite que la UI no afirme "correo enviado" si no lo hubo.
+   */
+  state?: string | null;
+}
+
+/** Tipos de respuesta del reenvío de verificación (resend-verification). */
+export type ResendVerificationStatus =
+  | "SENT"
+  | "ALREADY_VERIFIED"
+  | "COOLDOWN"
+  | "NO_ACCOUNT";
+
+export interface ResendVerificationResponse {
+  message: string;
+  status: ResendVerificationStatus;
 }
 
 export const authService = {
@@ -101,7 +121,7 @@ export const authService = {
 
   async resendVerification(email: string) {
     try {
-      const res = await api.post<{ message: string }>("/auth/resend-verification", {
+      const res = await api.post<ResendVerificationResponse>("/auth/resend-verification", {
         email,
       });
       return { data: res, error: null };
@@ -146,6 +166,7 @@ export const authService = {
         role: body.role,
         emailVerified: body.emailVerified ?? true,
         verificationStatus: body.verificationStatus ?? null,
+        physicianCapability: body.physicianCapability === true,
       };
     } catch {
       return null;

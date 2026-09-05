@@ -1,6 +1,7 @@
 package com.kinplatform.common.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -145,5 +146,45 @@ class SubscriptionAccessFilterTest {
         boolean skip = filter.shouldNotFilter(request);
 
         assertEquals(true, skip);
+    }
+
+    @Test
+    void usuarioEnAtributoDeRequest_deberiaReutilizarseSinConsultarBD() throws Exception {
+        authenticate("a@kin.com");
+        when(request.getServletPath()).thenReturn("/projects");
+        when(request.getRequestURI()).thenReturn("/api/v1/projects");
+        when(request.getMethod()).thenReturn("POST");
+        var stored = User.builder().id(USER_ID).email("a@kin.com").build();
+        when(request.getAttribute(any()))
+                .thenAnswer(inv -> JwtAuthenticationFilter.AUTHENTICATED_USER_ATTRIBUTE.equals(inv.getArgument(0))
+                        ? stored
+                        : null);
+        when(validatorService.canCreateProject(USER_ID)).thenReturn(true);
+
+        filter.doFilter(request, response, filterChain);
+
+        verify(userRepository, never()).findByEmail(any());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    void usuarioEnAtributoDeRequest_bloqueado_deberiaDevolver403() throws Exception {
+        authenticate("a@kin.com");
+        when(request.getServletPath()).thenReturn("/projects");
+        when(request.getRequestURI()).thenReturn("/api/v1/projects");
+        when(request.getMethod()).thenReturn("POST");
+        var stored = User.builder().id(USER_ID).email("a@kin.com").build();
+        when(request.getAttribute(any()))
+                .thenAnswer(inv -> JwtAuthenticationFilter.AUTHENTICATED_USER_ATTRIBUTE.equals(inv.getArgument(0))
+                        ? stored
+                        : null);
+        when(validatorService.canCreateProject(USER_ID)).thenReturn(false);
+        when(response.getWriter()).thenReturn(new java.io.PrintWriter(new java.io.StringWriter()));
+
+        filter.doFilter(request, response, filterChain);
+
+        verify(userRepository, never()).findByEmail(any());
+        verify(response).setStatus(HttpServletResponse.SC_FORBIDDEN);
+        verify(filterChain, never()).doFilter(request, response);
     }
 }

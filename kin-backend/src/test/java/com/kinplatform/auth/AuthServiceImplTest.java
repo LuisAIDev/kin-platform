@@ -317,39 +317,48 @@ class AuthServiceImplTest {
         when(tokenService.isWithinCooldown(user.getId())).thenReturn(false);
         when(tokenService.createForUser(user)).thenReturn("new-token");
 
-        authService.resendVerification(EMAIL);
+        ResendVerificationStatus result = authService.resendVerification(EMAIL);
 
+        assertEquals(ResendVerificationStatus.SENT, result);
         verify(emailSender)
                 .sendVerificationEmail(EMAIL, "KIN User", "http://localhost:3000/verify-email?token=new-token");
     }
 
     @Test
-    void resend_conEmailInexistente_noDeberiaEnviarNada() {
+    void resend_conEmailInexistente_deberiaDevolverNO_ACCOUNT() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
 
-        authService.resendVerification(EMAIL);
+        ResendVerificationStatus result = authService.resendVerification(EMAIL);
 
+        assertEquals(ResendVerificationStatus.NO_ACCOUNT, result);
         verify(emailSender, never()).sendVerificationEmail(anyString(), anyString(), anyString());
     }
 
     @Test
-    void resend_conUsuarioVerificado_noDeberiaEnviarNada() {
+    void resend_conUsuarioVerificado_deberiaDevolverALREADY_VERIFIED() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(verifiedUser()));
 
-        authService.resendVerification(EMAIL);
+        ResendVerificationStatus result = authService.resendVerification(EMAIL);
 
+        assertEquals(ResendVerificationStatus.ALREADY_VERIFIED, result);
         verify(emailSender, never()).sendVerificationEmail(anyString(), anyString(), anyString());
     }
 
     @Test
-    void resend_dentroDeCooldown_noDeberiaEnviarNada() {
+    void resend_dentroDeCooldown_deberiaDevolverCOOLDOWN() {
         var user = unverifiedUser();
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(tokenService.isWithinCooldown(user.getId())).thenReturn(true);
 
-        authService.resendVerification(EMAIL);
+        ResendVerificationStatus result = authService.resendVerification(EMAIL);
 
+        assertEquals(ResendVerificationStatus.COOLDOWN, result);
         verify(emailSender, never()).sendVerificationEmail(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void resend_emailVacio_deberiaDevolverNO_ACCOUNT() {
+        assertEquals(ResendVerificationStatus.NO_ACCOUNT, authService.resendVerification("  "));
     }
 
     // ---------- Auto-registro vertical Salud ----------
@@ -432,7 +441,7 @@ class AuthServiceImplTest {
 
     @Test
     void registerPhysician_deberiaCrearMedicoPendienteEnviarVerificacion() {
-        when(userRepository.existsByEmail(EMAIL)).thenReturn(false);
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
         when(passwordEncoder.encode("KINpass123!a")).thenReturn("hashed");
         var user = User.builder()
                 .id(UUID.randomUUID())
@@ -456,12 +465,109 @@ class AuthServiceImplTest {
         assertFalse(response.getEmailVerified());
         assertEquals("PHYSICIAN", response.getRole());
         assertEquals("PENDING", response.getVerificationStatus());
+        assertEquals(AuthResponse.STATE_NEW_REGISTRATION, response.getState());
         verify(userRepository)
                 .save(argThat(u -> u.getRole() == UserRole.PHYSICIAN
                         && u.getPhysicianVerificationStatus() == PhysicianVerificationStatus.PENDING
                         && "CEDULA-12345".equals(u.getLicenseNumber())));
         verify(emailSender)
                 .sendVerificationEmail(EMAIL, "Dr. García", "http://localhost:3000/verify-email?token=verify-token");
+    }
+
+    @Test
+    void registerPhysician_emailExistenteVerificado_deberiaResponder201SinEnviar() {
+        var existing = User.builder()
+                .id(UUID.randomUUID())
+                .email(EMAIL)
+                .fullName("Dr. Existente")
+                .role(UserRole.FREE)
+                .emailVerified(true)
+                .physicianVerificationStatus(null)
+                .build();
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(existing));
+
+        AuthResponse response = authService.registerPhysician(physicianRequest());
+
+        assertEquals(AuthResponse.STATE_ACCOUNT_ALREADY_VERIFIED, response.getState());
+        assertTrue(response.getEmailVerified());
+        assertEquals("FREE", response.getRole());
+        verify(userRepository, never()).save(any(User.class));
+        verify(emailSender, never()).sendVerificationEmail(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void registerPhysician_emailExistenteNoVerificado_deberiaResponder201SinEnviar() {
+        var existing = User.builder()
+                .id(UUID.randomUUID())
+                .email(EMAIL)
+                .fullName("Dr. Existente")
+                .role(UserRole.FREE)
+                .emailVerified(false)
+                .physicianVerificationStatus(null)
+                .build();
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(existing));
+
+        AuthResponse response = authService.registerPhysician(physicianRequest());
+
+        assertEquals(AuthResponse.STATE_ACCOUNT_NOT_VERIFIED, response.getState());
+        assertFalse(response.getEmailVerified());
+        verify(userRepository, never()).save(any(User.class));
+        verify(emailSender, never()).sendVerificationEmail(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void registerPhysician_emailConSolicitudPendiente_deberiaResponderPENDING() {
+        var existing = User.builder()
+                .id(UUID.randomUUID())
+                .email(EMAIL)
+                .fullName("Dr. Existente")
+                .role(UserRole.PATIENT)
+                .emailVerified(true)
+                .physicianVerificationStatus(PhysicianVerificationStatus.PENDING)
+                .build();
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(existing));
+
+        AuthResponse response = authService.registerPhysician(physicianRequest());
+
+        assertEquals(AuthResponse.STATE_PHYSICIAN_PENDING, response.getState());
+        assertEquals("PENDING", response.getVerificationStatus());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void registerPhysician_emailConSolicitudAprobada_deberiaResponderAPPROVED() {
+        var existing = User.builder()
+                .id(UUID.randomUUID())
+                .email(EMAIL)
+                .fullName("Dr. Existente")
+                .role(UserRole.FREE)
+                .emailVerified(true)
+                .physicianVerificationStatus(PhysicianVerificationStatus.APPROVED)
+                .build();
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(existing));
+
+        AuthResponse response = authService.registerPhysician(physicianRequest());
+
+        assertEquals(AuthResponse.STATE_PHYSICIAN_APPROVED, response.getState());
+        assertTrue(response.isPhysicianCapability());
+    }
+
+    @Test
+    void registerPhysician_emailConSolicitudRechazada_deberiaResponderREJECTED() {
+        var existing = User.builder()
+                .id(UUID.randomUUID())
+                .email(EMAIL)
+                .fullName("Dr. Existente")
+                .role(UserRole.FREE)
+                .emailVerified(true)
+                .physicianVerificationStatus(PhysicianVerificationStatus.REJECTED)
+                .build();
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(existing));
+
+        AuthResponse response = authService.registerPhysician(physicianRequest());
+
+        assertEquals(AuthResponse.STATE_PHYSICIAN_REJECTED, response.getState());
+        assertFalse(response.isPhysicianCapability());
     }
 
     @Test
@@ -537,7 +643,7 @@ class AuthServiceImplTest {
 
     @Test
     void login_medicoPilotoSinEstado_deberiaDevolverToken() {
-        // Médicos del piloto/admin tienen verificationStatus null → equivalen a aprobados.
+        // M�dicos del piloto/admin tienen verificationStatus null  equivalen a aprobados.
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(physicianUser(null)));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
         when(jwtService.generateToken(any(UUID.class), anyString(), anyString()))
@@ -547,5 +653,119 @@ class AuthServiceImplTest {
 
         assertEquals(TOKEN, response.getToken());
         assertNull(response.getVerificationStatus());
+    }
+
+    // ------------------------------------------------------------------
+    // physicianCapability expuesta en login (Alternativa B)
+    // ------------------------------------------------------------------
+
+    @Test
+    void login_freeAprobado_deberiaExponerPhysicianCapabilityTrue() {
+        var user = User.builder()
+                .id(UUID.randomUUID())
+                .email(EMAIL)
+                .passwordHash("hashed")
+                .fullName("Dr. Free Aprobado")
+                .role(UserRole.FREE)
+                .emailVerified(true)
+                .physicianVerificationStatus(PhysicianVerificationStatus.APPROVED)
+                .build();
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
+        when(jwtService.generateToken(any(UUID.class), anyString(), anyString())).thenReturn(TOKEN);
+
+        AuthResponse response = authService.login(loginRequest());
+
+        assertTrue(response.isPhysicianCapability());
+    }
+
+    @Test
+    void login_freePendiente_deberiaExponerPhysicianCapabilityFalse() {
+        var user = User.builder()
+                .id(UUID.randomUUID())
+                .email(EMAIL)
+                .passwordHash("hashed")
+                .fullName("Dr. Free Pendiente")
+                .role(UserRole.FREE)
+                .emailVerified(true)
+                .physicianVerificationStatus(PhysicianVerificationStatus.PENDING)
+                .build();
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
+        when(jwtService.generateToken(any(UUID.class), anyString(), anyString())).thenReturn(TOKEN);
+
+        AuthResponse response = authService.login(loginRequest());
+
+        assertFalse(response.isPhysicianCapability());
+    }
+
+    @Test
+    void login_medicoAprobado_deberiaExponerPhysicianCapabilityTrue() {
+        when(userRepository.findByEmail(EMAIL))
+                .thenReturn(Optional.of(physicianUser(PhysicianVerificationStatus.APPROVED)));
+        when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
+        when(jwtService.generateToken(any(UUID.class), anyString(), anyString())).thenReturn(TOKEN);
+
+        AuthResponse response = authService.login(loginRequest());
+
+        assertTrue(response.isPhysicianCapability());
+    }
+
+    // ------------------------------------------------------------------
+    // physicianCapability expuesta en /auth/me (getCurrentUser)
+    // ------------------------------------------------------------------
+
+    @Test
+    void getCurrentUser_freeAprobado_deberiaExponerPhysicianCapabilityTrue() {
+        when(jwtService.isTokenValid(TOKEN)).thenReturn(true);
+        when(jwtService.extractEmail(TOKEN)).thenReturn(EMAIL);
+        var user = User.builder()
+                .id(UUID.randomUUID())
+                .email(EMAIL)
+                .role(UserRole.FREE)
+                .emailVerified(true)
+                .physicianVerificationStatus(PhysicianVerificationStatus.APPROVED)
+                .build();
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+
+        UserDTO dto = authService.getCurrentUser(TOKEN);
+
+        assertTrue(dto.isPhysicianCapability());
+    }
+
+    @Test
+    void getCurrentUser_medicoPendiente_deberiaExponerPhysicianCapabilityFalse() {
+        when(jwtService.isTokenValid(TOKEN)).thenReturn(true);
+        when(jwtService.extractEmail(TOKEN)).thenReturn(EMAIL);
+        var user = User.builder()
+                .id(UUID.randomUUID())
+                .email(EMAIL)
+                .role(UserRole.PHYSICIAN)
+                .emailVerified(true)
+                .physicianVerificationStatus(PhysicianVerificationStatus.PENDING)
+                .build();
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+
+        UserDTO dto = authService.getCurrentUser(TOKEN);
+
+        assertFalse(dto.isPhysicianCapability());
+    }
+
+    @Test
+    void getCurrentUser_medicoLegacyNull_deberiaExponerPhysicianCapabilityTrue() {
+        when(jwtService.isTokenValid(TOKEN)).thenReturn(true);
+        when(jwtService.extractEmail(TOKEN)).thenReturn(EMAIL);
+        var user = User.builder()
+                .id(UUID.randomUUID())
+                .email(EMAIL)
+                .role(UserRole.PHYSICIAN)
+                .emailVerified(true)
+                .physicianVerificationStatus(null)
+                .build();
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+
+        UserDTO dto = authService.getCurrentUser(TOKEN);
+
+        assertTrue(dto.isPhysicianCapability());
     }
 }

@@ -8,13 +8,20 @@ const ME_TTL_MS = 30_000;
 
 const meCache = new Map<
   string,
-  { ok: boolean; verified: boolean; role: string | null; expiresAt: number }
+  {
+    ok: boolean;
+    verified: boolean;
+    role: string | null;
+    physicianCapability: boolean;
+    expiresAt: number;
+  }
 >();
 
 interface MeInfo {
   ok: boolean;
   verified: boolean;
   role: string | null;
+  physicianCapability: boolean;
 }
 
 async function checkSession(token: string): Promise<MeInfo> {
@@ -31,19 +38,21 @@ async function checkSession(token: string): Promise<MeInfo> {
     const ok = res.ok;
     let verified = true;
     let role: string | null = null;
+    let physicianCapability = false;
     if (ok) {
       const body = await res.json().catch(() => null);
       verified = body?.emailVerified !== false;
       role = body?.role ?? null;
+      physicianCapability = body?.physicianCapability === true;
     }
-    const result = { ok, verified, role };
+    const result = { ok, verified, role, physicianCapability };
     meCache.set(token, { ...result, expiresAt: now + ME_TTL_MS });
     return result;
   } catch {
     // Error de red al validar la sesión: NO asumir autenticado (evitar falsos
     // positivos que redirigirían /login → /dashboard en bucle). Se trata como
     // no-autenticado: el middleware dejará pasar a /login y/o forzará logout.
-    const result = { ok: false, verified: false, role: null };
+    const result = { ok: false, verified: false, role: null, physicianCapability: false };
     meCache.set(token, { ...result, expiresAt: now + ME_TTL_MS });
     return result;
   }
@@ -74,7 +83,7 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    const { ok, verified, role } = await checkSession(token);
+    const { ok, verified, role, physicianCapability } = await checkSession(token);
 
     if (!ok) {
       const response = buildLoginRedirect(request);
@@ -92,9 +101,11 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/verify-email", request.url));
     }
 
+    const userContext = { role, physicianCapability };
+
     // Segmentación por vertical de NAVEGACIÓN (rol + selección): bloquea rutas
     // de otra vertical y redirige la raíz `/dashboard` al hub correspondiente.
-    if (pathname === "/dashboard" || !canAccessPath(role, pathname, selected)) {
+    if (pathname === "/dashboard" || !canAccessPath(userContext, pathname, selected)) {
       return NextResponse.redirect(
         new URL(homePathForRole(role, selected), request.url),
       );

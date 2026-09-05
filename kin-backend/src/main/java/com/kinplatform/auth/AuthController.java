@@ -114,11 +114,16 @@ public class AuthController {
 
     @PostMapping("/resend-verification")
     public ResponseEntity<Map<String, String>> resendVerification(@RequestBody Map<String, String> body) {
-        authService.resendVerification(body == null ? null : body.get("email"));
-        return ResponseEntity.ok(Map.of(
-                "message",
-                "Si existe una cuenta asociada a este correo y necesita verificación, "
-                        + "recibirás un nuevo mensaje."));
+        ResendVerificationStatus status =
+                authService.resendVerification(body == null ? null : body.get("email"));
+        String message = switch (status) {
+            case SENT -> "Te hemos enviado un nuevo correo de verificación. Revisa tu bandeja de entrada.";
+            case ALREADY_VERIFIED -> "Tu cuenta ya está verificada. Inicia sesión.";
+            case COOLDOWN -> "Ya has solicitado un reenvío recientemente. Intenta de nuevo en unos segundos.";
+            case NO_ACCOUNT -> "Si existe una cuenta asociada a este correo y necesita verificación, "
+                    + "recibirás un nuevo mensaje.";
+        };
+        return ResponseEntity.ok(Map.of("message", message, "status", status.name()));
     }
 
     @PostMapping("/forgot-password")

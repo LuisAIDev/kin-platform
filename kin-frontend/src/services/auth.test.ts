@@ -143,6 +143,27 @@ describe("authService", () => {
     expect(result.data?.message).toContain("recibirás un nuevo mensaje");
   });
 
+  it("resendVerification: mapea el status real del backend", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse({ message: "Tu cuenta ya está verificada. Inicia sesión.", status: "ALREADY_VERIFIED" })
+    );
+
+    const result = await authService.resendVerification("a@b.c");
+
+    expect(result.error).toBeNull();
+    expect(result.data?.status).toBe("ALREADY_VERIFIED");
+  });
+
+  it("resendVerification: status SENT indica que sí hubo envío", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse({ message: "Te hemos enviado un nuevo correo de verificación.", status: "SENT" })
+    );
+
+    const result = await authService.resendVerification("a@b.c");
+
+    expect(result.data?.status).toBe("SENT");
+  });
+
   it("logout: limpia sesión y llama a /auth/logout para invalidar cookie HttpOnly", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
 
@@ -185,6 +206,34 @@ describe("authService", () => {
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ credentials: "include" });
     expect(user?.role).toBe("PATIENT");
     expect(user?.token).toBeNull();
+  });
+
+  it("fetchCurrentUser: mapea physicianCapability desde /auth/me (fuente de verdad backend)", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse({
+        email: "a@b.c",
+        fullName: "Ana",
+        role: "FREE",
+        emailVerified: true,
+        verificationStatus: "APPROVED",
+        physicianCapability: true,
+      }),
+    );
+
+    const user = await authService.fetchCurrentUser();
+
+    expect(user?.physicianCapability).toBe(true);
+    expect(user?.verificationStatus).toBe("APPROVED");
+  });
+
+  it("fetchCurrentUser: physicianCapability ausente se normaliza a false", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse({ email: "a@b.c", fullName: "Ana", role: "FREE", emailVerified: true }),
+    );
+
+    const user = await authService.fetchCurrentUser();
+
+    expect(user?.physicianCapability).toBe(false);
   });
 
   it("fetchCurrentUser: con 401 devuelve null SIN disparar forceLogout (evita el bucle de recarga)", async () => {

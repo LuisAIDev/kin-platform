@@ -26,5 +26,11 @@ public enum AuditAction {
     UPDATE,
     TOGGLE,
     DELETE,
-    EXECUTE
+    EXECUTE,
+    /** Solicitud profesional enviada por un usuario (capacidad PHYSICIAN). */
+    PHYSICIAN_APPLICATION_REQUESTED,
+    /** Solicitud profesional aprobada por un ADMIN (capacidad PHYSICIAN). */
+    PHYSICIAN_APPLICATION_APPROVED,
+    /** Solicitud profesional rechazada por un ADMIN (capacidad PHYSICIAN). */
+    PHYSICIAN_APPLICATION_REJECTED
 }

@@ -1,17 +1,22 @@
 package com.kinplatform.common.security;
 
+import com.kinplatform.user.User;
+import com.kinplatform.user.UserRepository;
+import com.kinplatform.user.UserRole;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -24,7 +29,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private static final String TOKEN_COOKIE = "kin_token_v2";
 
+    /**
+     * Atributo de request donde se guarda el {@link User} resuelto desde la
+     * base de datos para REUTILIZARLO en el resto de filtros/controllers de la
+     * misma request (evita N+1 consultas por request autenticada).
+     */
+    public static final String AUTHENTICATED_USER_ATTRIBUTE = JwtAuthenticationFilter.class.getName() + ".authenticatedUser";
+
     private final JwtService jwtService;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(
@@ -50,11 +63,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         var email = jwtService.extractEmail(token);
-        var role = jwtService.extractRole(token);
 
-        var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+        // "Java decide": las authorities se derivan SIEMPRE del estado
+        // persistido (User en BD), nunca de claims del JWT (que podrían quedar
+        // obsoletos). Si la cuenta ya no existe, no se autentica.
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            log.warn("Token válido pero usuario inexistente en BD para email={}, URI={}", email, request.getRequestURI());
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        if (user.getRole() != UserRole.PHYSICIAN) {
+            // Persona comercial/funcional (FREE/PREMIUM/FACILITADOR/PATIENT/ADMIN).
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+        }
+        if (PhysicianAccess.isPhysician(user)) {
+            // Capacidad profesional desacoplada de users.role (Alternativa B).
+            // Se omite deliberadamente para PHYSICIAN legacy en PENDING/REJECTED.
+            authorities.add(new SimpleGrantedAuthority("ROLE_PHYSICIAN"));
+        }
+
+        request.setAttribute(AUTHENTICATED_USER_ATTRIBUTE, user);
+
         var authentication = new UsernamePasswordAuthenticationToken(email, null, authorities);
-
         SecurityContextHolder.getContext().setAuthentication(authentication);
         filterChain.doFilter(request, response);
     }

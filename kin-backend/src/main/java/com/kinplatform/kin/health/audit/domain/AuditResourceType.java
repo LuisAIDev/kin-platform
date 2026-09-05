@@ -13,5 +13,7 @@ public enum AuditResourceType {
     ALERTA,
     DOCUMENTO,
     AUTOMATION_RULE,
-    AUTOMATION_RULE_EXECUTION
+    AUTOMATION_RULE_EXECUTION,
+    /** Usuario afectado (p. ej. decisión ADMIN sobre una solicitud profesional). */
+    USER
 }

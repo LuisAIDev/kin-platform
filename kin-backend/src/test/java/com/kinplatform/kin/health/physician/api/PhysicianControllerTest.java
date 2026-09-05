@@ -66,6 +66,9 @@ class PhysicianControllerTest {
     private final ObjectMapper objectMapper =
             new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
 
+    @Mock
+    private PhysicianApplicationService applicationService;
+
     @BeforeEach
     void setUp() {
         var user = User.builder()
@@ -75,7 +78,7 @@ class PhysicianControllerTest {
                 .build();
         lenient().when(authentication.getName()).thenReturn(EMAIL);
         lenient().when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        mockMvc = MockMvcBuilders.standaloneSetup(new PhysicianController(physicianService, relationshipService, userRepository))
+        mockMvc = MockMvcBuilders.standaloneSetup(new PhysicianController(physicianService, relationshipService, userRepository, applicationService))
                 .setCustomArgumentResolvers(new org.springframework.data.web.PageableHandlerMethodArgumentResolver())
                 .defaultRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request(
                                 org.springframework.http.HttpMethod.GET, "/")

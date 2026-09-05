@@ -57,8 +57,29 @@ export default function PhysicianRegisterForm() {
         setError(result.error);
         return;
       }
-      // Médico: tras verificar el correo verá la pantalla de "cuenta en revisión".
-      router.push(`/verify-email?email=${encodeURIComponent(email)}&pending=1`);
+      const state = result.data?.state;
+      switch (state) {
+        case "ACCOUNT_ALREADY_VERIFIED":
+          setError(
+            "Esta cuenta ya está verificada. Inicia sesión para solicitar el registro como profesional.",
+          );
+          return;
+        case "ACCOUNT_NOT_VERIFIED":
+          setError("Debes verificar primero tu correo. Revisa tu bandeja de entrada.");
+          return;
+        case "PHYSICIAN_PENDING":
+          setError("Tu solicitud profesional está pendiente de revisión.");
+          return;
+        case "PHYSICIAN_APPROVED":
+          setError("Esta cuenta ya está habilitada como profesional.");
+          return;
+        case "PHYSICIAN_REJECTED":
+          setError("Tu solicitud fue rechazada. Puedes intentarlo de nuevo.");
+          return;
+        default:
+          // NEW_REGISTRATION (o estado desconocido): se envió correo de verificación.
+          router.push(`/verify-email?email=${encodeURIComponent(email)}&pending=1`);
+      }
     } finally {
       setLoading(false);
     }
