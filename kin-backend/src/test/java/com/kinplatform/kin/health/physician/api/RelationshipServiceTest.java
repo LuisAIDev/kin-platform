@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.health.physician.InMemoryPhysicianRepositories;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
+import com.kinplatform.kin.health.physician.domain.PhysicianPatientAssignment;
 import com.kinplatform.kin.health.physician.domain.RelationshipStatus;
 import com.kinplatform.kin.health.physician.event.PatientInvitedEvent;
 import com.kinplatform.kin.health.physician.event.RelationshipAcceptedEvent;
@@ -99,19 +100,21 @@ class RelationshipServiceTest {
     }
 
     @Test
-    void invitePatient_emailConRolEmpresarialSinConsentimiento_deberiaLanzar409() {
+    void invitePatient_emailConRolEmpresarialSinConsentimiento_deberiaCrearPendingConsent() {
+        var targetId = UUID.randomUUID();
         when(userRepository.findByEmail("empresa@kin.com"))
                 .thenReturn(Optional.of(User.builder()
-                        .id(UUID.randomUUID())
+                        .id(targetId)
                         .email("empresa@kin.com")
                         .role(UserRole.FREE)
                         .healthDataConsent(false)
                         .build()));
 
-        var ex = assertThrows(
-                PatientNotCapableException.class,
-                () -> service().invitePatient(PHYSICIAN, "empresa@kin.com", null));
-        assertTrue(ex.getReason().contains("no tiene capacidad de paciente"));
+        var invitation = service().invitePatient(PHYSICIAN, "empresa@kin.com", null);
+
+        assertEquals(RelationshipStatus.PENDING_CONSENT, invitation.status());
+        assertEquals(targetId, invitation.patientId());
+        verify(eventBus).publish(any(PatientInvitedEvent.class));
     }
 
     @Test
@@ -239,19 +242,21 @@ class RelationshipServiceTest {
     }
 
     @Test
-    void invitePatient_freeSinConsentimiento_deberiaLanzar409() {
+    void invitePatient_freeSinConsentimiento_deberiaCrearPendingConsent() {
+        var targetId = UUID.randomUUID();
         when(userRepository.findByEmail("free-sin-consent@kin.com"))
                 .thenReturn(Optional.of(User.builder()
-                        .id(UUID.randomUUID())
+                        .id(targetId)
                         .email("free-sin-consent@kin.com")
                         .role(UserRole.FREE)
                         .healthDataConsent(false)
                         .build()));
 
-        var ex = assertThrows(
-                PatientNotCapableException.class,
-                () -> service().invitePatient(PHYSICIAN, "free-sin-consent@kin.com", null));
-        assertTrue(ex.getReason().contains("no tiene capacidad de paciente"));
+        var invitation = service().invitePatient(PHYSICIAN, "free-sin-consent@kin.com", null);
+
+        assertEquals(RelationshipStatus.PENDING_CONSENT, invitation.status());
+        assertEquals(targetId, invitation.patientId());
+        verify(eventBus).publish(any(PatientInvitedEvent.class));
     }
 
     @Test
@@ -303,5 +308,74 @@ class RelationshipServiceTest {
 
         assertEquals(RelationshipStatus.PENDING, invitation.status());
         assertEquals(targetId, invitation.patientId());
+    }
+
+    @Test
+    void invitePatient_invitacionPendingConsentExistente_deberiaLanzar409() {
+        repos.patientRepository().assign(PhysicianPatientAssignment.pendingConsent(PHYSICIAN, PATIENT, PHYSICIAN, null));
+
+        var ex = assertThrows(
+                DuplicateRelationshipException.class,
+                () -> service().invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
+        assertTrue(ex.getReason().contains("Ya existe una invitación o relación activa"));
+    }
+
+    // ------------------------------------------------------------------
+    // Flujo "consentimiento en un clic": el paciente acepta el consentimiento
+    // de salud y la relación PENDING_CONSENT pasa a ACTIVE automáticamente.
+    // ------------------------------------------------------------------
+
+    @Test
+    void acceptWithConsent_deberiaConcederConsentimientoYActivarRelacion() {
+        var patient = User.builder()
+                .id(PATIENT)
+                .email("paciente@kin.com")
+                .fullName("Paciente Test")
+                .role(UserRole.FREE)
+                .healthDataConsent(false)
+                .build();
+        when(userRepository.findById(PATIENT)).thenReturn(Optional.of(patient));
+        repos.patientRepository()
+                .assign(PhysicianPatientAssignment.pendingConsent(PHYSICIAN, PATIENT, PHYSICIAN, null));
+
+        var accepted = service().acceptWithConsent(PATIENT, PHYSICIAN);
+
+        assertEquals(RelationshipStatus.ACTIVE, accepted.status());
+        assertTrue(accepted.acceptedAt() != null);
+        assertTrue(patient.getHealthDataConsent());
+        verify(userRepository).save(patient);
+        verify(eventBus).publish(any(RelationshipAcceptedEvent.class));
+    }
+
+    @Test
+    void acceptWithConsent_cuandoYaActiva_deberiaSerIdempotente() {
+        when(userRepository.findById(PATIENT))
+                .thenReturn(Optional.of(User.builder()
+                        .id(PATIENT)
+                        .email("paciente@kin.com")
+                        .role(UserRole.FREE)
+                        .healthDataConsent(false)
+                        .build()));
+        repos.patientRepository().assign(InMemoryPhysicianRepositories.assignment(PHYSICIAN, PATIENT));
+
+        var result = service().acceptWithConsent(PATIENT, PHYSICIAN);
+
+        assertEquals(RelationshipStatus.ACTIVE, result.status());
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void acceptWithConsent_sinInvitacion_deberiaLanzar404() {
+        when(userRepository.findById(PATIENT))
+                .thenReturn(Optional.of(User.builder()
+                        .id(PATIENT)
+                        .email("paciente@kin.com")
+                        .role(UserRole.FREE)
+                        .healthDataConsent(false)
+                        .build()));
+
+        assertThrows(
+                InvitationNotFoundException.class,
+                () -> service().acceptWithConsent(PATIENT, PHYSICIAN));
     }
 }

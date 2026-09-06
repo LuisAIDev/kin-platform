@@ -37,6 +37,7 @@ public class PatientInvitedEventListener {
     private static final Logger log = LoggerFactory.getLogger(PatientInvitedEventListener.class);
 
     private static final String INVITATIONS_PATH = "/dashboard/patient/invitations";
+    private static final String ACCEPT_CONSENT_PATH = "/dashboard/accept-invitation";
 
     private final DomainEventBus eventBus;
     private final EmailSender emailSender;
@@ -84,10 +85,12 @@ public class PatientInvitedEventListener {
                     ? "Médico"
                     : event.physicianName();
             String specialty = specialtyOf(event.physicianId());
-            String link = baseUrl() + INVITATIONS_PATH;
             // El correo explica que falta el consentimiento si el paciente aún no
             // tiene capacidad de paciente (PatientAccess es la única fuente de verdad).
             boolean consentRequired = !com.kinplatform.common.security.PatientAccess.isPatient(patient);
+            String link = consentRequired && event.physicianId() != null
+                    ? baseUrl() + ACCEPT_CONSENT_PATH + "?physicianId=" + event.physicianId()
+                    : baseUrl() + INVITATIONS_PATH;
 
             emailSender.sendInvitationEmail(
                     patient.getEmail(), patientName, physicianName, specialty, event.message(), link, consentRequired);

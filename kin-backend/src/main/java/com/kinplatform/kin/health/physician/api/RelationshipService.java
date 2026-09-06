@@ -92,9 +92,13 @@ public class RelationshipService {
     }
 
     /**
-     * Invita a un paciente (existente en KIN con capacidad de paciente, ver
-     * {@code PatientAccess.isPatient}) a vincularse. La relación queda
-     * {@code PENDING}; no se permiten duplicados (ACTIVE o PENDING ya existentes).
+     * Invita a un usuario existente en KIN a vincularse con el médico. No crea
+     * cuentas nuevas y NUNCA bloquea por falta de consentimiento: si el usuario
+     * ya tiene capacidad de paciente ({@code PatientAccess.isPatient}) la
+     * invitación queda {@code PENDING}; si no la tiene (falta aceptar el
+     * consentimiento de salud), la invitación queda {@code PENDING_CONSENT} y
+     * el correo la guía para aceptar consentimiento y vincularse en un solo
+     * clic. No se permiten duplicados (ACTIVE/PENDING/PENDING_CONSENT).
      */
     @Transactional
     public PhysicianPatientAssignment invitePatient(UUID physicianId, String patientEmail, String message) {
@@ -112,27 +116,65 @@ public class RelationshipService {
             // 404: no existe cuenta KIN con ese correo (el flujo NO crea usuarios).
             throw new PatientNotRegisteredException();
         }
-        if (!com.kinplatform.common.security.PatientAccess.isPatient(patient)) {
-            // 409: la cuenta existe pero no tiene capacidad de paciente (falta consentimiento).
-            throw new PatientNotCapableException();
-        }
-
-        if (patientRepository.existsByPhysicianIdAndPatientIdAndStatus(
-                        physicianId, patient.getId(), RelationshipStatus.ACTIVE)
-                || patientRepository.existsByPhysicianIdAndPatientIdAndStatus(
-                        physicianId, patient.getId(), RelationshipStatus.PENDING)) {
+        if (duplicateRelationship(physicianId, patient.getId())) {
             throw new DuplicateRelationshipException();
         }
 
         requirePhysicianCanInvite(physicianId);
 
-        PhysicianPatientAssignment invitation =
-                PhysicianPatientAssignment.invitation(physicianId, patient.getId(), physicianId, OffsetDateTime.now());
+        boolean requiresConsent = !com.kinplatform.common.security.PatientAccess.isPatient(patient);
+        PhysicianPatientAssignment invitation = requiresConsent
+                ? PhysicianPatientAssignment.pendingConsent(
+                        physicianId, patient.getId(), physicianId, OffsetDateTime.now())
+                : PhysicianPatientAssignment.invitation(
+                        physicianId, patient.getId(), physicianId, OffsetDateTime.now());
         patientRepository.assign(invitation);
         publish(new PatientInvitedEvent(
                 patient.getId(), physicianId, physician.getFullName(), message == null ? "" : message));
-        log.info("RelationshipService: médico {} invitó al paciente {}", physicianId, patient.getId());
+        log.info(
+                "RelationshipService: médico {} invitó al usuario {} (estado {}, requiereConsentimiento={})",
+                physicianId,
+                patient.getId(),
+                invitation.status(),
+                requiresConsent);
         return invitation;
+    }
+
+    /**
+     * El paciente acepta el consentimiento de datos de salud y, con un único
+     * clic, se vincula al médico que lo invitó (transición
+     * {@code PENDING_CONSENT} → {@code ACTIVE}). Idempotente: si la relación ya
+     * está {@code ACTIVE}, solo garantiza el consentimiento y responde OK.
+     */
+    @Transactional
+    public PhysicianPatientAssignment acceptWithConsent(UUID patientId, UUID physicianId) {
+        requireInviteEnabled();
+        requireNotNull(patientId, physicianId);
+
+        User patient = userRepository.findById(patientId)
+                .orElseThrow(() -> new IllegalArgumentException("Paciente no encontrado"));
+        if (!Boolean.TRUE.equals(patient.getHealthDataConsent())) {
+            patient.setHealthDataConsent(true);
+            userRepository.save(patient);
+            log.info("RelationshipService: paciente {} aceptó el consentimiento de datos de salud", patientId);
+        }
+
+        PhysicianPatientAssignment current = patientRepository
+                .findByPhysicianIdAndPatientId(physicianId, patientId)
+                .orElseThrow(() -> new InvitationNotFoundException(physicianId, patientId));
+
+        if (current.isActive()) {
+            return current;
+        }
+        if (!current.isAwaitingAcceptance()) {
+            throw new InvitationNotFoundException(physicianId, patientId);
+        }
+
+        PhysicianPatientAssignment accepted = current.accepted(OffsetDateTime.now());
+        patientRepository.assign(accepted);
+        publish(new RelationshipAcceptedEvent(patientId, physicianId));
+        log.info("RelationshipService: paciente {} aceptó consentimiento y se vinculó con médico {}", patientId, physicianId);
+        return accepted;
     }
 
     /**
@@ -200,8 +242,19 @@ public class RelationshipService {
 
     private PhysicianPatientAssignment pending(UUID patientId, UUID physicianId) {
         return patientRepository
-                .findPendingInvitation(physicianId, patientId)
+                .findByPhysicianIdAndPatientId(physicianId, patientId)
+                .filter(PhysicianPatientAssignment::isAwaitingAcceptance)
                 .orElseThrow(() -> new InvitationNotFoundException(physicianId, patientId));
+    }
+
+    /** ¿Ya existe una relación activa o una invitación pendiente (PENDING o PENDING_CONSENT)? */
+    private boolean duplicateRelationship(UUID physicianId, UUID patientId) {
+        return patientRepository.existsByPhysicianIdAndPatientIdAndStatus(
+                        physicianId, patientId, RelationshipStatus.ACTIVE)
+                || patientRepository.existsByPhysicianIdAndPatientIdAndStatus(
+                        physicianId, patientId, RelationshipStatus.PENDING)
+                || patientRepository.existsByPhysicianIdAndPatientIdAndStatus(
+                        physicianId, patientId, RelationshipStatus.PENDING_CONSENT);
     }
 
     private void requireNotNull(UUID patientId, UUID physicianId) {

@@ -70,6 +70,8 @@ public class SecurityConfig {
                         .hasAnyRole("FREE", "PREMIUM", "FACILITADOR", "PATIENT", "ADMIN")
                         .requestMatchers("/health/dashboard/**")
                         .hasAnyRole("FREE", "PREMIUM", "FACILITADOR", "PATIENT", "ADMIN")
+                        .requestMatchers("/health/patient/consent/**")
+                        .authenticated()
                         .requestMatchers("/health/patient/**")
                         .hasAnyRole("PATIENT", "ADMIN")
                         // Solicitud de capacidad profesional (Alternativa B): accesible para

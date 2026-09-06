@@ -9,6 +9,13 @@ y el versionado del proyecto en [SemVer](https://semver.org/lang/es/).
 
 ### Added
 
+- **Invitación sin bloqueo por consentimiento** (flujo "consentimiento en un clic"): al invitar a una
+  cuenta existente sin capacidad de paciente, `RelationshipService.invitePatient` crea la invitación en
+  `PENDING_CONSENT` (en lugar de 409) y dispara el correo automático con nota explícita de
+  consentimiento. Nuevo endpoint `POST /health/patient/consent/accept` (autenticado, cualquier persona)
+  que concede `health_data_consent` y vincula al médico (→ `ACTIVE`) en un clic; el enlace del correo
+  apunta a `/dashboard/accept-invitation`. El modal del médico muestra éxito y ya no exhibe el 409 de
+  "no puede ser invitado en este estado".
 - **Capacidad de paciente desacoplada de `users.role`** (ADR-040): nuevo predicado central
   `PatientAccess.isPatient` (`role = PATIENT` legacy o `health_data_consent = true`, V29).
   `JwtAuthenticationFilter` deriva `ROLE_PATIENT` por request desde el estado persistido, y

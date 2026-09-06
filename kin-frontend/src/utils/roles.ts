@@ -186,6 +186,9 @@ export function canAccessPath(
       typeof roleOrUser === "string" || roleOrUser == null ? { role: roleOrUser } : roleOrUser,
     );
   if (segment === "admin") return false;
+  // Página de destino del enlace de invitación (aceptar consentimiento y
+  // vincularse): accesible a cualquier usuario autenticado.
+  if (segment === "accept-invitation") return true;
 
   // Segmentos empresariales (projects, analytics, insights, ...).
   return vertical === "empresa";

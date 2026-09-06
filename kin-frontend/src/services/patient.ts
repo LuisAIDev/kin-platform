@@ -34,4 +34,11 @@ export const patientRelationshipService = {
 
   rejectInvitation: (physicianId: string) =>
     api.post<RelationshipResponse>("/health/patient/relationships/reject", { physicianId }),
+
+  /**
+   * Flujo "consentimiento en un clic" (enlace del correo de invitación): acepta
+   * el consentimiento de datos de salud y vincula la invitación al médico (→ ACTIVE).
+   */
+  acceptConsentAndLink: (physicianId: string) =>
+    api.post<RelationshipResponse>("/health/patient/consent/accept", { physicianId }),
 };

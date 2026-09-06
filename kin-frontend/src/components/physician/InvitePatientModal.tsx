@@ -41,7 +41,7 @@ export default function InvitePatientModal({
       if (e.status === 404) {
         setError("El correo no está registrado en KIN.");
       } else if (e.status === 409) {
-        setError("El paciente ya existe pero no puede ser invitado en este estado.");
+        setError("Ya existe una invitación o relación activa con este paciente.");
       } else if (e.status === 400) {
         setError("Por favor revisa el formato del correo.");
       } else {
@@ -83,8 +83,10 @@ export default function InvitePatientModal({
 
         {invitedEmail ? (
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-            Invitación enviada a <strong>{invitedEmail}</strong>. El paciente
-            debe aceptarla para que la relación quede activa.
+            <p className="font-medium">Invitación enviada.</p>
+            <p className="mt-1">
+              El paciente recibirá un correo para completar el registro y aceptar los términos.
+            </p>
           </div>
         ) : (
           <>

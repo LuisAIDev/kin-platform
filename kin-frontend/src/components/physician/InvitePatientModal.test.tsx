@@ -40,7 +40,7 @@ describe("InvitePatientModal", () => {
       expect(physicianService.invitePatient).toHaveBeenCalledWith("paciente@kin.com", ""),
     );
     await waitFor(() =>
-      expect(screen.getByText(/Invitación enviada a/)).toBeInTheDocument(),
+      expect(screen.getByText(/Invitación enviada/)).toBeInTheDocument(),
     );
     expect(onInvited).toHaveBeenCalled();
   });
@@ -80,12 +80,11 @@ describe("InvitePatientModal", () => {
     );
   });
 
-  it("409: muestra que el paciente ya existe pero no puede ser invitado en este estado", async () => {
+  it("409: muestra que ya existe una invitación o relación activa", async () => {
     const user = userEvent.setup();
-    const error = Object.assign(
-      new Error("La cuenta existe pero no tiene capacidad de paciente."),
-      { status: 409 },
-    );
+    const error = Object.assign(new Error("Ya existe una invitación o relación activa con este paciente."), {
+      status: 409,
+    });
     (physicianService.invitePatient as ReturnType<typeof vi.fn>).mockRejectedValue(error);
 
     render(<InvitePatientModal onClose={vi.fn()} onInvited={vi.fn()} />);
@@ -95,7 +94,7 @@ describe("InvitePatientModal", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("El paciente ya existe pero no puede ser invitado en este estado."),
+        screen.getByText("Ya existe una invitación o relación activa con este paciente."),
       ).toBeInTheDocument(),
     );
   });

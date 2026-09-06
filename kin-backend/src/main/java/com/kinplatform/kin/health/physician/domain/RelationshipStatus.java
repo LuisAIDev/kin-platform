@@ -6,17 +6,23 @@ package com.kinplatform.kin.health.physician.domain;
  * <p>V30 amplía la asignación binaria original (ADR-031) a un ciclo de vida
  * con invitación y aceptación:
  * <ul>
- *   <li>{@code PENDING} — el médico invitó al paciente, pendiente de aceptación.</li>
- *   <li>{@code ACTIVE} — relación activa (aceptada por el paciente o creada
+ *   <li>{@code PENDING} - el médico invitó al paciente (ya con capacidad de
+ *       paciente), pendiente de aceptación.</li>
+ *   <li>{@code PENDING_CONSENT} - el médico invitó a una cuenta existente que
+ *       aún no tiene capacidad de paciente (falta aceptar el consentimiento de
+ *       datos de salud). Al aceptarlo vía {@code /health/patient/consent/accept},
+ *       la relación pasa directo a {@code ACTIVE}.</li>
+ *   <li>{@code ACTIVE} - relación activa (aceptada por el paciente o creada
  *       directamente por ADMIN/piloto). Es el estado que habilita mensajería
  *       y citas.</li>
- *   <li>{@code SUSPENDED} — relación suspendida temporalmente.</li>
- *   <li>{@code ENDED} — relación finalizada (rechazo, baja, etc.).</li>
+ *   <li>{@code SUSPENDED} - relación suspendida temporalmente.</li>
+ *   <li>{@code ENDED} - relación finalizada (rechazo, baja, etc.).</li>
  * </ul>
  * Solo {@code ACTIVE} habilita el acceso clínico y la comunicación.</p>
  */
 public enum RelationshipStatus {
     PENDING,
+    PENDING_CONSENT,
     ACTIVE,
     SUSPENDED,
     ENDED

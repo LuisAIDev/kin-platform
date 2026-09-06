@@ -55,14 +55,36 @@ public record PhysicianPatientAssignment(
                 physicianId, patientId, now, RelationshipStatus.PENDING, invitedBy, now, null, null, null);
     }
 
+    /**
+     * Invitación a una cuenta existente que aún no tiene capacidad de paciente
+     * (falta aceptar el consentimiento de datos de salud). Estado
+     * {@code PENDING_CONSENT}: al aceptarlo, la relación pasa directo a ACTIVE.
+     */
+    public static PhysicianPatientAssignment pendingConsent(
+            UUID physicianId, UUID patientId, UUID invitedBy, OffsetDateTime invitedAt) {
+        OffsetDateTime now = invitedAt == null ? OffsetDateTime.now() : invitedAt;
+        return new PhysicianPatientAssignment(
+                physicianId, patientId, now, RelationshipStatus.PENDING_CONSENT, invitedBy, now, null, null, null);
+    }
+
     /** La relación está activa (único estado que habilita comunicación y acceso clínico). */
     public boolean isActive() {
         return status == RelationshipStatus.ACTIVE;
     }
 
-    /** La relación está pendiente de aceptación. */
+    /** La relación está pendiente de aceptación (invitación estándar). */
     public boolean isPending() {
         return status == RelationshipStatus.PENDING;
+    }
+
+    /** La relación está pendiente de que el paciente acepte el consentimiento de salud. */
+    public boolean isPendingConsent() {
+        return status == RelationshipStatus.PENDING_CONSENT;
+    }
+
+    /** La relación está esperando una acción del paciente (PENDING o PENDING_CONSENT). */
+    public boolean isAwaitingAcceptance() {
+        return status == RelationshipStatus.PENDING || status == RelationshipStatus.PENDING_CONSENT;
     }
 
     /** Transición a ACTIVE al aceptar el paciente. */
