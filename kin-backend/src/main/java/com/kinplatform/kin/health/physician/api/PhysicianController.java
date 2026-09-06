@@ -166,7 +166,22 @@ public class PhysicianController {
             @NotBlank(message = "patientEmail es obligatorio")
                     @Email(message = "El correo no tiene un formato válido")
                     String patientEmail,
-            String message) {}
+            String message) {
+
+        /**
+         * Normaliza el correo ANTES de que corra la validación de bean: recorta
+         * espacios, pasa a minúsculas y elimina caracteres Unicode invisibles
+         * (NBSP \u00A0, ZWSP \u200B-\u200D, BOM \uFEFF) que rompen el patrón de
+         * {@code @Email} al copiar/pegar el correo.
+         */
+        public InviteRequest {
+            if (patientEmail != null) {
+                patientEmail = patientEmail.trim()
+                        .toLowerCase(java.util.Locale.ROOT)
+                        .replaceAll("[\\u00A0\\u200B-\\u200D\\uFEFF]", "");
+            }
+        }
+    }
 
     public record InvitationResponse(
             UUID physicianId,

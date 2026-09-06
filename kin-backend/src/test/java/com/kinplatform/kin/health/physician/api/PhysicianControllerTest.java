@@ -3,6 +3,7 @@ package com.kinplatform.kin.health.physician.api;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -150,6 +151,43 @@ class PhysicianControllerTest {
                 .andExpect(jsonPath("$.status").value("PENDING"))
                 .andExpect(jsonPath("$.patientId").value(invited.toString()))
                 .andExpect(jsonPath("$.patientEmail").value("paciente@kin.com"));
+    }
+
+    @Test
+    void invite_conCaracteresInvisibles_deberiaNormalizarAntesDeValidar() throws Exception {
+        UUID invited = UUID.randomUUID();
+        PhysicianPatientAssignment invitation = PhysicianPatientAssignment.invitation(
+                PHYSICIAN, invited, PHYSICIAN, OffsetDateTime.now());
+        when(relationshipService.invitePatient(PHYSICIAN, "paciente@kin.com", "Hola"))
+                .thenReturn(invitation);
+        when(userRepository.findById(invited))
+                .thenReturn(Optional.of(User.builder()
+                        .id(invited)
+                        .email("paciente@kin.com")
+                        .role(UserRole.PATIENT)
+                        .build()));
+
+        // NBSP (\u00A0), mayúsculas y ZWSP (\u200B): deben limpiarse antes de @Email.
+        var payload = objectMapper.writeValueAsString(
+                java.util.Map.of("patientEmail", "\u00A0PACIENTE@KIN.COM\u200B ", "message", "Hola"));
+
+        mockMvc.perform(post("/health/physician/patients/invite")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.patientEmail").value("paciente@kin.com"));
+        verify(relationshipService).invitePatient(PHYSICIAN, "paciente@kin.com", "Hola");
+    }
+
+    @Test
+    void invite_conCorreoSintacticamenteInvalido_deberiaResponder400() throws Exception {
+        var payload = objectMapper.writeValueAsString(
+                java.util.Map.of("patientEmail", "no-es-un-correo", "message", "Hola"));
+
+        mockMvc.perform(post("/health/physician/patients/invite")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

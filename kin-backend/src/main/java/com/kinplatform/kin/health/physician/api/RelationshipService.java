@@ -107,16 +107,21 @@ public class RelationshipService {
                 .findById(physicianId)
                 .filter(u -> u.getRole() == UserRole.PHYSICIAN)
                 .orElseThrow(() -> new PhysicianNotFoundException(physicianId));
-        User patient = userRepository
-                .findByEmail(normalized)
-                .filter(com.kinplatform.common.security.PatientAccess::isPatient)
-                .orElseThrow(() -> new PatientNotRegisteredException(patientEmail));
+        User patient = userRepository.findByEmail(normalized).orElse(null);
+        if (patient == null) {
+            // 404: no existe cuenta KIN con ese correo (el flujo NO crea usuarios).
+            throw new PatientNotRegisteredException();
+        }
+        if (!com.kinplatform.common.security.PatientAccess.isPatient(patient)) {
+            // 409: la cuenta existe pero no tiene capacidad de paciente (falta consentimiento).
+            throw new PatientNotCapableException();
+        }
 
         if (patientRepository.existsByPhysicianIdAndPatientIdAndStatus(
                         physicianId, patient.getId(), RelationshipStatus.ACTIVE)
                 || patientRepository.existsByPhysicianIdAndPatientIdAndStatus(
                         physicianId, patient.getId(), RelationshipStatus.PENDING)) {
-            throw new DuplicateRelationshipException(physicianId, patient.getId());
+            throw new DuplicateRelationshipException();
         }
 
         requirePhysicianCanInvite(physicianId);

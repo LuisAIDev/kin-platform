@@ -44,8 +44,9 @@ async function request<T>(
     const body = await res.json().catch(() => null);
     const message = body?.error ?? `Request failed (${res.status})`;
 
-    const error = new Error(message) as Error & { code?: string };
+    const error = new Error(message) as Error & { code?: string; status?: number };
     error.code = body?.code;
+    error.status = res.status;
 
     if (res.status === 401 && !isAuthEndpoint(endpoint)) {
       forceLogout();

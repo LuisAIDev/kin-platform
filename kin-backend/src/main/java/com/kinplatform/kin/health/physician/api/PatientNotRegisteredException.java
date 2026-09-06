@@ -4,12 +4,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * El email no corresponde a un paciente registrado en KIN (o no tiene rol
- * PATIENT). El médico solo puede invitar a pacientes existentes.
+ * El correo no corresponde a ninguna cuenta KIN. El médico solo puede invitar
+ * a pacientes que ya tienen cuenta registrada en la plataforma.
  */
 public class PatientNotRegisteredException extends ResponseStatusException {
 
-    public PatientNotRegisteredException(String email) {
-        super(HttpStatus.NOT_FOUND, "Paciente no registrado en KIN: " + email);
+    public PatientNotRegisteredException() {
+        super(HttpStatus.NOT_FOUND,
+                "No existe una cuenta KIN con ese correo. El paciente debe registrarse antes de ser invitado.");
     }
 }

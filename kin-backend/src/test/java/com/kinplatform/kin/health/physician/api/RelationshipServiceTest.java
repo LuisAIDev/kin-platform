@@ -89,24 +89,29 @@ class RelationshipServiceTest {
     }
 
     @Test
-    void invitePatient_pacienteNoRegistrado_deberiaLanzar404() {
+    void invitePatient_pacienteNoRegistrado_deberiaLanzar404ConMensajeClaro() {
         when(userRepository.findByEmail("desconocido@kin.com")).thenReturn(Optional.empty());
 
-        assertThrows(
+        var ex = assertThrows(
                 PatientNotRegisteredException.class,
                 () -> service().invitePatient(PHYSICIAN, "desconocido@kin.com", null));
+        assertTrue(ex.getReason().contains("No existe una cuenta KIN con ese correo"));
     }
 
     @Test
-    void invitePatient_emailConRolEmpresarial_deberiaLanzar404() {
+    void invitePatient_emailConRolEmpresarialSinConsentimiento_deberiaLanzar409() {
         when(userRepository.findByEmail("empresa@kin.com"))
                 .thenReturn(Optional.of(User.builder()
                         .id(UUID.randomUUID())
                         .email("empresa@kin.com")
                         .role(UserRole.FREE)
+                        .healthDataConsent(false)
                         .build()));
 
-        assertThrows(PatientNotRegisteredException.class, () -> service().invitePatient(PHYSICIAN, "empresa@kin.com", null));
+        var ex = assertThrows(
+                PatientNotCapableException.class,
+                () -> service().invitePatient(PHYSICIAN, "empresa@kin.com", null));
+        assertTrue(ex.getReason().contains("no tiene capacidad de paciente"));
     }
 
     @Test
@@ -117,17 +122,23 @@ class RelationshipServiceTest {
     }
 
     @Test
-    void invitePatient_relacionActivaExistente_deberiaLanzarConflicto() {
+    void invitePatient_relacionActivaExistente_deberiaLanzar409() {
         repos.patientRepository().assign(InMemoryPhysicianRepositories.assignment(PHYSICIAN, PATIENT));
 
-        assertThrows(DuplicateRelationshipException.class, () -> service().invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
+        var ex = assertThrows(
+                DuplicateRelationshipException.class,
+                () -> service().invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
+        assertTrue(ex.getReason().contains("Ya existe una invitación o relación activa"));
     }
 
     @Test
-    void invitePatient_invitacionPendienteExistente_deberiaLanzarConflicto() {
+    void invitePatient_invitacionPendienteExistente_deberiaLanzar409() {
         repos.patientRepository().assign(InMemoryPhysicianRepositories.pendingAssignment(PHYSICIAN, PATIENT));
 
-        assertThrows(DuplicateRelationshipException.class, () -> service().invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
+        var ex = assertThrows(
+                DuplicateRelationshipException.class,
+                () -> service().invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
+        assertTrue(ex.getReason().contains("Ya existe una invitación o relación activa"));
     }
 
     @Test
@@ -228,7 +239,7 @@ class RelationshipServiceTest {
     }
 
     @Test
-    void invitePatient_freeSinConsentimiento_deberiaLanzar404() {
+    void invitePatient_freeSinConsentimiento_deberiaLanzar409() {
         when(userRepository.findByEmail("free-sin-consent@kin.com"))
                 .thenReturn(Optional.of(User.builder()
                         .id(UUID.randomUUID())
@@ -237,9 +248,10 @@ class RelationshipServiceTest {
                         .healthDataConsent(false)
                         .build()));
 
-        assertThrows(
-                PatientNotRegisteredException.class,
+        var ex = assertThrows(
+                PatientNotCapableException.class,
                 () -> service().invitePatient(PHYSICIAN, "free-sin-consent@kin.com", null));
+        assertTrue(ex.getReason().contains("no tiene capacidad de paciente"));
     }
 
     @Test

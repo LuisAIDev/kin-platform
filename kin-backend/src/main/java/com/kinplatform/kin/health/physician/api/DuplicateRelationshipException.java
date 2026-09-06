@@ -1,6 +1,5 @@
 package com.kinplatform.kin.health.physician.api;
 
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -10,9 +9,8 @@ import org.springframework.web.server.ResponseStatusException;
  */
 public class DuplicateRelationshipException extends ResponseStatusException {
 
-    public DuplicateRelationshipException(UUID physicianId, UUID patientId) {
+    public DuplicateRelationshipException() {
         super(HttpStatus.CONFLICT,
-                "Ya existe una relación (ACTIVE o PENDING) entre el médico " + physicianId + " y el paciente "
-                        + patientId);
+                "Ya existe una invitación o relación activa con este paciente.");
     }
 }

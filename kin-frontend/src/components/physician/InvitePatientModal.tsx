@@ -22,16 +22,31 @@ export default function InvitePatientModal({
   const [invitedEmail, setInvitedEmail] = useState("");
 
   const handleSubmit = async () => {
-    const normalized = email.trim();
-    if (!normalized) return;
+    // Normalización previa: recorta, minúsculas y elimina caracteres Unicode
+    // invisibles (NBSP, ZWSP, BOM) que rompen la validación de correo al
+    // copiar/pegar. El backend aplica la misma normalización como defensa.
+    const cleanedEmail = email
+      .trim()
+      .toLowerCase()
+      .replace(/[\u00A0\u200B-\u200D\uFEFF]/g, "");
+    if (!cleanedEmail) return;
     setSaving(true);
     setError("");
     try {
-      const invitation = await physicianService.invitePatient(normalized, message.trim());
+      const invitation = await physicianService.invitePatient(cleanedEmail, message.trim());
       setInvitedEmail(invitation.patientEmail);
       onInvited();
     } catch (err) {
-      setError((err as Error).message);
+      const e = err as { status?: number; message?: string };
+      if (e.status === 404) {
+        setError("El correo no está registrado en KIN.");
+      } else if (e.status === 409) {
+        setError("El paciente ya existe pero no puede ser invitado en este estado.");
+      } else if (e.status === 400) {
+        setError("Por favor revisa el formato del correo.");
+      } else {
+        setError(e.message ?? "No se pudo enviar la invitación.");
+      }
     } finally {
       setSaving(false);
     }
@@ -79,7 +94,10 @@ export default function InvitePatientModal({
               </label>
               <input
                 id="invite-email"
-                type="email"
+                type="text"
+                inputMode="email"
+                autoCapitalize="off"
+                spellCheck={false}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="paciente@correo.com"

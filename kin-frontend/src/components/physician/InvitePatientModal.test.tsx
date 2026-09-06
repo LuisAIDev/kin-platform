@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import InvitePatientModal from "@/components/physician/InvitePatientModal";
 
@@ -44,11 +45,30 @@ describe("InvitePatientModal", () => {
     expect(onInvited).toHaveBeenCalled();
   });
 
-  it("muestra el error si el paciente no está registrado", async () => {
+  it("normaliza espacios, mayúsculas y caracteres invisibles antes de invitar", async () => {
     const user = userEvent.setup();
-    (physicianService.invitePatient as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error("Paciente no registrado en KIN: x@kin.com"),
+    (physicianService.invitePatient as ReturnType<typeof vi.fn>).mockResolvedValue({
+      patientEmail: "paciente@kin.com",
+      status: "PENDING",
+    });
+
+    render(<InvitePatientModal onClose={vi.fn()} onInvited={vi.fn()} />);
+
+    const input = screen.getByLabelText("Correo del paciente");
+    fireEvent.change(input, { target: { value: "\u00A0PACIENTE@KIN.COM\u200B " } });
+    await user.click(screen.getByRole("button", { name: "Enviar invitación" }));
+
+    await waitFor(() =>
+      expect(physicianService.invitePatient).toHaveBeenCalledWith("paciente@kin.com", ""),
     );
+  });
+
+  it("404: muestra que el correo no está registrado en KIN", async () => {
+    const user = userEvent.setup();
+    const error = Object.assign(new Error("No existe una cuenta KIN con ese correo."), {
+      status: 404,
+    });
+    (physicianService.invitePatient as ReturnType<typeof vi.fn>).mockRejectedValue(error);
 
     render(<InvitePatientModal onClose={vi.fn()} onInvited={vi.fn()} />);
 
@@ -56,7 +76,44 @@ describe("InvitePatientModal", () => {
     await user.click(screen.getByRole("button", { name: "Enviar invitación" }));
 
     await waitFor(() =>
-      expect(screen.getByText(/Paciente no registrado en KIN/)).toBeInTheDocument(),
+      expect(screen.getByText("El correo no está registrado en KIN.")).toBeInTheDocument(),
+    );
+  });
+
+  it("409: muestra que el paciente ya existe pero no puede ser invitado en este estado", async () => {
+    const user = userEvent.setup();
+    const error = Object.assign(
+      new Error("La cuenta existe pero no tiene capacidad de paciente."),
+      { status: 409 },
+    );
+    (physicianService.invitePatient as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+
+    render(<InvitePatientModal onClose={vi.fn()} onInvited={vi.fn()} />);
+
+    await user.type(screen.getByLabelText("Correo del paciente"), "x@kin.com");
+    await user.click(screen.getByRole("button", { name: "Enviar invitación" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("El paciente ya existe pero no puede ser invitado en este estado."),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it("400: pide revisar el formato del correo", async () => {
+    const user = userEvent.setup();
+    const error = Object.assign(new Error("patientEmail: El correo no tiene un formato válido"), {
+      status: 400,
+    });
+    (physicianService.invitePatient as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+
+    render(<InvitePatientModal onClose={vi.fn()} onInvited={vi.fn()} />);
+
+    await user.type(screen.getByLabelText("Correo del paciente"), "x@kin.com");
+    await user.click(screen.getByRole("button", { name: "Enviar invitación" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Por favor revisa el formato del correo.")).toBeInTheDocument(),
     );
   });
 });
