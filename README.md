@@ -465,6 +465,12 @@ Medidas implementadas en código (`SecurityConfig`, filtros y dominio):
   `physicianCapability` en `/auth/me` y login; `POST/GET /health/physician/application` gestionan
   la solicitud y `POST /admin/users/physicians/{id}/approve|reject` la deciden (cualquier rol,
   auditado).
+- **Capacidad de paciente desacoplada de `users.role`** (ADR-040): `PatientAccess.isPatient` es la
+  única fuente de verdad (`role = PATIENT` legacy o `health_data_consent = true`, V29).
+  `JwtAuthenticationFilter` deriva `ROLE_PATIENT` por request desde el estado persistido, de modo
+  que un usuario con consentimiento (FREE/PREMIUM/PHYSICIAN/…) puede ser invitado por un médico
+  (`RelationshipService.invitePatient`) y aceptar la relación sin cambiar su persona ni relogin.
+  Sin migración ni backfill.
 - **Permisos granulares por relación (Área 5)**: en KIN Salud toda operación sobre datos de un
   paciente (mensajes, citas, seguimiento, agenda, documentos, IA, automatizaciones) exige una
   relación médico-paciente `ACTIVE` verificada por `RelationshipAccessValidator`; el paciente

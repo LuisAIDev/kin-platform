@@ -5,6 +5,21 @@ Todos los cambios notables de este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es/1.1.0/),
 y el versionado del proyecto en [SemVer](https://semver.org/lang/es/).
 
+## [Unreleased]
+
+### Added
+
+- **Capacidad de paciente desacoplada de `users.role`** (ADR-040): nuevo predicado central
+  `PatientAccess.isPatient` (`role = PATIENT` legacy o `health_data_consent = true`, V29).
+  `JwtAuthenticationFilter` deriva `ROLE_PATIENT` por request desde el estado persistido, y
+  `RelationshipService.invitePatient` acepta a cualquier usuario con capacidad de paciente
+  (antes exigía `role = PATIENT` y devolvía 404 "Paciente no registrado en KIN"). Sin migración
+  ni backfill. Claves: `PatientAccess`, `JwtAuthenticationFilter`, `RelationshipService`.
+- **Migración V40**: `users_role_check` ampliado a `PATIENT` y `PHYSICIAN` (desbloquea el
+  auto-registro de pacientes/médicos en bases cuyo CHECK quedó desactualizado del enum `UserRole`).
+- **Observabilidad**: `GlobalExceptionHandler` registra la causa raíz (constraint/columna) de
+  `DataIntegrityViolationException` antes de responder el 409 genérico.
+
 ## [v1.1.0-phase9] - 2026-08-02
 
 **FASE 9 (KIN 2.1 — "Pipeline Estabilizado") completada y cerrada oficialmente.** ADR-017

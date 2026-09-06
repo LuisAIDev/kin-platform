@@ -75,14 +75,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         List<GrantedAuthority> authorities = new ArrayList<>();
-        if (user.getRole() != UserRole.PHYSICIAN) {
-            // Persona comercial/funcional (FREE/PREMIUM/FACILITADOR/PATIENT/ADMIN).
+        if (user.getRole() != UserRole.PHYSICIAN && user.getRole() != UserRole.PATIENT) {
+            // Persona comercial/funcional (FREE/PREMIUM/FACILITADOR/ADMIN). La
+            // persona PATIENT no añade ROLE_PATIENT aquí: esa autoridad se deriva
+            // abajo desde PatientAccess (capacidad desacoplada de users.role).
             authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
         }
         if (PhysicianAccess.isPhysician(user)) {
             // Capacidad profesional desacoplada de users.role (Alternativa B).
             // Se omite deliberadamente para PHYSICIAN legacy en PENDING/REJECTED.
             authorities.add(new SimpleGrantedAuthority("ROLE_PHYSICIAN"));
+        }
+        if (PatientAccess.isPatient(user)) {
+            // Capacidad de paciente desacoplada de users.role (ADR-040): cualquier
+            // persona (FREE/PREMIUM/PHYSICIAN/…) con health_data_consent=true, o un
+            // PATIENT legacy, obtiene ROLE_PATIENT sin cambiar users.role ni relogin.
+            authorities.add(new SimpleGrantedAuthority("ROLE_PATIENT"));
         }
 
         request.setAttribute(AUTHENTICATED_USER_ATTRIBUTE, user);

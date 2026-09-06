@@ -202,4 +202,94 @@ class RelationshipServiceTest {
                 PhysicianDisabledException.class,
                 () -> service.pendingInvitationsForPatient(PATIENT));
     }
+
+    // ------------------------------------------------------------------
+    // Capacidad de paciente desacoplada de users.role (ADR-040): cualquier
+    // usuario con health_data_consent=true puede ser invitado, y los PATIENT
+    // legacy se mantienen (compatibilidad hacia atrás).
+    // ------------------------------------------------------------------
+
+    @Test
+    void invitePatient_freeConConsentimiento_deberiaInvitar() {
+        var targetId = UUID.randomUUID();
+        when(userRepository.findByEmail("free-paciente@kin.com"))
+                .thenReturn(Optional.of(User.builder()
+                        .id(targetId)
+                        .email("free-paciente@kin.com")
+                        .role(UserRole.FREE)
+                        .healthDataConsent(true)
+                        .build()));
+
+        var invitation = service().invitePatient(PHYSICIAN, "free-paciente@kin.com", "Hola");
+
+        assertEquals(RelationshipStatus.PENDING, invitation.status());
+        assertEquals(targetId, invitation.patientId());
+        verify(eventBus).publish(any(PatientInvitedEvent.class));
+    }
+
+    @Test
+    void invitePatient_freeSinConsentimiento_deberiaLanzar404() {
+        when(userRepository.findByEmail("free-sin-consent@kin.com"))
+                .thenReturn(Optional.of(User.builder()
+                        .id(UUID.randomUUID())
+                        .email("free-sin-consent@kin.com")
+                        .role(UserRole.FREE)
+                        .healthDataConsent(false)
+                        .build()));
+
+        assertThrows(
+                PatientNotRegisteredException.class,
+                () -> service().invitePatient(PHYSICIAN, "free-sin-consent@kin.com", null));
+    }
+
+    @Test
+    void invitePatient_premiumConConsentimiento_deberiaInvitar() {
+        var targetId = UUID.randomUUID();
+        when(userRepository.findByEmail("premium-paciente@kin.com"))
+                .thenReturn(Optional.of(User.builder()
+                        .id(targetId)
+                        .email("premium-paciente@kin.com")
+                        .role(UserRole.PREMIUM)
+                        .healthDataConsent(true)
+                        .build()));
+
+        var invitation = service().invitePatient(PHYSICIAN, "premium-paciente@kin.com", null);
+
+        assertEquals(RelationshipStatus.PENDING, invitation.status());
+        assertEquals(targetId, invitation.patientId());
+    }
+
+    @Test
+    void invitePatient_physicianConConsentimiento_deberiaInvitar() {
+        var targetId = UUID.randomUUID();
+        when(userRepository.findByEmail("medico-paciente@kin.com"))
+                .thenReturn(Optional.of(User.builder()
+                        .id(targetId)
+                        .email("medico-paciente@kin.com")
+                        .role(UserRole.PHYSICIAN)
+                        .healthDataConsent(true)
+                        .build()));
+
+        var invitation = service().invitePatient(PHYSICIAN, "medico-paciente@kin.com", null);
+
+        assertEquals(RelationshipStatus.PENDING, invitation.status());
+        assertEquals(targetId, invitation.patientId());
+    }
+
+    @Test
+    void invitePatient_patientLegacySinConsentimiento_deberiaInvitar() {
+        var targetId = UUID.randomUUID();
+        when(userRepository.findByEmail("patient-legacy@kin.com"))
+                .thenReturn(Optional.of(User.builder()
+                        .id(targetId)
+                        .email("patient-legacy@kin.com")
+                        .role(UserRole.PATIENT)
+                        .healthDataConsent(false)
+                        .build()));
+
+        var invitation = service().invitePatient(PHYSICIAN, "patient-legacy@kin.com", null);
+
+        assertEquals(RelationshipStatus.PENDING, invitation.status());
+        assertEquals(targetId, invitation.patientId());
+    }
 }

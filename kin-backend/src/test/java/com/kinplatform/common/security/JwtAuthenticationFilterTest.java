@@ -65,6 +65,16 @@ class JwtAuthenticationFilterTest {
                 .build();
     }
 
+    private User user(UserRole role, PhysicianVerificationStatus status, Boolean healthDataConsent) {
+        return User.builder()
+                .id(UUID.randomUUID())
+                .email("a@kin.com")
+                .role(role)
+                .physicianVerificationStatus(status)
+                .healthDataConsent(healthDataConsent)
+                .build();
+    }
+
     private void stubValidToken(String token, String email) {
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtService.isTokenValid(token)).thenReturn(true);
@@ -216,5 +226,79 @@ class JwtAuthenticationFilterTest {
 
         var auth = SecurityContextHolder.getContext().getAuthentication();
         assertTrue(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PHYSICIAN")));
+    }
+
+    // ------------------------------------------------------------------
+    // Capacidad de paciente derivada del estado persistido (ADR-040): un
+    // usuario con health_data_consent=true obtiene ROLE_PATIENT sin relogin
+    // ni cambio de users.role.
+    // ------------------------------------------------------------------
+
+    @Test
+    void freeConConsentimiento_deberiaObtenerROLE_PATIENT_sinRelogin() throws Exception {
+        stubValidToken("valid", "a@kin.com");
+        var consented = user(UserRole.FREE, null, true);
+        when(userRepository.findByEmail("a@kin.com")).thenReturn(Optional.of(consented));
+
+        filter.doFilter(request, response, filterChain);
+
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        assertTrue(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_FREE")));
+        assertTrue(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PATIENT")));
+        assertFalse(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PHYSICIAN")));
+        verify(request).setAttribute(JwtAuthenticationFilter.AUTHENTICATED_USER_ATTRIBUTE, consented);
+    }
+
+    @Test
+    void freeSinConsentimiento_noDeberiaObtenerROLE_PATIENT() throws Exception {
+        stubValidToken("valid", "a@kin.com");
+        when(userRepository.findByEmail("a@kin.com"))
+                .thenReturn(Optional.of(user(UserRole.FREE, null, false)));
+
+        filter.doFilter(request, response, filterChain);
+
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        assertTrue(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_FREE")));
+        assertFalse(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PATIENT")));
+    }
+
+    @Test
+    void premiumConConsentimiento_deberiaObtenerROLE_PATIENT() throws Exception {
+        stubValidToken("valid", "a@kin.com");
+        when(userRepository.findByEmail("a@kin.com"))
+                .thenReturn(Optional.of(user(UserRole.PREMIUM, null, true)));
+
+        filter.doFilter(request, response, filterChain);
+
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        assertTrue(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PREMIUM")));
+        assertTrue(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PATIENT")));
+    }
+
+    @Test
+    void physicianConConsentimiento_deberiaObtenerROLE_PATIENT() throws Exception {
+        stubValidToken("valid", "a@kin.com");
+        when(userRepository.findByEmail("a@kin.com"))
+                .thenReturn(Optional.of(
+                        user(UserRole.PHYSICIAN, PhysicianVerificationStatus.APPROVED, true)));
+
+        filter.doFilter(request, response, filterChain);
+
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        assertTrue(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PHYSICIAN")));
+        assertTrue(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PATIENT")));
+    }
+
+    @Test
+    void patientLegacy_deberiaObtenerUnicoROLE_PATIENT() throws Exception {
+        stubValidToken("valid", "a@kin.com");
+        when(userRepository.findByEmail("a@kin.com"))
+                .thenReturn(Optional.of(user(UserRole.PATIENT, null, false)));
+
+        filter.doFilter(request, response, filterChain);
+
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        assertEquals(1, auth.getAuthorities().size());
+        assertTrue(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PATIENT")));
     }
 }

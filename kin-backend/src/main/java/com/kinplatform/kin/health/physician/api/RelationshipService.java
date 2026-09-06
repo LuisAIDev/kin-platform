@@ -92,9 +92,9 @@ public class RelationshipService {
     }
 
     /**
-     * Invita a un paciente (existente en KIN, rol PATIENT) a vincularse.
-     * La relación queda {@code PENDING}; no se permiten duplicados
-     * (ACTIVE o PENDING ya existentes).
+     * Invita a un paciente (existente en KIN con capacidad de paciente, ver
+     * {@code PatientAccess.isPatient}) a vincularse. La relación queda
+     * {@code PENDING}; no se permiten duplicados (ACTIVE o PENDING ya existentes).
      */
     @Transactional
     public PhysicianPatientAssignment invitePatient(UUID physicianId, String patientEmail, String message) {
@@ -109,7 +109,7 @@ public class RelationshipService {
                 .orElseThrow(() -> new PhysicianNotFoundException(physicianId));
         User patient = userRepository
                 .findByEmail(normalized)
-                .filter(u -> u.getRole() == UserRole.PATIENT)
+                .filter(com.kinplatform.common.security.PatientAccess::isPatient)
                 .orElseThrow(() -> new PatientNotRegisteredException(patientEmail));
 
         if (patientRepository.existsByPhysicianIdAndPatientIdAndStatus(
