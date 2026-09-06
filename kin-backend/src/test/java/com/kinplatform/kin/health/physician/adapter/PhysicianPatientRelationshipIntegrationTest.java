@@ -85,8 +85,32 @@ class PhysicianPatientRelationshipIntegrationTest extends PostgresTestSupport {
                         + "WHERE conname = 'chk_ppa_status'",
                 String.class);
         assertTrue(check != null && check.contains("PENDING")
+                && check.contains("PENDING_CONSENT")
                 && check.contains("ACTIVE") && check.contains("ENDED"),
-                "CHECK de estados no creado por V30");
+                "CHECK de estados no permite PENDING_CONSENT (V30+V41)");
+    }
+
+    @Test
+    void inviteSinConsentimiento_deberiaCrearPendingConsent() throws Exception {
+        var physician = saveUser(UserRole.PHYSICIAN, "medico-" + uuid() + "@test.com");
+        var patient = saveUser(UserRole.FREE, "paciente-free-" + uuid() + "@test.com");
+        String physicianToken = token(physician);
+
+        // Paciente FREE sin health_data_consent => sin capacidad de paciente:
+        // la invitación debe persistir como PENDING_CONSENT (no 409 genérico).
+        var invite = httpClient.send(
+                jsonRequest("POST", baseUrl + "/health/physician/patients/invite", physicianToken,
+                        "{\"patientEmail\":\"" + patient.getEmail() + "\",\"message\":\"Bienvenido\"}"),
+                HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, invite.statusCode(), "invitación sin consentimiento no debería devolver 409: " + invite.body());
+        assertEquals("PENDING_CONSENT", json(invite).get("status").asText());
+
+        assertEquals(
+                RelationshipStatus.PENDING_CONSENT,
+                patientRepository.findByPhysicianIdAndPatientId(physician.getId(), patient.getId())
+                        .orElseThrow()
+                        .status());
+        assertFalse(patientRepository.isAssigned(physician.getId(), patient.getId()));
     }
 
     @Test
