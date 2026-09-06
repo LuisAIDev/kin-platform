@@ -8,12 +8,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.kinplatform.kin.event.DomainEventBus;
+import com.kinplatform.kin.health.common.exception.QuotaExceededException;
 import com.kinplatform.kin.health.physician.InMemoryPhysicianRepositories;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
 import com.kinplatform.kin.health.physician.domain.PhysicianPatientAssignment;
 import com.kinplatform.kin.health.physician.domain.RelationshipStatus;
 import com.kinplatform.kin.health.physician.event.PatientInvitedEvent;
 import com.kinplatform.kin.health.physician.event.RelationshipAcceptedEvent;
+import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
+import com.kinplatform.pricing.ProductVertical;
+import com.kinplatform.pricing.SubscriptionStatus;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
@@ -377,5 +381,67 @@ class RelationshipServiceTest {
         assertThrows(
                 InvitationNotFoundException.class,
                 () -> service().acceptWithConsent(PATIENT, PHYSICIAN));
+    }
+
+    // ------------------------------------------------------------------
+    // Cuota de invitaciones: el bypass configurable (allowUnlimitedInvites)
+    // elimina el QUOTA_EXCEEDED para pruebas sin abrir la puerta en default.
+    // ------------------------------------------------------------------
+
+    private HealthQuotaPort quota(boolean eligiblePlan, Integer maxPatients) {
+        return new HealthQuotaPort() {
+            @Override
+            public Integer getMaxTriagesPerMonth(UUID userId) {
+                return null;
+            }
+
+            @Override
+            public Integer getMaxPatients(UUID physicianId) {
+                return maxPatients;
+            }
+
+            @Override
+            public Integer getTrialDays(UUID userId) {
+                return null;
+            }
+
+            @Override
+            public boolean hasEligibleSubscription(
+                    UUID userId, ProductVertical vertical, SubscriptionStatus... statuses) {
+                return eligiblePlan;
+            }
+        };
+    }
+
+    private RelationshipService serviceWithQuota(HealthQuotaPort healthQuotaPort, boolean allowUnlimitedInvites) {
+        var props = new PhysicianProperties();
+        props.setEnabled(true);
+        props.setInviteEnabled(true);
+        props.setInvitationEmailEnabled(true);
+        props.setAllowUnlimitedInvites(allowUnlimitedInvites);
+        return new RelationshipService(
+                repos.patientRepository(), userRepository, props, eventBus, null, healthQuotaPort);
+    }
+
+    @Test
+    void invitePatient_sinPlanYsinBypass_deberiaLanzarQuotaExceeded() {
+        assertThrows(
+                QuotaExceededException.class,
+                () -> serviceWithQuota(quota(false, null), false).invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
+    }
+
+    @Test
+    void invitePatient_conBypassSinPlan_deberiaPermitirLaInvitacion() {
+        var invitation = serviceWithQuota(quota(false, null), true).invitePatient(PHYSICIAN, PATIENT_EMAIL, null);
+
+        assertEquals(RelationshipStatus.PENDING, invitation.status());
+    }
+
+    @Test
+    void invitePatient_conBypassALimiteAlcanzado_deberiaPermitirLaInvitacion() {
+        // Alcanzó el límite del plan (0 cupos) pero el bypass está activo.
+        var invitation = serviceWithQuota(quota(true, 0), true).invitePatient(PHYSICIAN, PATIENT_EMAIL, null);
+
+        assertEquals(RelationshipStatus.PENDING, invitation.status());
     }
 }

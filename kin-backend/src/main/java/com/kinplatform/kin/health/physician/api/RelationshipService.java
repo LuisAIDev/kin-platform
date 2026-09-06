@@ -284,6 +284,13 @@ public class RelationshipService {
      * </ul>
      */
     private void requirePhysicianCanInvite(UUID physicianId) {
+        if (properties.isAllowUnlimitedInvites()) {
+            log.info(
+                    "RelationshipService: bypass de cuota de invitaciones activo "
+                            + "(allowUnlimitedInvites=true) para médico {}",
+                    physicianId);
+            return;
+        }
         if (healthQuotaPort == null) {
             // Constructores de test sin HealthQuotaPort: no bloquean.
             return;

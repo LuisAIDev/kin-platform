@@ -42,6 +42,10 @@ app:
     enabled: false
 
 kin:
+  health:
+    physician:
+      # Desarrollo/pruebas: invitaciones sin cuota (sin plan ni límite de pacientes).
+      allow-unlimited-invites: true
   outbox:
     relay:
       # Dev: polling más rápido para desarrollo
