@@ -79,7 +79,7 @@ public class TransactionalOutboxEventPublisher implements OutboxEventPublisher {
 
         String sql = """
             INSERT INTO domain_event_outbox (id, aggregate_id, event_type, payload, metadata, status, retry_count, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?)
             """;
 
         jdbcTemplate.update(sql,
