@@ -23,10 +23,13 @@ import org.springframework.stereotype.Component;
  * bus en su hilo de polling (~2 s), de modo que el envío del correo nunca
  * bloquea la respuesta de {@code POST /health/physician/patients/invite}.</p>
  *
- * <p>Resiliencia: cualquier fallo de SMTP se registra con {@code log.error} y
- * no afecta la operación principal (la invitación ya quedó persistida en
- * {@code PENDING}). Si el paciente no tiene email, el módulo está deshabilitado
- * o el correo de invitación está desactivado por flag, no se envía.</p>
+ * <p>Resiliencia: cualquier fallo de SMTP se registra con {@code log.error} y se
+ * PROPAGA para que el {@code OutboxRelay} reintente la entrega del evento hasta
+ * agotar reintentos y moverlo a DEAD_LETTER (visible en el panel de
+ * administración). La invitación ya quedó persistida en {@code PENDING} en una
+ * transacción previa y nunca se pierde por un fallo de correo. Si el paciente
+ * no tiene email, el módulo está deshabilitado o el correo de invitación está
+ * desactivado por flag, no se envía.</p>
  */
 @Component
 public class PatientInvitedEventListener {
@@ -82,17 +85,26 @@ public class PatientInvitedEventListener {
                     : event.physicianName();
             String specialty = specialtyOf(event.physicianId());
             String link = baseUrl() + INVITATIONS_PATH;
+            // El correo explica que falta el consentimiento si el paciente aún no
+            // tiene capacidad de paciente (PatientAccess es la única fuente de verdad).
+            boolean consentRequired = !com.kinplatform.common.security.PatientAccess.isPatient(patient);
 
             emailSender.sendInvitationEmail(
-                    patient.getEmail(), patientName, physicianName, specialty, event.message(), link);
+                    patient.getEmail(), patientName, physicianName, specialty, event.message(), link, consentRequired);
             log.info("PatientInvitedEventListener: correo de invitación enviado a paciente {}", event.patientId());
         } catch (Exception e) {
-            // El correo no debe romper el flujo de invitación: se registra y continúa.
+            // Se PROPAGA a propósito: en producción el evento se entrega desde el
+            // OutboxRelay (transacción ajena a la invitación, ya persistida en PENDING),
+            // por lo que el relé reintentará el envío hasta DEAD_LETTER (visible en el
+            // panel admin). La invitación nunca se pierde.
             log.error(
-                    "PatientInvitedEventListener: fallo al enviar correo de invitación al paciente {}: {}",
+                    "PatientInvitedEventListener: fallo al enviar correo de invitación al paciente {}; "
+                            + "se reintentará desde el outbox: {}",
                     event.patientId(),
                     e.getMessage(),
                     e);
+            throw new IllegalStateException(
+                    "No se pudo enviar el correo de invitación al paciente " + event.patientId(), e);
         }
     }
 

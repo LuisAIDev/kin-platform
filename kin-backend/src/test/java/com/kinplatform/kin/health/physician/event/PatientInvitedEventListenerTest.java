@@ -1,10 +1,13 @@
 package com.kinplatform.kin.health.physician.event;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,8 +31,9 @@ import org.mockito.quality.Strictness;
 
 /**
  * Tests del listener de correo de invitación (ADR-031, ciclo de vida V30):
- * envía el correo al paciente con los datos del médico y el enlace al panel de
- * invitaciones; los fallos de envío nunca rompen el flujo.
+ * envía el correo al paciente con los datos del médico, el enlace al panel de
+ * invitaciones y, si hace falta, la nota de consentimiento de datos de salud.
+ * Un fallo de envío se PROPAGA para que el outbox reintente la entrega.
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -87,11 +91,12 @@ class PatientInvitedEventListenerTest {
         ArgumentCaptor<String> specialty = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> message = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> link = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Boolean> consentRequired = ArgumentCaptor.forClass(Boolean.class);
 
         verify(emailSender)
                 .sendInvitationEmail(
                         to.capture(), patientName.capture(), physicianName.capture(),
-                        specialty.capture(), message.capture(), link.capture());
+                        specialty.capture(), message.capture(), link.capture(), consentRequired.capture());
 
         assertTrue(to.getValue().endsWith(PATIENT_EMAIL));
         assertTrue(patientName.getValue().equals("Paciente Test"));
@@ -99,6 +104,8 @@ class PatientInvitedEventListenerTest {
         assertTrue(specialty.getValue().equals("Cardiología"));
         assertTrue(message.getValue().equals("Te invito a mi cartera"));
         assertTrue(link.getValue().endsWith("/dashboard/patient/invitations"));
+        // PATIENT legacy ya es paciente: no debe pedir consentimiento.
+        assertFalse(consentRequired.getValue());
     }
 
     @Test
@@ -106,7 +113,7 @@ class PatientInvitedEventListenerTest {
         publishEvent(null);
 
         verify(emailSender)
-                .sendInvitationEmail(eq(PATIENT_EMAIL), anyString(), anyString(), anyString(), eq(""), anyString());
+                .sendInvitationEmail(eq(PATIENT_EMAIL), anyString(), anyString(), anyString(), eq(""), anyString(), anyBoolean());
     }
 
     @Test
@@ -121,7 +128,7 @@ class PatientInvitedEventListenerTest {
         publishEvent(null);
 
         verify(emailSender)
-                .sendInvitationEmail(eq(PATIENT_EMAIL), eq(PATIENT_EMAIL), anyString(), anyString(), eq(""), anyString());
+                .sendInvitationEmail(eq(PATIENT_EMAIL), eq(PATIENT_EMAIL), anyString(), anyString(), eq(""), anyString(), anyBoolean());
     }
 
     @Test
@@ -137,7 +144,47 @@ class PatientInvitedEventListenerTest {
         publishEvent(null);
 
         verify(emailSender)
-                .sendInvitationEmail(anyString(), anyString(), anyString(), eq(null), eq(""), anyString());
+                .sendInvitationEmail(anyString(), anyString(), anyString(), eq(null), eq(""), anyString(), anyBoolean());
+    }
+
+    @Test
+    void pacienteSinConsentimiento_deberiaMarcarConsentimientoPendiente() {
+        // FREE sin health_data_consent: no tiene capacidad de paciente -> consentRequired=true
+        when(userRepository.findById(PATIENT))
+                .thenReturn(Optional.of(User.builder()
+                        .id(PATIENT)
+                        .email(PATIENT_EMAIL)
+                        .fullName("Paciente Test")
+                        .role(UserRole.FREE)
+                        .healthDataConsent(false)
+                        .build()));
+
+        publishEvent(null);
+
+        ArgumentCaptor<Boolean> consentRequired = ArgumentCaptor.forClass(Boolean.class);
+        verify(emailSender).sendInvitationEmail(
+                anyString(), anyString(), anyString(), any(), anyString(), anyString(), consentRequired.capture());
+        assertTrue(consentRequired.getValue());
+    }
+
+    @Test
+    void pacienteConConsentimiento_noDeberiaMarcarConsentimientoPendiente() {
+        // FREE con health_data_consent=true: ya tiene capacidad de paciente
+        when(userRepository.findById(PATIENT))
+                .thenReturn(Optional.of(User.builder()
+                        .id(PATIENT)
+                        .email(PATIENT_EMAIL)
+                        .fullName("Paciente Test")
+                        .role(UserRole.FREE)
+                        .healthDataConsent(true)
+                        .build()));
+
+        publishEvent(null);
+
+        ArgumentCaptor<Boolean> consentRequired = ArgumentCaptor.forClass(Boolean.class);
+        verify(emailSender).sendInvitationEmail(
+                anyString(), anyString(), anyString(), any(), anyString(), anyString(), consentRequired.capture());
+        assertFalse(consentRequired.getValue());
     }
 
     @Test
@@ -147,7 +194,7 @@ class PatientInvitedEventListenerTest {
         publishEvent(null);
 
         verify(emailSender, never())
-                .sendInvitationEmail(anyString(), anyString(), anyString(), any(), anyString(), anyString());
+                .sendInvitationEmail(anyString(), anyString(), anyString(), any(), anyString(), anyString(), anyBoolean());
     }
 
     @Test
@@ -157,7 +204,7 @@ class PatientInvitedEventListenerTest {
         publishEvent(null);
 
         verify(emailSender, never())
-                .sendInvitationEmail(anyString(), anyString(), anyString(), any(), anyString(), anyString());
+                .sendInvitationEmail(anyString(), anyString(), anyString(), any(), anyString(), anyString(), anyBoolean());
     }
 
     @Test
@@ -173,17 +220,18 @@ class PatientInvitedEventListenerTest {
         publishEvent(null);
 
         verify(emailSender, never())
-                .sendInvitationEmail(anyString(), anyString(), anyString(), any(), anyString(), anyString());
+                .sendInvitationEmail(anyString(), anyString(), anyString(), any(), anyString(), anyString(), anyBoolean());
     }
 
     @Test
-    void falloDeEnvio_deberiaNoLanzar() {
-        org.mockito.Mockito.doThrow(new IllegalStateException("SMTP caído"))
+    void falloDeEnvio_deberiaPropagarParaReintentoDelOutbox() {
+        doThrow(new IllegalStateException("SMTP caído"))
                 .when(emailSender)
-                .sendInvitationEmail(anyString(), anyString(), anyString(), any(), anyString(), anyString());
+                .sendInvitationEmail(anyString(), anyString(), anyString(), any(), anyString(), anyString(), anyBoolean());
 
-        // No debe propagar la excepción (el correo no rompe la invitación).
-        publishEvent(null);
+        // El fallo se PROPAGA: en producción el OutboxRelay lo reintentará hasta
+        // DEAD_LETTER (la invitación PENDING ya quedó persistida en otra transacción).
+        assertThrows(IllegalStateException.class, () -> publishEvent(null));
         assertFalse(bus.publishedEvents().isEmpty());
     }
 
@@ -191,6 +239,6 @@ class PatientInvitedEventListenerTest {
     void register_deberiaSuscribirseAlBus() {
         publishEvent(null);
         // Si no estuviera suscrito, emailSender nunca recibiría la llamada (verificado arriba).
-        verify(emailSender).sendInvitationEmail(anyString(), anyString(), anyString(), any(), anyString(), anyString());
+        verify(emailSender).sendInvitationEmail(anyString(), anyString(), anyString(), any(), anyString(), anyString(), anyBoolean());
     }
 }

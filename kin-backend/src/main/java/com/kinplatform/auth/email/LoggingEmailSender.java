@@ -114,14 +114,16 @@ public class LoggingEmailSender implements EmailSender {
             String physicianName,
             String specialty,
             String message,
-            String invitationLink) {
+            String invitationLink,
+            boolean consentRequired) {
         attemptsCounter.increment();
         Timer.Sample sample = Timer.start();
         try {
             log.warn(
-                    "[email-invitation][dev/no-smtp] destinatario={} medico={} enlace={}",
+                    "[email-invitation][dev/no-smtp] destinatario={} medico={} consentimientoPendiente={} enlace={}",
                     maskEmail(to),
                     physicianName,
+                    consentRequired,
                     invitationLink);
             successCounter.increment();
         } catch (Exception e) {

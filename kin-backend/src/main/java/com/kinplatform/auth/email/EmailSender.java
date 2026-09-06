@@ -20,8 +20,11 @@ public interface EmailSender {
      * @param specialty      especialidad del médico (puede ser {@code null})
      * @param message        mensaje opcional del médico (puede ser {@code null})
      * @param invitationLink enlace al panel de invitaciones del paciente
+     * @param consentRequired {@code true} si el paciente aún no tiene la
+     *     capacidad de paciente (falta aceptar el consentimiento de datos de
+     *     salud); el correo debe explicarlo explícitamente
      */
-    void sendInvitationEmail(String to, String patientName, String physicianName, String specialty, String message, String invitationLink);
+    void sendInvitationEmail(String to, String patientName, String physicianName, String specialty, String message, String invitationLink, boolean consentRequired);
 
     /**
      * Recordatorio automático de una cita confirmada (ADR-034, scheduler diario).

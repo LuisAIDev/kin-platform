@@ -157,9 +157,14 @@ public class SmtpEmailSender implements EmailSender {
             String physicianName,
             String specialty,
             String message,
-            String invitationLink) {
+            String invitationLink,
+            boolean consentRequired) {
         String specialtySuffix = (specialty == null || specialty.isBlank()) ? "" : " (" + specialty + ")";
         String optionalMessage = (message == null || message.isBlank()) ? "" : "\n" + message + "\n";
+        String consentHint = consentRequired
+                ? "\nIMPORTANTE: para unirte a " + physicianName
+                        + " debes aceptar primero el consentimiento de tratamiento de datos de salud desde tu panel.\n"
+                : "";
         sendEmail(
                 "invitation",
                 to,
@@ -170,7 +175,8 @@ public class SmtpEmailSender implements EmailSender {
                         + "El médico " + physicianName + specialtySuffix
                         + " te ha invitado a conectarte a través de KIN Salud."
                         + optionalMessage + "\n"
-                        + "Para aceptar o rechazar esta invitación, haz clic en el siguiente enlace:\n\n"
+                        + consentHint + "\n"
+                        + "Para aceptar o rechazar esta invitación, abre tu panel de invitaciones:\n\n"
                         + invitationLink + "\n\n"
                         + "Si no reconoces a este médico, puedes ignorar este mensaje.");
     }
