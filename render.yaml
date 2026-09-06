@@ -84,6 +84,13 @@ services:
         sync: false
       - key: FRONTEND_BASE_URL
         value: "https://kin-platform.com"
+      # Bypass de cuota de invitaciones (fase piloto E2E): fuerza true en el
+      # blueprint para que Render lo aplique por encima de cualquier valor
+      # previo del dashboard. Para GA: cambiar a "false" y redeploy.
+      - key: ALLOW_UNLIMITED_INVITES
+        value: "true"
+      - key: KIN_HEALTH_PHYSICIAN_ALLOW_UNLIMITED_INVITES
+        value: "true"
 
   # ---------------- Frontend (Next.js) ----------------
   - type: web
