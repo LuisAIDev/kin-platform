@@ -269,11 +269,13 @@ kin:
     invite-enabled: ${KIN_HEALTH_PHYSICIAN_INVITE_ENABLED:true}
     # Correo de notificación al paciente cuando recibe una invitación.
     invitation-email-enabled: ${KIN_HEALTH_PHYSICIAN_INVITATION_EMAIL_ENABLED:true}
-    # Bypass de la cuota de invitaciones (fase piloto): true ignora el plan
-    # SALUD_PROFESIONAL y el límite de pacientes. Para volver a exigir plan en
-    # GA, fijar KIN_HEALTH_PHYSICIAN_ALLOW_UNLIMITED_INVITES=false (o el alias
-    # ALLOW_UNLIMITED_INVITES=false).
-    allow-unlimited-invites: ${KIN_HEALTH_PHYSICIAN_ALLOW_UNLIMITED_INVITES:${ALLOW_UNLIMITED_INVITES:true}}
+    # Bypass de cuota de invitaciones: true ignora el plan SALUD_PROFESIONAL y el
+    # límite de pacientes (solo tiene efecto si enforce-invite-quota=true).
+    allow-unlimited-invites: ${KIN_HEALTH_PHYSICIAN_ALLOW_UNLIMITED_INVITES:${ALLOW_UNLIMITED_INVITES:false}}
+    # Master switch de la cuota de invitaciones. Fase piloto: false = cuota
+    # DESACTIVADA (invitar no exige plan ni límite y NO depende de variables del
+    # dashboard). GA: fijar a true para volver a exigir plan Profesional.
+    enforce-invite-quota: ${KIN_HEALTH_PHYSICIAN_ENFORCE_INVITE_QUOTA:${KIN_ENFORCE_PHYSICIAN_INVITE_QUOTA:false}}
 
   # -----------------------------------------------------------
   # Telemedicina (ADR-032) — mensajería asíncrona y citas

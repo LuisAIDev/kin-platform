@@ -28,12 +28,20 @@ public class PhysicianProperties {
 
     /**
      * Bypass de la cuota de invitaciones (plan SALUD_PROFESIONAL y límite de
-     * pacientes). Pensado para la fase piloto/E2E: cuando es {@code true}, el
-     * médico puede invitar sin suscripción elegible ni límite de pacientes.
-     * Variables de entorno: {@code KIN_HEALTH_PHYSICIAN_ALLOW_UNLIMITED_INVITES}
-     * o {@code ALLOW_UNLIMITED_INVITES}. En {@code application.yml} el default
-     * de la fase piloto es {@code true}; al pasar a GA fijar la variable a
-     * {@code false} para volver a exigir el plan.
+     * pacientes). Cuando es {@code true}, el médico puede invitar sin
+     * suscripción elegible ni límite de pacientes. Variables de entorno:
+     * {@code KIN_HEALTH_PHYSICIAN_ALLOW_UNLIMITED_INVITES} o
+     * {@code ALLOW_UNLIMITED_INVITES}.
      */
     private boolean allowUnlimitedInvites = false;
+
+    /**
+     * Master switch de la cuota de invitaciones (fase piloto). Default
+     * {@code false} = cuota DESACTIVADA (las invitaciones no exigen plan ni
+     * límite, sin depender de otras variables). Al pasar a GA fijar
+     * {@code KIN_HEALTH_PHYSICIAN_ENFORCE_INVITE_QUOTA=true} (o el alias
+     * {@code KIN_ENFORCE_PHYSICIAN_INVITE_QUOTA=true}) para volver a exigir el
+     * plan Profesional y el límite de pacientes.
+     */
+    private boolean enforceInviteQuota = false;
 }

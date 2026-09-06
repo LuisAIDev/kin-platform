@@ -284,6 +284,16 @@ public class RelationshipService {
      * </ul>
      */
     private void requirePhysicianCanInvite(UUID physicianId) {
+        // Fase piloto: la cuota de invitaciones está DESACTIVADA por defecto
+        // (enforceInviteQuota=false) para no depender de ninguna variable del
+        // dashboard. Para volver a exigir plan/límite en GA, activar
+        // KIN_HEALTH_PHYSICIAN_ENFORCE_INVITE_QUOTA=true.
+        if (!properties.isEnforceInviteQuota()) {
+            log.info(
+                    "RelationshipService: cuota de invitaciones desactivada (enforceInviteQuota=false) para médico {}",
+                    physicianId);
+            return;
+        }
         if (properties.isAllowUnlimitedInvites()) {
             log.info(
                     "RelationshipService: bypass de cuota de invitaciones activo "

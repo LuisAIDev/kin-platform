@@ -413,26 +413,39 @@ class RelationshipServiceTest {
         };
     }
 
-    private RelationshipService serviceWithQuota(HealthQuotaPort healthQuotaPort, boolean allowUnlimitedInvites) {
+    private RelationshipService serviceWithQuota(
+            HealthQuotaPort healthQuotaPort, boolean allowUnlimitedInvites, boolean enforceInviteQuota) {
         var props = new PhysicianProperties();
         props.setEnabled(true);
         props.setInviteEnabled(true);
         props.setInvitationEmailEnabled(true);
         props.setAllowUnlimitedInvites(allowUnlimitedInvites);
+        props.setEnforceInviteQuota(enforceInviteQuota);
         return new RelationshipService(
                 repos.patientRepository(), userRepository, props, eventBus, null, healthQuotaPort);
     }
 
     @Test
-    void invitePatient_sinPlanYsinBypass_deberiaLanzarQuotaExceeded() {
+    void invitePatient_sinPlanConCuotaObligatoria_deberiaLanzarQuotaExceeded() {
         assertThrows(
                 QuotaExceededException.class,
-                () -> serviceWithQuota(quota(false, null), false).invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
+                () -> serviceWithQuota(quota(false, null), false, true)
+                        .invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
+    }
+
+    @Test
+    void invitePatient_cuotaDesactivadaPorDefault_deberiaPermitirSinPlan() {
+        // Fase piloto: enforceInviteQuota=false (default) => no exige plan.
+        var invitation = serviceWithQuota(quota(false, null), false, false)
+                .invitePatient(PHYSICIAN, PATIENT_EMAIL, null);
+
+        assertEquals(RelationshipStatus.PENDING, invitation.status());
     }
 
     @Test
     void invitePatient_conBypassSinPlan_deberiaPermitirLaInvitacion() {
-        var invitation = serviceWithQuota(quota(false, null), true).invitePatient(PHYSICIAN, PATIENT_EMAIL, null);
+        var invitation = serviceWithQuota(quota(false, null), true, true)
+                .invitePatient(PHYSICIAN, PATIENT_EMAIL, null);
 
         assertEquals(RelationshipStatus.PENDING, invitation.status());
     }
@@ -440,7 +453,8 @@ class RelationshipServiceTest {
     @Test
     void invitePatient_conBypassALimiteAlcanzado_deberiaPermitirLaInvitacion() {
         // Alcanzó el límite del plan (0 cupos) pero el bypass está activo.
-        var invitation = serviceWithQuota(quota(true, 0), true).invitePatient(PHYSICIAN, PATIENT_EMAIL, null);
+        var invitation = serviceWithQuota(quota(true, 0), true, true)
+                .invitePatient(PHYSICIAN, PATIENT_EMAIL, null);
 
         assertEquals(RelationshipStatus.PENDING, invitation.status());
     }
