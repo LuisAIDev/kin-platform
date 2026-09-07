@@ -18,6 +18,8 @@ export default function MessagesPage() {
   const [selected, setSelected] = useState<Conversation | null>(null);
   const [newContact, setNewContact] = useState<Contact | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [filteredContacts, setFilteredContacts] = useState<Contact[]>([]);
+  const [contactSearch, setContactSearch] = useState("");
   const [showNew, setShowNew] = useState(false);
   const [unread, setUnread] = useState(0);
   const [error, setError] = useState("");
@@ -43,6 +45,11 @@ export default function MessagesPage() {
       })
       .catch((err) => {
         if (!cancelled) setError((err as Error).message);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          // no-op
+        }
       });
     const interval = setInterval(loadConversations, 30000);
     return () => {
@@ -51,15 +58,29 @@ export default function MessagesPage() {
     };
   }, []);
 
-  const openNewConversation = async () => {
-    setShowNew(true);
-    setError("");
+  const loadContacts = async () => {
     try {
       const data = await telemedicineService.contacts();
       setContacts(data);
+      setFilteredContacts(data);
     } catch (err) {
       setError((err as Error).message);
     }
+  };
+
+  const openNewConversation = async () => {
+    setShowNew(true);
+    setError("");
+    setContactSearch("");
+    await loadContacts();
+  };
+
+  const filterContacts = (search: string) => {
+    setContactSearch(search);
+    const filtered = contacts.filter((c) =>
+      c.name.toLowerCase().includes(search.toLowerCase())
+    );
+    setFilteredContacts(filtered);
   };
 
   return (
@@ -95,7 +116,12 @@ export default function MessagesPage() {
         {showNew && (
           <div className="rounded-xl border border-neutral-200 bg-white p-4 flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Iniciar nueva conversación</h2>
+              <div>
+                <h2 className="text-sm font-semibold">Iniciar nueva conversación</h2>
+                <p className="text-xs text-neutral-400">
+                  Busca un contacto para iniciar la conversación.
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowNew(false)}
@@ -105,28 +131,41 @@ export default function MessagesPage() {
                 ×
               </button>
             </div>
-            {contacts.length === 0 ? (
-              <p className="text-sm text-neutral-400">
-                No tienes contactos con relación activa. Un médico o paciente debe vincularte primero.
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {contacts.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => {
-                      setNewContact(c);
-                      setSelected(null);
-                      setShowNew(false);
-                    }}
-                    className="rounded-lg border border-neutral-200 px-3 py-2 text-sm text-left hover:bg-neutral-50 transition"
-                  >
-                    {c.name}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                placeholder="Buscar contactos..."
+                value={contactSearch}
+                onChange={(e) => filterContacts(e.target.value)}
+                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                aria-label="Buscar contactos"
+              />
+              {filteredContacts.length === 0 ? (
+                <p className="text-sm text-neutral-400 text-center py-4">
+                  {contactSearch
+                    ? "No se encontraron contactos con ese nombre."
+                    : "No tienes contactos con relación activa. Un médico o paciente debe vincularte primero."}
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+                  {filteredContacts.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        setNewContact(c);
+                        setSelected(null);
+                        setShowNew(false);
+                        setContactSearch("");
+                      }}
+                      className="rounded-lg border border-neutral-200 px-3 py-2 text-sm text-left hover:bg-neutral-50 transition"
+                    >
+                      {c.name} <span className="text-xs text-neutral-400">({c.role})</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

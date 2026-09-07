@@ -137,25 +137,40 @@ export default function PhysicianDashboard() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => handleAiAssist("summary", selectedSummary?.patientId || "")}
-              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition disabled:opacity-50"
-              disabled={!selectedSummary}
+              onClick={() => {
+                if (!selectedSummary) {
+                  setError("Selecciona un paciente primero para generar un resumen.");
+                  return;
+                }
+                handleAiAssist("summary", selectedSummary?.patientId || "");
+              }}
+              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition opacity-100"
             >
               Generar resumen
             </button>
             <button
               type="button"
-              onClick={() => handleAiAssist("prepare", selectedSummary?.patientId || "")}
-              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition disabled:opacity-50"
-              disabled={!selectedSummary}
+              onClick={() => {
+                if (!selectedSummary) {
+                  setError("Selecciona un paciente primero para preparar la consulta.");
+                  return;
+                }
+                handleAiAssist("prepare", selectedSummary?.patientId || "");
+              }}
+              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition"
             >
               Preparar consulta
             </button>
             <button
               type="button"
-              onClick={() => handleAiAssist("draft", selectedSummary?.patientId || "")}
-              className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-700 transition disabled:opacity-50"
-              disabled={!selectedSummary}
+              onClick={() => {
+                if (!selectedSummary) {
+                  setError("Selecciona un paciente primero para redactar un mensaje.");
+                  return;
+                }
+                handleAiAssist("draft", selectedSummary?.patientId || "");
+              }}
+              className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-700 transition"
             >
               Redactar mensaje
             </button>
