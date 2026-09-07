@@ -79,7 +79,8 @@ class PhysicianControllerTest {
                 .build();
         lenient().when(authentication.getName()).thenReturn(EMAIL);
         lenient().when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        mockMvc = MockMvcBuilders.standaloneSetup(new PhysicianController(physicianService, relationshipService, userRepository, applicationService))
+        mockMvc = MockMvcBuilders.standaloneSetup(new PhysicianController(
+                        physicianService, relationshipService, userRepository, applicationService))
                 .setCustomArgumentResolvers(new org.springframework.data.web.PageableHandlerMethodArgumentResolver())
                 .defaultRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request(
                                 org.springframework.http.HttpMethod.GET, "/")
@@ -119,9 +120,7 @@ class PhysicianControllerTest {
     void patients_conStatusPending_deberiaFiltrarPorEstado() throws Exception {
         when(physicianService.listPatients(eq(PHYSICIAN), eq(RelationshipStatus.PENDING), any()))
                 .thenReturn(new PageImpl<>(
-                        List.of(PatientSummary.pending(PATIENT, "Paciente Test")),
-                        PageRequest.of(0, 10),
-                        1));
+                        List.of(PatientSummary.pending(PATIENT, "Paciente Test")), PageRequest.of(0, 10), 1));
 
         mockMvc.perform(get("/health/physician/patients").param("status", "PENDING"))
                 .andExpect(status().isOk())
@@ -132,10 +131,12 @@ class PhysicianControllerTest {
     @Test
     void invite_deberiaInvocarInvitacion() throws Exception {
         UUID invited = UUID.randomUUID();
-        PhysicianPatientAssignment invitation = PhysicianPatientAssignment.invitation(
-                PHYSICIAN, invited, PHYSICIAN, OffsetDateTime.now());
+        PhysicianPatientAssignment invitation =
+                PhysicianPatientAssignment.invitation(PHYSICIAN, invited, PHYSICIAN, OffsetDateTime.now());
         when(relationshipService.invitePatient(PHYSICIAN, "paciente@kin.com", "Hola"))
                 .thenReturn(invitation);
+        when(relationshipService.hasPendingInvitation(PHYSICIAN, "paciente@kin.com"))
+                .thenReturn(false);
         when(userRepository.findById(invited))
                 .thenReturn(Optional.of(User.builder()
                         .id(invited)
@@ -150,14 +151,39 @@ class PhysicianControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PENDING"))
                 .andExpect(jsonPath("$.patientId").value(invited.toString()))
-                .andExpect(jsonPath("$.patientEmail").value("paciente@kin.com"));
+                .andExpect(jsonPath("$.patientEmail").value("paciente@kin.com"))
+                .andExpect(jsonPath("$.resent").value(false));
+    }
+
+    @Test
+    void invite_conInvitacionPendiente_deberiaMarcarResent() throws Exception {
+        UUID invited = UUID.randomUUID();
+        PhysicianPatientAssignment invitation =
+                PhysicianPatientAssignment.invitation(PHYSICIAN, invited, PHYSICIAN, OffsetDateTime.now());
+        when(relationshipService.invitePatient(PHYSICIAN, "paciente@kin.com", "Hola"))
+                .thenReturn(invitation);
+        when(relationshipService.hasPendingInvitation(PHYSICIAN, "paciente@kin.com"))
+                .thenReturn(true);
+        when(userRepository.findById(invited))
+                .thenReturn(Optional.of(User.builder()
+                        .id(invited)
+                        .email("paciente@kin.com")
+                        .role(UserRole.PATIENT)
+                        .build()));
+
+        mockMvc.perform(post("/health/physician/patients/invite")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new PhysicianController.InviteRequest("paciente@kin.com", "Hola"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resent").value(true));
     }
 
     @Test
     void invite_conCaracteresInvisibles_deberiaNormalizarAntesDeValidar() throws Exception {
         UUID invited = UUID.randomUUID();
-        PhysicianPatientAssignment invitation = PhysicianPatientAssignment.invitation(
-                PHYSICIAN, invited, PHYSICIAN, OffsetDateTime.now());
+        PhysicianPatientAssignment invitation =
+                PhysicianPatientAssignment.invitation(PHYSICIAN, invited, PHYSICIAN, OffsetDateTime.now());
         when(relationshipService.invitePatient(PHYSICIAN, "paciente@kin.com", "Hola"))
                 .thenReturn(invitation);
         when(userRepository.findById(invited))
@@ -181,8 +207,8 @@ class PhysicianControllerTest {
 
     @Test
     void invite_conCorreoSintacticamenteInvalido_deberiaResponder400() throws Exception {
-        var payload = objectMapper.writeValueAsString(
-                java.util.Map.of("patientEmail", "no-es-un-correo", "message", "Hola"));
+        var payload =
+                objectMapper.writeValueAsString(java.util.Map.of("patientEmail", "no-es-un-correo", "message", "Hola"));
 
         mockMvc.perform(post("/health/physician/patients/invite")
                         .contentType(MediaType.APPLICATION_JSON)

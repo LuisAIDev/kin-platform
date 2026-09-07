@@ -135,6 +135,33 @@ public class LoggingEmailSender implements EmailSender {
     }
 
     @Override
+    public void sendInvitationReminderEmail(
+            String to,
+            String patientName,
+            String physicianName,
+            String specialty,
+            String message,
+            String invitationLink,
+            boolean consentRequired) {
+        attemptsCounter.increment();
+        Timer.Sample sample = Timer.start();
+        try {
+            log.warn(
+                    "[email-invitation-reminder][dev/no-smtp] destinatario={} medico={} consentimientoPendiente={} enlace={}",
+                    maskEmail(to),
+                    physicianName,
+                    consentRequired,
+                    invitationLink);
+            successCounter.increment();
+        } catch (Exception e) {
+            failureCounter.increment();
+            throw new IllegalStateException("No se pudo procesar el correo de recordatorio de invitación (logging)", e);
+        } finally {
+            sample.stop(latencyTimer);
+        }
+    }
+
+    @Override
     public void sendAppointmentReminderEmail(
             String to, String patientName, String physicianName, String scheduledAtText) {
         attemptsCounter.increment();

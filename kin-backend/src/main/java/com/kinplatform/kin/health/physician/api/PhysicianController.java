@@ -27,9 +27,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.kinplatform.user.PhysicianVerificationStatus;
-import com.kinplatform.kin.health.physician.api.PhysicianApplicationRequest;
-
 /**
  * Endpoints REST del portal de médicos (ADR-031 + ciclo de vida V30).
  *
@@ -77,7 +74,8 @@ public class PhysicianController {
     public ResponseEntity<com.kinplatform.user.PhysicianVerificationStatus> requestApplication(
             Authentication authentication, @Valid @RequestBody PhysicianApplicationRequest request) {
         UUID userId = AuthenticatedUsers.require(userRepository, authentication).getId();
-        com.kinplatform.user.PhysicianVerificationStatus status = applicationService.requestApplication(userId, request);
+        com.kinplatform.user.PhysicianVerificationStatus status =
+                applicationService.requestApplication(userId, request);
         log.info("=== PHYSICIAN APPLICATION REQUEST === userId={}, status={}", userId, status);
         return ResponseEntity.ok(status);
     }
@@ -96,7 +94,8 @@ public class PhysicianController {
             Authentication authentication,
             @RequestParam(required = false) String status,
             @PageableDefault(size = 10) Pageable pageable) {
-        UUID physicianId = AuthenticatedUsers.require(userRepository, authentication).getId();
+        UUID physicianId =
+                AuthenticatedUsers.require(userRepository, authentication).getId();
         RelationshipStatus resolved = resolveStatus(status);
         var page = resolved == null
                 ? physicianService.listPatients(physicianId, pageable)
@@ -108,28 +107,36 @@ public class PhysicianController {
     @PostMapping("/patients/invite")
     public ResponseEntity<InvitationResponse> invitePatient(
             Authentication authentication, @Valid @RequestBody InviteRequest request) {
-        UUID physicianId = AuthenticatedUsers.require(userRepository, authentication).getId();
+        UUID physicianId =
+                AuthenticatedUsers.require(userRepository, authentication).getId();
+        boolean resent = relationshipService.hasPendingInvitation(physicianId, request.patientEmail());
         PhysicianPatientAssignment invitation =
                 relationshipService.invitePatient(physicianId, request.patientEmail(), request.message());
         String patientEmail = userRepository
                 .findById(invitation.patientId())
                 .map(User::getEmail)
                 .orElse(request.patientEmail());
-        log.info("=== PHYSICIAN INVITE === physicianId={}, patient={}", physicianId, invitation.patientId());
-        return ResponseEntity.ok(InvitationResponse.from(invitation, patientEmail));
+        log.info(
+                "=== PHYSICIAN INVITE === physicianId={}, patient={}, resent={}",
+                physicianId,
+                invitation.patientId(),
+                resent);
+        return ResponseEntity.ok(InvitationResponse.from(invitation, patientEmail, resent));
     }
 
     @GetMapping("/patients/{patientId}/summary")
     public ResponseEntity<PatientSummaryResponse> patientSummary(
             Authentication authentication, @PathVariable UUID patientId) {
-        UUID physicianId = AuthenticatedUsers.require(userRepository, authentication).getId();
+        UUID physicianId =
+                AuthenticatedUsers.require(userRepository, authentication).getId();
         return ResponseEntity.ok(PatientSummaryResponse.from(physicianService.patientSummary(physicianId, patientId)));
     }
 
     @GetMapping("/patients/{patientId}/history")
     public ResponseEntity<List<TriageHistoryResponse>> patientHistory(
             Authentication authentication, @PathVariable UUID patientId) {
-        UUID physicianId = AuthenticatedUsers.require(userRepository, authentication).getId();
+        UUID physicianId =
+                AuthenticatedUsers.require(userRepository, authentication).getId();
         return ResponseEntity.ok(physicianService.patientHistory(physicianId, patientId).stream()
                 .map(TriageHistoryResponse::from)
                 .toList());
@@ -137,7 +144,8 @@ public class PhysicianController {
 
     @GetMapping("/alerts")
     public ResponseEntity<List<ClinicalAlertResponse>> alerts(Authentication authentication) {
-        UUID physicianId = AuthenticatedUsers.require(userRepository, authentication).getId();
+        UUID physicianId =
+                AuthenticatedUsers.require(userRepository, authentication).getId();
         return ResponseEntity.ok(physicianService.activeAlerts(physicianId).stream()
                 .map(ClinicalAlertResponse::from)
                 .toList());
@@ -146,7 +154,8 @@ public class PhysicianController {
     @PostMapping("/alerts/{alertId}/acknowledge")
     public ResponseEntity<ClinicalAlertResponse> acknowledge(
             Authentication authentication, @PathVariable UUID alertId) {
-        UUID physicianId = AuthenticatedUsers.require(userRepository, authentication).getId();
+        UUID physicianId =
+                AuthenticatedUsers.require(userRepository, authentication).getId();
         log.info("=== PHYSICIAN ALERT ACKNOWLEDGE === physicianId={}, alertId={}", physicianId, alertId);
         return ResponseEntity.ok(ClinicalAlertResponse.from(physicianService.acknowledgeAlert(physicianId, alertId)));
     }
@@ -163,8 +172,7 @@ public class PhysicianController {
     }
 
     public record InviteRequest(
-            @NotBlank(message = "patientEmail es obligatorio")
-                    @Email(message = "El correo no tiene un formato válido")
+            @NotBlank(message = "patientEmail es obligatorio") @Email(message = "El correo no tiene un formato válido")
                     String patientEmail,
             String message) {
 
@@ -176,7 +184,8 @@ public class PhysicianController {
          */
         public InviteRequest {
             if (patientEmail != null) {
-                patientEmail = patientEmail.trim()
+                patientEmail = patientEmail
+                        .trim()
                         .toLowerCase(java.util.Locale.ROOT)
                         .replaceAll("[\\u00A0\\u200B-\\u200D\\uFEFF]", "");
             }
@@ -188,14 +197,16 @@ public class PhysicianController {
             UUID patientId,
             RelationshipStatus status,
             OffsetDateTime invitedAt,
-            String patientEmail) {
-        static InvitationResponse from(PhysicianPatientAssignment assignment, String patientEmail) {
+            String patientEmail,
+            boolean resent) {
+        static InvitationResponse from(PhysicianPatientAssignment assignment, String patientEmail, boolean resent) {
             return new InvitationResponse(
                     assignment.physicianId(),
                     assignment.patientId(),
                     assignment.status(),
                     assignment.invitedAt(),
-                    patientEmail);
+                    patientEmail,
+                    resent);
         }
     }
 }

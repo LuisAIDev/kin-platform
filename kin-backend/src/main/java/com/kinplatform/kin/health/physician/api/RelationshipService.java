@@ -18,6 +18,7 @@ import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,7 +99,14 @@ public class RelationshipService {
      * invitación queda {@code PENDING}; si no la tiene (falta aceptar el
      * consentimiento de salud), la invitación queda {@code PENDING_CONSENT} y
      * el correo la guía para aceptar consentimiento y vincularse en un solo
-     * clic. No se permiten duplicados (ACTIVE/PENDING/PENDING_CONSENT).
+     * clic.
+     *
+     * <p><b>Reenvío:</b> si ya existe una invitación {@code PENDING} o
+     * {@code PENDING_CONSENT} para la pareja médico-paciente, NO se bloquea:
+     * se actualiza {@code invitedAt} y se publica de nuevo
+     * {@link PatientInvitedEvent} para reenviar el correo (reminder). Solo una
+     * relación {@code ACTIVE} es un bloqueo definitivo
+     * ({@link ActiveRelationshipException}).</p>
      */
     @Transactional
     public PhysicianPatientAssignment invitePatient(UUID physicianId, String patientEmail, String message) {
@@ -116,11 +124,16 @@ public class RelationshipService {
             // 404: no existe cuenta KIN con ese correo (el flujo NO crea usuarios).
             throw new PatientNotRegisteredException();
         }
-        if (duplicateRelationship(physicianId, patient.getId())) {
-            throw new DuplicateRelationshipException();
+        Optional<PhysicianPatientAssignment> existing =
+                patientRepository.findByPhysicianIdAndPatientId(physicianId, patient.getId());
+        if (existing.isPresent() && existing.get().isActive()) {
+            throw new ActiveRelationshipException();
         }
-
-        requirePhysicianCanInvite(physicianId);
+        boolean resend = existing.isPresent() && existing.get().isAwaitingAcceptance();
+        if (!resend) {
+            // Una nueva invitación exige cuota/plan; un reenvío no añade cupo.
+            requirePhysicianCanInvite(physicianId);
+        }
 
         boolean requiresConsent = !com.kinplatform.common.security.PatientAccess.isPatient(patient);
         PhysicianPatientAssignment invitation = requiresConsent
@@ -130,14 +143,36 @@ public class RelationshipService {
                         physicianId, patient.getId(), physicianId, OffsetDateTime.now());
         patientRepository.assign(invitation);
         publish(new PatientInvitedEvent(
-                patient.getId(), physicianId, physician.getFullName(), message == null ? "" : message));
+                patient.getId(), physicianId, physician.getFullName(), message == null ? "" : message, resend));
         log.info(
-                "RelationshipService: médico {} invitó al usuario {} (estado {}, requiereConsentimiento={})",
+                "RelationshipService: médico {} invitó al usuario {} (estado {}, requiereConsentimiento={}, reenvío={})",
                 physicianId,
                 patient.getId(),
                 invitation.status(),
-                requiresConsent);
+                requiresConsent,
+                resend);
         return invitation;
+    }
+
+    /**
+     * Indica si el médico ya tiene una invitación {@code PENDING} o
+     * {@code PENDING_CONSENT} dirigida al usuario con el correo indicado. Lo
+     * usa el controlador para informar en la respuesta si la invitación fue un
+     * reenvío ({@code resent=true}) y así el frontend puede mostrarlo.
+     */
+    @Transactional(readOnly = true)
+    public boolean hasPendingInvitation(UUID physicianId, String patientEmail) {
+        if (physicianId == null) {
+            return false;
+        }
+        String normalized = normalizeEmail(patientEmail);
+        return userRepository
+                .findByEmail(normalized)
+                .map(patient -> patientRepository.existsByPhysicianIdAndPatientIdAndStatus(
+                                physicianId, patient.getId(), RelationshipStatus.PENDING)
+                        || patientRepository.existsByPhysicianIdAndPatientIdAndStatus(
+                                physicianId, patient.getId(), RelationshipStatus.PENDING_CONSENT))
+                .orElse(false);
     }
 
     /**
@@ -151,7 +186,8 @@ public class RelationshipService {
         requireInviteEnabled();
         requireNotNull(patientId, physicianId);
 
-        User patient = userRepository.findById(patientId)
+        User patient = userRepository
+                .findById(patientId)
                 .orElseThrow(() -> new IllegalArgumentException("Paciente no encontrado"));
         if (!Boolean.TRUE.equals(patient.getHealthDataConsent())) {
             patient.setHealthDataConsent(true);
@@ -173,7 +209,10 @@ public class RelationshipService {
         PhysicianPatientAssignment accepted = current.accepted(OffsetDateTime.now());
         patientRepository.assign(accepted);
         publish(new RelationshipAcceptedEvent(patientId, physicianId));
-        log.info("RelationshipService: paciente {} aceptó consentimiento y se vinculó con médico {}", patientId, physicianId);
+        log.info(
+                "RelationshipService: paciente {} aceptó consentimiento y se vinculó con médico {}",
+                patientId,
+                physicianId);
         return accepted;
     }
 
@@ -247,16 +286,6 @@ public class RelationshipService {
                 .orElseThrow(() -> new InvitationNotFoundException(physicianId, patientId));
     }
 
-    /** ¿Ya existe una relación activa o una invitación pendiente (PENDING o PENDING_CONSENT)? */
-    private boolean duplicateRelationship(UUID physicianId, UUID patientId) {
-        return patientRepository.existsByPhysicianIdAndPatientIdAndStatus(
-                        physicianId, patientId, RelationshipStatus.ACTIVE)
-                || patientRepository.existsByPhysicianIdAndPatientIdAndStatus(
-                        physicianId, patientId, RelationshipStatus.PENDING)
-                || patientRepository.existsByPhysicianIdAndPatientIdAndStatus(
-                        physicianId, patientId, RelationshipStatus.PENDING_CONSENT);
-    }
-
     private void requireNotNull(UUID patientId, UUID physicianId) {
         if (patientId == null) {
             throw new IllegalArgumentException("patientId es obligatorio");
@@ -306,10 +335,7 @@ public class RelationshipService {
             return;
         }
         boolean hasPlan = healthQuotaPort.hasEligibleSubscription(
-                physicianId,
-                ProductVertical.SALUD_PROFESIONAL,
-                SubscriptionStatus.ACTIVE,
-                SubscriptionStatus.TRIAL);
+                physicianId, ProductVertical.SALUD_PROFESIONAL, SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL);
         if (!hasPlan) {
             throw new QuotaExceededException(
                     "Tu plan no permite invitar pacientes. Contrata el plan Profesional ($35/mes) o activa tu prueba de 30 días.",
@@ -318,7 +344,8 @@ public class RelationshipService {
         }
         Integer maxPatients = healthQuotaPort.getMaxPatients(physicianId);
         if (maxPatients != null) {
-            long activePatients = patientRepository.findPatientIdsByPhysician(physicianId).size();
+            long activePatients =
+                    patientRepository.findPatientIdsByPhysician(physicianId).size();
             if (activePatients >= maxPatients) {
                 throw new QuotaExceededException(
                         "Has alcanzado el límite de " + maxPatients + " pacientes de tu plan.",

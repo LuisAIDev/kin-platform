@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.common.security.JwtService;
+import com.kinplatform.kin.health.physician.domain.PhysicianPatientAssignment;
 import com.kinplatform.kin.health.physician.domain.RelationshipStatus;
 import com.kinplatform.test.PostgresTestSupport;
 import com.kinplatform.user.User;
@@ -16,6 +17,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,12 +83,14 @@ class PhysicianPatientRelationshipIntegrationTest extends PostgresTestSupport {
         assertTrue(columns.contains("ended_reason"), "ended_reason no creado por V30");
 
         var check = jdbcTemplate.queryForObject(
-                "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
-                        + "WHERE conname = 'chk_ppa_status'",
+                "SELECT pg_get_constraintdef(oid) FROM pg_constraint " + "WHERE conname = 'chk_ppa_status'",
                 String.class);
-        assertTrue(check != null && check.contains("PENDING")
-                && check.contains("PENDING_CONSENT")
-                && check.contains("ACTIVE") && check.contains("ENDED"),
+        assertTrue(
+                check != null
+                        && check.contains("PENDING")
+                        && check.contains("PENDING_CONSENT")
+                        && check.contains("ACTIVE")
+                        && check.contains("ENDED"),
                 "CHECK de estados no permite PENDING_CONSENT (V30+V41)");
     }
 
@@ -99,18 +103,74 @@ class PhysicianPatientRelationshipIntegrationTest extends PostgresTestSupport {
         // Paciente FREE sin health_data_consent => sin capacidad de paciente:
         // la invitación debe persistir como PENDING_CONSENT (no 409 genérico).
         var invite = httpClient.send(
-                jsonRequest("POST", baseUrl + "/health/physician/patients/invite", physicianToken,
+                jsonRequest(
+                        "POST",
+                        baseUrl + "/health/physician/patients/invite",
+                        physicianToken,
                         "{\"patientEmail\":\"" + patient.getEmail() + "\",\"message\":\"Bienvenido\"}"),
                 HttpResponse.BodyHandlers.ofString());
-        assertEquals(200, invite.statusCode(), "invitación sin consentimiento no debería devolver 409: " + invite.body());
+        assertEquals(
+                200, invite.statusCode(), "invitación sin consentimiento no debería devolver 409: " + invite.body());
         assertEquals("PENDING_CONSENT", json(invite).get("status").asText());
 
         assertEquals(
                 RelationshipStatus.PENDING_CONSENT,
-                patientRepository.findByPhysicianIdAndPatientId(physician.getId(), patient.getId())
+                patientRepository
+                        .findByPhysicianIdAndPatientId(physician.getId(), patient.getId())
                         .orElseThrow()
                         .status());
         assertFalse(patientRepository.isAssigned(physician.getId(), patient.getId()));
+    }
+
+    @Test
+    void reenvio_conInvitacionPendiente_deberiaResponder200ConResentTrue() throws Exception {
+        var physician = saveUser(UserRole.PHYSICIAN, "medico-" + uuid() + "@test.com");
+        var patient = saveUser(UserRole.PATIENT, "paciente-" + uuid() + "@test.com");
+        String physicianToken = token(physician);
+
+        var first = httpClient.send(
+                jsonRequest(
+                        "POST",
+                        baseUrl + "/health/physician/patients/invite",
+                        physicianToken,
+                        "{\"patientEmail\":\"" + patient.getEmail() + "\"}"),
+                HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, first.statusCode());
+        assertEquals("PENDING", json(first).get("status").asText());
+        assertFalse(json(first).get("resent").asBoolean());
+
+        // Reenvío: no debe bloquear (sin 409), responde 200 con resent=true y re-dispara el evento.
+        var resend = httpClient.send(
+                jsonRequest(
+                        "POST",
+                        baseUrl + "/health/physician/patients/invite",
+                        physicianToken,
+                        "{\"patientEmail\":\"" + patient.getEmail() + "\",\"message\":\"Recordatorio\"}"),
+                HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, resend.statusCode(), "el reenvío no debe devolver 409: " + resend.body());
+        assertEquals("PENDING", json(resend).get("status").asText());
+        assertTrue(json(resend).get("resent").asBoolean(), "la respuesta debe marcar resent=true");
+    }
+
+    @Test
+    void inviteConRelacionActiva_deberiaResponder409ConMensajeClaro() throws Exception {
+        var physician = saveUser(UserRole.PHYSICIAN, "medico-" + uuid() + "@test.com");
+        var patient = saveUser(UserRole.PATIENT, "paciente-" + uuid() + "@test.com");
+        String physicianToken = token(physician);
+        patientRepository.assign(
+                PhysicianPatientAssignment.of(physician.getId(), patient.getId(), OffsetDateTime.now()));
+
+        var invite = httpClient.send(
+                jsonRequest(
+                        "POST",
+                        baseUrl + "/health/physician/patients/invite",
+                        physicianToken,
+                        "{\"patientEmail\":\"" + patient.getEmail() + "\"}"),
+                HttpResponse.BodyHandlers.ofString());
+        assertEquals(409, invite.statusCode());
+        assertTrue(
+                invite.body().contains("El paciente ya está vinculado a usted"),
+                "debe devolver el mensaje claro de relación activa: " + invite.body());
     }
 
     @Test
@@ -122,7 +182,10 @@ class PhysicianPatientRelationshipIntegrationTest extends PostgresTestSupport {
 
         // 1. El médico invita por email.
         var invite = httpClient.send(
-                jsonRequest("POST", baseUrl + "/health/physician/patients/invite", physicianToken,
+                jsonRequest(
+                        "POST",
+                        baseUrl + "/health/physician/patients/invite",
+                        physicianToken,
                         "{\"patientEmail\":\"" + patient.getEmail() + "\",\"message\":\"Bienvenido\"}"),
                 HttpResponse.BodyHandlers.ofString());
         assertEquals(200, invite.statusCode());
@@ -142,11 +205,16 @@ class PhysicianPatientRelationshipIntegrationTest extends PostgresTestSupport {
                 getRequest(baseUrl + "/health/patient/relationships/pending", patientToken),
                 HttpResponse.BodyHandlers.ofString());
         assertEquals(200, pending.statusCode());
-        assertEquals(physician.getId().toString(), json(pending).get(0).get("physicianId").asText());
+        assertEquals(
+                physician.getId().toString(),
+                json(pending).get(0).get("physicianId").asText());
 
         // 4. El paciente acepta.
         var accept = httpClient.send(
-                jsonRequest("POST", baseUrl + "/health/patient/relationships/accept", patientToken,
+                jsonRequest(
+                        "POST",
+                        baseUrl + "/health/patient/relationships/accept",
+                        patientToken,
                         "{\"physicianId\":\"" + physician.getId() + "\"}"),
                 HttpResponse.BodyHandlers.ofString());
         assertEquals(200, accept.statusCode());
@@ -156,7 +224,8 @@ class PhysicianPatientRelationshipIntegrationTest extends PostgresTestSupport {
         assertTrue(patientRepository.isAssigned(physician.getId(), patient.getId()));
         assertEquals(
                 RelationshipStatus.ACTIVE,
-                patientRepository.findByPhysicianIdAndPatientId(physician.getId(), patient.getId())
+                patientRepository
+                        .findByPhysicianIdAndPatientId(physician.getId(), patient.getId())
                         .orElseThrow()
                         .status());
 
@@ -176,12 +245,18 @@ class PhysicianPatientRelationshipIntegrationTest extends PostgresTestSupport {
         String patientToken = token(patient);
 
         httpClient.send(
-                jsonRequest("POST", baseUrl + "/health/physician/patients/invite", physicianToken,
+                jsonRequest(
+                        "POST",
+                        baseUrl + "/health/physician/patients/invite",
+                        physicianToken,
                         "{\"patientEmail\":\"" + patient.getEmail() + "\"}"),
                 HttpResponse.BodyHandlers.ofString());
 
         var reject = httpClient.send(
-                jsonRequest("POST", baseUrl + "/health/patient/relationships/reject", patientToken,
+                jsonRequest(
+                        "POST",
+                        baseUrl + "/health/patient/relationships/reject",
+                        patientToken,
                         "{\"physicianId\":\"" + physician.getId() + "\"}"),
                 HttpResponse.BodyHandlers.ofString());
         assertEquals(200, reject.statusCode());
@@ -191,7 +266,8 @@ class PhysicianPatientRelationshipIntegrationTest extends PostgresTestSupport {
         assertFalse(patientRepository.isAssigned(physician.getId(), patient.getId()));
         assertEquals(
                 RelationshipStatus.ENDED,
-                patientRepository.findByPhysicianIdAndPatientId(physician.getId(), patient.getId())
+                patientRepository
+                        .findByPhysicianIdAndPatientId(physician.getId(), patient.getId())
                         .orElseThrow()
                         .status());
     }
@@ -206,7 +282,10 @@ class PhysicianPatientRelationshipIntegrationTest extends PostgresTestSupport {
         String patientBToken = token(patientB);
 
         httpClient.send(
-                jsonRequest("POST", baseUrl + "/health/physician/patients/invite", physicianToken,
+                jsonRequest(
+                        "POST",
+                        baseUrl + "/health/physician/patients/invite",
+                        physicianToken,
                         "{\"patientEmail\":\"" + patientA.getEmail() + "\"}"),
                 HttpResponse.BodyHandlers.ofString());
 
@@ -232,7 +311,8 @@ class PhysicianPatientRelationshipIntegrationTest extends PostgresTestSupport {
     }
 
     private String token(User user) {
-        return jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        return jwtService.generateToken(
+                user.getId(), user.getEmail(), user.getRole().name());
     }
 
     private HttpRequest getRequest(String url, String token) {

@@ -74,16 +74,20 @@ public class PatientInvitedEventListener {
         }
         User patient = userRepository.findById(event.patientId()).orElse(null);
         if (patient == null || patient.getEmail() == null || patient.getEmail().isBlank()) {
-            log.warn("PatientInvitedEventListener: paciente sin email válido para invitación (id={})", event.patientId());
+            log.warn(
+                    "PatientInvitedEventListener: paciente sin email válido para invitación (id={})",
+                    event.patientId());
             return;
         }
         try {
-            String patientName = (patient.getFullName() == null || patient.getFullName().isBlank())
-                    ? patient.getEmail()
-                    : patient.getFullName();
-            String physicianName = (event.physicianName() == null || event.physicianName().isBlank())
-                    ? "Médico"
-                    : event.physicianName();
+            String patientName =
+                    (patient.getFullName() == null || patient.getFullName().isBlank())
+                            ? patient.getEmail()
+                            : patient.getFullName();
+            String physicianName =
+                    (event.physicianName() == null || event.physicianName().isBlank())
+                            ? "Médico"
+                            : event.physicianName();
             String specialty = specialtyOf(event.physicianId());
             // El correo explica que falta el consentimiento si el paciente aún no
             // tiene capacidad de paciente (PatientAccess es la única fuente de verdad).
@@ -92,9 +96,29 @@ public class PatientInvitedEventListener {
                     ? baseUrl() + ACCEPT_CONSENT_PATH + "?physicianId=" + event.physicianId()
                     : baseUrl() + INVITATIONS_PATH;
 
-            emailSender.sendInvitationEmail(
-                    patient.getEmail(), patientName, physicianName, specialty, event.message(), link, consentRequired);
-            log.info("PatientInvitedEventListener: correo de invitación enviado a paciente {}", event.patientId());
+            if (event.resend()) {
+                emailSender.sendInvitationReminderEmail(
+                        patient.getEmail(),
+                        patientName,
+                        physicianName,
+                        specialty,
+                        event.message(),
+                        link,
+                        consentRequired);
+                log.info(
+                        "PatientInvitedEventListener: correo de REENVÍO de invitación enviado a paciente {}",
+                        event.patientId());
+            } else {
+                emailSender.sendInvitationEmail(
+                        patient.getEmail(),
+                        patientName,
+                        physicianName,
+                        specialty,
+                        event.message(),
+                        link,
+                        consentRequired);
+                log.info("PatientInvitedEventListener: correo de invitación enviado a paciente {}", event.patientId());
+            }
         } catch (Exception e) {
             // Se PROPAGA a propósito: en producción el evento se entrega desde el
             // OutboxRelay (transacción ajena a la invitación, ya persistida en PENDING),

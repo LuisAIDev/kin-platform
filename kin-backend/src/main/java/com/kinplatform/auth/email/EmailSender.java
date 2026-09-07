@@ -24,7 +24,28 @@ public interface EmailSender {
      *     capacidad de paciente (falta aceptar el consentimiento de datos de
      *     salud); el correo debe explicarlo explícitamente
      */
-    void sendInvitationEmail(String to, String patientName, String physicianName, String specialty, String message, String invitationLink, boolean consentRequired);
+    void sendInvitationEmail(
+            String to,
+            String patientName,
+            String physicianName,
+            String specialty,
+            String message,
+            String invitationLink,
+            boolean consentRequired);
+
+    /**
+     * Recordatorio de una invitación pendiente cuando el médico REENVÍA la
+     * invitación a un paciente que aún no la ha aceptado. Mismos datos que
+     * {@link #sendInvitationEmail}, pero con asunto y texto de recordatorio.
+     */
+    void sendInvitationReminderEmail(
+            String to,
+            String patientName,
+            String physicianName,
+            String specialty,
+            String message,
+            String invitationLink,
+            boolean consentRequired);
 
     /**
      * Recordatorio automático de una cita confirmada (ADR-034, scheduler diario).

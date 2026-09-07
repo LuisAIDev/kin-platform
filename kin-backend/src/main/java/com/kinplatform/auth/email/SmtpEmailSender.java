@@ -159,19 +159,51 @@ public class SmtpEmailSender implements EmailSender {
             String message,
             String invitationLink,
             boolean consentRequired) {
+        sendInvitationEmail(to, patientName, physicianName, specialty, message, invitationLink, consentRequired, false);
+    }
+
+    @Override
+    public void sendInvitationReminderEmail(
+            String to,
+            String patientName,
+            String physicianName,
+            String specialty,
+            String message,
+            String invitationLink,
+            boolean consentRequired) {
+        sendInvitationEmail(to, patientName, physicianName, specialty, message, invitationLink, consentRequired, true);
+    }
+
+    private void sendInvitationEmail(
+            String to,
+            String patientName,
+            String physicianName,
+            String specialty,
+            String message,
+            String invitationLink,
+            boolean consentRequired,
+            boolean reminder) {
         String specialtySuffix = (specialty == null || specialty.isBlank()) ? "" : " (" + specialty + ")";
         String optionalMessage = (message == null || message.isBlank()) ? "" : "\n" + message + "\n";
+        String reminderLine = reminder
+                ? "Recordatorio: " + physicianName + specialtySuffix
+                        + " te envió una invitación anteriormente y sigue pendiente de tu respuesta.\n\n"
+                : "";
         String consentHint = consentRequired
                 ? "\nIMPORTANTE: para unirte a " + physicianName
                         + " debes aceptar primero el consentimiento de tratamiento de datos de salud desde tu panel.\n"
                 : "";
+        String subject = reminder
+                ? "Recordatorio: Tienes una invitación pendiente de KIN Salud"
+                : "Has recibido una invitación de tu médico en KIN Salud";
         sendEmail(
                 "invitation",
                 to,
                 patientName,
                 invitationLink,
-                "Has recibido una invitación de tu médico en KIN Salud",
+                subject,
                 "Hola " + patientName + ",\n\n"
+                        + reminderLine
                         + "El médico " + physicianName + specialtySuffix
                         + " te ha invitado a conectarte a través de KIN Salud."
                         + optionalMessage + "\n"

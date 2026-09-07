@@ -5,17 +5,16 @@ import com.kinplatform.kin.event.HasUserId;
 import java.util.UUID;
 
 /**
- * Evento emitido cuando un médico invita a un paciente a vincularse.
+ * Evento emitido cuando un médico invita a un paciente a vincularse (o reenvía
+ * la invitación a un paciente que ya tiene una {@code PENDING}/
+ * {@code PENDING_CONSENT}).
  *
- * <p>Alimenta futuras notificaciones (correo, push) y registros de auditoría
- * sin acoplar el dominio de la relación al bus. La relación queda en
+ * <p>Alimenta el envío del correo de invitación (o recordatorio de invitación
+ * pendiente) sin acoplar el dominio de la relación al bus. La relación queda en
  * {@code PENDING} hasta que el paciente acepte o rechace.</p>
  */
 public record PatientInvitedEvent(
-        UUID patientId,
-        UUID physicianId,
-        String physicianName,
-        String message)
+        UUID patientId, UUID physicianId, String physicianName, String message, boolean resend)
         implements DomainEvent, HasUserId {
 
     public PatientInvitedEvent {
@@ -23,9 +22,14 @@ public record PatientInvitedEvent(
         message = message == null ? "" : message;
     }
 
+    /** Conveniencia: invitación inicial (no es un reenvío). */
+    public PatientInvitedEvent(UUID patientId, UUID physicianId, String physicianName, String message) {
+        this(patientId, physicianId, physicianName, message, false);
+    }
+
     @Override
     public String type() {
-        return "patient_invited";
+        return resend ? "patient_invited_resend" : "patient_invited";
     }
 
     @Override

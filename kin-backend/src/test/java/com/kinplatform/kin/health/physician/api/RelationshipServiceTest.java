@@ -1,6 +1,7 @@
 package com.kinplatform.kin.health.physician.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,6 +27,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -97,9 +99,8 @@ class RelationshipServiceTest {
     void invitePatient_pacienteNoRegistrado_deberiaLanzar404ConMensajeClaro() {
         when(userRepository.findByEmail("desconocido@kin.com")).thenReturn(Optional.empty());
 
-        var ex = assertThrows(
-                PatientNotRegisteredException.class,
-                () -> service().invitePatient(PHYSICIAN, "desconocido@kin.com", null));
+        var ex = assertThrows(PatientNotRegisteredException.class, () -> service()
+                .invitePatient(PHYSICIAN, "desconocido@kin.com", null));
         assertTrue(ex.getReason().contains("No existe una cuenta KIN con ese correo"));
     }
 
@@ -129,23 +130,55 @@ class RelationshipServiceTest {
     }
 
     @Test
-    void invitePatient_relacionActivaExistente_deberiaLanzar409() {
+    void invitePatient_relacionActivaExistente_deberiaBloquearConMensajeClaro() {
         repos.patientRepository().assign(InMemoryPhysicianRepositories.assignment(PHYSICIAN, PATIENT));
 
         var ex = assertThrows(
-                DuplicateRelationshipException.class,
-                () -> service().invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
-        assertTrue(ex.getReason().contains("Ya existe una invitación o relación activa"));
+                ActiveRelationshipException.class, () -> service().invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
+        assertTrue(ex.getReason().contains("El paciente ya está vinculado a usted"));
     }
 
     @Test
-    void invitePatient_invitacionPendienteExistente_deberiaLanzar409() {
+    void invitePatient_invitacionPendienteExistente_deberiaReenviarSinBloquear() {
         repos.patientRepository().assign(InMemoryPhysicianRepositories.pendingAssignment(PHYSICIAN, PATIENT));
 
-        var ex = assertThrows(
-                DuplicateRelationshipException.class,
-                () -> service().invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
-        assertTrue(ex.getReason().contains("Ya existe una invitación o relación activa"));
+        var invitation = service().invitePatient(PHYSICIAN, PATIENT_EMAIL, "Recordatorio");
+
+        assertEquals(RelationshipStatus.PENDING, invitation.status());
+        assertTrue(invitation.invitedAt() != null);
+        var captor = ArgumentCaptor.forClass(PatientInvitedEvent.class);
+        verify(eventBus).publish(captor.capture());
+        assertTrue(captor.getValue().resend(), "el evento de reenvío debe marcarse como resend=true");
+    }
+
+    @Test
+    void invitePatient_invitacionPendingConsentExistente_deberiaReenviarSinBloquear() {
+        when(userRepository.findByEmail(PATIENT_EMAIL))
+                .thenReturn(Optional.of(User.builder()
+                        .id(PATIENT)
+                        .email(PATIENT_EMAIL)
+                        .role(UserRole.FREE)
+                        .healthDataConsent(false)
+                        .build()));
+        repos.patientRepository()
+                .assign(PhysicianPatientAssignment.pendingConsent(PHYSICIAN, PATIENT, PHYSICIAN, null));
+
+        var invitation = service().invitePatient(PHYSICIAN, PATIENT_EMAIL, null);
+
+        assertEquals(RelationshipStatus.PENDING_CONSENT, invitation.status());
+        var captor = ArgumentCaptor.forClass(PatientInvitedEvent.class);
+        verify(eventBus).publish(captor.capture());
+        assertTrue(captor.getValue().resend(), "el evento de reenvío debe marcarse como resend=true");
+    }
+
+    @Test
+    void invitePatient_sinRelacionExistente_deberiaEmitirEventoSinResend() {
+        var invitation = service().invitePatient(PHYSICIAN, PATIENT_EMAIL, "Hola");
+
+        assertEquals(RelationshipStatus.PENDING, invitation.status());
+        var captor = ArgumentCaptor.forClass(PatientInvitedEvent.class);
+        verify(eventBus).publish(captor.capture());
+        assertFalse(captor.getValue().resend(), "la invitación inicial no es un reenvío");
     }
 
     @Test
@@ -161,18 +194,14 @@ class RelationshipServiceTest {
 
     @Test
     void acceptInvitation_sinInvitacion_deberiaLanzar404() {
-        assertThrows(
-                InvitationNotFoundException.class,
-                () -> service().acceptInvitation(PATIENT, PHYSICIAN));
+        assertThrows(InvitationNotFoundException.class, () -> service().acceptInvitation(PATIENT, PHYSICIAN));
     }
 
     @Test
     void acceptInvitation_yaAceptada_deberiaLanzar404() {
         repos.patientRepository().assign(InMemoryPhysicianRepositories.assignment(PHYSICIAN, PATIENT));
 
-        assertThrows(
-                InvitationNotFoundException.class,
-                () -> service().acceptInvitation(PATIENT, PHYSICIAN));
+        assertThrows(InvitationNotFoundException.class, () -> service().acceptInvitation(PATIENT, PHYSICIAN));
     }
 
     @Test
@@ -188,9 +217,7 @@ class RelationshipServiceTest {
 
     @Test
     void rejectInvitation_sinInvitacion_deberiaLanzar404() {
-        assertThrows(
-                InvitationNotFoundException.class,
-                () -> service().rejectInvitation(PATIENT, PHYSICIAN));
+        assertThrows(InvitationNotFoundException.class, () -> service().rejectInvitation(PATIENT, PHYSICIAN));
     }
 
     @Test
@@ -210,15 +237,9 @@ class RelationshipServiceTest {
         var service = new RelationshipService(
                 repos.patientRepository(), userRepository, properties(true, false), eventBus, null);
 
-        assertThrows(
-                PhysicianDisabledException.class,
-                () -> service.invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
-        assertThrows(
-                PhysicianDisabledException.class,
-                () -> service.acceptInvitation(PATIENT, PHYSICIAN));
-        assertThrows(
-                PhysicianDisabledException.class,
-                () -> service.pendingInvitationsForPatient(PATIENT));
+        assertThrows(PhysicianDisabledException.class, () -> service.invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
+        assertThrows(PhysicianDisabledException.class, () -> service.acceptInvitation(PATIENT, PHYSICIAN));
+        assertThrows(PhysicianDisabledException.class, () -> service.pendingInvitationsForPatient(PATIENT));
     }
 
     // ------------------------------------------------------------------
@@ -314,16 +335,6 @@ class RelationshipServiceTest {
         assertEquals(targetId, invitation.patientId());
     }
 
-    @Test
-    void invitePatient_invitacionPendingConsentExistente_deberiaLanzar409() {
-        repos.patientRepository().assign(PhysicianPatientAssignment.pendingConsent(PHYSICIAN, PATIENT, PHYSICIAN, null));
-
-        var ex = assertThrows(
-                DuplicateRelationshipException.class,
-                () -> service().invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
-        assertTrue(ex.getReason().contains("Ya existe una invitación o relación activa"));
-    }
-
     // ------------------------------------------------------------------
     // Flujo "consentimiento en un clic": el paciente acepta el consentimiento
     // de salud y la relación PENDING_CONSENT pasa a ACTIVE automáticamente.
@@ -378,9 +389,7 @@ class RelationshipServiceTest {
                         .healthDataConsent(false)
                         .build()));
 
-        assertThrows(
-                InvitationNotFoundException.class,
-                () -> service().acceptWithConsent(PATIENT, PHYSICIAN));
+        assertThrows(InvitationNotFoundException.class, () -> service().acceptWithConsent(PATIENT, PHYSICIAN));
     }
 
     // ------------------------------------------------------------------
@@ -427,25 +436,22 @@ class RelationshipServiceTest {
 
     @Test
     void invitePatient_sinPlanConCuotaObligatoria_deberiaLanzarQuotaExceeded() {
-        assertThrows(
-                QuotaExceededException.class,
-                () -> serviceWithQuota(quota(false, null), false, true)
-                        .invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
+        assertThrows(QuotaExceededException.class, () -> serviceWithQuota(quota(false, null), false, true)
+                .invitePatient(PHYSICIAN, PATIENT_EMAIL, null));
     }
 
     @Test
     void invitePatient_cuotaDesactivadaPorDefault_deberiaPermitirSinPlan() {
         // Fase piloto: enforceInviteQuota=false (default) => no exige plan.
-        var invitation = serviceWithQuota(quota(false, null), false, false)
-                .invitePatient(PHYSICIAN, PATIENT_EMAIL, null);
+        var invitation =
+                serviceWithQuota(quota(false, null), false, false).invitePatient(PHYSICIAN, PATIENT_EMAIL, null);
 
         assertEquals(RelationshipStatus.PENDING, invitation.status());
     }
 
     @Test
     void invitePatient_conBypassSinPlan_deberiaPermitirLaInvitacion() {
-        var invitation = serviceWithQuota(quota(false, null), true, true)
-                .invitePatient(PHYSICIAN, PATIENT_EMAIL, null);
+        var invitation = serviceWithQuota(quota(false, null), true, true).invitePatient(PHYSICIAN, PATIENT_EMAIL, null);
 
         assertEquals(RelationshipStatus.PENDING, invitation.status());
     }
@@ -453,8 +459,7 @@ class RelationshipServiceTest {
     @Test
     void invitePatient_conBypassALimiteAlcanzado_deberiaPermitirLaInvitacion() {
         // Alcanzó el límite del plan (0 cupos) pero el bypass está activo.
-        var invitation = serviceWithQuota(quota(true, 0), true, true)
-                .invitePatient(PHYSICIAN, PATIENT_EMAIL, null);
+        var invitation = serviceWithQuota(quota(true, 0), true, true).invitePatient(PHYSICIAN, PATIENT_EMAIL, null);
 
         assertEquals(RelationshipStatus.PENDING, invitation.status());
     }
