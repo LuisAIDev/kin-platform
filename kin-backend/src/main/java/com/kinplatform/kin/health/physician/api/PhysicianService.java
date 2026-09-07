@@ -122,7 +122,7 @@ public class PhysicianService {
         return new PageImpl<>(page, pageable, summaries.size());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public PatientSummary patientSummary(UUID physicianId, UUID patientId) {
         if (!properties.isEnabled()) {
             throw new PhysicianDisabledException();
@@ -133,7 +133,7 @@ public class PhysicianService {
         return summarizePatient(physicianId, patientId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<TriageConsultation> patientHistory(UUID physicianId, UUID patientId) {
         if (!properties.isEnabled()) {
             throw new PhysicianDisabledException();
