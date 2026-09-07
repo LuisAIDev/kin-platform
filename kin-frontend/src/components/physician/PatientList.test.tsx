@@ -27,7 +27,7 @@ const PAGE: PageResponse<PhysicianPatientSummary> = {
 
 describe("PatientList", () => {
   it("muestra los pacientes asignados", () => {
-    render(<PatientList page={PAGE} onPageChange={vi.fn()} onSelect={vi.fn()} />);
+    render(<PatientList page={PAGE} onPageChange={vi.fn()} onSelect={vi.fn()} selectedPatientId={null} />);
 
     expect(screen.getByText("Paciente Test")).toBeInTheDocument();
     expect(screen.getByText("Gripe")).toBeInTheDocument();
@@ -38,7 +38,7 @@ describe("PatientList", () => {
   it("selecciona un paciente al pulsar Ver resumen", async () => {
     const onSelect = vi.fn();
     const user = userEvent.setup();
-    render(<PatientList page={PAGE} onPageChange={vi.fn()} onSelect={onSelect} />);
+    render(<PatientList page={PAGE} onPageChange={vi.fn()} onSelect={onSelect} selectedPatientId={null} />);
 
     await user.click(screen.getByRole("button", { name: "Ver resumen" }));
 
@@ -51,6 +51,7 @@ describe("PatientList", () => {
         page={{ content: [], totalElements: 0, totalPages: 0, currentPage: 0, size: 10 }}
         onPageChange={vi.fn()}
         onSelect={vi.fn()}
+        selectedPatientId={null}
       />,
     );
 
@@ -78,9 +79,16 @@ describe("PatientList", () => {
       size: 10,
     };
 
-    render(<PatientList page={PENDING_PAGE} onPageChange={vi.fn()} onSelect={vi.fn()} />);
+    render(<PatientList page={PENDING_PAGE} onPageChange={vi.fn()} onSelect={vi.fn()} selectedPatientId={null} />);
 
     expect(screen.getByText("Pendiente de aceptación")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ver resumen" })).not.toBeInTheDocument();
+  });
+
+  it("resalta la fila del paciente seleccionado", () => {
+    render(<PatientList page={PAGE} onPageChange={vi.fn()} onSelect={vi.fn()} selectedPatientId="p1" />);
+
+    const row = screen.getByText("Paciente Test").closest("tr");
+    expect(row).toHaveClass("bg-primary-50");
   });
 });

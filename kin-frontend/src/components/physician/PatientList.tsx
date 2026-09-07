@@ -38,10 +38,12 @@ export default function PatientList({
   page,
   onPageChange,
   onSelect,
+  selectedPatientId,
 }: {
   page: PageResponse<PhysicianPatientSummary>;
   onPageChange: (page: number) => void;
   onSelect: (patientId: string) => void;
+  selectedPatientId: string | null;
 }) {
   const { content, totalElements, totalPages, currentPage } = page;
 
@@ -64,6 +66,7 @@ export default function PatientList({
               <th className="px-4 py-3 font-medium">Último triaje</th>
               <th className="px-4 py-3 font-medium">Condiciones</th>
               <th className="px-4 py-3 font-medium">Alertas</th>
+              <th className="px-4 py-3 font-medium">Seleccionado</th>
               <th className="px-4 py-3 font-medium"></th>
             </tr>
           </thead>
@@ -71,9 +74,9 @@ export default function PatientList({
             {content.map((p) => (
               <tr
                 key={p.patientId}
-                className={`hover:bg-neutral-50 ${
+                className={`hover:bg-neutral-50 transition-colors ${
                   p.relationshipStatus === "ACTIVE" ? "cursor-pointer" : ""
-                }`}
+                } ${selectedPatientId === p.patientId ? "bg-primary-50" : ""}`}
                 onClick={() => {
                   if (p.relationshipStatus === "ACTIVE") onSelect(p.patientId);
                 }}
@@ -93,6 +96,13 @@ export default function PatientList({
                     </span>
                   ) : (
                     <span className="text-neutral-300">0</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  {selectedPatientId === p.patientId && (
+                    <svg className="w-5 h-5 text-primary-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
                   )}
                 </td>
                 <td className="px-4 py-3 text-right">

@@ -26,6 +26,7 @@ export default function PhysicianDashboard() {
   const [filter, setFilter] = useState<PatientFilter>("ACTIVE");
   const [page, setPage] = useState<PageResponse<PhysicianPatientSummary> | null>(null);
   const [alerts, setAlerts] = useState<ClinicalAlert[]>([]);
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [selectedSummary, setSelectedSummary] = useState<PhysicianPatientSummary | null>(null);
   const [selectedHistory, setSelectedHistory] = useState<TriageHistoryEntry[]>([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -66,17 +67,23 @@ export default function PhysicianDashboard() {
   const [aiResult, setAiResult] = useState<{ type: string; response: string } | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
-  const handleSelect = async (patientId: string) => {
-    try {
-      const [summary, history] = await Promise.all([
-        physicianService.patientSummary(patientId),
-        physicianService.patientHistory(patientId),
-      ]);
+  const handleSelect = (patientId: string) => {
+    setSelectedPatientId(patientId);
+    setError("");
+    physicianService.patientSummary(patientId).then((summary) => {
       setSelectedSummary(summary);
+    });
+    physicianService.patientHistory(patientId).then((history) => {
       setSelectedHistory(history);
-    } catch (err) {
+    }).catch((err) => {
       setError((err as Error).message);
-    }
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedPatientId(null);
+    setSelectedSummary(null);
+    setSelectedHistory([]);
   };
 
   const handleAiAssist = async (type: string, patientId: string) => {
@@ -137,40 +144,34 @@ export default function PhysicianDashboard() {
           <div className="flex items-center gap-2">
             <button
               type="button"
+              disabled={!selectedPatientId}
               onClick={() => {
-                if (!selectedSummary) {
-                  setError("Selecciona un paciente primero para generar un resumen.");
-                  return;
-                }
-                handleAiAssist("summary", selectedSummary?.patientId || "");
+                if (!selectedPatientId) return;
+                handleAiAssist("summary", selectedPatientId);
               }}
-              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition opacity-100"
+              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Generar resumen
             </button>
             <button
               type="button"
+              disabled={!selectedPatientId}
               onClick={() => {
-                if (!selectedSummary) {
-                  setError("Selecciona un paciente primero para preparar la consulta.");
-                  return;
-                }
-                handleAiAssist("prepare", selectedSummary?.patientId || "");
+                if (!selectedPatientId) return;
+                handleAiAssist("prepare", selectedPatientId);
               }}
-              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition"
+              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Preparar consulta
             </button>
             <button
               type="button"
+              disabled={!selectedPatientId}
               onClick={() => {
-                if (!selectedSummary) {
-                  setError("Selecciona un paciente primero para redactar un mensaje.");
-                  return;
-                }
-                handleAiAssist("draft", selectedSummary?.patientId || "");
+                if (!selectedPatientId) return;
+                handleAiAssist("draft", selectedPatientId);
               }}
-              className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-700 transition"
+              className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Redactar mensaje
             </button>
@@ -221,7 +222,12 @@ export default function PhysicianDashboard() {
             </div>
           </div>
           {page && (
-            <PatientList page={page} onPageChange={handlePageChange} onSelect={handleSelect} />
+            <PatientList
+              page={page}
+              onPageChange={handlePageChange}
+              onSelect={handleSelect}
+              selectedPatientId={selectedPatientId}
+            />
           )}
         </section>
       </div>
@@ -230,7 +236,7 @@ export default function PhysicianDashboard() {
         <PatientDetailView
           summary={selectedSummary}
           history={selectedHistory}
-          onClose={() => setSelectedSummary(null)}
+          onClose={clearSelection}
         />
       )}
 
