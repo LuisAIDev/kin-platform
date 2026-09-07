@@ -133,7 +133,7 @@ public class DocumentService {
     /** Resultado de una descarga (bytes + metadatos). */
     public record DownloadedDocument(byte[] content, String fileName, String mimeType) {}
 
-    @Transactional(readOnly = true)
+    @Transactional
     public DownloadedDocument downloadDocument(UUID documentId, UUID userId) {
         requireEnabled();
         ClinicalDocument document = requireActiveDocument(documentId);
