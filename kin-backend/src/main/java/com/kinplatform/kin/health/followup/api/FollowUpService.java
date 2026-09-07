@@ -218,7 +218,7 @@ public class FollowUpService {
         return taskRepository.findOpenDueBefore(planIds, OffsetDateTime.now());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<PatientEvolution> getPatientEvolution(UUID physicianId, UUID patientId) {
         requireEnabled();
         accessValidator.requireActiveRelationship(physicianId, patientId);
