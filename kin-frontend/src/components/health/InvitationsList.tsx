@@ -54,13 +54,25 @@ export default function InvitationsList() {
     };
   }, []);
 
-  const handleAccept = async (physicianId: string, physicianName: string) => {
-    setProcessing(physicianId);
+  const handleAccept = async (invitation: PendingInvitation) => {
+    setProcessing(invitation.physicianId);
     setError("");
     setMessage("");
     try {
-      await patientRelationshipService.acceptInvitation(physicianId);
-      setMessage(`Has aceptado la invitación de ${physicianName}. Ya puedes comunicarte con tu médico.`);
+      if (invitation.consentRequired) {
+        // La invitación exige aceptar el consentimiento de datos de salud: se
+        // acepta consentimiento + vínculo en un solo paso (flujo PENDING_CONSENT).
+        await patientRelationshipService.acceptConsentAndLink(invitation.physicianId);
+        setMessage(
+          `Has aceptado el consentimiento y la invitación de ${invitation.physicianName}. ` +
+            "Ya puedes comunicarte con tu médico.",
+        );
+      } else {
+        await patientRelationshipService.acceptInvitation(invitation.physicianId);
+        setMessage(
+          `Has aceptado la invitación de ${invitation.physicianName}. Ya puedes comunicarte con tu médico.`,
+        );
+      }
       await load();
     } catch (err) {
       setError((err as Error).message);
@@ -112,6 +124,12 @@ export default function InvitationsList() {
                   Especialidad: <span className="text-neutral-700">{inv.specialty}</span>
                 </p>
               )}
+              {inv.consentRequired ? (
+                <p className="text-sm text-amber-700 bg-amber-50 px-3 py-2 rounded-lg mt-1">
+                  El médico te invitó a vincularte. Para aceptar, primero debes dar tu
+                  consentimiento de tratamiento de datos de salud.
+                </p>
+              ) : null}
               <p className="text-xs text-neutral-400">
                 Invitación recibida el {formatDate(inv.invitedAt)}
               </p>
@@ -119,11 +137,15 @@ export default function InvitationsList() {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => handleAccept(inv.physicianId, inv.physicianName)}
+                onClick={() => handleAccept(inv)}
                 disabled={processing === inv.physicianId}
                 className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:bg-primary-300"
               >
-                {processing === inv.physicianId ? "Procesando..." : "Aceptar"}
+                {processing === inv.physicianId
+                  ? "Procesando..."
+                  : inv.consentRequired
+                    ? "Aceptar y dar consentimiento"
+                    : "Aceptar"}
               </button>
               <button
                 type="button"

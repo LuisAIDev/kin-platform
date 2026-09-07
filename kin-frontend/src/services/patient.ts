@@ -10,6 +10,10 @@ export interface PendingInvitation {
   physicianName: string;
   specialty: string | null;
   invitedAt: string | null;
+  /** PENDING (ya es paciente) o PENDING_CONSENT (falta aceptar el consentimiento de salud). */
+  status: RelationshipStatus;
+  /** true si la invitación exige aceptar primero el consentimiento de datos de salud. */
+  consentRequired: boolean;
 }
 
 export interface RelationshipResponse {

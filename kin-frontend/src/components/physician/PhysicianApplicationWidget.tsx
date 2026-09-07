@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { physicianService, type PhysicianApplicationStatus } from "@/services/physician";
 import { authService } from "@/services/auth";
 import { hasPhysicianCapability, isAdminRole } from "@/utils/roles";
@@ -34,6 +35,7 @@ type Status = "loading" | "form" | "success";
  */
 export default function PhysicianApplicationWidget() {
   const user = typeof window !== "undefined" ? authService.getUser() : null;
+  const pathname = usePathname();
   const [appStatus, setAppStatus] = useState<PhysicianApplicationStatus | null>(null);
   const [ui, setUi] = useState<Status>("loading");
   const [submitting, setSubmitting] = useState(false);
@@ -45,7 +47,14 @@ export default function PhysicianApplicationWidget() {
   const [phone, setPhone] = useState("");
   const [consent, setConsent] = useState(false);
 
+  // El formulario de solicitud profesional (médico) NO debe aparecer en el
+  // módulo de paciente: allí el usuario opera como paciente (ver/aceptar
+  // invitaciones de médicos). La solicitud de capacidad profesional solo se
+  // ofrece en los hubs generales de persona (empresa/salud), no en /dashboard/patient/**.
+  const onPatientModule = pathname?.startsWith("/dashboard/patient") ?? false;
+
   useEffect(() => {
+    if (onPatientModule) return;
     let cancelled = false;
     async function load() {
       // ADMIN y quien ya tiene capacidad profesional no necesitan este widget.
@@ -66,7 +75,7 @@ export default function PhysicianApplicationWidget() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, onPatientModule]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +107,9 @@ export default function PhysicianApplicationWidget() {
       setSubmitting(false);
     }
   };
+
+  // Nunca en el módulo de paciente (el widget es de capacidad profesional).
+  if (onPatientModule) return null;
 
   // Oculto mientras carga o para ADMIN/PHYSICIAN (no aplican a este widget).
   if (ui === "loading") return null;
