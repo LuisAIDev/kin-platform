@@ -69,7 +69,15 @@ export default function PatientList({
           </thead>
           <tbody className="divide-y divide-neutral-100">
             {content.map((p) => (
-              <tr key={p.patientId} className="hover:bg-neutral-50">
+              <tr
+                key={p.patientId}
+                className={`hover:bg-neutral-50 ${
+                  p.relationshipStatus === "ACTIVE" ? "cursor-pointer" : ""
+                }`}
+                onClick={() => {
+                  if (p.relationshipStatus === "ACTIVE") onSelect(p.patientId);
+                }}
+              >
                 <td className="px-4 py-3 font-medium text-neutral-800">{p.patientName}</td>
                 <td className="px-4 py-3">
                   <StatusBadge status={p.relationshipStatus ?? "ACTIVE"} />
@@ -91,7 +99,10 @@ export default function PatientList({
                   {p.relationshipStatus === "ACTIVE" ? (
                     <button
                       type="button"
-                      onClick={() => onSelect(p.patientId)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelect(p.patientId);
+                      }}
                       className="rounded-lg border border-primary-200 text-primary-700 px-3 py-1.5 text-xs font-medium hover:bg-primary-50 transition"
                     >
                       Ver resumen
