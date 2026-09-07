@@ -174,6 +174,58 @@ class PhysicianPatientRelationshipIntegrationTest extends PostgresTestSupport {
     }
 
     @Test
+    void pacienteSinConsentimiento_conInvitacionPendingConsent_puedeVerYaceptarDesdeSuModulo() throws Exception {
+        var physician = saveUser(UserRole.PHYSICIAN, "medico-" + uuid() + "@test.com");
+        var patient = saveUser(UserRole.FREE, "paciente-consent-" + uuid() + "@test.com");
+        String physicianToken = token(physician);
+        String patientToken = token(patient);
+
+        // El médico invita al usuario FREE sin consentimiento -> PENDING_CONSENT.
+        var invite = httpClient.send(
+                jsonRequest(
+                        "POST",
+                        baseUrl + "/health/physician/patients/invite",
+                        physicianToken,
+                        "{\"patientEmail\":\"" + patient.getEmail() + "\"}"),
+                HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, invite.statusCode());
+        assertEquals("PENDING_CONSENT", json(invite).get("status").asText());
+
+        // La invitada (aún SIN ROLE_PATIENT) puede listar su invitación desde su módulo
+        // (/health/patient/relationships/** solo exige autenticación).
+        var pending = httpClient.send(
+                getRequest(baseUrl + "/health/patient/relationships/pending", patientToken),
+                HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, pending.statusCode(), "el listado no debe devolver 403: " + pending.body());
+        assertTrue(pending.body().contains(physician.getId().toString()));
+        assertTrue(json(pending).get(0).get("consentRequired").asBoolean());
+        assertEquals("PENDING_CONSENT", json(pending).get(0).get("status").asText());
+
+        // Acepta consentimiento + vínculo en un solo clic (flujo PENDING_CONSENT -> ACTIVE).
+        var accept = httpClient.send(
+                jsonRequest(
+                        "POST",
+                        baseUrl + "/health/patient/consent/accept",
+                        patientToken,
+                        "{\"physicianId\":\"" + physician.getId() + "\"}"),
+                HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, accept.statusCode());
+        assertEquals("ACTIVE", json(accept).get("status").asText());
+
+        assertTrue(
+                Boolean.TRUE.equals(
+                        userRepository.findById(patient.getId()).orElseThrow().getHealthDataConsent()),
+                "el consentimiento de salud debe quedar concedido");
+        assertTrue(patientRepository.isAssigned(physician.getId(), patient.getId()));
+
+        var empty = httpClient.send(
+                getRequest(baseUrl + "/health/patient/relationships/pending", patientToken),
+                HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, empty.statusCode());
+        assertEquals(0, json(empty).size());
+    }
+
+    @Test
     void cicloCompleto_medicoInvita_pacienteAcepta() throws Exception {
         var physician = saveUser(UserRole.PHYSICIAN, "medico-" + uuid() + "@test.com");
         var patient = saveUser(UserRole.PATIENT, "paciente-" + uuid() + "@test.com");

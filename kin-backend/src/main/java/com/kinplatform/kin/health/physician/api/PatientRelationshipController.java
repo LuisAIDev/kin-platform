@@ -25,15 +25,20 @@ import org.springframework.web.bind.annotation.RestController;
  * (ciclo de vida V30).
  *
  * <ul>
- *   <li>{@code GET /api/v1/health/patient/relationships/pending} — invitaciones pendientes.</li>
- *   <li>{@code POST /api/v1/health/patient/relationships/accept} — aceptar una invitación.</li>
+ *   <li>{@code GET /api/v1/health/patient/relationships/pending} — invitaciones pendientes
+ *       ({@code PENDING} y {@code PENDING_CONSENT}).</li>
+ *   <li>{@code POST /api/v1/health/patient/relationships/accept} — aceptar una invitación
+ *       ({@code PENDING}; las {@code PENDING_CONSENT} se aceptan por
+ *       {@code /health/patient/consent/accept}).</li>
  *   <li>{@code POST /api/v1/health/patient/relationships/reject} — rechazar una invitación.</li>
  * </ul>
  *
  * <p>Aislamiento estricto: el paciente solo opera sobre invitaciones dirigidas
  * a él (el userId se resuelve siempre desde la autenticación, nunca del body).
- * Protegido por JWT con rol {@code PATIENT} (o {@code ADMIN}) en
- * {@code SecurityConfig}.</p>
+ * Los matchers de {@code SecurityConfig} exigen solo autenticación para
+ * {@code /health/patient/relationships/**} porque antes de aceptar el
+ * consentimiento de salud (estado {@code PENDING_CONSENT}) el usuario aún no
+ * tiene {@code ROLE_PATIENT}, pero debe poder ver/actuar sobre su invitación.</p>
  */
 @RestController
 @RequestMapping("/health/patient/relationships")
@@ -51,7 +56,8 @@ public class PatientRelationshipController {
 
     @GetMapping("/pending")
     public ResponseEntity<List<PendingInvitationResponse>> pending(Authentication authentication) {
-        UUID patientId = AuthenticatedUsers.require(userRepository, authentication).getId();
+        UUID patientId =
+                AuthenticatedUsers.require(userRepository, authentication).getId();
         List<PendingInvitationResponse> invitations =
                 relationshipService.pendingInvitationsForPatient(patientId).stream()
                         .map(this::toPendingResponse)
@@ -62,9 +68,9 @@ public class PatientRelationshipController {
     @PostMapping("/accept")
     public ResponseEntity<RelationshipResponse> accept(
             Authentication authentication, @Valid @RequestBody PhysicianRequest request) {
-        UUID patientId = AuthenticatedUsers.require(userRepository, authentication).getId();
-        PhysicianPatientAssignment accepted =
-                relationshipService.acceptInvitation(patientId, request.physicianId());
+        UUID patientId =
+                AuthenticatedUsers.require(userRepository, authentication).getId();
+        PhysicianPatientAssignment accepted = relationshipService.acceptInvitation(patientId, request.physicianId());
         log.info("=== PATIENT RELATIONSHIP ACCEPT === patientId={}, physicianId={}", patientId, request.physicianId());
         return ResponseEntity.ok(RelationshipResponse.of(accepted));
     }
@@ -72,9 +78,9 @@ public class PatientRelationshipController {
     @PostMapping("/reject")
     public ResponseEntity<RelationshipResponse> reject(
             Authentication authentication, @Valid @RequestBody PhysicianRequest request) {
-        UUID patientId = AuthenticatedUsers.require(userRepository, authentication).getId();
-        PhysicianPatientAssignment ended =
-                relationshipService.rejectInvitation(patientId, request.physicianId());
+        UUID patientId =
+                AuthenticatedUsers.require(userRepository, authentication).getId();
+        PhysicianPatientAssignment ended = relationshipService.rejectInvitation(patientId, request.physicianId());
         log.info("=== PATIENT RELATIONSHIP REJECT === patientId={}, physicianId={}", patientId, request.physicianId());
         return ResponseEntity.ok(RelationshipResponse.of(ended));
     }
@@ -84,17 +90,23 @@ public class PatientRelationshipController {
         String physicianName = physician == null ? "Médico" : physician.getFullName();
         String specialty = physician == null ? null : physician.getSpecialty();
         return new PendingInvitationResponse(
-                assignment.physicianId(), physicianName, specialty, assignment.invitedAt());
+                assignment.physicianId(),
+                physicianName,
+                specialty,
+                assignment.invitedAt(),
+                assignment.status(),
+                assignment.isPendingConsent());
     }
 
-    public record PhysicianRequest(
-            @NotNull(message = "physicianId es obligatorio") UUID physicianId) {}
+    public record PhysicianRequest(@NotNull(message = "physicianId es obligatorio") UUID physicianId) {}
 
     public record PendingInvitationResponse(
             UUID physicianId,
             String physicianName,
             String specialty,
-            OffsetDateTime invitedAt) {}
+            OffsetDateTime invitedAt,
+            RelationshipStatus status,
+            boolean consentRequired) {}
 
     public record RelationshipResponse(
             UUID physicianId,

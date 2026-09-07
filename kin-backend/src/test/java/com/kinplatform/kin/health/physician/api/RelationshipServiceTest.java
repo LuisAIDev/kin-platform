@@ -233,6 +233,31 @@ class RelationshipServiceTest {
     }
 
     @Test
+    void pendingInvitationsForPatient_deberiaIncluirPendingConsent() {
+        var otherPhysician = UUID.randomUUID();
+        repos.patientRepository().assign(InMemoryPhysicianRepositories.pendingAssignment(PHYSICIAN, PATIENT));
+        repos.patientRepository()
+                .assign(PhysicianPatientAssignment.pendingConsent(otherPhysician, PATIENT, otherPhysician, null));
+
+        var pending = service().pendingInvitationsForPatient(PATIENT);
+
+        assertEquals(2, pending.size());
+        assertTrue(pending.stream().anyMatch(a -> a.status() == RelationshipStatus.PENDING));
+        assertTrue(pending.stream().anyMatch(a -> a.status() == RelationshipStatus.PENDING_CONSENT));
+    }
+
+    @Test
+    void pendingInvitationsForPatient_conSoloPendingConsent_deberiaDevolverla() {
+        repos.patientRepository()
+                .assign(PhysicianPatientAssignment.pendingConsent(PHYSICIAN, PATIENT, PHYSICIAN, null));
+
+        var pending = service().pendingInvitationsForPatient(PATIENT);
+
+        assertEquals(1, pending.size());
+        assertEquals(RelationshipStatus.PENDING_CONSENT, pending.get(0).status());
+    }
+
+    @Test
     void conInviteDeshabilitado_deberiaLanzar() {
         var service = new RelationshipService(
                 repos.patientRepository(), userRepository, properties(true, false), eventBus, null);

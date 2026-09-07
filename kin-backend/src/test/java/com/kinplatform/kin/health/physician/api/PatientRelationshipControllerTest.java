@@ -1,6 +1,5 @@
 package com.kinplatform.kin.health.physician.api;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -10,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.kin.health.physician.domain.PhysicianPatientAssignment;
-import com.kinplatform.kin.health.physician.domain.RelationshipStatus;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
@@ -58,13 +56,15 @@ class PatientRelationshipControllerTest {
     @BeforeEach
     void setUp() {
         lenient().when(authentication.getName()).thenReturn(PATIENT_EMAIL);
-        lenient().when(userRepository.findByEmail(PATIENT_EMAIL))
+        lenient()
+                .when(userRepository.findByEmail(PATIENT_EMAIL))
                 .thenReturn(Optional.of(User.builder()
                         .id(PATIENT)
                         .email(PATIENT_EMAIL)
                         .role(UserRole.PATIENT)
                         .build()));
-        mockMvc = MockMvcBuilders.standaloneSetup(new PatientRelationshipController(relationshipService, userRepository))
+        mockMvc = MockMvcBuilders.standaloneSetup(
+                        new PatientRelationshipController(relationshipService, userRepository))
                 .defaultRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request(
                                 org.springframework.http.HttpMethod.GET, "/")
                         .with(request -> {
@@ -77,9 +77,10 @@ class PatientRelationshipControllerTest {
     @Test
     void pending_deberiaDevolverInvitacionesConDatosDelMedico() throws Exception {
         when(relationshipService.pendingInvitationsForPatient(PATIENT))
-                .thenReturn(List.of(PhysicianPatientAssignment.invitation(
-                        PHYSICIAN, PATIENT, PHYSICIAN, OffsetDateTime.now())));
-        lenient().when(userRepository.findById(PHYSICIAN))
+                .thenReturn(List.of(
+                        PhysicianPatientAssignment.invitation(PHYSICIAN, PATIENT, PHYSICIAN, OffsetDateTime.now())));
+        lenient()
+                .when(userRepository.findById(PHYSICIAN))
                 .thenReturn(Optional.of(User.builder()
                         .id(PHYSICIAN)
                         .fullName("Dr. Test")
@@ -91,7 +92,28 @@ class PatientRelationshipControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].physicianId").value(PHYSICIAN.toString()))
                 .andExpect(jsonPath("$[0].physicianName").value("Dr. Test"))
-                .andExpect(jsonPath("$[0].specialty").value("Cardiología"));
+                .andExpect(jsonPath("$[0].specialty").value("Cardiología"))
+                .andExpect(jsonPath("$[0].status").value("PENDING"))
+                .andExpect(jsonPath("$[0].consentRequired").value(false));
+    }
+
+    @Test
+    void pending_conInvitacionPendingConsent_deberiaMarcarConsentRequired() throws Exception {
+        when(relationshipService.pendingInvitationsForPatient(PATIENT))
+                .thenReturn(List.of(PhysicianPatientAssignment.pendingConsent(
+                        PHYSICIAN, PATIENT, PHYSICIAN, OffsetDateTime.now())));
+        lenient()
+                .when(userRepository.findById(PHYSICIAN))
+                .thenReturn(Optional.of(User.builder()
+                        .id(PHYSICIAN)
+                        .fullName("Dr. Test")
+                        .role(UserRole.PHYSICIAN)
+                        .build()));
+
+        mockMvc.perform(get("/health/patient/relationships/pending"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].status").value("PENDING_CONSENT"))
+                .andExpect(jsonPath("$[0].consentRequired").value(true));
     }
 
     @Test
@@ -144,10 +166,11 @@ class PatientRelationshipControllerTest {
     }
 
     @Test
-    void pending_usuarioNoPaciente_deberiaFallar() throws Exception {
-        // El aislamiento lo garantiza SecurityConfig (rol PATIENT); aquí se
-        // verifica que el endpoint se apoya en la identidad autenticada.
-        mockMvc.perform(get("/health/patient/relationships/pending"))
-                .andExpect(status().isOk());
+    void pending_usuarioAutenticadoSinRolPaciente_deberiaDevolver200() throws Exception {
+        // SecurityConfig exige SOLO autenticación para /health/patient/relationships/**
+        // (quien aún no aceptó el consentimiento de salud no tiene ROLE_PATIENT pero debe
+        // poder ver/actuar sobre su invitación). El aislamiento lo garantiza el servicio,
+        // resolviendo el userId desde la identidad autenticada.
+        mockMvc.perform(get("/health/patient/relationships/pending")).andExpect(status().isOk());
     }
 }

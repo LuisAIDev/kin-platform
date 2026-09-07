@@ -72,6 +72,13 @@ public class SecurityConfig {
                         .hasAnyRole("FREE", "PREMIUM", "FACILITADOR", "PATIENT", "ADMIN")
                         .requestMatchers("/health/patient/consent/**")
                         .authenticated()
+                        // Gestión de invitaciones recibidas: accesible a cualquier usuario
+                        // autenticado que sea la parte invitada (aislamiento por identidad en
+                        // el servicio). Antes de aceptar el consentimiento (PENDING_CONSENT) el
+                        // usuario aún no tiene ROLE_PATIENT, pero debe poder ver/aceptar su
+                        // invitación. Debe ir ANTES de /health/patient/**.
+                        .requestMatchers("/health/patient/relationships/**")
+                        .authenticated()
                         .requestMatchers("/health/patient/**")
                         .hasAnyRole("PATIENT", "ADMIN")
                         // Solicitud de capacidad profesional (Alternativa B): accesible para

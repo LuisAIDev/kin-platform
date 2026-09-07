@@ -218,13 +218,16 @@ public class RelationshipService {
 
     /**
      * El paciente acepta la invitación pendiente del médico: la relación
-     * pasa a {@code ACTIVE} y se registra {@code acceptedAt}.
+     * pasa a {@code ACTIVE} y se registra {@code acceptedAt}. Solo aplica a
+     * invitaciones {@code PENDING}; una {@code PENDING_CONSENT} exige antes
+     * aceptar el consentimiento de datos de salud
+     * ({@link #acceptWithConsent(UUID, UUID)}), que es quien la activa.
      */
     @Transactional
     public PhysicianPatientAssignment acceptInvitation(UUID patientId, UUID physicianId) {
         requireInviteEnabled();
         requireNotNull(patientId, physicianId);
-        PhysicianPatientAssignment pending = pending(patientId, physicianId);
+        PhysicianPatientAssignment pending = pendingForAccept(patientId, physicianId);
         PhysicianPatientAssignment accepted = pending.accepted(OffsetDateTime.now());
         patientRepository.assign(accepted);
         publish(new RelationshipAcceptedEvent(patientId, physicianId));
@@ -247,14 +250,19 @@ public class RelationshipService {
         return ended;
     }
 
-    /** Invitaciones pendientes dirigidas al paciente. */
+    /** Invitaciones pendientes dirigidas al paciente (PENDING y PENDING_CONSENT). */
     @Transactional(readOnly = true)
     public List<PhysicianPatientAssignment> pendingInvitationsForPatient(UUID patientId) {
         requireInviteEnabled();
         if (patientId == null) {
             return List.of();
         }
-        return patientRepository.findByPatientIdAndStatus(patientId, RelationshipStatus.PENDING);
+        List<PhysicianPatientAssignment> pending =
+                patientRepository.findByPatientIdAndStatus(patientId, RelationshipStatus.PENDING);
+        List<PhysicianPatientAssignment> pendingConsent =
+                patientRepository.findByPatientIdAndStatus(patientId, RelationshipStatus.PENDING_CONSENT);
+        return java.util.stream.Stream.concat(pending.stream(), pendingConsent.stream())
+                .toList();
     }
 
     /**
@@ -283,6 +291,14 @@ public class RelationshipService {
         return patientRepository
                 .findByPhysicianIdAndPatientId(physicianId, patientId)
                 .filter(PhysicianPatientAssignment::isAwaitingAcceptance)
+                .orElseThrow(() -> new InvitationNotFoundException(physicianId, patientId));
+    }
+
+    /** Invitación estándar {@code PENDING} pendiente de aceptación. */
+    private PhysicianPatientAssignment pendingForAccept(UUID patientId, UUID physicianId) {
+        return patientRepository
+                .findByPhysicianIdAndPatientId(physicianId, patientId)
+                .filter(PhysicianPatientAssignment::isPending)
                 .orElseThrow(() -> new InvitationNotFoundException(physicianId, patientId));
     }
 
