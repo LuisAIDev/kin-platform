@@ -4,7 +4,9 @@ import { canAccessPath, homePathForRole } from "./utils/roles";
 import { isSelectedVertical } from "./services/session";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
-const ME_TTL_MS = 30_000;
+// Reducido a 5s para minimizar ventana de inconsistencia de physicianCapability
+// tras approve/reject por ADMIN. El RoleGuard client-side también valida sin cache.
+const ME_TTL_MS = 5_000;
 
 const meCache = new Map<
   string,
