@@ -29,6 +29,7 @@ describe("InvitePatientModal", () => {
     (physicianService.invitePatient as ReturnType<typeof vi.fn>).mockResolvedValue({
       patientEmail: "paciente@kin.com",
       status: "PENDING",
+      resent: false,
     });
 
     render(<InvitePatientModal onClose={onClose} onInvited={onInvited} />);
@@ -42,6 +43,27 @@ describe("InvitePatientModal", () => {
     await waitFor(() =>
       expect(screen.getByText(/Invitación enviada/)).toBeInTheDocument(),
     );
+    expect(onInvited).toHaveBeenCalled();
+  });
+
+  it("reenvío: muestra que la invitación fue reenviada", async () => {
+    const onInvited = vi.fn();
+    const user = userEvent.setup();
+    (physicianService.invitePatient as ReturnType<typeof vi.fn>).mockResolvedValue({
+      patientEmail: "paciente@kin.com",
+      status: "PENDING",
+      resent: true,
+    });
+
+    render(<InvitePatientModal onClose={vi.fn()} onInvited={onInvited} />);
+
+    await user.type(screen.getByLabelText("Correo del paciente"), "paciente@kin.com");
+    await user.click(screen.getByRole("button", { name: "Enviar invitación" }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/Invitación reenviada/)).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/recibirá un nuevo correo electrónico/)).toBeInTheDocument();
     expect(onInvited).toHaveBeenCalled();
   });
 
@@ -80,9 +102,9 @@ describe("InvitePatientModal", () => {
     );
   });
 
-  it("409: muestra que ya existe una invitación o relación activa", async () => {
+  it("409: muestra que el paciente ya está vinculado", async () => {
     const user = userEvent.setup();
-    const error = Object.assign(new Error("Ya existe una invitación o relación activa con este paciente."), {
+    const error = Object.assign(new Error("El paciente ya está vinculado a usted. No se puede invitar de nuevo."), {
       status: 409,
     });
     (physicianService.invitePatient as ReturnType<typeof vi.fn>).mockRejectedValue(error);
@@ -94,7 +116,7 @@ describe("InvitePatientModal", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("Ya existe una invitación o relación activa con este paciente."),
+        screen.getByText("El paciente ya está vinculado a usted. No se puede invitar de nuevo."),
       ).toBeInTheDocument(),
     );
   });

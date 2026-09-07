@@ -2,7 +2,12 @@ import { api } from "./api";
 import type { PageResponse } from "@/types";
 import type { TriageHistoryEntry } from "./triage";
 
-export type RelationshipStatus = "PENDING" | "ACTIVE" | "SUSPENDED" | "ENDED";
+export type RelationshipStatus =
+  | "PENDING"
+  | "PENDING_CONSENT"
+  | "ACTIVE"
+  | "SUSPENDED"
+  | "ENDED";
 
 export interface PhysicianPatientSummary {
   patientId: string;
@@ -33,6 +38,8 @@ export interface Invitation {
   status: RelationshipStatus;
   invitedAt: string | null;
   patientEmail: string;
+  /** true si la invitación era un reenvío (ya existía PENDING/PENDING_CONSENT). */
+  resent: boolean;
 }
 
 export interface PatientInviteRequest {

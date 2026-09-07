@@ -20,6 +20,7 @@ export default function InvitePatientModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [invitedEmail, setInvitedEmail] = useState("");
+  const [resent, setResent] = useState(false);
 
   const handleSubmit = async () => {
     // Normalización previa: recorta, minúsculas y elimina caracteres Unicode
@@ -35,13 +36,14 @@ export default function InvitePatientModal({
     try {
       const invitation = await physicianService.invitePatient(cleanedEmail, message.trim());
       setInvitedEmail(invitation.patientEmail);
+      setResent(invitation.resent === true);
       onInvited();
     } catch (err) {
       const e = err as { status?: number; message?: string };
       if (e.status === 404) {
         setError("El correo no está registrado en KIN.");
       } else if (e.status === 409) {
-        setError("Ya existe una invitación o relación activa con este paciente.");
+        setError("El paciente ya está vinculado a usted. No se puede invitar de nuevo.");
       } else if (e.status === 400) {
         setError("Por favor revisa el formato del correo.");
       } else {
@@ -83,10 +85,21 @@ export default function InvitePatientModal({
 
         {invitedEmail ? (
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-            <p className="font-medium">Invitación enviada.</p>
-            <p className="mt-1">
-              El paciente recibirá un correo para completar el registro y aceptar los términos.
-            </p>
+            {resent ? (
+              <>
+                <p className="font-medium">Invitación reenviada.</p>
+                <p className="mt-1">
+                  El paciente recibirá un nuevo correo electrónico para aceptar la invitación.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-medium">Invitación enviada.</p>
+                <p className="mt-1">
+                  El paciente recibirá un correo para completar el registro y aceptar los términos.
+                </p>
+              </>
+            )}
           </div>
         ) : (
           <>
