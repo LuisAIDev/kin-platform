@@ -8,6 +8,7 @@ import FeedbackButton from "@/components/health/FeedbackButton";
 import InvitePatientModal from "@/components/physician/InvitePatientModal";
 import PatientDetailView from "@/components/physician/PatientDetailView";
 import PatientList from "@/components/physician/PatientList";
+import PhysicianApplicationWidget from "@/components/physician/PhysicianApplicationWidget";
 import { aiassistService } from "@/services/aiassist";
 import { physicianService } from "@/services/physician";
 import type { ClinicalAlert, PhysicianPatientSummary } from "@/services/physician";
@@ -134,6 +135,8 @@ export default function PhysicianDashboard() {
   return (
     <main className="flex-1 flex items-start justify-center px-6 pt-10 pb-12">
       <div className="w-full max-w-5xl flex flex-col gap-6">
+        {/* Solicitud de capacidad profesional para cuentas existentes (solo en portal médico). */}
+        <PhysicianApplicationWidget />
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">Portal Médico</h1>
