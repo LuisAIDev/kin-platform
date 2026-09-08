@@ -8,10 +8,12 @@ export interface ClinicalDocument {
   fileSize: number;
   mimeType: string;
   patientId: string;
-  physicianId: string;
+  physicianId: string | null;
   description: string;
   status: DocumentStatus;
   uploadedAt: string;
+  /** true si el archivo tiene texto extraíble para el análisis con IA. */
+  analyzable: boolean;
 }
 
 async function uploadMultipart(endpoint: string, form: FormData): Promise<ClinicalDocument> {
@@ -35,6 +37,14 @@ export const documentsService = {
     form.append("patientId", patientId);
     if (description) form.append("description", description);
     return uploadMultipart("/health/documents/upload", form);
+  },
+
+  /** Subida de un documento por el propio paciente (Centro de Documentos Clínicos). */
+  myUpload: (file: File, description?: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    if (description) form.append("description", description);
+    return uploadMultipart("/health/documents/my/upload", form);
   },
 
   documentsForPatient: (patientId: string) =>

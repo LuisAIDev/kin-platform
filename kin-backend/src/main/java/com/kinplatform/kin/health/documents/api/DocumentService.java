@@ -11,6 +11,7 @@ import com.kinplatform.kin.health.documents.domain.ClinicalDocument;
 import com.kinplatform.kin.health.documents.domain.DocumentStatus;
 import com.kinplatform.kin.health.documents.event.DocumentDeletedEvent;
 import com.kinplatform.kin.health.documents.event.DocumentUploadedEvent;
+import com.kinplatform.kin.health.documents.infrastructure.ClinicalDocumentTextExtractor;
 import com.kinplatform.kin.health.documents.infrastructure.DocumentStorage;
 import com.kinplatform.kin.health.documents.port.ClinicalDocumentRepository;
 import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
@@ -43,6 +44,7 @@ public class DocumentService {
     private final DocumentProperties properties;
     private final DomainEventBus eventBus;
     private final OutboxEventPublisher outboxEventPublisher;
+    private final ClinicalDocumentTextExtractor textExtractor;
 
     public DocumentService(
             ClinicalDocumentRepository documentRepository,
@@ -50,7 +52,20 @@ public class DocumentService {
             RelationshipAccessValidator accessValidator,
             AuditService auditService,
             DocumentProperties properties) {
-        this(documentRepository, storage, accessValidator, auditService, properties, null, null);
+        this(documentRepository, storage, accessValidator, auditService, properties, null, null, null);
+    }
+
+    /** Compatibilidad de tests: sin extractor de texto. */
+    public DocumentService(
+            ClinicalDocumentRepository documentRepository,
+            DocumentStorage storage,
+            RelationshipAccessValidator accessValidator,
+            AuditService auditService,
+            DocumentProperties properties,
+            DomainEventBus eventBus,
+            OutboxEventPublisher outboxEventPublisher) {
+        this(documentRepository, storage, accessValidator, auditService, properties, eventBus,
+                outboxEventPublisher, null);
     }
 
     @Autowired
@@ -61,7 +76,8 @@ public class DocumentService {
             AuditService auditService,
             DocumentProperties properties,
             DomainEventBus eventBus,
-            OutboxEventPublisher outboxEventPublisher) {
+            OutboxEventPublisher outboxEventPublisher,
+            ClinicalDocumentTextExtractor textExtractor) {
         this.documentRepository = documentRepository;
         this.storage = storage;
         this.accessValidator = accessValidator;
@@ -69,6 +85,7 @@ public class DocumentService {
         this.properties = properties;
         this.eventBus = eventBus;
         this.outboxEventPublisher = outboxEventPublisher;
+        this.textExtractor = textExtractor;
     }
 
     @Transactional
@@ -81,6 +98,46 @@ public class DocumentService {
             String description) {
         requireEnabled();
         accessValidator.requireActiveRelationship(physicianId, patientId);
+        ClinicalDocument document = storeAndPersist(
+                physicianId, patientId, physicianId, fileName, mimeType, content, description);
+        auditService.logAccess(physicianId, AuditAction.UPLOAD_DOCUMENT, AuditResourceType.DOCUMENTO, document.id(),
+                patientId, Map.of("fileName", document.fileName()));
+        log.info("DocumentService: documento {} subido por médico {} para paciente {}",
+                document.id(), physicianId, patientId);
+        return document;
+    }
+
+    /**
+     * Subida de un documento clínico por el propio paciente (Centro de
+     * Documentos Clínicos). El paciente SIEMPRE queda como dueño del documento
+     * ({@code patientId = userId}) y sin médico asociado: solo él podrá
+     * consultarlo y analizarlo. No exige relación (el usuario actúa sobre su
+     * propia información).
+     */
+    @Transactional
+    public ClinicalDocument uploadOwnDocument(
+            UUID patientId,
+            String fileName,
+            String mimeType,
+            byte[] content,
+            String description) {
+        requireEnabled();
+        ClinicalDocument document = storeAndPersist(
+                patientId, patientId, null, fileName, mimeType, content, description);
+        auditService.logAccess(patientId, AuditAction.UPLOAD_DOCUMENT, AuditResourceType.DOCUMENTO, document.id(),
+                patientId, Map.of("fileName", document.fileName()));
+        log.info("DocumentService: documento propio {} subido por paciente {}", document.id(), patientId);
+        return document;
+    }
+
+    private ClinicalDocument storeAndPersist(
+            UUID uploadedBy,
+            UUID patientId,
+            UUID physicianId,
+            String fileName,
+            String mimeType,
+            byte[] content,
+            String description) {
         if (content == null || content.length == 0) {
             throw new IllegalArgumentException("El archivo no puede estar vacío");
         }
@@ -92,25 +149,26 @@ public class DocumentService {
         String storageKey = UUID.randomUUID() + "_" + safeName;
         storage.store(storageKey, content);
 
+        String extractedText = "";
+        if (textExtractor != null) {
+            extractedText = textExtractor.extract(content, safeName, mimeType);
+        }
         ClinicalDocument document = ClinicalDocument.of(
                 UUID.randomUUID(),
                 safeName,
                 content.length,
                 mimeType,
                 storageKey,
-                physicianId,
+                uploadedBy,
                 patientId,
                 physicianId,
                 description,
                 DocumentStatus.ACTIVE,
                 OffsetDateTime.now(),
-                OffsetDateTime.now());
+                OffsetDateTime.now(),
+                extractedText);
         ClinicalDocument saved = documentRepository.save(document);
         publish(new DocumentUploadedEvent(saved.id(), patientId, physicianId, safeName));
-        auditService.logAccess(physicianId, AuditAction.UPLOAD_DOCUMENT, AuditResourceType.DOCUMENTO, saved.id(),
-                patientId, Map.of("fileName", safeName));
-        log.info("DocumentService: documento {} subido por médico {} para paciente {}",
-                saved.id(), physicianId, patientId);
         return saved;
     }
 
@@ -181,13 +239,61 @@ public class DocumentService {
                 .orElseThrow(() -> new DocumentNotFoundException(documentId));
     }
 
+    /**
+     * Acceso a un documento activo respetando el ownership (ADR-036): el
+     * paciente dueño, el médico asociado, quien lo subió o un ADMIN. Cualquier
+     * otro usuario recibe 403 (sin filtrar existencia del documento).
+     */
+    @Transactional(readOnly = true)
+    public ClinicalDocument requireAccessibleDocument(UUID documentId, UUID userId, boolean admin) {
+        requireEnabled();
+        ClinicalDocument document = requireActiveDocument(documentId);
+        if (!admin && !isAccessible(document, userId)) {
+            throw new DocumentAccessDeniedException("Acceso denegado: no tiene acceso a este documento");
+        }
+        return document;
+    }
+
+    /**
+     * Texto extraído del documento para el análisis con IA. Si aún no se ha
+     * extraído (subidas previas a la columna {@code extracted_text} o a la
+     * caché), lo extrae bajo demanda del archivo almacenado y lo persiste para
+     * reutilizarlo en los siguientes turnos de la conversación.
+     */
+    @Transactional
+    public String ensureExtractedText(ClinicalDocument document) {
+        requireEnabled();
+        if (document.hasExtractedText()) {
+            return document.extractedText();
+        }
+        if (textExtractor == null) {
+            return "";
+        }
+        String text = "";
+        try {
+            text = textExtractor.extract(storage.load(document.storageKey()), document.fileName(), document.mimeType());
+        } catch (RuntimeException e) {
+            log.warn("DocumentService: no se pudo extraer el texto del documento {}: {}",
+                    document.id(), e.getMessage());
+            text = "";
+        }
+        if (!document.extractedText().equals(text)) {
+            documentRepository.save(document.withExtractedText(text));
+        }
+        return text;
+    }
+
     private void requireAccess(ClinicalDocument document, UUID userId, String message) {
+        if (!isAccessible(document, userId)) {
+            throw new DocumentAccessDeniedException(message);
+        }
+    }
+
+    private boolean isAccessible(ClinicalDocument document, UUID userId) {
         boolean patient = document.patientId().equals(userId);
         boolean physician = document.physicianId() != null && document.physicianId().equals(userId);
         boolean uploader = document.uploadedBy().equals(userId);
-        if (!patient && !physician && !uploader) {
-            throw new DocumentAccessDeniedException(message);
-        }
+        return patient || physician || uploader;
     }
 
     private static String sanitizeFileName(String fileName) {

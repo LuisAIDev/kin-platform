@@ -40,6 +40,7 @@ public class JpaClinicalDocumentRepository implements ClinicalDocumentRepository
         entity.setStatus(document.status());
         entity.setUploadedAt(document.uploadedAt());
         entity.setCreatedAt(document.createdAt());
+        entity.setExtractedText(document.extractedText());
         repository.save(entity);
         return document;
     }
@@ -111,6 +112,7 @@ public class JpaClinicalDocumentRepository implements ClinicalDocumentRepository
                 e.getDescription(),
                 e.getStatus(),
                 e.getUploadedAt(),
-                e.getCreatedAt());
+                e.getCreatedAt(),
+                e.getExtractedText());
     }
 }

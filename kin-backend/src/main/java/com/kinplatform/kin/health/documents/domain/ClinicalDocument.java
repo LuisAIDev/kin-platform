@@ -23,7 +23,8 @@ public record ClinicalDocument(
         String description,
         DocumentStatus status,
         OffsetDateTime uploadedAt,
-        OffsetDateTime createdAt) {
+        OffsetDateTime createdAt,
+        String extractedText) {
 
     public ClinicalDocument {
         if (id == null || uploadedBy == null || patientId == null) {
@@ -36,6 +37,7 @@ public record ClinicalDocument(
         status = status == null ? DocumentStatus.ACTIVE : status;
         uploadedAt = uploadedAt == null ? OffsetDateTime.now() : uploadedAt;
         createdAt = createdAt == null ? OffsetDateTime.now() : createdAt;
+        extractedText = extractedText == null ? "" : extractedText;
     }
 
     public static ClinicalDocument of(
@@ -53,17 +55,48 @@ public record ClinicalDocument(
             OffsetDateTime createdAt) {
         return new ClinicalDocument(
                 id, fileName, fileSize, mimeType, storageKey, uploadedBy, patientId, physicianId,
-                description, status, uploadedAt, createdAt);
+                description, status, uploadedAt, createdAt, "");
+    }
+
+    public static ClinicalDocument of(
+            UUID id,
+            String fileName,
+            long fileSize,
+            String mimeType,
+            String storageKey,
+            UUID uploadedBy,
+            UUID patientId,
+            UUID physicianId,
+            String description,
+            DocumentStatus status,
+            OffsetDateTime uploadedAt,
+            OffsetDateTime createdAt,
+            String extractedText) {
+        return new ClinicalDocument(
+                id, fileName, fileSize, mimeType, storageKey, uploadedBy, patientId, physicianId,
+                description, status, uploadedAt, createdAt, extractedText);
     }
 
     public boolean isActive() {
         return status == DocumentStatus.ACTIVE;
     }
 
+    /** {@code true} si existe texto extraído utilizable para el análisis con IA. */
+    public boolean hasExtractedText() {
+        return extractedText != null && !extractedText.isBlank();
+    }
+
+    /** Copia con el texto extraído actualizado (cache de extracción perezosa). */
+    public ClinicalDocument withExtractedText(String text) {
+        return new ClinicalDocument(
+                id, fileName, fileSize, mimeType, storageKey, uploadedBy, patientId, physicianId,
+                description, status, uploadedAt, createdAt, text == null ? "" : text);
+    }
+
     /** Soft delete: marca el documento como eliminado. */
     public ClinicalDocument deleted() {
         return new ClinicalDocument(
                 id, fileName, fileSize, mimeType, storageKey, uploadedBy, patientId, physicianId,
-                description, DocumentStatus.DELETED, uploadedAt, createdAt);
+                description, DocumentStatus.DELETED, uploadedAt, createdAt, extractedText);
     }
 }

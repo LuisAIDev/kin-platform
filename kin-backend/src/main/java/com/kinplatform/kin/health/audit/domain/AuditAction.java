@@ -22,6 +22,8 @@ public enum AuditAction {
     UPLOAD_DOCUMENT,
     DOWNLOAD_DOCUMENT,
     DELETE_DOCUMENT,
+    /** Análisis conversacional de un documento clínico con IA (ADR-041). */
+    AI_ANALYZE_DOCUMENT,
     CREATE,
     UPDATE,
     TOGGLE,

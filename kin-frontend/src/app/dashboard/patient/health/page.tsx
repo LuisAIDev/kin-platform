@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import CarePlanView from "@/components/health/CarePlanView";
 import FeedbackButton from "@/components/health/FeedbackButton";
@@ -71,6 +72,33 @@ export default function PatientHealthPage() {
           ⚠️ Esta información es de apoyo informativo. No sustituye la
           evaluación ni el diagnóstico de un profesional de la salud.
         </div>
+
+        <section className="rounded-xl border border-neutral-200 bg-white p-5">
+          <h2 className="text-base font-semibold">Centro de Documentos Clínicos</h2>
+          <p className="text-xs text-neutral-500 mt-0.5">
+            Sube tus exámenes y analízalos con IA en lenguaje sencillo (apoyo informativo).
+          </p>
+          <div className="flex flex-wrap gap-3 mt-3">
+            <Link
+              href="/dashboard/patient/documents"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition"
+            >
+              + Agregar documento
+            </Link>
+            <Link
+              href="/dashboard/patient/documents"
+              className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 text-emerald-700 px-4 py-2 text-sm font-medium hover:bg-emerald-50 transition"
+            >
+              Analizar con IA / Importar información
+            </Link>
+            <Link
+              href="/dashboard/patient/documents"
+              className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition"
+            >
+              Descargar PDF del análisis
+            </Link>
+          </div>
+        </section>
 
         {error && (
           <p className="text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-lg">{error}</p>

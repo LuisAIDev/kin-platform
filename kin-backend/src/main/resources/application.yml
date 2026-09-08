@@ -330,6 +330,46 @@ kin:
     max-file-size: ${KIN_HEALTH_DOCUMENTS_MAX_FILE_SIZE:10485760}
 
   # -----------------------------------------------------------
+  # Verificación clínica con la OMS (ADR-041)
+  # Centro de Documentos Clínicos: la IA verifica contra la ICD-API
+  # (CIE-10/11) y consulta el GHO ANTES de explicar un resultado.
+  # ICD-API: OAuth2 Client Credentials. Obtener client id/secret en
+  # https://icd.who.int/icdapi (View API access key). Sin credenciales
+  # la IA degrada: avisa que no pudo verificar y no inventa datos.
+  # -----------------------------------------------------------
+  verification:
+    # Master switch del paso de verificación OMS en el análisis IA.
+    enabled: ${KIN_HEALTH_VERIFICATION_ENABLED:true}
+    # Circuit Breaker: umbral de fallos para abrir y ms que permanece abierto.
+    failure-threshold: ${WHO_CIRCUIT_FAILURE_THRESHOLD:3}
+    open-timeout-millis: ${WHO_CIRCUIT_OPEN_TIMEOUT_MILLIS:30000}
+    icd:
+      # Habilitar consultas a la ICD-API (requiere credenciales).
+      enabled: ${WHO_ICD_ENABLED:false}
+      # Base URL de la API de la OMS (cloud).
+      base-url: ${WHO_ICD_BASE_URL:https://id.who.int}
+      # Versión del contrato de la API (cabecera API-Version).
+      api-version: ${WHO_ICD_API_VERSION:v2}
+      # Release de la clasificación (ICD-11 MMS).
+      release-id: ${WHO_ICD_RELEASE_ID:2024-01}
+      # Token endpoint OAuth2 de la OMS.
+      token-endpoint: ${WHO_ICD_TOKEN_ENDPOINT:https://icdaccessmanagement.who.int/connect/token}
+      scope: ${WHO_ICD_SCOPE:icdapi_access}
+      client-id: ${WHO_ICD_CLIENT_ID:}
+      client-secret: ${WHO_ICD_CLIENT_SECRET:}
+      max-results: ${WHO_ICD_MAX_RESULTS:5}
+      max-queries-per-turn: ${WHO_ICD_MAX_QUERIES_PER_TURN:2}
+    gho:
+      # El GHO no requiere credenciales.
+      enabled: ${WHO_GHO_ENABLED:true}
+      base-url: ${WHO_GHO_BASE_URL:https://apps.who.int/gho/athena/api/GHO}
+      # Indicadores consultados automáticamente (opcional). Cada entrada:
+      #   - indicatorCode: código del catálogo GHO
+      #   - label: etiqueta para el prompt
+      #   - countryCode: ISO 3166-1 alpha-3 (vacío = dimensión GLOBAL)
+      indicators: []
+
+  # -----------------------------------------------------------
   # Transactional Outbox (ADR-026, KIN 2.4)
   # Garantiza entrega at-least-once de Domain Events escribiendo en la misma
   # transacción del caso de uso. El relé (OutboxRelay) publica asíncronamente.

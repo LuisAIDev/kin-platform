@@ -62,4 +62,8 @@ public class ClinicalDocumentEntity {
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
+
+    /** Texto plano extraído del archivo (base del análisis IA; nunca se expone al cliente). */
+    @Column(name = "extracted_text", columnDefinition = "TEXT")
+    private String extractedText;
 }
