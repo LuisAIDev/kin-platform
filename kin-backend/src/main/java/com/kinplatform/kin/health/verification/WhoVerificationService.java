@@ -16,6 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -49,6 +50,7 @@ public class WhoVerificationService {
     private final CircuitBreaker icdBreaker;
     private final CircuitBreaker ghoBreaker;
 
+    @Autowired
     public WhoVerificationService(
             WhoVerificationProperties properties,
             IcdDiagnosisLookup icdLookup,
