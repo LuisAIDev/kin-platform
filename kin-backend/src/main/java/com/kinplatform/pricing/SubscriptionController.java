@@ -1,5 +1,6 @@
 package com.kinplatform.pricing;
 
+import com.kinplatform.common.security.PatientAccess;
 import com.kinplatform.pricing.dto.PatientSubscriptionStatusResponse;
 import com.kinplatform.pricing.dto.PricingPlanDTO;
 import com.kinplatform.pricing.dto.SubscriptionRequest;
@@ -70,7 +71,7 @@ public class SubscriptionController {
     public ResponseEntity<SubscriptionResponse> cancelPatientSubscription(Authentication auth) {
         User user = getCurrentUser(auth);
         
-        if (!user.isPatient()) {
+        if (!PatientAccess.isPatient(user)) {
             throw new IllegalStateException("Endpoint solo disponible para pacientes");
         }
 
@@ -131,7 +132,7 @@ public class SubscriptionController {
         UUID userId = user.getId();
 
         // Verificar que el usuario es paciente
-        if (!user.isPatient()) {
+        if (!PatientAccess.isPatient(user)) {
             throw new IllegalStateException("Endpoint solo disponible para pacientes");
         }
 

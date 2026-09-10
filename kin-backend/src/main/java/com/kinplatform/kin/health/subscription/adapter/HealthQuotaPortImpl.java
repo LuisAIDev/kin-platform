@@ -57,12 +57,7 @@ public class HealthQuotaPortImpl implements HealthQuotaPort {
                 ? subscription.getEndDate()
                 : OffsetDateTime.now().plusMonths(1);
 
-        return triageRepository.countByUserIdAndCreatedAtBetween(userId, periodStart, periodEnd);
-    }
-
-    @Override
-    public Integer getMaxTriagesPerMonth(UUID userId) {
-        return resolvePlan(userId).getMaxTriagesPerMonth();
+        return (int) triageRepository.countByUserIdAndCreatedAtBetween(userId, periodStart, periodEnd);
     }
 
     @Override
