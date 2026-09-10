@@ -1,24 +1,23 @@
 package com.kinplatform.kin;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.conversation.ResponseFallback;
 import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.pipeline.Pipeline;
 import com.kinplatform.kin.pipeline.PipelineContext;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
-
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class KinMethodFallbackTest {
@@ -40,7 +39,7 @@ class KinMethodFallbackTest {
     }
 
     private KinMethod kinMethod(ResponseFallback fallback) {
-        return new KinMethod(pipeline, eventBus, contextRepository, fallback);
+        return new KinMethod(pipeline, contextRepository, fallback);
     }
 
     private void stubPipeline(Flux<String> flux, ResponseValidation validation) {
@@ -57,29 +56,28 @@ class KinMethodFallbackTest {
     void validacionRechazada_dura_deberiaAnexarRespuestaSegura() {
         stubPipeline(Flux.just("token"), ResponseValidation.rejected(List.of("issue")));
 
-        var flux = kinMethod(new ResponseFallback(List.of("respuesta segura"), 0)).executeStream(command());
+        var flux =
+                kinMethod(new ResponseFallback(List.of("respuesta segura"), 0)).executeStream(command());
 
-        StepVerifier.create(flux)
-            .expectNext("token", "respuesta segura")
-            .verifyComplete();
+        StepVerifier.create(flux).expectNext("token", "respuesta segura").verifyComplete();
     }
 
     @Test
     void validacionRechazada_porLongitud_noDeberiaAnexarNada() {
         stubPipeline(Flux.just("token"), ResponseValidation.rejected(List.of("response.too_long")));
 
-        var flux = kinMethod(new ResponseFallback(List.of("respuesta segura"), 0)).executeStream(command());
+        var flux =
+                kinMethod(new ResponseFallback(List.of("respuesta segura"), 0)).executeStream(command());
 
-        StepVerifier.create(flux)
-            .expectNext("token")
-            .verifyComplete();
+        StepVerifier.create(flux).expectNext("token").verifyComplete();
     }
 
     @Test
     void validacionAceptada_deberiaConservarLosTokens() {
         stubPipeline(Flux.just("a", "b"), ResponseValidation.ok());
 
-        var flux = kinMethod(new ResponseFallback(List.of("respuesta segura"), 0)).executeStream(command());
+        var flux =
+                kinMethod(new ResponseFallback(List.of("respuesta segura"), 0)).executeStream(command());
 
         StepVerifier.create(flux).expectNext("a", "b").verifyComplete();
     }
@@ -88,7 +86,8 @@ class KinMethodFallbackTest {
     void validacionNula_deberiaConservarLosTokens() {
         stubPipeline(Flux.just("a"), null);
 
-        var flux = kinMethod(new ResponseFallback(List.of("respuesta segura"), 0)).executeStream(command());
+        var flux =
+                kinMethod(new ResponseFallback(List.of("respuesta segura"), 0)).executeStream(command());
 
         StepVerifier.create(flux).expectNext("a").verifyComplete();
     }
@@ -97,6 +96,7 @@ class KinMethodFallbackTest {
     void fluxNulo_deberiaDevolverNull() {
         when(pipeline.execute(any(PipelineContext.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        assertNull(kinMethod(new ResponseFallback(List.of("respuesta segura"), 0)).executeStream(command()));
+        assertNull(
+                kinMethod(new ResponseFallback(List.of("respuesta segura"), 0)).executeStream(command()));
     }
 }

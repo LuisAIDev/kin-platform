@@ -1,5 +1,12 @@
 package com.kinplatform.kin;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.kin.context.ContextRepository;
@@ -11,22 +18,13 @@ import com.kinplatform.kin.conversation.TurnResult;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
-
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * FASE 9 · E6 — flujo integrado con consumo real de {@code ResponseValidation}
@@ -45,27 +43,25 @@ class PipelineFlowIntegrationTest {
     private AIResponder aiResponder;
 
     private ConversationOrchestrator orchestrator() {
-        var kinMethod = TestIntegrationPipeline.realKinMethod(aiResponder, contextRepository,
-            new InMemoryDomainEventBus(), PROJECT_ID);
-        return new ConversationOrchestrator(new HistoryWindow(), new DefaultTurnPolicy(),
-            kinMethod, new ResponseGuard(), contextRepository);
+        var kinMethod = TestIntegrationPipeline.realKinMethod(aiResponder, contextRepository, PROJECT_ID);
+        return new ConversationOrchestrator(
+                new HistoryWindow(), new DefaultTurnPolicy(), kinMethod, new ResponseGuard(), contextRepository);
     }
 
     private ConversationTurn turn() {
-        return new ConversationTurn(PROJECT_ID, USER_ID, "generá el informe", List.of(),
-            "Proyecto Test", "Descripción", "Software");
+        return new ConversationTurn(
+                PROJECT_ID, USER_ID, "generá el informe", List.of(), "Proyecto Test", "Descripción", "Software");
     }
 
     private void stubContextoCompleto() {
         when(contextRepository.findOrCreate(PROJECT_ID, "Proyecto Test", "Descripción", "Software"))
-            .thenReturn(TestIntegrationPipeline.fullContext());
+                .thenReturn(TestIntegrationPipeline.fullContext());
     }
 
     @Test
     void flujoAceptado_deberiaConsumirLaValidacion() {
         stubContextoCompleto();
-        when(aiResponder.respond(any(AIRequest.class)))
-            .thenReturn("Aquí tenés el informe de viabilidad completo.");
+        when(aiResponder.respond(any(AIRequest.class))).thenReturn("Aquí tenés el informe de viabilidad completo.");
 
         TurnResult result = orchestrator().orchestrate(turn());
 
@@ -85,8 +81,7 @@ class PipelineFlowIntegrationTest {
         assertNotNull(result.validation());
         assertFalse(result.validation().accepted());
         assertTrue(result.validation().issues().contains("response.multiple_questions"));
-        assertEquals(ResponseFallback.DEFAULT_CANNED_RESPONSE,
-            result.aiResponse());
+        assertEquals(ResponseFallback.DEFAULT_CANNED_RESPONSE, result.aiResponse());
         assertNotNull(result.aiResponse());
         assertNotNull(result.consultingReport());
         assertFalse(result.events().isEmpty());
@@ -96,13 +91,14 @@ class PipelineFlowIntegrationTest {
     void flujoStreaming_conRespuestaMuyLarga_deberiaEntregarElContenidoSinErrorTecnico() {
         stubContextoCompleto();
         String base = "## Dónde podría quedar bien tu restaurante\n"
-            + "- Calle del Arsenal\n- Plaza Santo Domingo\n- Callejón Ancho\n- Calle de la Mantilla\n";
+                + "- Calle del Arsenal\n- Plaza Santo Domingo\n- Callejón Ancho\n- Calle de la Mantilla\n";
         String respuesta = base + "a".repeat(TurnConstraints.REPORT_EXPLANATION_MAX_LENGTH);
         when(aiResponder.respondStream(any(AIRequest.class))).thenReturn(Flux.just(respuesta));
 
-        String content = orchestrator().orchestrateStream(turn())
-            .reduce("", (acc, next) -> acc + next)
-            .block();
+        String content = orchestrator()
+                .orchestrateStream(turn())
+                .reduce("", (acc, next) -> acc + next)
+                .block();
 
         assertEquals(respuesta, content);
         assertFalse(content.contains("No pude generar"));

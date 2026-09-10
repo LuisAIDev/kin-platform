@@ -1,30 +1,27 @@
 package com.kinplatform.kin;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.kin.conversation.ResponseFallback;
 import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.enterprise.application.EnterprisePipelineResultStore;
-import com.kinplatform.kin.enterprise.application.EnterpriseTurnResults;
 import com.kinplatform.kin.enterprise.application.InMemoryEnterprisePipelineResultStore;
 import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
 import com.kinplatform.kin.pipeline.Pipeline;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
-import org.junit.jupiter.api.Test;
-
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests de captura de los resultados reales del pipeline en el runtime (Fase
@@ -82,21 +79,23 @@ class KinMethodPipelineResultsCaptureTest {
         assertTrue(result.decision().action() == ConversationDecision.Action.REPORT);
     }
 
-    private KinMethod kinMethodConStore(Pipeline pipeline,
-                                        EnterprisePipelineResultStore store) {
+    private KinMethod kinMethodConStore(Pipeline pipeline, EnterprisePipelineResultStore store) {
         var contextRepository = mock(ContextRepository.class);
         when(contextRepository.findOrCreate(PROJECT_ID, "Proyecto Test", "Descripción", "Software"))
-            .thenReturn(contextoCompleto());
-        return new KinMethod(pipeline, new InMemoryDomainEventBus(), contextRepository,
-            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
-            (projectId, context) -> { }, store);
+                .thenReturn(contextoCompleto());
+        return new KinMethod(
+                pipeline,
+                contextRepository,
+                new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
+                (projectId, context) -> {},
+                store);
     }
 
     private KinMethod kinMethodSinStore(Pipeline pipeline) {
         var contextRepository = mock(ContextRepository.class);
         when(contextRepository.findOrCreate(PROJECT_ID, "Proyecto Test", "Descripción", "Software"))
-            .thenReturn(contextoCompleto());
-        return new KinMethod(pipeline, new InMemoryDomainEventBus(), contextRepository);
+                .thenReturn(contextoCompleto());
+        return new KinMethod(pipeline, contextRepository);
     }
 
     private Pipeline pipelineReporteConResultados() {
@@ -165,8 +164,7 @@ class KinMethodPipelineResultsCaptureTest {
             @Override
             public PipelineContext execute(PipelineContext context) {
                 context.projectContext(contextoCompleto());
-                context.decision(ConversationDecision.ask(
-                    AnalyzedDimension.PROBLEM, 10, "¿Cuál es el problema?"));
+                context.decision(ConversationDecision.ask(AnalyzedDimension.PROBLEM, 10, "¿Cuál es el problema?"));
                 context.aiResponse("¿Cuál es el problema que resolvés?");
                 context.markCompleted();
                 return context;
@@ -179,13 +177,11 @@ class KinMethodPipelineResultsCaptureTest {
         for (var dim : AnalyzedDimension.values()) {
             data.put(dim, dim.displayName().repeat(30));
         }
-        return ProjectContext.restore(
-            data, EnumSet.allOf(AnalyzedDimension.class), null, 5, false);
+        return ProjectContext.restore(data, EnumSet.allOf(AnalyzedDimension.class), null, 5, false);
     }
 
     private KinMethodCommand command(String message) {
         return new KinMethodCommand(
-            PROJECT_ID, USER_ID, message, List.of(),
-            "Proyecto Test", "Descripción", "Software");
+                PROJECT_ID, USER_ID, message, List.of(), "Proyecto Test", "Descripción", "Software");
     }
 }

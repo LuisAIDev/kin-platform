@@ -1,22 +1,14 @@
 package com.kinplatform.kin.conversation;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.kinplatform.kin.KinMethod;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluator;
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.EvaluationPolicies;
-import com.kinplatform.kin.context.ExplorationPriority;
-import com.kinplatform.kin.context.Message;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.context.strategy.ConversationStrategist;
-import com.kinplatform.kin.context.strategy.DefaultExplorationStrategy;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
-import com.kinplatform.kin.event.QuestionGeneratedEvent;
-import com.kinplatform.kin.event.ReportGeneratedEvent;
-import com.kinplatform.kin.conversation.history.HistoryWindow;
-import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
-import com.kinplatform.kin.conversation.validation.ResponseGuard;
-import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.kin.ai.PromptAssembler;
@@ -32,6 +24,21 @@ import com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
+import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.kin.context.CompletenessEvaluator;
+import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.kin.context.EvaluationPolicies;
+import com.kinplatform.kin.context.ExplorationPriority;
+import com.kinplatform.kin.context.Message;
+import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.kin.context.strategy.ConversationStrategist;
+import com.kinplatform.kin.context.strategy.DefaultExplorationStrategy;
+import com.kinplatform.kin.conversation.history.HistoryWindow;
+import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
+import com.kinplatform.kin.conversation.validation.ResponseGuard;
+import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.kin.event.QuestionGeneratedEvent;
+import com.kinplatform.kin.event.ReportGeneratedEvent;
 import com.kinplatform.kin.pipeline.Pipeline;
 import com.kinplatform.kin.pipeline.stage.AnalyzerStage;
 import com.kinplatform.kin.pipeline.stage.ConsultorStage;
@@ -68,6 +75,10 @@ import com.kinplatform.kin.reporting.risk.RiskEngine;
 import com.kinplatform.kin.reporting.risk.RiskModel;
 import com.kinplatform.kin.scoring.ScoringEngine;
 import com.kinplatform.kin.scoring.ScoringModel;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -75,19 +86,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
-
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ConversationOrchestratorPipelineIntegrationTest {
@@ -102,71 +100,73 @@ class ConversationOrchestratorPipelineIntegrationTest {
     private AIResponder aiResponder;
 
     private ConversationOrchestrator orchestrator;
-    private InMemoryDomainEventBus eventBus;
 
     @BeforeEach
     void setUp() {
-        eventBus = new InMemoryDomainEventBus();
         var conversationBuilder = new ConversationPromptBuilder();
         var reportBuilder = new ReportPromptBuilder(List.of(
-            new ExecutiveSummaryFormatter(),
-            new ScoresSectionFormatter(),
-            new RecommendationsSectionFormatter(),
-            new RisksSectionFormatter(),
-            new OpportunitiesSectionFormatter(),
-            new FinancialSectionFormatter(),
-            new MarketSectionFormatter(),
-            new InnovationSectionFormatter(),
-            new NextStepsSectionFormatter(),
-            new ReportMetadataFormatter()
-        ));
+                new ExecutiveSummaryFormatter(),
+                new ScoresSectionFormatter(),
+                new RecommendationsSectionFormatter(),
+                new RisksSectionFormatter(),
+                new OpportunitiesSectionFormatter(),
+                new FinancialSectionFormatter(),
+                new MarketSectionFormatter(),
+                new InnovationSectionFormatter(),
+                new NextStepsSectionFormatter(),
+                new ReportMetadataFormatter()));
         var promptAssembler = new PromptAssembler(conversationBuilder, reportBuilder);
         var pipeline = new Pipeline(List.of(
-            new AnalyzerStage((message, ctx) -> com.kinplatform.kin.context.AnalysisResult.empty()),
-            new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())),
-            new StrategistStage(new ConversationStrategist(
-                new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))),
-            new ScoringStage(new ScoringEngine(ScoringModel.defaultModel())),
-            new RecommendationStage(new RecommendationEngine(RecommendationModel.defaultModel())),
-            new RiskStage(new RiskEngine(
-                List.of(new BusinessRiskAnalyzer(), new MarketRiskAnalyzer()),
-                RiskModel.defaultModel())),
-            new OpportunityStage(new OpportunityEngine(
-                List.of(new MarketOpportunityAnalyzer(), new MonetizationOpportunityAnalyzer()),
-                OpportunityModel.defaultModel())),
-            new ReportStage(reportEngine()),
-            new ConsultorStage(aiResponder, promptAssembler, new ResponseGuard()),
-            new EventStage()
-        ));
-        var kinMethod = new KinMethod(pipeline, eventBus, contextRepository);
+                new AnalyzerStage((message, ctx) -> com.kinplatform.kin.context.AnalysisResult.empty()),
+                new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())),
+                new StrategistStage(new ConversationStrategist(
+                        new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))),
+                new ScoringStage(new ScoringEngine(ScoringModel.defaultModel())),
+                new RecommendationStage(new RecommendationEngine(RecommendationModel.defaultModel())),
+                new RiskStage(new RiskEngine(
+                        List.of(new BusinessRiskAnalyzer(), new MarketRiskAnalyzer()), RiskModel.defaultModel())),
+                new OpportunityStage(new OpportunityEngine(
+                        List.of(new MarketOpportunityAnalyzer(), new MonetizationOpportunityAnalyzer()),
+                        OpportunityModel.defaultModel())),
+                new ReportStage(reportEngine()),
+                new ConsultorStage(aiResponder, promptAssembler, new ResponseGuard()),
+                new EventStage()));
+        var kinMethod = new KinMethod(pipeline, contextRepository);
         orchestrator = new ConversationOrchestrator(
-            new HistoryWindow(), new DefaultTurnPolicy(), kinMethod,
-            new ResponseGuard(), contextRepository);
+                new HistoryWindow(), new DefaultTurnPolicy(), kinMethod, new ResponseGuard(), contextRepository);
     }
 
     private ReportEngine reportEngine() {
         var model = ReportModel.defaultModel();
-        return new ReportEngine(new ReportAssemblers(
-            new ExecutiveSummaryAssembler(),
-            new ScoresSectionAssembler(),
-            new RecommendationsSectionAssembler(),
-            new RisksSectionAssembler(),
-            new OpportunitiesSectionAssembler(),
-            new FinancialSectionAssembler(),
-            new MarketSectionAssembler(),
-            new InnovationSectionAssembler(),
-            new NextStepsSectionAssembler(model),
-            new ReportMetadataAssembler(model)), model);
+        return new ReportEngine(
+                new ReportAssemblers(
+                        new ExecutiveSummaryAssembler(),
+                        new ScoresSectionAssembler(),
+                        new RecommendationsSectionAssembler(),
+                        new RisksSectionAssembler(),
+                        new OpportunitiesSectionAssembler(),
+                        new FinancialSectionAssembler(),
+                        new MarketSectionAssembler(),
+                        new InnovationSectionAssembler(),
+                        new NextStepsSectionAssembler(model),
+                        new ReportMetadataAssembler(model)),
+                model);
     }
 
     private ConversationTurn turn() {
-        return new ConversationTurn(PROJECT_ID, USER_ID, "el problema es que la gente pierde tiempo",
-            List.of(), "Proyecto Test", "Descripción", "Software");
+        return new ConversationTurn(
+                PROJECT_ID,
+                USER_ID,
+                "el problema es que la gente pierde tiempo",
+                List.of(),
+                "Proyecto Test",
+                "Descripción",
+                "Software");
     }
 
     private void stubNuevoContexto() {
         when(contextRepository.findOrCreate(PROJECT_ID, "Proyecto Test", "Descripción", "Software"))
-            .thenReturn(ProjectContext.fromProject("Proyecto Test", "Descripción", "Software"));
+                .thenReturn(ProjectContext.fromProject("Proyecto Test", "Descripción", "Software"));
     }
 
     private void stubContextoCompleto() {
@@ -175,8 +175,7 @@ class ConversationOrchestratorPipelineIntegrationTest {
             data.put(dim, dim.displayName().repeat(30));
         }
         when(contextRepository.findOrCreate(PROJECT_ID, "Proyecto Test", "Descripción", "Software"))
-            .thenReturn(ProjectContext.restore(
-                data, EnumSet.allOf(AnalyzedDimension.class), null, 5, false));
+                .thenReturn(ProjectContext.restore(data, EnumSet.allOf(AnalyzedDimension.class), null, 5, false));
     }
 
     private AIRequest capturarAIRequest() {
@@ -188,8 +187,7 @@ class ConversationOrchestratorPipelineIntegrationTest {
     @Test
     void flujoConversacion_deberiaEnmarcarElPromptConLaDirectivaYValidar() {
         stubNuevoContexto();
-        when(aiResponder.respond(any(AIRequest.class)))
-            .thenReturn("¿Apuntás a consumidores o a empresas?");
+        when(aiResponder.respond(any(AIRequest.class))).thenReturn("¿Apuntás a consumidores o a empresas?");
 
         var result = orchestrator.orchestrate(turn());
 
@@ -204,7 +202,7 @@ class ConversationOrchestratorPipelineIntegrationTest {
         assertTrue(request.systemPrompt().contains(CommunicationMode.QUESTION.name()));
 
         assertTrue(result.events().stream().anyMatch(e -> e instanceof QuestionGeneratedEvent));
-        assertEquals(result.events(), eventBus.publishedEvents());
+        assertFalse(result.events().isEmpty());
     }
 
     @Test
@@ -231,17 +229,22 @@ class ConversationOrchestratorPipelineIntegrationTest {
     void flujoConversacion_streaming_deberiaEnmarcarElPromptYDevolverLosTokens() {
         stubNuevoContexto();
         when(aiResponder.respondStream(any(AIRequest.class)))
-            .thenReturn(Flux.just("¿Apuntás a ", "consumidores o a empresas?"));
+                .thenReturn(Flux.just("¿Apuntás a ", "consumidores o a empresas?"));
 
         var flux = orchestrator.orchestrateStream(turn());
 
-        assertEquals("¿Apuntás a consumidores o a empresas?",
-            flux.reduce("", (acc, next) -> acc + next).block());
+        assertEquals(
+                "¿Apuntás a consumidores o a empresas?",
+                flux.reduce("", (acc, next) -> acc + next).block());
 
         var captor = ArgumentCaptor.forClass(AIRequest.class);
         verify(aiResponder).respondStream(captor.capture());
         assertTrue(captor.getValue().systemPrompt().contains("## DIRECTIVA DE COMUNICACIÓN"));
-        assertFalse(eventBus.publishedEvents().isEmpty());
+
+        var outcome = orchestrator.orchestrateStreamWithOutcome(turn());
+        assertFalse(outcome.events().isEmpty());
+        assertTrue(outcome.events().stream()
+                .anyMatch(e -> e instanceof com.kinplatform.kin.event.ConversationCompletedEvent));
     }
 
     @Test
@@ -249,16 +252,24 @@ class ConversationOrchestratorPipelineIntegrationTest {
         stubNuevoContexto();
 
         String parte1 = "## Dónde podría quedar bien tu restaurante\n"
-            + "- Calle del Arsenal\n- Plaza Santo Domingo\n- Callejón Ancho\n- Calle de la Mantilla\n"
-            + "Estas zonas combinan tránsito turístico y peatonal constante, ideales para un restaurante.\n";
+                + "- Calle del Arsenal\n- Plaza Santo Domingo\n- Callejón Ancho\n- Calle de la Mantilla\n"
+                + "Estas zonas combinan tránsito turístico y peatonal constante, ideales para un restaurante.\n";
         String respuesta1 = parte1 + "x".repeat(6000);
         assertTrue(respuesta1.length() > 6000);
         when(aiResponder.respondStream(any(AIRequest.class))).thenReturn(Flux.just(respuesta1));
 
-        var turno1 = new ConversationTurn(PROJECT_ID, USER_ID, "¿Dónde puedo ubicar mi restaurante?",
-            List.of(), "Proyecto Test", "Descripción", "Software");
-        String contenido1 = orchestrator.orchestrateStream(turno1)
-            .reduce("", (acc, next) -> acc + next).block();
+        var turno1 = new ConversationTurn(
+                PROJECT_ID,
+                USER_ID,
+                "¿Dónde puedo ubicar mi restaurante?",
+                List.of(),
+                "Proyecto Test",
+                "Descripción",
+                "Software");
+        String contenido1 = orchestrator
+                .orchestrateStream(turno1)
+                .reduce("", (acc, next) -> acc + next)
+                .block();
 
         assertEquals(respuesta1, contenido1);
         assertFalse(contenido1.contains("No pude generar"));
@@ -268,17 +279,17 @@ class ConversationOrchestratorPipelineIntegrationTest {
         // Turno 2: el usuario pulsa "La respuesta es extensa. ¿Deseas que continúe?"
         // -> se envía "Continúa, por favor." y la IA produce SOLO la continuación.
         String respuesta2 = "## Continuación\n"
-            + "Ubicaciones alternativas: Centro Histórico, Getsemaní y Bocagrande.\n"
-            + "- Avenida San Martín\n- Parque de la Marina\n- Castillo San Felipe\n";
+                + "Ubicaciones alternativas: Centro Histórico, Getsemaní y Bocagrande.\n"
+                + "- Avenida San Martín\n- Parque de la Marina\n- Castillo San Felipe\n";
         when(aiResponder.respondStream(any(AIRequest.class))).thenReturn(Flux.just(respuesta2));
 
-        var historial = List.of(
-            Message.user("¿Dónde puedo ubicar mi restaurante?"),
-            Message.assistant(contenido1));
-        var turno2 = new ConversationTurn(PROJECT_ID, USER_ID, "Continúa, por favor.",
-            historial, "Proyecto Test", "Descripción", "Software");
-        String contenido2 = orchestrator.orchestrateStream(turno2)
-            .reduce("", (acc, next) -> acc + next).block();
+        var historial = List.of(Message.user("¿Dónde puedo ubicar mi restaurante?"), Message.assistant(contenido1));
+        var turno2 = new ConversationTurn(
+                PROJECT_ID, USER_ID, "Continúa, por favor.", historial, "Proyecto Test", "Descripción", "Software");
+        String contenido2 = orchestrator
+                .orchestrateStream(turno2)
+                .reduce("", (acc, next) -> acc + next)
+                .block();
 
         assertEquals(respuesta2, contenido2);
         assertFalse(contenido2.contains("No pude generar"));

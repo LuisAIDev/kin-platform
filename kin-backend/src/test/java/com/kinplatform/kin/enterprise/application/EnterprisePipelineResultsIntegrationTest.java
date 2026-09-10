@@ -1,7 +1,12 @@
 package com.kinplatform.kin.enterprise.application;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.kinplatform.kin.KinMethod;
-import com.kinplatform.kin.KinMethodCommand;
 import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.ContextRepository;
 import com.kinplatform.kin.context.ProjectContext;
@@ -28,18 +33,11 @@ import com.kinplatform.kin.pipeline.Pipeline;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
-import org.junit.jupiter.api.Test;
-
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.Test;
 
 /**
  * Prueba de integración de extremo a extremo de M3C (Fase 10): el pipeline real
@@ -63,34 +61,54 @@ class EnterprisePipelineResultsIntegrationTest {
         var contextRepository = mock(ContextRepository.class);
         var contexto = contextoCompleto();
         when(contextRepository.findOrCreate(PROJECT_ID, "Proyecto Test", "Descripción", "Software"))
-            .thenReturn(contexto);
+                .thenReturn(contexto);
         when(contextRepository.find(PROJECT_ID)).thenReturn(java.util.Optional.of(contexto));
 
-        var kinMethod = new KinMethod(pipelineReporteConResultados(), bus, contextRepository,
-            new com.kinplatform.kin.conversation.ResponseFallback(
-                List.of(com.kinplatform.kin.conversation.ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
-            (projectId, ctx) -> { }, store);
+        var kinMethod = new KinMethod(
+                pipelineReporteConResultados(),
+                contextRepository,
+                new com.kinplatform.kin.conversation.ResponseFallback(
+                        List.of(com.kinplatform.kin.conversation.ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
+                (projectId, ctx) -> {},
+                store);
         var trigger = new DefaultEnterpriseProjectTrigger(enterpriseRepository, bus);
-        var orchestrator = new ConversationOrchestrator(new HistoryWindow(),
-            new DefaultTurnPolicy(), kinMethod, new ResponseGuard(), contextRepository, trigger);
+        var orchestrator = new ConversationOrchestrator(
+                new HistoryWindow(),
+                new DefaultTurnPolicy(),
+                kinMethod,
+                new ResponseGuard(),
+                contextRepository,
+                trigger);
         var service = new EnterpriseGenerationService(
-            new DefaultBusinessModelEngine(), new DefaultMarketEngine(),
-            new DefaultInnovationEngine(), new DefaultFinancialPlanEngine(),
-            new DefaultRoadmapEngine(), new DefaultRiskPlanEngine(),
-            new DefaultKpiEngine(), new DefaultEnterpriseScoreEngine(),
-            new EnterpriseDocumentAssembler(), enterpriseRepository, bus, Runnable::run);
+                new DefaultBusinessModelEngine(),
+                new DefaultMarketEngine(),
+                new DefaultInnovationEngine(),
+                new DefaultFinancialPlanEngine(),
+                new DefaultRoadmapEngine(),
+                new DefaultRiskPlanEngine(),
+                new DefaultKpiEngine(),
+                new DefaultEnterpriseScoreEngine(),
+                new EnterpriseDocumentAssembler(),
+                enterpriseRepository,
+                bus,
+                Runnable::run);
         var generationOrchestrator = new EnterpriseGenerationOrchestrator(service);
-        new EnterpriseProjectRequestedListener(generationOrchestrator, contextRepository, bus,
-            Runnable::run, store);
+        new EnterpriseProjectRequestedListener(generationOrchestrator, contextRepository, bus, Runnable::run, store);
 
         var result = orchestrator.orchestrate(new ConversationTurn(
-            PROJECT_ID, USER_ID, "Generá el informe de viabilidad", List.of(),
-            "Proyecto Test", "Descripción", "Software"));
+                PROJECT_ID,
+                USER_ID,
+                "Generá el informe de viabilidad",
+                List.of(),
+                "Proyecto Test",
+                "Descripción",
+                "Software"));
 
         assertNotNull(result.consultingReport());
         assertEquals(ConversationDecision.Action.REPORT, result.decision().action());
 
-        EnterpriseProject generated = enterpriseRepository.findLatestVersion(PROJECT_ID).orElseThrow();
+        EnterpriseProject generated =
+                enterpriseRepository.findLatestVersion(PROJECT_ID).orElseThrow();
         assertTrue(generated.isCompleted());
         assertEquals(7, generated.documentCount());
         assertNotNull(generated.score(), "El Enterprise Score debe persistirse en el aggregate completado");
@@ -100,24 +118,27 @@ class EnterprisePipelineResultsIntegrationTest {
         assertTrue(market.contains("1000000"), "TAM real del KnowledgeResult no llegó al plan de mercado: " + market);
 
         String risks = documento(generated, DocumentType.RISK_MATRIX);
-        assertTrue(risks.contains("0.75"),
-            "Riesgo real HIGH del RiskResult no llegó a la matriz (probabilidad 0.75): " + risks);
+        assertTrue(
+                risks.contains("0.75"),
+                "Riesgo real HIGH del RiskResult no llegó a la matriz (probabilidad 0.75): " + risks);
 
         String innovation = documento(generated, DocumentType.INNOVATION_PLAN);
-        assertTrue(innovation.contains("Innovación de proceso"),
-            "Oportunidad real del OpportunityResult no llegó al plan de innovación: " + innovation);
+        assertTrue(
+                innovation.contains("Innovación de proceso"),
+                "Oportunidad real del OpportunityResult no llegó al plan de innovación: " + innovation);
 
         String roadmap = documento(generated, DocumentType.ROADMAP);
-        assertTrue(roadmap.contains("validation"),
-            "Recomendación real del RecommendationResult (fase VALIDATION) no llegó a la hoja de ruta: " + roadmap);
+        assertTrue(
+                roadmap.contains("validation"),
+                "Recomendación real del RecommendationResult (fase VALIDATION) no llegó a la hoja de ruta: " + roadmap);
     }
 
     private String documento(EnterpriseProject project, DocumentType type) {
         return project.documents().stream()
-            .filter(d -> d.type() == type)
-            .findFirst()
-            .map(d -> d.content())
-            .orElse("");
+                .filter(d -> d.type() == type)
+                .findFirst()
+                .map(d -> d.content())
+                .orElse("");
     }
 
     private Pipeline pipelineReporteConResultados() {
@@ -153,7 +174,6 @@ class EnterprisePipelineResultsIntegrationTest {
         for (var dim : AnalyzedDimension.values()) {
             data.put(dim, dim.displayName().repeat(30));
         }
-        return ProjectContext.restore(
-            data, EnumSet.allOf(AnalyzedDimension.class), null, 5, false);
+        return ProjectContext.restore(data, EnumSet.allOf(AnalyzedDimension.class), null, 5, false);
     }
 }

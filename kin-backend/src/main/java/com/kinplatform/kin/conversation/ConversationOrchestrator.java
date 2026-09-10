@@ -13,11 +13,10 @@ import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
 import com.kinplatform.kin.event.DomainEvent;
-import reactor.core.publisher.Flux;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import reactor.core.publisher.Flux;
 
 /**
  * Fachada de dominio del ciclo de conversación (ADR-013, Etapas 5 y 6).
@@ -50,15 +49,22 @@ public class ConversationOrchestrator {
     private final EnterpriseProjectTrigger enterpriseTrigger;
 
     /** Trigger por defecto: sin integración Enterprise, no emite nada. */
-    private static final EnterpriseProjectTrigger NO_OP_TRIGGER = projectId -> { };
+    private static final EnterpriseProjectTrigger NO_OP_TRIGGER = projectId -> {};
 
-    public ConversationOrchestrator(HistoryWindow historyWindow,
-                                    TurnPolicy turnPolicy,
-                                    KinMethod kinMethod,
-                                    ResponseGuard responseGuard,
-                                    ContextRepository contextRepository) {
-        this(historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository,
-            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0), NO_OP_TRIGGER);
+    public ConversationOrchestrator(
+            HistoryWindow historyWindow,
+            TurnPolicy turnPolicy,
+            KinMethod kinMethod,
+            ResponseGuard responseGuard,
+            ContextRepository contextRepository) {
+        this(
+                historyWindow,
+                turnPolicy,
+                kinMethod,
+                responseGuard,
+                contextRepository,
+                new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
+                NO_OP_TRIGGER);
     }
 
     /**
@@ -66,14 +72,14 @@ public class ConversationOrchestrator {
      * {@link ResponseFallback} que consume la {@link ResponseValidation} del
      * turno (reintento acotado o respuesta segura).
      */
-    public ConversationOrchestrator(HistoryWindow historyWindow,
-                                    TurnPolicy turnPolicy,
-                                    KinMethod kinMethod,
-                                    ResponseGuard responseGuard,
-                                    ContextRepository contextRepository,
-                                    ResponseFallback responseFallback) {
-        this(historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository,
-            responseFallback, NO_OP_TRIGGER);
+    public ConversationOrchestrator(
+            HistoryWindow historyWindow,
+            TurnPolicy turnPolicy,
+            KinMethod kinMethod,
+            ResponseGuard responseGuard,
+            ContextRepository contextRepository,
+            ResponseFallback responseFallback) {
+        this(historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository, responseFallback, NO_OP_TRIGGER);
     }
 
     /**
@@ -82,27 +88,35 @@ public class ConversationOrchestrator {
      * cuando el pipeline completa {@code REPORT}. Sin trigger, el orquestador
      * conserva el comportamiento previo intacto.
      */
-    public ConversationOrchestrator(HistoryWindow historyWindow,
-                                    TurnPolicy turnPolicy,
-                                    KinMethod kinMethod,
-                                    ResponseGuard responseGuard,
-                                    ContextRepository contextRepository,
-                                    EnterpriseProjectTrigger enterpriseTrigger) {
-        this(historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository,
-            new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0), enterpriseTrigger);
+    public ConversationOrchestrator(
+            HistoryWindow historyWindow,
+            TurnPolicy turnPolicy,
+            KinMethod kinMethod,
+            ResponseGuard responseGuard,
+            ContextRepository contextRepository,
+            EnterpriseProjectTrigger enterpriseTrigger) {
+        this(
+                historyWindow,
+                turnPolicy,
+                kinMethod,
+                responseGuard,
+                contextRepository,
+                new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
+                enterpriseTrigger);
     }
 
     /**
      * Constructor aditivo completo (Fase 10, Milestone 2F): permite inyectar
      * tanto el {@link ResponseFallback} como el {@link EnterpriseProjectTrigger}.
      */
-    public ConversationOrchestrator(HistoryWindow historyWindow,
-                                    TurnPolicy turnPolicy,
-                                    KinMethod kinMethod,
-                                    ResponseGuard responseGuard,
-                                    ContextRepository contextRepository,
-                                    ResponseFallback responseFallback,
-                                    EnterpriseProjectTrigger enterpriseTrigger) {
+    public ConversationOrchestrator(
+            HistoryWindow historyWindow,
+            TurnPolicy turnPolicy,
+            KinMethod kinMethod,
+            ResponseGuard responseGuard,
+            ContextRepository contextRepository,
+            ResponseFallback responseFallback,
+            EnterpriseProjectTrigger enterpriseTrigger) {
         if (historyWindow == null) {
             throw new IllegalArgumentException("historyWindow no puede ser null");
         }
@@ -153,17 +167,12 @@ public class ConversationOrchestrator {
             throw new IllegalArgumentException("turn no puede ser null");
         }
 
-        List<Message> windowedHistory = historyWindow.window(
-                turn.history(), HistoryWindow.DEFAULT_MAX_MESSAGES);
+        List<Message> windowedHistory = historyWindow.window(turn.history(), HistoryWindow.DEFAULT_MAX_MESSAGES);
 
         ProjectContext projectContext = contextRepository.findOrCreate(
-                turn.projectId(),
-                turn.projectTitle(),
-                turn.projectDescription(),
-                turn.projectCategory());
+                turn.projectId(), turn.projectTitle(), turn.projectDescription(), turn.projectCategory());
 
-        TurnDirective directive = turnPolicy.decide(
-                projectContext, previousDecision(projectContext));
+        TurnDirective directive = turnPolicy.decide(projectContext, previousDecision(projectContext));
 
         KinMethodCommand command = new KinMethodCommand(
                 turn.projectId(),
@@ -180,8 +189,7 @@ public class ConversationOrchestrator {
             throw new IllegalStateException("KinMethod.execute devolvió null");
         }
 
-        ResponseValidation validation = responseGuard.validate(
-                result.aiResponse(), directive);
+        ResponseValidation validation = responseGuard.validate(result.aiResponse(), directive);
         List<DomainEvent> events = new ArrayList<>(result.events());
 
         // Reintento acotado SOLO ante un rechazo duro (respuesta no entregable:
@@ -191,8 +199,7 @@ public class ConversationOrchestrator {
         // longitud suave, ADR-017 E5).
         if (ResponseGuard.requiresFallback(validation)) {
             int attempt = 0;
-            while (ResponseGuard.requiresFallback(validation)
-                    && responseFallback.shouldRetry(validation, ++attempt)) {
+            while (ResponseGuard.requiresFallback(validation) && responseFallback.shouldRetry(validation, ++attempt)) {
                 result = kinMethod.execute(command);
                 events.addAll(result.events());
                 validation = responseGuard.validate(result.aiResponse(), directive);
@@ -265,22 +272,18 @@ public class ConversationOrchestrator {
         return new StreamingTurnOutcome(
                 outcome.safeFlux(),
                 outcome.result().decision(),
-                outcome.result().consultingReport());
+                outcome.result().consultingReport(),
+                outcome.result().events());
     }
 
     private KinMethodCommand buildStreamCommand(ConversationTurn turn) {
         if (turn == null) {
             throw new IllegalArgumentException("turn no puede ser null");
         }
-        List<Message> windowedHistory = historyWindow.window(
-                turn.history(), HistoryWindow.DEFAULT_MAX_MESSAGES);
+        List<Message> windowedHistory = historyWindow.window(turn.history(), HistoryWindow.DEFAULT_MAX_MESSAGES);
         ProjectContext projectContext = contextRepository.findOrCreate(
-                turn.projectId(),
-                turn.projectTitle(),
-                turn.projectDescription(),
-                turn.projectCategory());
-        TurnDirective directive = turnPolicy.decide(
-                projectContext, previousDecision(projectContext));
+                turn.projectId(), turn.projectTitle(), turn.projectDescription(), turn.projectCategory());
+        TurnDirective directive = turnPolicy.decide(projectContext, previousDecision(projectContext));
         return new KinMethodCommand(
                 turn.projectId(),
                 turn.userId(),

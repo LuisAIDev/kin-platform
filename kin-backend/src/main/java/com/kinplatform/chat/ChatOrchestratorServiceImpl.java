@@ -13,6 +13,7 @@ import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.ConversationTurn;
 import com.kinplatform.kin.conversation.StreamingTurnOutcome;
 import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.export.intent.ExportAction;
 import com.kinplatform.kin.export.intent.ExportChatIntentService;
 import com.kinplatform.kin.reporting.report.ReportRepository;
@@ -63,6 +64,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
     private final AiBudgetControlService budgetControlService;
     private final ReservationContext reservationContext;
     private final ExportChatIntentService exportChatIntentService;
+    private final ChatTurnFinalizationService finalizationService;
     private final ExecutorService pipelineExecutor;
     private final boolean useSynchronousExecutor;
 
@@ -98,7 +100,46 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         }
     };
 
+    /**
+     * Constructor de producción: inyecta el {@link ChatTurnFinalizationService}
+     * que persiste mensaje asistente + reporte + eventos outbox en una
+     * transacción corta tras completarse el turno (ADR-026).
+     */
     @Autowired
+    public ChatOrchestratorServiceImpl(
+            ChatService chatService,
+            ProjectRepository projectRepository,
+            ObjectMapper objectMapper,
+            ConversationOrchestrator conversationOrchestrator,
+            PromptGuardrail promptGuardrail,
+            ReportRepository reportRepository,
+            SubscriptionValidatorService subscriptionValidator,
+            AiBudgetControlService budgetControlService,
+            ReservationContext reservationContext,
+            ExportChatIntentService exportChatIntentService,
+            ChatTurnFinalizationService finalizationService) {
+        this(
+                chatService,
+                projectRepository,
+                objectMapper,
+                conversationOrchestrator,
+                promptGuardrail,
+                reportRepository,
+                subscriptionValidator,
+                budgetControlService,
+                reservationContext,
+                exportChatIntentService,
+                finalizationService,
+                defaultPipelineExecutor(),
+                false);
+    }
+
+    /**
+     * Constructor de compatibilidad (10 args) sin servicio de finalización:
+     * conserva el comportamiento previo (guardar mensaje asistente + reporte,
+     * sin publicación de eventos). Lo usan tests que construyen el servicio
+     * directamente.
+     */
     public ChatOrchestratorServiceImpl(
             ChatService chatService,
             ProjectRepository projectRepository,
@@ -121,12 +162,14 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                 budgetControlService,
                 reservationContext,
                 exportChatIntentService,
+                null,
                 defaultPipelineExecutor(),
                 false);
     }
 
     /**
      * Constructor completo para tests: permite inyectar un executor síncrono.
+     * No usa servicio de finalización (comportamiento legacy).
      */
     ChatOrchestratorServiceImpl(
             ChatService chatService,
@@ -141,6 +184,40 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
             ExportChatIntentService exportChatIntentService,
             ExecutorService pipelineExecutor,
             boolean useSynchronousExecutor) {
+        this(
+                chatService,
+                projectRepository,
+                objectMapper,
+                conversationOrchestrator,
+                promptGuardrail,
+                reportRepository,
+                subscriptionValidator,
+                budgetControlService,
+                reservationContext,
+                exportChatIntentService,
+                null,
+                pipelineExecutor,
+                useSynchronousExecutor);
+    }
+
+    /**
+     * Constructor completo para tests de cadena real: permite inyectar el
+     * {@link ChatTurnFinalizationService} y un executor síncrono.
+     */
+    ChatOrchestratorServiceImpl(
+            ChatService chatService,
+            ProjectRepository projectRepository,
+            ObjectMapper objectMapper,
+            ConversationOrchestrator conversationOrchestrator,
+            PromptGuardrail promptGuardrail,
+            ReportRepository reportRepository,
+            SubscriptionValidatorService subscriptionValidator,
+            AiBudgetControlService budgetControlService,
+            ReservationContext reservationContext,
+            ExportChatIntentService exportChatIntentService,
+            ChatTurnFinalizationService finalizationService,
+            ExecutorService pipelineExecutor,
+            boolean useSynchronousExecutor) {
         this.chatService = chatService;
         this.projectRepository = projectRepository;
         this.objectMapper = objectMapper;
@@ -151,6 +228,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         this.budgetControlService = budgetControlService;
         this.reservationContext = reservationContext;
         this.exportChatIntentService = exportChatIntentService;
+        this.finalizationService = finalizationService;
         this.pipelineExecutor = pipelineExecutor;
         this.useSynchronousExecutor = useSynchronousExecutor;
     }
@@ -244,8 +322,13 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                     result.aiResponse() != null ? result.aiResponse().length() : 0,
                     result.events().size(),
                     result.validation() != null ? result.validation().accepted() : null);
-            var assistantMessage = saveAssistantMessage(userId, projectId, result.aiResponse());
-            persistReportIfGenerated(projectId, result.decision(), result.consultingReport());
+            var assistantMessage = finalizeTurn(
+                    userId,
+                    projectId,
+                    result.aiResponse(),
+                    result.decision(),
+                    result.consultingReport(),
+                    result.events());
             return ChatResponse.builder()
                     .userMessageId(userMessage.getId())
                     .assistantMessageId(assistantMessage.getId())
@@ -376,34 +459,46 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
                         },
                         () -> {
                             var finalContent = fullContent.toString();
-                            String assistantMessageId = null;
-                            int tokensUsed = 0;
+                            ChatMessageResponse assistantMessage = null;
                             log.info("=== AI RESPONSE RECEIVED === chars={}", finalContent.length());
 
                             try {
-                                var assistantMessage = saveAssistantMessage(userId, projectId, finalContent);
-                                assistantMessageId = assistantMessage.getId().toString();
-                                tokensUsed = assistantMessage.getTokensUsed();
+                                assistantMessage = finalizeTurn(
+                                        userId,
+                                        projectId,
+                                        finalContent,
+                                        outcome != null ? outcome.decision() : null,
+                                        outcome != null ? outcome.consultingReport() : null,
+                                        outcome != null ? outcome.events() : List.of());
                             } catch (Exception e) {
                                 log.error(
-                                        "=== SSE SAVE ASSISTANT FAILED === projectId={}, contentChars={}, errorType={}, message={}",
+                                        "=== SSE TURN FINALIZATION FAILED === projectId={}, contentChars={}, errorType={}, message={}",
                                         projectId,
                                         finalContent.length(),
                                         e.getClass().getSimpleName(),
                                         e.getMessage());
+                                if (!emitterCompleted.compareAndSet(false, true)) {
+                                    return;
+                                }
+                                try {
+                                    emitter.send(SseEmitter.event()
+                                            .name("error")
+                                            .data(objectMapper.writeValueAsString(Map.of(
+                                                    "error", "No se pudo finalizar la respuesta: " + e.getMessage()))));
+                                } catch (IOException sendError) {
+                                    log.error(
+                                            "Failed to send finalization error event. projectId={}",
+                                            projectId,
+                                            sendError);
+                                }
+                                emitter.complete();
+                                return;
                             }
 
-                            if (outcome != null) {
-                                try {
-                                    persistReportIfGenerated(projectId, outcome.decision(), outcome.consultingReport());
-                                } catch (Exception e) {
-                                    log.error(
-                                            "=== SSE PERSIST REPORT FAILED === projectId={}, errorType={}, message={}",
-                                            projectId,
-                                            e.getClass().getSimpleName(),
-                                            e.getMessage());
-                                }
-                            }
+                            String assistantMessageId = assistantMessage != null
+                                    ? assistantMessage.getId().toString()
+                                    : "";
+                            int tokensUsed = assistantMessage != null ? assistantMessage.getTokensUsed() : 0;
 
                             if (!emitterCompleted.compareAndSet(false, true)) {
                                 log.warn(
@@ -730,6 +825,30 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         request.setRole(MessageRole.ASSISTANT);
         request.setContent(content);
         return chatService.saveMessage(userId, projectId, request);
+    }
+
+    /**
+     * Finaliza el turno. En producción delega en
+     * {@link ChatTurnFinalizationService} (transacción corta que persiste
+     * mensaje asistente + reporte + eventos outbox de forma atómica). Cuando el
+     * servicio de finalización no está inyectado (tests/constructores legacy)
+     * conserva el comportamiento previo: guardar el asistente y persistir el
+     * reporte sin publicar eventos.
+     */
+    private ChatMessageResponse finalizeTurn(
+            UUID userId,
+            UUID projectId,
+            String assistantContent,
+            ConversationDecision decision,
+            ConsultingReport consultingReport,
+            List<DomainEvent> events) {
+        if (finalizationService != null) {
+            return finalizationService.finalizeTurn(
+                    userId, projectId, assistantContent, decision, consultingReport, events);
+        }
+        var assistantMessage = saveAssistantMessage(userId, projectId, assistantContent);
+        persistReportIfGenerated(projectId, decision, consultingReport);
+        return assistantMessage;
     }
 
     private List<Message> loadHistoryForContext(UUID userId, UUID projectId) {

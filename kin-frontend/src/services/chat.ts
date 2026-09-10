@@ -92,6 +92,7 @@ export const chatService = {
         let buffer = "";
         let eventType = "";
         let receivedDone = false;
+        let receivedError = false;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -128,9 +129,15 @@ export const chatService = {
                   });
                   break;
                 } else if (eventType === "error") {
+                  // El evento de error del backend es TERMINAL: el servidor
+                  // completa la conexión justo después de emitirlo. Se dispara
+                  // un único onError y no se genera el segundo error de
+                  // "Stream ended without completion" cuando llega el EOF.
+                  receivedError = true;
                   callbacks.onError(
                     streamError(parsed.error ?? "Unknown server error", receivedTokens),
                   );
+                  break;
                 } else if (eventType === "started") {
                   if (!receivedStarted) {
                     receivedStarted = true;
@@ -145,10 +152,10 @@ export const chatService = {
               eventType = "";
             }
           }
-          if (receivedDone) break;
+          if (receivedDone || receivedError) break;
         }
 
-        if (!receivedDone) {
+        if (!receivedDone && !receivedError) {
           callbacks.onError(streamError("Stream ended without completion", receivedTokens));
         }
       } catch (err: unknown) {

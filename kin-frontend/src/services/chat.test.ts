@@ -178,6 +178,24 @@ describe("chatService", () => {
     expect(err.message).toBe("stream broke");
   });
 
+  it("sendMessageStream: event:error es terminal → un único onError (sin doble error por EOF)", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(sseResponse([
+      'event: error\ndata: {"error":"backend error"}\n\n',
+    ]));
+    const onError = vi.fn();
+
+    chatService.sendMessageStream("p1", "hola", {
+      onToken: vi.fn(),
+      onDone: vi.fn(),
+      onError,
+    });
+    await vi.waitFor(() => expect(onError).toHaveBeenCalledTimes(1));
+
+    const err = onError.mock.calls[0][0] as { hadTokens?: boolean; message?: string };
+    expect(err.message).toBe("backend error");
+    expect(err.hadTokens).toBe(false);
+  });
+
   it("sendMessageStream: EOF sin done después de tokens → onError con hadTokens=true", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(sseResponse([
       'event: token\ndata: {"token":"parcial"}\n\n',

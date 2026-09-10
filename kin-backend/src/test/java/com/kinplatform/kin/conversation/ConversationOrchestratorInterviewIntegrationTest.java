@@ -1,5 +1,14 @@
 package com.kinplatform.kin.conversation;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.ai.AIResponder;
@@ -28,12 +37,11 @@ import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.kin.decision.ConversationDecision;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.kin.interview.InMemoryInterviewRepository;
 import com.kinplatform.kin.interview.InterviewAnswer;
 import com.kinplatform.kin.interview.InterviewQuestion;
 import com.kinplatform.kin.interview.InterviewRepository;
 import com.kinplatform.kin.interview.InterviewState;
-import com.kinplatform.kin.interview.InMemoryInterviewRepository;
 import com.kinplatform.kin.interview.engine.AnswerValidator;
 import com.kinplatform.kin.interview.engine.InterviewBlueprint;
 import com.kinplatform.kin.interview.engine.InterviewEngine;
@@ -79,27 +87,17 @@ import com.kinplatform.kin.reporting.risk.RiskEngine;
 import com.kinplatform.kin.reporting.risk.RiskModel;
 import com.kinplatform.kin.scoring.ScoringEngine;
 import com.kinplatform.kin.scoring.ScoringModel;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Integración E6 (ADR-015): verifica el flujo completo de la entrevista a través
@@ -127,74 +125,69 @@ class ConversationOrchestratorInterviewIntegrationTest {
     void setUp() {
         interviewRepository = new InMemoryInterviewRepository();
         var interviewBlueprint = new InterviewBlueprint(List.of(
-            InterviewQuestion.required("q-sector", AnalyzedDimension.SECTOR,
-                "sector y giro del negocio", 1),
-            InterviewQuestion.required("q-revenue", AnalyzedDimension.REVENUE_MODEL,
-                "modelo de ingresos", 2)));
+                InterviewQuestion.required("q-sector", AnalyzedDimension.SECTOR, "sector y giro del negocio", 1),
+                InterviewQuestion.required("q-revenue", AnalyzedDimension.REVENUE_MODEL, "modelo de ingresos", 2)));
         var conversationBuilder = new ConversationPromptBuilder();
         var reportBuilder = new ReportPromptBuilder(List.of(
-            new ExecutiveSummaryFormatter(),
-            new ScoresSectionFormatter(),
-            new RecommendationsSectionFormatter(),
-            new RisksSectionFormatter(),
-            new OpportunitiesSectionFormatter(),
-            new FinancialSectionFormatter(),
-            new MarketSectionFormatter(),
-            new InnovationSectionFormatter(),
-            new NextStepsSectionFormatter(),
-            new ReportMetadataFormatter()
-        ));
+                new ExecutiveSummaryFormatter(),
+                new ScoresSectionFormatter(),
+                new RecommendationsSectionFormatter(),
+                new RisksSectionFormatter(),
+                new OpportunitiesSectionFormatter(),
+                new FinancialSectionFormatter(),
+                new MarketSectionFormatter(),
+                new InnovationSectionFormatter(),
+                new NextStepsSectionFormatter(),
+                new ReportMetadataFormatter()));
         var promptAssembler = new PromptAssembler(conversationBuilder, reportBuilder);
         var gateway = new KnowledgeGateway(SourceRegistry.empty(), SourceValidator.strict());
         var pipeline = new Pipeline(List.of(
-            new AnalyzerStage((message, ctx) -> com.kinplatform.kin.context.AnalysisResult.empty()),
-            new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())),
-            new StrategistStage(new ConversationStrategist(
-                new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))),
-            new InterviewStage(new InterviewEngine(interviewBlueprint, new AnswerValidator()),
-                interviewRepository),
-            new KnowledgeStage(new KnowledgeEngine(gateway)),
-            new ScoringStage(new ScoringEngine(ScoringModel.defaultModel())),
-            new RecommendationStage(new RecommendationEngine(RecommendationModel.defaultModel())),
-            new RiskStage(new RiskEngine(
-                List.of(new BusinessRiskAnalyzer(), new MarketRiskAnalyzer()),
-                RiskModel.defaultModel())),
-            new OpportunityStage(new OpportunityEngine(
-                List.of(new MarketOpportunityAnalyzer(), new MonetizationOpportunityAnalyzer()),
-                OpportunityModel.defaultModel())),
-            new ReportStage(reportEngine()),
-            new ConsultorStage(aiResponder, promptAssembler, new ResponseGuard()),
-            new EventStage()
-        ));
-        var kinMethod = new KinMethod(pipeline, new InMemoryDomainEventBus(), contextRepository);
+                new AnalyzerStage((message, ctx) -> com.kinplatform.kin.context.AnalysisResult.empty()),
+                new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())),
+                new StrategistStage(new ConversationStrategist(
+                        new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))),
+                new InterviewStage(new InterviewEngine(interviewBlueprint, new AnswerValidator()), interviewRepository),
+                new KnowledgeStage(new KnowledgeEngine(gateway)),
+                new ScoringStage(new ScoringEngine(ScoringModel.defaultModel())),
+                new RecommendationStage(new RecommendationEngine(RecommendationModel.defaultModel())),
+                new RiskStage(new RiskEngine(
+                        List.of(new BusinessRiskAnalyzer(), new MarketRiskAnalyzer()), RiskModel.defaultModel())),
+                new OpportunityStage(new OpportunityEngine(
+                        List.of(new MarketOpportunityAnalyzer(), new MonetizationOpportunityAnalyzer()),
+                        OpportunityModel.defaultModel())),
+                new ReportStage(reportEngine()),
+                new ConsultorStage(aiResponder, promptAssembler, new ResponseGuard()),
+                new EventStage()));
+        var kinMethod = new KinMethod(pipeline, contextRepository);
         orchestrator = new ConversationOrchestrator(
-            new HistoryWindow(), new DefaultTurnPolicy(), kinMethod,
-            new ResponseGuard(), contextRepository);
+                new HistoryWindow(), new DefaultTurnPolicy(), kinMethod, new ResponseGuard(), contextRepository);
     }
 
     private ReportEngine reportEngine() {
         var model = ReportModel.defaultModel();
-        return new ReportEngine(new ReportAssemblers(
-            new ExecutiveSummaryAssembler(),
-            new ScoresSectionAssembler(),
-            new RecommendationsSectionAssembler(),
-            new RisksSectionAssembler(),
-            new OpportunitiesSectionAssembler(),
-            new FinancialSectionAssembler(),
-            new MarketSectionAssembler(),
-            new InnovationSectionAssembler(),
-            new NextStepsSectionAssembler(model),
-            new ReportMetadataAssembler(model)), model);
+        return new ReportEngine(
+                new ReportAssemblers(
+                        new ExecutiveSummaryAssembler(),
+                        new ScoresSectionAssembler(),
+                        new RecommendationsSectionAssembler(),
+                        new RisksSectionAssembler(),
+                        new OpportunitiesSectionAssembler(),
+                        new FinancialSectionAssembler(),
+                        new MarketSectionAssembler(),
+                        new InnovationSectionAssembler(),
+                        new NextStepsSectionAssembler(model),
+                        new ReportMetadataAssembler(model)),
+                model);
     }
 
     private ConversationTurn turn(String userMessage) {
-        return new ConversationTurn(PROJECT_ID, USER_ID, userMessage, List.of(),
-            "Proyecto Test", "Descripción", "Software");
+        return new ConversationTurn(
+                PROJECT_ID, USER_ID, userMessage, List.of(), "Proyecto Test", "Descripción", "Software");
     }
 
     private void stubContextoNuevo() {
         when(contextRepository.findOrCreate(PROJECT_ID, "Proyecto Test", "Descripción", "Software"))
-            .thenReturn(ProjectContext.fromProject("Proyecto Test", "Descripción", "Software"));
+                .thenReturn(ProjectContext.fromProject("Proyecto Test", "Descripción", "Software"));
     }
 
     private void stubContextoCompleto() {
@@ -203,8 +196,7 @@ class ConversationOrchestratorInterviewIntegrationTest {
             data.put(dim, dim.displayName().repeat(30));
         }
         when(contextRepository.findOrCreate(PROJECT_ID, "Proyecto Test", "Descripción", "Software"))
-            .thenReturn(ProjectContext.restore(
-                data, EnumSet.allOf(AnalyzedDimension.class), null, 5, false));
+                .thenReturn(ProjectContext.restore(data, EnumSet.allOf(AnalyzedDimension.class), null, 5, false));
     }
 
     private AIRequest capturarAIRequest() {
@@ -258,8 +250,8 @@ class ConversationOrchestratorInterviewIntegrationTest {
         stubContextoNuevo();
         when(aiResponder.respond(any(AIRequest.class))).thenReturn("Aquí tenés el informe de viabilidad.");
         interviewRepository.save(InterviewState.empty(PROJECT_ID)
-            .withCurrent("q-revenue")
-            .withAnswered(Map.of("q-sector", InterviewAnswer.of("q-sector", "Restaurante"))));
+                .withCurrent("q-revenue")
+                .withAnswered(Map.of("q-sector", InterviewAnswer.of("q-sector", "Restaurante"))));
 
         var result = orchestrator.orchestrate(turn("cobramos por venta directa"));
 

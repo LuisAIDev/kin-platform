@@ -1,11 +1,18 @@
 package com.kinplatform.project;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.ai.context.adapter.HeuristicContextAnalyzerAdapter;
 import com.kinplatform.ai.context.adapter.JpaContextRepository;
 import com.kinplatform.ai.context.adapter.ProjectContextEntity;
 import com.kinplatform.ai.context.adapter.ProjectContextJpaRepository;
 import com.kinplatform.chat.ChatMessageRepository;
+import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.CompletenessEvaluator;
 import com.kinplatform.kin.context.ContextRepository;
@@ -20,8 +27,6 @@ import com.kinplatform.kin.conversation.TurnResult;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
-import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.pipeline.Pipeline;
 import com.kinplatform.kin.pipeline.stage.AnalyzerStage;
 import com.kinplatform.kin.pipeline.stage.EvaluatorStage;
@@ -30,24 +35,17 @@ import com.kinplatform.kin.pipeline.stage.StrategistStage;
 import com.kinplatform.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Integración de la sincronización ProjectContext → Project (FASE 9 · cierre de
@@ -85,8 +83,7 @@ class ProjectContextSyncIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        when(contextJpa.findById(any())).thenAnswer(i ->
-            Optional.ofNullable(contextStore.get(i.getArgument(0))));
+        when(contextJpa.findById(any())).thenAnswer(i -> Optional.ofNullable(contextStore.get(i.getArgument(0))));
         when(contextJpa.save(any())).thenAnswer(i -> {
             ProjectContextEntity e = i.getArgument(0);
             contextStore.put(e.getProjectId(), e);
@@ -95,13 +92,18 @@ class ProjectContextSyncIntegrationTest {
         contextRepository = new JpaContextRepository(contextJpa, new ObjectMapper());
 
         project = Project.builder()
-            .id(PROJECT_ID)
-            .user(User.builder().id(USER_ID).build())
-            .title("")
-            .description("")
-            .category(Category.builder().code("EMPRESARIAL").name("Empresarial")
-                .displayOrder(2).color("#0ea5e9").active(true).build())
-            .build();
+                .id(PROJECT_ID)
+                .user(User.builder().id(USER_ID).build())
+                .title("")
+                .description("")
+                .category(Category.builder()
+                        .code("EMPRESARIAL")
+                        .name("Empresarial")
+                        .displayOrder(2)
+                        .color("#0ea5e9")
+                        .active(true)
+                        .build())
+                .build();
         when(projectRepository.findById(PROJECT_ID)).thenAnswer(i -> Optional.of(project));
         when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
@@ -110,25 +112,27 @@ class ProjectContextSyncIntegrationTest {
 
     private ConversationOrchestrator orchestrator() {
         var pipeline = new Pipeline(List.of(
-            new AnalyzerStage(new HeuristicContextAnalyzerAdapter()),
-            new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())),
-            new StrategistStage(new ConversationStrategist(
-                new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))),
-            new EventStage()));
-        var kinMethod = new KinMethod(pipeline, new InMemoryDomainEventBus(), contextRepository, sync);
-        return new ConversationOrchestrator(new HistoryWindow(), new DefaultTurnPolicy(),
-            kinMethod, new ResponseGuard(), contextRepository);
+                new AnalyzerStage(new HeuristicContextAnalyzerAdapter()),
+                new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())),
+                new StrategistStage(new ConversationStrategist(
+                        new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))),
+                new EventStage()));
+        var kinMethod = new KinMethod(pipeline, contextRepository, sync);
+        return new ConversationOrchestrator(
+                new HistoryWindow(), new DefaultTurnPolicy(), kinMethod, new ResponseGuard(), contextRepository);
     }
 
     private ConversationTurn turn(String message) {
-        return new ConversationTurn(PROJECT_ID, USER_ID, message, List.of(),
-            "Proyecto", "Descripción", "Software");
+        return new ConversationTurn(PROJECT_ID, USER_ID, message, List.of(), "Proyecto", "Descripción", "Software");
     }
 
     private int progress(Project p) {
-        var service = new ProjectServiceImpl(projectRepository, userRepository,
-            chatMessageRepository, subscriptionValidatorService,
-            new CategoryService(categoryRepository));
+        var service = new ProjectServiceImpl(
+                projectRepository,
+                userRepository,
+                chatMessageRepository,
+                subscriptionValidatorService,
+                new CategoryService(categoryRepository));
         try {
             Method m = ProjectServiceImpl.class.getDeclaredMethod("calculateProgress", Project.class);
             m.setAccessible(true);
@@ -140,19 +144,19 @@ class ProjectContextSyncIntegrationTest {
 
     @Test
     void caso1_descubrirNombre_deberiaSincronizarProjectContextYProject() {
-        TurnResult result = orchestrator().orchestrate(turn(
-            "Mi proyecto se llama Restaurante Vida Sana Caribe"));
+        TurnResult result = orchestrator().orchestrate(turn("Mi proyecto se llama Restaurante Vida Sana Caribe"));
 
-        assertEquals("Restaurante Vida Sana Caribe",
-            result.projectContext().value(AnalyzedDimension.PROJECT_NAME));
+        assertEquals("Restaurante Vida Sana Caribe", result.projectContext().value(AnalyzedDimension.PROJECT_NAME));
         assertEquals("Restaurante Vida Sana Caribe", project.getTitle());
         assertFalse(project.getTitle().isBlank());
     }
 
     @Test
     void caso2_reabrirElProyecto_deberiaDejarDeMostrarCeroPorCiento() {
-        orchestrator().orchestrate(turn(
-            "Mi proyecto se llama Restaurante Vida Sana Caribe. El problema es que la gente no come sano."));
+        orchestrator()
+                .orchestrate(
+                        turn(
+                                "Mi proyecto se llama Restaurante Vida Sana Caribe. El problema es que la gente no come sano."));
 
         assertEquals("Restaurante Vida Sana Caribe", project.getTitle());
         assertFalse(project.getDescription().isBlank());
@@ -168,8 +172,7 @@ class ProjectContextSyncIntegrationTest {
         var orquestadorReabierto = orchestrator();
         TurnResult reabierto = orquestadorReabierto.orchestrate(turn("contame más"));
 
-        assertEquals("Restaurante Vida Sana Caribe",
-            reabierto.projectContext().value(AnalyzedDimension.PROJECT_NAME));
+        assertEquals("Restaurante Vida Sana Caribe", reabierto.projectContext().value(AnalyzedDimension.PROJECT_NAME));
         assertEquals("Restaurante Vida Sana Caribe", project.getTitle());
     }
 

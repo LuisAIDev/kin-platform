@@ -26,11 +26,10 @@ import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.kin.enrichment.EnrichmentEngine;
 import com.kinplatform.kin.enrichment.FactRanker;
 import com.kinplatform.kin.enrichment.stage.EnrichmentStage;
-import com.kinplatform.kin.event.DomainEventBus;
+import com.kinplatform.kin.interview.InMemoryInterviewRepository;
 import com.kinplatform.kin.interview.InterviewAnswer;
 import com.kinplatform.kin.interview.InterviewQuestion;
 import com.kinplatform.kin.interview.InterviewState;
-import com.kinplatform.kin.interview.InMemoryInterviewRepository;
 import com.kinplatform.kin.interview.engine.AnswerValidator;
 import com.kinplatform.kin.interview.engine.InterviewBlueprint;
 import com.kinplatform.kin.interview.engine.InterviewEngine;
@@ -81,10 +80,8 @@ import com.kinplatform.kin.reporting.risk.RiskEngine;
 import com.kinplatform.kin.reporting.risk.RiskModel;
 import com.kinplatform.kin.scoring.ScoringEngine;
 import com.kinplatform.kin.scoring.ScoringModel;
-
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
@@ -101,8 +98,7 @@ import java.util.UUID;
  */
 public final class TestIntegrationPipeline {
 
-    private TestIntegrationPipeline() {
-    }
+    private TestIntegrationPipeline() {}
 
     public static Pipeline realPipeline(AIResponder aiResponder, UUID projectId) {
         return new Pipeline(stages(aiResponder, projectId));
@@ -110,13 +106,13 @@ public final class TestIntegrationPipeline {
 
     public static Pipeline realPipeline(AIResponder aiResponder, UUID projectId, List<String> order) {
         return new Pipeline(stages(aiResponder, projectId).stream()
-            .map(s -> record(s, order))
-            .toList());
+                .map(s -> record(s, order))
+                .toList());
     }
 
-    public static KinMethod realKinMethod(AIResponder aiResponder, ContextRepository contextRepository,
-                                          DomainEventBus eventBus, UUID projectId) {
-        return new KinMethod(realPipeline(aiResponder, projectId), eventBus, contextRepository);
+    public static KinMethod realKinMethod(
+            AIResponder aiResponder, ContextRepository contextRepository, UUID projectId) {
+        return new KinMethod(realPipeline(aiResponder, projectId), contextRepository);
     }
 
     public static ProjectContext fullContext() {
@@ -128,92 +124,96 @@ public final class TestIntegrationPipeline {
     }
 
     public static PipelineContext pipelineContext(UUID projectId, UUID userId) {
-        var ctx = new PipelineContext(projectId, userId, "generá el informe", List.of(),
-            "Proyecto Test", "Descripción", "Software");
+        var ctx = new PipelineContext(
+                projectId, userId, "generá el informe", List.of(), "Proyecto Test", "Descripción", "Software");
         ctx.projectContext(fullContext());
         return ctx;
     }
 
     private static List<PipelineStage> stages(AIResponder aiResponder, UUID projectId) {
         return List.of(
-            new AnalyzerStage((message, ctx) -> com.kinplatform.kin.context.AnalysisResult.empty()),
-            new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())),
-            new StrategistStage(new ConversationStrategist(
-                new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))),
-            new InterviewStage(new InterviewEngine(interviewBlueprint(), new AnswerValidator()),
-                new InMemoryInterviewRepository(completeInterview(projectId))),
-            knowledgeStage(),
-            new EnrichmentStage(new EnrichmentEngine(new FactRanker())),
-            new ScoringStage(new ScoringEngine(ScoringModel.defaultModel())),
-            new RecommendationStage(new RecommendationEngine(RecommendationModel.defaultModel())),
-            new RiskStage(new RiskEngine(
-                List.of(new BusinessRiskAnalyzer(), new MarketRiskAnalyzer()),
-                RiskModel.defaultModel())),
-            new OpportunityStage(new OpportunityEngine(
-                List.of(new MarketOpportunityAnalyzer(), new MonetizationOpportunityAnalyzer()),
-                OpportunityModel.defaultModel())),
-            new ReportStage(reportEngine()),
-            new ConsultorStage(aiResponder, promptAssembler(), new ResponseGuard()),
-            new EventStage()
-        );
+                new AnalyzerStage((message, ctx) -> com.kinplatform.kin.context.AnalysisResult.empty()),
+                new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())),
+                new StrategistStage(new ConversationStrategist(
+                        new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))),
+                new InterviewStage(
+                        new InterviewEngine(interviewBlueprint(), new AnswerValidator()),
+                        new InMemoryInterviewRepository(completeInterview(projectId))),
+                knowledgeStage(),
+                new EnrichmentStage(new EnrichmentEngine(new FactRanker())),
+                new ScoringStage(new ScoringEngine(ScoringModel.defaultModel())),
+                new RecommendationStage(new RecommendationEngine(RecommendationModel.defaultModel())),
+                new RiskStage(new RiskEngine(
+                        List.of(new BusinessRiskAnalyzer(), new MarketRiskAnalyzer()), RiskModel.defaultModel())),
+                new OpportunityStage(new OpportunityEngine(
+                        List.of(new MarketOpportunityAnalyzer(), new MonetizationOpportunityAnalyzer()),
+                        OpportunityModel.defaultModel())),
+                new ReportStage(reportEngine()),
+                new ConsultorStage(aiResponder, promptAssembler(), new ResponseGuard()),
+                new EventStage());
     }
 
     private static InterviewBlueprint interviewBlueprint() {
         return new InterviewBlueprint(List.of(
-            InterviewQuestion.required("q-sector", AnalyzedDimension.SECTOR, "sector del negocio", 1),
-            InterviewQuestion.required("q-revenue", AnalyzedDimension.REVENUE_MODEL, "modelo de ingresos", 2)));
+                InterviewQuestion.required("q-sector", AnalyzedDimension.SECTOR, "sector del negocio", 1),
+                InterviewQuestion.required("q-revenue", AnalyzedDimension.REVENUE_MODEL, "modelo de ingresos", 2)));
     }
 
     private static InterviewState completeInterview(UUID projectId) {
         return InterviewState.empty(projectId)
-            .withAnswered(Map.of(
-                "q-sector", InterviewAnswer.of("q-sector", "Restaurante"),
-                "q-revenue", InterviewAnswer.of("q-revenue", "Ventas directas")))
-            .withPending(List.of())
-            .withComplete(true);
+                .withAnswered(Map.of(
+                        "q-sector", InterviewAnswer.of("q-sector", "Restaurante"),
+                        "q-revenue", InterviewAnswer.of("q-revenue", "Ventas directas")))
+                .withPending(List.of())
+                .withComplete(true);
     }
 
     private static KnowledgeStage knowledgeStage() {
         var candidate = new KnowledgeCandidate(
-            "El mercado retail crece con demanda del consumidor. Dato verificado.",
-            "src-1", "Fuente", "https://example.com/reporte",
-            OffsetDateTime.now().minusDays(10), "application/json",
-            Map.of(SourceValidator.META_SOURCE_TYPE, "official"));
+                "El mercado retail crece con demanda del consumidor. Dato verificado.",
+                "src-1",
+                "Fuente",
+                "https://example.com/reporte",
+                OffsetDateTime.now().minusDays(10),
+                "application/json",
+                Map.of(SourceValidator.META_SOURCE_TYPE, "official"));
         var source = new CapturingSource(candidate);
-        var validator = new SourceValidator(Set.of("example.com"), Duration.ofDays(365),
-            Set.of("application/json", "text/plain"));
-        return new KnowledgeStage(new KnowledgeEngine(
-            new KnowledgeGateway(new SourceRegistry(List.of(source)), validator)));
+        var validator = new SourceValidator(
+                Set.of("example.com"), Duration.ofDays(365), Set.of("application/json", "text/plain"));
+        return new KnowledgeStage(
+                new KnowledgeEngine(new KnowledgeGateway(new SourceRegistry(List.of(source)), validator)));
     }
 
     private static ReportEngine reportEngine() {
         var model = ReportModel.defaultModel();
-        return new ReportEngine(new ReportAssemblers(
-            new ExecutiveSummaryAssembler(),
-            new ScoresSectionAssembler(),
-            new RecommendationsSectionAssembler(),
-            new RisksSectionAssembler(),
-            new OpportunitiesSectionAssembler(),
-            new FinancialSectionAssembler(),
-            new MarketSectionAssembler(),
-            new InnovationSectionAssembler(),
-            new NextStepsSectionAssembler(model),
-            new ReportMetadataAssembler(model)), model);
+        return new ReportEngine(
+                new ReportAssemblers(
+                        new ExecutiveSummaryAssembler(),
+                        new ScoresSectionAssembler(),
+                        new RecommendationsSectionAssembler(),
+                        new RisksSectionAssembler(),
+                        new OpportunitiesSectionAssembler(),
+                        new FinancialSectionAssembler(),
+                        new MarketSectionAssembler(),
+                        new InnovationSectionAssembler(),
+                        new NextStepsSectionAssembler(model),
+                        new ReportMetadataAssembler(model)),
+                model);
     }
 
     private static PromptAssembler promptAssembler() {
         var conversationBuilder = new ConversationPromptBuilder();
         var reportBuilder = new ReportPromptBuilder(List.of(
-            new ExecutiveSummaryFormatter(),
-            new ScoresSectionFormatter(),
-            new RecommendationsSectionFormatter(),
-            new RisksSectionFormatter(),
-            new OpportunitiesSectionFormatter(),
-            new FinancialSectionFormatter(),
-            new MarketSectionFormatter(),
-            new InnovationSectionFormatter(),
-            new NextStepsSectionFormatter(),
-            new ReportMetadataFormatter()));
+                new ExecutiveSummaryFormatter(),
+                new ScoresSectionFormatter(),
+                new RecommendationsSectionFormatter(),
+                new RisksSectionFormatter(),
+                new OpportunitiesSectionFormatter(),
+                new FinancialSectionFormatter(),
+                new MarketSectionFormatter(),
+                new InnovationSectionFormatter(),
+                new NextStepsSectionFormatter(),
+                new ReportMetadataFormatter()));
         return new PromptAssembler(conversationBuilder, reportBuilder);
     }
 
