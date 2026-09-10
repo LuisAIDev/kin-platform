@@ -31,7 +31,10 @@ import java.util.UUID;
  * servicio.</p>
  */
 @RestController
-@RequestMapping("/enterprise")
+@RequestMapping({
+    "/enterprise",
+    "/empresas/enterprise"
+})
 @Tag(name = "Enterprise", description = "API del módulo Enterprise: progreso en "
     + "tiempo real vía Server Sent Events de la generación del proyecto empresarial.")
 public class EnterpriseProgressController {

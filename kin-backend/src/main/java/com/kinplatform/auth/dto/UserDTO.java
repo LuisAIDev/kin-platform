@@ -4,6 +4,7 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -27,4 +28,12 @@ public class UserDTO {
      * también pueden ser médicos). Nunca la decide el frontend.
      */
     private boolean physicianCapability;
+
+    /**
+     * Verticales (productos) a las que tiene acceso este usuario.
+     * - FREE, PREMIUM, FACILITADOR, ADMIN → "empresas"
+     * - PATIENT, PHYSICIAN, o physicianCapability == true → "medical"
+     * - Un usuario puede tener ambos valores.
+     */
+    private List<String> verticalAccess;
 }

@@ -49,7 +49,10 @@ import org.springframework.web.bind.annotation.RestController;
  * necesario para solicitar).</p>
  */
 @RestController
-@RequestMapping("/health/physician")
+@RequestMapping({
+    "/health/physician",
+    "/medical/physician"
+})
 public class PhysicianController {
 
     private static final Logger log = LoggerFactory.getLogger(PhysicianController.class);

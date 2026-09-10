@@ -24,7 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
  * (SecurityConfig: {@code /admin/**}).</p>
  */
 @RestController
-@RequestMapping("/admin/health/audit")
+@RequestMapping({
+    "/admin/health/audit",
+    "/medical/admin/audit"
+})
 public class AuditAdminController {
 
     private static final Logger log = LoggerFactory.getLogger(AuditAdminController.class);

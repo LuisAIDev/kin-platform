@@ -63,7 +63,10 @@ import org.springframework.web.bind.annotation.RestController;
  * códigos HTTP.</p>
  */
 @RestController
-@RequestMapping("/enterprise")
+@RequestMapping({
+    "/enterprise",
+    "/empresas/enterprise"
+})
 @Tag(
         name = "Enterprise",
         description = "API del módulo Enterprise: consulta, "

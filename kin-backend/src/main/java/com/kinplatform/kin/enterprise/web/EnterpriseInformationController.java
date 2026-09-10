@@ -34,7 +34,10 @@ import org.springframework.web.bind.annotation.RestController;
  * de rutas {@code /enterprise/**}).
  */
 @RestController
-@RequestMapping("/enterprise")
+@RequestMapping({
+    "/enterprise",
+    "/empresas/enterprise"
+})
 @Tag(name = "Enterprise", description = "Información y fuentes del proyecto (integración)")
 public class EnterpriseInformationController {
 

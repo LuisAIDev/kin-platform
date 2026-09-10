@@ -31,7 +31,10 @@ import org.springframework.web.bind.annotation.RestController;
  * autenticación, garantizando el aislamiento por paciente.</p>
  */
 @RestController
-@RequestMapping("/health/differential")
+@RequestMapping({
+    "/health/differential",
+    "/medical/differential"
+})
 public class DifferentialController {
 
     private static final Logger log = LoggerFactory.getLogger(DifferentialController.class);
