@@ -90,7 +90,9 @@ public class StripeService {
 
             // Añadir trial_period_days si el plan tiene trial_days > 0
             if (plan.getTrialDays() != null && plan.getTrialDays() > 0) {
-                paramsBuilder.setTrialPeriodDays(plan.getTrialDays());
+                paramsBuilder.setSubscriptionData(SessionCreateParams.SubscriptionData.builder()
+                        .setTrialPeriodDays(plan.getTrialDays().longValue())
+                        .build());
             }
 
             if (successUrl != null) {

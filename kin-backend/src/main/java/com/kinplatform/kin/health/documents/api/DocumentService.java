@@ -11,9 +11,11 @@ import com.kinplatform.kin.health.documents.domain.ClinicalDocument;
 import com.kinplatform.kin.health.documents.domain.DocumentStatus;
 import com.kinplatform.kin.health.documents.event.DocumentDeletedEvent;
 import com.kinplatform.kin.health.documents.event.DocumentUploadedEvent;
+import com.kinplatform.kin.health.documents.exception.QuotaExceededException;
 import com.kinplatform.kin.health.documents.infrastructure.ClinicalDocumentTextExtractor;
 import com.kinplatform.kin.health.documents.infrastructure.DocumentStorage;
 import com.kinplatform.kin.health.documents.port.ClinicalDocumentRepository;
+import com.kinplatform.kin.health.documents.port.DocumentStorageQuotaPort;
 import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -90,6 +92,7 @@ public class DocumentService {
         this.eventBus = eventBus;
         this.outboxEventPublisher = outboxEventPublisher;
         this.textExtractor = textExtractor;
+        this.documentStorageQuotaPort = documentStorageQuotaPort;
     }
 
     @Transactional

@@ -1,5 +1,6 @@
+package com.kinplatform.pricing;
+
 import com.kinplatform.kin.health.documents.port.DocumentStorageQuotaPort;
-import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
 import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
 import com.kinplatform.pricing.dto.PatientSubscriptionStatusResponse;
 import com.kinplatform.pricing.dto.SubscriptionResponse;
@@ -31,8 +32,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final HealthQuotaPort healthQuotaPort;
     private final AiBudgetControlService aiBudgetControlService;
     private final DocumentStorageQuotaPort documentStorageQuotaPort;
-    private final HealthQuotaPort healthQuotaPort;
-    private final AiBudgetControlService aiBudgetControlService;
 
     @Override
     @Transactional
@@ -280,7 +279,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         // Obtener triajes usados del período actual
         int triagesUsed = 0;
-        int maxTriagesPerMonth = plan.getMaxTriagesPerMonth();
+        Integer maxTriagesPerMonth = plan.getMaxTriagesPerMonth();
         Integer triagesRemaining = null;
 
         if (maxTriagesPerMonth != null) {
