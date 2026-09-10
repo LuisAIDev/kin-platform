@@ -68,7 +68,7 @@ public class StripeService {
 
         try {
             var paramsBuilder = SessionCreateParams.builder()
-                    .setMode(SessionCreateParams.Mode.PAYMENT)
+                    .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
                     .setCustomerEmail(user.getEmail())
                     .setClientReferenceId(userId.toString())
                     .addLineItem(SessionCreateParams.LineItem.builder()
@@ -85,7 +85,13 @@ public class StripeService {
                                     .build())
                             .build())
                     .putMetadata("plan_id", planId.toString())
-                    .putMetadata("user_id", userId.toString());
+                    .putMetadata("user_id", userId.toString())
+                    .putMetadata("vertical", "SALUD_PERSONAL");
+
+            // Añadir trial_period_days si el plan tiene trial_days > 0
+            if (plan.getTrialDays() != null && plan.getTrialDays() > 0) {
+                paramsBuilder.setTrialPeriodDays(plan.getTrialDays());
+            }
 
             if (successUrl != null) {
                 paramsBuilder.setSuccessUrl(successUrl);
@@ -161,6 +167,57 @@ public class StripeService {
     }
 
     @Transactional
+    public void handlePatientCheckoutCompleted(String sessionId) {
+        try {
+            var session = Session.retrieve(sessionId);
+
+            var userId = UUID.fromString(session.getClientReferenceId());
+            var planId = UUID.fromString(session.getMetadata().get("plan_id"));
+
+            var user = userRepository
+                    .findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+            var plan = planRepository
+                    .findById(planId)
+                    .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
+
+            subscriptionRepository
+                    .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+                    .ifPresent(s -> {
+                        throw new IllegalArgumentException("User already has an active subscription");
+                    });
+
+            var now = OffsetDateTime.now();
+            var endDate = now.plusMonths(1);
+
+            var subscription = UserSubscription.builder()
+                    .user(user)
+                    .plan(plan)
+                    .startDate(now)
+                    .endDate(endDate)
+                    .status(SubscriptionStatus.ACTIVE)
+                    .messagesUsed(0)
+                    .lastResetDate(now)
+                    .build();
+
+            var saved = subscriptionRepository.save(subscription);
+
+            user.setCurrentPlan(plan);
+            user.setSubscription(saved);
+            userRepository.save(user);
+
+            log.info(
+                    "Patient subscription activated after checkout: user {} plan {} session {}",
+                    userId,
+                    plan.getName(),
+                    sessionId);
+        } catch (Exception e) {
+            log.error("Failed to process patient checkout completed event for session {}", sessionId, e);
+            throw new RuntimeException("Failed to activate patient subscription", e);
+        }
+    }
+
+    @Transactional
     public void handleInvoicePaymentSucceeded(String sessionId) {
         try {
             var session = Session.retrieve(sessionId);
@@ -213,6 +270,62 @@ public class StripeService {
         } catch (Exception e) {
             log.error("Failed to process invoice payment succeeded event for session {}", sessionId, e);
             throw new RuntimeException("Failed to renew subscription", e);
+        }
+    }
+
+    @Transactional
+    public void handlePatientInvoicePaymentSucceeded(String sessionId) {
+        try {
+            var session = Session.retrieve(sessionId);
+
+            var userId = UUID.fromString(session.getClientReferenceId());
+            var planId = UUID.fromString(session.getMetadata().get("plan_id"));
+
+            var user = userRepository
+                    .findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+            var plan = planRepository
+                    .findById(planId)
+                    .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
+
+            var now = OffsetDateTime.now();
+            var endDate = now.plusMonths(1);
+
+            var existingSubscription = subscriptionRepository
+                    .findByUserIdAndStatusAndEndDateAfter(userId, SubscriptionStatus.ACTIVE, now)
+                    .orElse(null);
+
+            if (existingSubscription != null) {
+                // Suscripción existente: actualizar fechas
+                existingSubscription.setEndDate(endDate);
+                existingSubscription.setMessagesUsed(0);
+                existingSubscription.setLastResetDate(now);
+                subscriptionRepository.save(existingSubscription);
+            } else {
+                // Crear nueva suscripción
+                var subscription = UserSubscription.builder()
+                        .user(user)
+                        .plan(plan)
+                        .startDate(now)
+                        .endDate(endDate)
+                        .status(SubscriptionStatus.ACTIVE)
+                        .messagesUsed(0)
+                        .lastResetDate(now)
+                        .build();
+                var saved = subscriptionRepository.save(subscription);
+                user.setCurrentPlan(plan);
+                user.setSubscription(saved);
+                userRepository.save(user);
+            }
+
+            log.info(
+                    "Patient subscription renewed after invoice payment: user {} plan {} session {}",
+                    userId,
+                    plan.getName(),
+                    sessionId);
+        } catch (Exception e) {
+            log.error("Failed to process patient invoice payment succeeded event for session {}", sessionId, e);
+            throw new RuntimeException("Failed to renew patient subscription", e);
         }
     }
 
@@ -288,14 +401,26 @@ public class StripeService {
                 var session = (Session) event.getDataObjectDeserializer()
                         .getObject()
                         .orElseThrow(() -> new RuntimeException("Failed to deserialize session"));
-                handleCheckoutCompleted(session.getId());
+
+                // Verificar si es un evento de paciente
+                var vertical = session.getMetadata().get("vertical");
+                if ("SALUD_PERSONAL".equals(vertical)) {
+                    handlePatientCheckoutCompleted(session.getId());
+                } else {
+                    handleCheckoutCompleted(session.getId());
+                }
                 log.info("Checkout session completed: {}", session.getId());
             }
             case "invoice.payment_succeeded" -> {
                 var session = (Session) event.getDataObjectDeserializer()
                         .getObject()
                         .orElseThrow(() -> new RuntimeException("Failed to deserialize session"));
-                handleInvoicePaymentSucceeded(session.getId());
+                var vertical = session.getMetadata().get("vertical");
+                if ("SALUD_PERSONAL".equals(vertical)) {
+                    handlePatientInvoicePaymentSucceeded(session.getId());
+                } else {
+                    handleInvoicePaymentSucceeded(session.getId());
+                }
                 log.info("Invoice payment succeeded: {}", session.getId());
             }
             case "invoice.payment_failed" -> {

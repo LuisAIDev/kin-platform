@@ -1,5 +1,6 @@
 import { api } from "./api";
-import type { PricingPlan } from "./pricing";
+import { PricingPlan } from "./pricing";
+import { PatientSubscriptionStatusResponse } from "./patientPlans";
 
 export interface SubscriptionStatus {
   isActive: boolean;
@@ -50,6 +51,8 @@ export const subscriptionApi = {
 
   getStatus: () => api.get<SubscriptionStatus>("/subscriptions/status"),
 
+  getPatientStatus: () => api.get<PatientSubscriptionStatusResponse>("/subscriptions/patient-status"),
+
   getCurrent: () => api.get<SubscriptionResponse>("/subscriptions/current"),
 
   subscribe: (planId: string) =>
@@ -57,6 +60,9 @@ export const subscriptionApi = {
 
   cancel: () =>
     api.post<SubscriptionResponse>("/subscriptions/cancel", {}),
+
+  cancelPatient: () =>
+    api.post<SubscriptionResponse>("/subscriptions/cancel-patient", {}),
 
   startTrial: () =>
     api.post<SubscriptionResponse>("/subscriptions/trial", {}),

@@ -1,13 +1,23 @@
-package com.kinplatform.pricing;
-
+import com.kinplatform.kin.health.documents.port.DocumentStorageQuotaPort;
+import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
+import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
+import com.kinplatform.pricing.dto.PatientSubscriptionStatusResponse;
 import com.kinplatform.pricing.dto.SubscriptionResponse;
+import com.kinplatform.pricing.PricingPlanRepository;
+import com.kinplatform.pricing.SubscriptionStatus;
+import com.kinplatform.pricing.UserSubscription;
+import com.kinplatform.pricing.UserSubscriptionRepository;
 import com.kinplatform.user.UserRepository;
+import com.kinplatform.pricing.ProductVertical;
+import com.kinplatform.ai.usage.AiBudgetControlService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -18,6 +28,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final UserSubscriptionRepository subscriptionRepository;
     private final PricingPlanRepository planRepository;
     private final UserRepository userRepository;
+    private final HealthQuotaPort healthQuotaPort;
+    private final AiBudgetControlService aiBudgetControlService;
+    private final DocumentStorageQuotaPort documentStorageQuotaPort;
+    private final HealthQuotaPort healthQuotaPort;
+    private final AiBudgetControlService aiBudgetControlService;
 
     @Override
     @Transactional
@@ -128,6 +143,34 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
+    @Transactional
+    public SubscriptionResponse cancelPatientSubscription(UUID userId) {
+        log.info("Cancelling patient subscription for user {}", userId);
+
+        var subscription = subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+                .orElseThrow(() -> new IllegalArgumentException("No active subscription found for user: " + userId));
+
+        var plan = subscription.getPlan();
+        if (plan.getVertical() != ProductVertical.SALUD_PERSONAL) {
+            throw new IllegalArgumentException("El usuario no tiene una suscripción de paciente");
+        }
+
+        subscription.setStatus(SubscriptionStatus.CANCELLED);
+        subscription.setEndDate(OffsetDateTime.now());
+        var saved = subscriptionRepository.save(subscription);
+
+        var user = saved.getUser();
+        // Revertir al plan FREE de SALUD_PERSONAL
+        var freePlan = planRepository.findByCodeAndVertical("FREE", ProductVertical.SALUD_PERSONAL)
+                .orElseThrow(() -> new RuntimeException("Plan FREE no encontrado para SALUD_PERSONAL"));
+        user.setCurrentPlan(freePlan);
+        userRepository.save(user);
+
+        log.info("Patient subscription cancelled for user {}, reverted to FREE plan", userId);
+        return SubscriptionResponse.fromEntity(saved);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public SubscriptionResponse getCurrentSubscription(UUID userId) {
         log.debug("Fetching current subscription for user {}", userId);
@@ -190,5 +233,101 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             }
         }
         log.info("Monthly usage reset completed for {} subscriptions", activeSubscriptions.size());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PatientSubscriptionStatusResponse getPatientSubscriptionStatus(UUID userId) {
+        log.debug("Fetching patient subscription status for user {}", userId);
+
+        var subscription = subscriptionRepository
+                .findByUserIdAndStatusAndEndDateAfter(userId, SubscriptionStatus.ACTIVE, OffsetDateTime.now())
+                .orElse(null);
+
+        if (subscription == null) {
+            // Usuario sin suscripción activa - devolver estado del plan por defecto (FREE)
+            var defaultPlan = planRepository
+                    .findByCodeAndVertical("FREE", ProductVertical.SALUD_PERSONAL)
+                    .orElseThrow(() -> new IllegalStateException("Plan FREE no encontrado para SALUD_PERSONAL"));
+
+            return PatientSubscriptionStatusResponse.builder()
+                    .isActive(false)
+                    .planName(defaultPlan.getName())
+                    .planCode(defaultPlan.getCode())
+                    .planDescription(defaultPlan.getDescription())
+                    .maxTriagesPerMonth(defaultPlan.getMaxTriagesPerMonth())
+                    .triagesUsed(0)
+                    .triagesRemaining(defaultPlan.getMaxTriagesPerMonth())
+                    .maxStorageMb(null)
+                    .storageUsedMb(0)
+                    .storageRemainingMb(null)
+                    .aiBudgetUsd(defaultPlan.getAiBudgetUsd())
+                    .aiBudgetUsed(BigDecimal.ZERO)
+                    .aiBudgetRemaining(defaultPlan.getAiBudgetUsd())
+                    .aiLevel("FLASH")
+                    .pdfExport(defaultPlan.getPdfExport())
+                    .triageSharing(defaultPlan.getTriageSharing())
+                    .advancedAI(defaultPlan.getAdvancedAI())
+                    .supportLevel(defaultPlan.getSupportLevel().name())
+                    .periodStart(OffsetDateTime.now())
+                    .periodEnd(OffsetDateTime.now().plusMonths(1))
+                    .subscriptionEndDate(null)
+                    .build();
+        }
+
+        var plan = subscription.getPlan();
+        var now = OffsetDateTime.now();
+
+        // Obtener triajes usados del período actual
+        int triagesUsed = 0;
+        int maxTriagesPerMonth = plan.getMaxTriagesPerMonth();
+        Integer triagesRemaining = null;
+
+        if (maxTriagesPerMonth != null) {
+            triagesUsed = healthQuotaPort.getTriagesUsed(userId);
+            triagesRemaining = Math.max(0, maxTriagesPerMonth - triagesUsed);
+        }
+
+        // Almacenamiento
+        long maxStorageBytes = documentStorageQuotaPort.getStorageLimitBytes(userId);
+        Integer maxStorageMb = maxStorageBytes == Long.MAX_VALUE ? null : (int) (maxStorageBytes / (1024 * 1024));
+        long storageUsedBytes = documentStorageQuotaPort.getStorageUsedBytes(userId);
+        Integer storageUsedMb = (int) (storageUsedBytes / (1024 * 1024));
+        Integer storageRemainingMb = maxStorageMb != null ? Math.max(0, maxStorageMb - storageUsedMb) : null;
+
+        // Presupuesto de IA
+        var aiUsage = aiBudgetControlService.summary(userId, plan);
+        BigDecimal aiBudgetUsd = plan.getAiBudgetUsd();
+        BigDecimal aiBudgetUsed = aiUsage.budgetUsed();
+        BigDecimal aiBudgetRemaining = aiUsage.budgetRemaining();
+        String aiLevel = plan.getAdvancedAI() ? "PRO" : "FLASH";
+
+        // Fechas del período
+        var periodStart = subscription.getStartDate();
+        var periodEnd = subscription.getEndDate() != null ? subscription.getEndDate() : periodStart.plusMonths(1);
+
+        return PatientSubscriptionStatusResponse.builder()
+                .isActive(subscription.getStatus() == SubscriptionStatus.ACTIVE)
+                .planName(plan.getName())
+                .planCode(plan.getCode())
+                .planDescription(plan.getDescription())
+                .maxTriagesPerMonth(maxTriagesPerMonth)
+                .triagesUsed(triagesUsed)
+                .triagesRemaining(triagesRemaining)
+                .maxStorageMb(maxStorageMb)
+                .storageUsedMb(storageUsedMb)
+                .storageRemainingMb(storageRemainingMb)
+                .aiBudgetUsd(aiBudgetUsd)
+                .aiBudgetUsed(aiBudgetUsed)
+                .aiBudgetRemaining(aiBudgetRemaining)
+                .aiLevel(aiLevel)
+                .pdfExport(plan.getPdfExport())
+                .triageSharing(plan.getTriageSharing())
+                .advancedAI(plan.getAdvancedAI())
+                .supportLevel(plan.getSupportLevel().name())
+                .periodStart(periodStart)
+                .periodEnd(periodEnd)
+                .subscriptionEndDate(subscription.getEndDate())
+                .build();
     }
 }

@@ -10,6 +10,7 @@ import ProfileEditor from "@/components/health/ProfileEditor";
 import ShareTriageModal from "@/components/health/ShareTriageModal";
 import SymptomEvolutionChart from "@/components/health/SymptomEvolutionChart";
 import { dashboardService } from "@/services/dashboard";
+import { SubscriptionStatusBanner } from "@/components/patient/SubscriptionStatusBanner";
 import type { CarePlan, HealthSummary } from "@/services/dashboard";
 import type { PageResponse } from "@/types";
 import type { TriageHistoryEntry } from "@/services/triage";
@@ -67,6 +68,8 @@ export default function PatientHealthPage() {
           </div>
           <FeedbackButton label="Dar feedback" />
         </div>
+
+        <SubscriptionStatusBanner />
 
         <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
           ⚠️ Esta información es de apoyo informativo. No sustituye la

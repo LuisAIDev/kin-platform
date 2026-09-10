@@ -5,12 +5,14 @@ import {
   patientPlansService,
   type PatientPlan,
 } from "@/services/patientPlans";
+import { subscriptionApi } from "@/services/subscriptionApi";
 
 export default function PatientPlansPage() {
   const [plans, setPlans] = useState<PatientPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [banner, setBanner] = useState<"success" | "canceled" | null>(null);
+  const [cancelling, setCancelling] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -41,6 +43,23 @@ export default function PatientPlansPage() {
       window.location.href = session.url;
     } catch (err) {
       setError((err as Error).message);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!confirm("¿Estás seguro de que quieres cancelar tu suscripción? Perderás los beneficios del plan de pago y volverás al plan gratuito.")) {
+      return;
+    }
+    setCancelling("cancel");
+    setError("");
+    try {
+      const result = await subscriptionApi.cancelPatient();
+      setBanner("canceled");
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setCancelling(null);
     }
   };
 
@@ -128,9 +147,19 @@ export default function PatientPlansPage() {
 
                 <div className="mt-auto pt-2">
                   {plan.maxTriagesPerMonth !== null ? (
-                    <div className="rounded-lg bg-neutral-100 px-4 py-2 text-center text-xs font-medium text-neutral-600">
-                      Tu plan actual
-                    </div>
+                    <>
+                      <div className="rounded-lg bg-neutral-100 px-4 py-2 text-center text-xs font-medium text-neutral-600 mb-2">
+                        Tu plan actual
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleCancelSubscription}
+                        disabled={cancelling === "cancel"}
+                        className="w-full rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition disabled:opacity-40"
+                      >
+                        {cancelling === "cancel" ? "Cancelando..." : "Cancelar suscripción"}
+                      </button>
+                    </>
                   ) : (
                     <button
                       type="button"

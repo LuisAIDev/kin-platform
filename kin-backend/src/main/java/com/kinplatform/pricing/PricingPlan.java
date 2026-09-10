@@ -72,11 +72,22 @@ public class PricingPlan {
     private Integer maxTriagesPerMonth;
 
     /**
-     * Días de prueba gratuita (KIN Salud Profesional).
+     * Días de prueba gratuita (KIN Salud Profesional / Personal+).
      * {@code null} = sin trial (plan pago PROFESSIONAL).
+     * {@code 0} = sin trial (FREE, planes de pago sin trial).
+     * {@code >0} = días de trial (ej. 14 para Personal+).
      */
     @Column(name = "trial_days")
     private Integer trialDays;
+
+    /**
+     * Máximo de almacenamiento en MB (KIN Salud Personal).
+     * {@code null} = ilimitado (planes PROFESSIONAL, PREMIUM).
+     * {@code 0} = sin almacenamiento.
+     * {@code >0} = MB permitidos (ej. 50 para FREE, 5000 para PERSONAL_PLUS).
+     */
+    @Column(name = "max_storage_mb")
+    private Integer maxStorageMb;
 
     /**
      * Máximo de pacientes propios (KIN Salud Profesional pago).

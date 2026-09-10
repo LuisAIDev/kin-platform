@@ -1,5 +1,6 @@
 package com.kinplatform.pricing;
 
+import com.kinplatform.pricing.dto.PatientSubscriptionStatusResponse;
 import com.kinplatform.pricing.dto.PricingPlanDTO;
 import com.kinplatform.pricing.dto.SubscriptionRequest;
 import com.kinplatform.pricing.dto.SubscriptionResponse;
@@ -65,6 +66,20 @@ public class SubscriptionController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/cancel-patient")
+    public ResponseEntity<SubscriptionResponse> cancelPatientSubscription(Authentication auth) {
+        User user = getCurrentUser(auth);
+        
+        if (!user.isPatient()) {
+            throw new IllegalStateException("Endpoint solo disponible para pacientes");
+        }
+
+        log.info("Usuario paciente {} cancelando suscripción", user.getId());
+
+        SubscriptionResponse response = subscriptionService.cancelPatientSubscription(user.getId());
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/status")
     public ResponseEntity<SubscriptionStatusResponse> getSubscriptionStatus(Authentication auth) {
         User user = getCurrentUser(auth);
@@ -103,6 +118,24 @@ public class SubscriptionController {
                 .aiUsagePeriodEnd(aiUsage.periodEnd())
                 .build();
 
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Obtiene el estado de suscripción específico para pacientes (vertical SALUD_PERSONAL).
+     * Incluye límites de triaje, almacenamiento, presupuesto de IA, etc.
+     */
+    @GetMapping("/patient-status")
+    public ResponseEntity<PatientSubscriptionStatusResponse> getPatientSubscriptionStatus(Authentication auth) {
+        User user = getCurrentUser(auth);
+        UUID userId = user.getId();
+
+        // Verificar que el usuario es paciente
+        if (!user.isPatient()) {
+            throw new IllegalStateException("Endpoint solo disponible para pacientes");
+        }
+
+        PatientSubscriptionStatusResponse response = subscriptionService.getPatientSubscriptionStatus(userId);
         return ResponseEntity.ok(response);
     }
 

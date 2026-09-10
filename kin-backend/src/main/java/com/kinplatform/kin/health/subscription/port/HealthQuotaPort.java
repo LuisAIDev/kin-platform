@@ -16,6 +16,9 @@ public interface HealthQuotaPort {
     /** Máximo de triajes por mes para el usuario. {@code null} = ilimitado. */
     Integer getMaxTriagesPerMonth(UUID userId);
 
+    /** Triajes utilizados por el usuario en el período actual. */
+    Integer getTriagesUsed(UUID userId);
+
     /** Máximo de pacientes propios del médico. {@code null} = ilimitado. */
     Integer getMaxPatients(UUID physicianId);
 

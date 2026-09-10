@@ -32,6 +32,31 @@ export interface CheckoutSessionResponse {
   url: string;
 }
 
+/** Respuesta de GET /subscriptions/patient-status */
+export interface PatientSubscriptionStatusResponse {
+  isActive: boolean;
+  planName: string;
+  planCode: string;
+  planDescription: string;
+  maxTriagesPerMonth: number | null;
+  triagesUsed: number;
+  triagesRemaining: number | null;
+  maxStorageMb: number | null;
+  storageUsedMb: number;
+  storageRemainingMb: number | null;
+  aiBudgetUsd: number | null;
+  aiBudgetUsed: number;
+  aiBudgetRemaining: number | null;
+  aiLevel: string;
+  pdfExport: boolean;
+  triageSharing: boolean;
+  advancedAI: boolean;
+  supportLevel: string;
+  periodStart: string | null;
+  periodEnd: string | null;
+  subscriptionEndDate: string | null;
+}
+
 export const patientPlansService = {
   getPatientPlans: () =>
     api.get<PatientPlan[]>("/pricing-plans/vertical/SALUD_PERSONAL"),

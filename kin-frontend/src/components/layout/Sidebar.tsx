@@ -63,6 +63,7 @@ const BUSINESS_ITEMS: NavItem[] = [
 const PATIENT_ITEMS: NavItem[] = [
   { label: "Mi Salud", href: "/dashboard/patient/health" },
   { label: "Triaje Digital", href: "/dashboard/patient/triage" },
+  { label: "Planes", href: "/dashboard/patient/plans" },
   { label: "Invitaciones", href: "/dashboard/patient/invitations" },
   { label: "Mensajes", href: "/dashboard/patient/messages" },
   { label: "Citas", href: "/dashboard/patient/appointments" },

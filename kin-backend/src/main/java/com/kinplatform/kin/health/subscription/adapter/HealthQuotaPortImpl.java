@@ -7,6 +7,7 @@ import com.kinplatform.pricing.SubscriptionStatus;
 import com.kinplatform.pricing.UserSubscription;
 import com.kinplatform.pricing.UserSubscriptionRepository;
 import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
+import com.kinplatform.kin.health.triage.port.TriageConsultationRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
@@ -23,14 +24,40 @@ public class HealthQuotaPortImpl implements HealthQuotaPort {
     private final UserSubscriptionRepository subscriptionRepository;
     private final PricingPlanRepository planRepository;
     private final UserRepository userRepository;
+    private final com.kinplatform.kin.health.triage.port.TriageConsultationRepository triageRepository;
 
     public HealthQuotaPortImpl(
             UserSubscriptionRepository subscriptionRepository,
             PricingPlanRepository planRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            com.kinplatform.kin.health.triage.port.TriageConsultationRepository triageRepository) {
         this.subscriptionRepository = subscriptionRepository;
         this.planRepository = planRepository;
         this.userRepository = userRepository;
+        this.triageRepository = triageRepository;
+    }
+
+    @Override
+    public Integer getMaxTriagesPerMonth(UUID userId) {
+        return resolvePlan(userId).getMaxTriagesPerMonth();
+    }
+
+    @Override
+    public Integer getTriagesUsed(UUID userId) {
+        var subscription = subscriptionRepository
+                .findByUserIdAndStatusAndEndDateAfter(userId, SubscriptionStatus.ACTIVE, OffsetDateTime.now())
+                .orElse(null);
+
+        if (subscription == null) {
+            return 0;
+        }
+
+        var periodStart = subscription.getStartDate();
+        var periodEnd = subscription.getEndDate() != null
+                ? subscription.getEndDate()
+                : OffsetDateTime.now().plusMonths(1);
+
+        return triageRepository.countByUserIdAndCreatedAtBetween(userId, periodStart, periodEnd);
     }
 
     @Override

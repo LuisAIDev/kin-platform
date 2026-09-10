@@ -45,14 +45,16 @@ public class DocumentService {
     private final DomainEventBus eventBus;
     private final OutboxEventPublisher outboxEventPublisher;
     private final ClinicalDocumentTextExtractor textExtractor;
+    private final DocumentStorageQuotaPort documentStorageQuotaPort;
 
     public DocumentService(
             ClinicalDocumentRepository documentRepository,
             DocumentStorage storage,
             RelationshipAccessValidator accessValidator,
             AuditService auditService,
-            DocumentProperties properties) {
-        this(documentRepository, storage, accessValidator, auditService, properties, null, null, null);
+            DocumentProperties properties,
+            DocumentStorageQuotaPort documentStorageQuotaPort) {
+        this(documentRepository, storage, accessValidator, auditService, properties, null, null, null, documentStorageQuotaPort);
     }
 
     /** Compatibilidad de tests: sin extractor de texto. */
@@ -63,9 +65,10 @@ public class DocumentService {
             AuditService auditService,
             DocumentProperties properties,
             DomainEventBus eventBus,
-            OutboxEventPublisher outboxEventPublisher) {
+            OutboxEventPublisher outboxEventPublisher,
+            DocumentStorageQuotaPort documentStorageQuotaPort) {
         this(documentRepository, storage, accessValidator, auditService, properties, eventBus,
-                outboxEventPublisher, null);
+                outboxEventPublisher, null, documentStorageQuotaPort);
     }
 
     @Autowired
@@ -77,7 +80,8 @@ public class DocumentService {
             DocumentProperties properties,
             DomainEventBus eventBus,
             OutboxEventPublisher outboxEventPublisher,
-            ClinicalDocumentTextExtractor textExtractor) {
+            ClinicalDocumentTextExtractor textExtractor,
+            DocumentStorageQuotaPort documentStorageQuotaPort) {
         this.documentRepository = documentRepository;
         this.storage = storage;
         this.accessValidator = accessValidator;
@@ -122,6 +126,10 @@ public class DocumentService {
             byte[] content,
             String description) {
         requireEnabled();
+        // Validar cuota de almacenamiento antes de subir
+        if (!documentStorageQuotaPort.canUpload(patientId, content.length)) {
+            throw new QuotaExceededException("Has superado el límite de almacenamiento de tu plan.");
+        }
         ClinicalDocument document = storeAndPersist(
                 patientId, patientId, null, fileName, mimeType, content, description);
         auditService.logAccess(patientId, AuditAction.UPLOAD_DOCUMENT, AuditResourceType.DOCUMENTO, document.id(),
