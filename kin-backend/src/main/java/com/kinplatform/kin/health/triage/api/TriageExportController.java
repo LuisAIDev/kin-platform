@@ -27,7 +27,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/health/triage")
+@RequestMapping({
+    "/health/triage",
+    "/medical/triage"
+})
 public class TriageExportController {
 
     private static final Logger log = LoggerFactory.getLogger(TriageExportController.class);

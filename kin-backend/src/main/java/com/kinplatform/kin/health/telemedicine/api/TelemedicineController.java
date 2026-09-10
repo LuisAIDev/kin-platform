@@ -48,7 +48,10 @@ import org.springframework.web.bind.annotation.RestController;
  * médico-paciente.</p>
  */
 @RestController
-@RequestMapping("/health/telemedicine")
+@RequestMapping({
+    "/health/telemedicine",
+    "/medical/telemedicine"
+})
 public class TelemedicineController {
 
     private static final Logger log = LoggerFactory.getLogger(TelemedicineController.class);

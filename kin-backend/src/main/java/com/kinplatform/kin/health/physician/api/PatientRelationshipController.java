@@ -41,7 +41,10 @@ import org.springframework.web.bind.annotation.RestController;
  * tiene {@code ROLE_PATIENT}, pero debe poder ver/actuar sobre su invitación.</p>
  */
 @RestController
-@RequestMapping("/health/patient/relationships")
+@RequestMapping({
+    "/health/patient/relationships",
+    "/medical/patient/relationships"
+})
 public class PatientRelationshipController {
 
     private static final Logger log = LoggerFactory.getLogger(PatientRelationshipController.class);

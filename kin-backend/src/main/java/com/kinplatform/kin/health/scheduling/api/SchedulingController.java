@@ -41,7 +41,10 @@ import org.springframework.web.bind.annotation.RestController;
  * sobre un paciente exige relación {@code ACTIVE} (Área 5).</p>
  */
 @RestController
-@RequestMapping("/health/scheduling")
+@RequestMapping({
+    "/health/scheduling",
+    "/medical/scheduling"
+})
 public class SchedulingController {
 
     private static final Logger log = LoggerFactory.getLogger(SchedulingController.class);

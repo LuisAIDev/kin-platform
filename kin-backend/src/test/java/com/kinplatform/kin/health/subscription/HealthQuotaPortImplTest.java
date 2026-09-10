@@ -45,11 +45,14 @@ class HealthQuotaPortImplTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private com.kinplatform.kin.health.triage.port.TriageConsultationRepository triageRepository;
+
     private HealthQuotaPortImpl quotaPort;
 
     @BeforeEach
     void setUp() {
-        quotaPort = new HealthQuotaPortImpl(subscriptionRepository, planRepository, userRepository);
+        quotaPort = new HealthQuotaPortImpl(subscriptionRepository, planRepository, userRepository, triageRepository);
     }
 
     private PricingPlan paidHealthPlan(Integer maxTriages, Integer maxPatients, Integer trialDays) {

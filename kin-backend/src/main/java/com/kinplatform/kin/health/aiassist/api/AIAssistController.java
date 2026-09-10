@@ -20,7 +20,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/health/aiassist")
+@RequestMapping({
+    "/health/aiassist",
+    "/medical/aiassist"
+})
 public class AIAssistController {
 
     private final AIAssistService assistService;

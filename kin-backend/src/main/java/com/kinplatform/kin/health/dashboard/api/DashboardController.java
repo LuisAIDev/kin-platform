@@ -39,7 +39,10 @@ import org.springframework.web.bind.annotation.RestController;
  * autenticación, garantizando el aislamiento por paciente.</p>
  */
 @RestController
-@RequestMapping("/health/dashboard")
+@RequestMapping({
+    "/health/dashboard",
+    "/medical/dashboard"
+})
 public class DashboardController {
 
     private static final Logger log = LoggerFactory.getLogger(DashboardController.class);

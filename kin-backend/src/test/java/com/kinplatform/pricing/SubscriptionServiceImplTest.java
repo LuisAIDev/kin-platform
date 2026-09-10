@@ -9,6 +9,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.kinplatform.ai.usage.AiBudgetControlService;
+import com.kinplatform.kin.health.documents.port.DocumentStorageQuotaPort;
+import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
 import com.kinplatform.pricing.dto.SubscriptionResponse;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -38,11 +41,22 @@ class SubscriptionServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private HealthQuotaPort healthQuotaPort;
+
+    @Mock
+    private AiBudgetControlService aiBudgetControlService;
+
+    @Mock
+    private DocumentStorageQuotaPort documentStorageQuotaPort;
+
     private SubscriptionServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new SubscriptionServiceImpl(subscriptionRepository, planRepository, userRepository);
+        service = new SubscriptionServiceImpl(
+                subscriptionRepository, planRepository, userRepository,
+                healthQuotaPort, aiBudgetControlService, documentStorageQuotaPort);
     }
 
     private User user() {

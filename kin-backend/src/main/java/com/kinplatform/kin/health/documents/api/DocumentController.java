@@ -38,7 +38,10 @@ import org.springframework.web.multipart.MultipartFile;
  * sobre un paciente exige relación {@code ACTIVE} (Área 5) y queda auditada.</p>
  */
 @RestController
-@RequestMapping("/health/documents")
+@RequestMapping({
+    "/health/documents",
+    "/medical/documents"
+})
 public class DocumentController {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentController.class);

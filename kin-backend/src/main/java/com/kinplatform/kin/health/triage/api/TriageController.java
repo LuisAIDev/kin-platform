@@ -29,7 +29,10 @@ import org.springframework.web.bind.annotation.RestController;
  * paciente en el historial.</p>
  */
 @RestController
-@RequestMapping("/health/triage")
+@RequestMapping({
+    "/health/triage",
+    "/medical/triage"
+})
 public class TriageController {
 
     private static final Logger log = LoggerFactory.getLogger(TriageController.class);

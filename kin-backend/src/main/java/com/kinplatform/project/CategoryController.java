@@ -12,7 +12,10 @@ import java.util.List;
  * categorías activas ordenadas por {@code displayOrder}.
  */
 @RestController
-@RequestMapping("/categories")
+@RequestMapping({
+    "/categories",
+    "/empresas/categories"
+})
 public class CategoryController {
 
     private final CategoryService categoryService;

@@ -17,7 +17,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/projects")
+@RequestMapping({
+    "/projects",
+    "/empresas/projects"
+})
 @RequiredArgsConstructor
 public class ProjectController {
 

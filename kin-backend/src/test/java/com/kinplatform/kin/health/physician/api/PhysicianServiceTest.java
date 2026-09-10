@@ -78,6 +78,11 @@ class PhysicianServiceTest {
             public Integer getTrialDays(UUID userId) {
                 return null;
             }
+
+            @Override
+            public Integer getTriagesUsed(UUID userId) {
+                return 0;
+            }
         };
     }
 

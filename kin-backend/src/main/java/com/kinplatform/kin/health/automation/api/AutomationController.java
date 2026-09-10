@@ -16,7 +16,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/health/automation")
+@RequestMapping({
+    "/health/automation",
+    "/medical/automation"
+})
 public class AutomationController {
 
     private final AutomationService automationService;

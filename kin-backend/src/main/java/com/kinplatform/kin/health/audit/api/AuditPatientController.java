@@ -24,7 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
  * Protegido por rol PATIENT/ADMIN (SecurityConfig: {@code /health/audit/**}).</p>
  */
 @RestController
-@RequestMapping("/health/audit")
+@RequestMapping({
+    "/health/audit",
+    "/medical/audit"
+})
 public class AuditPatientController {
 
     private final AuditLogRepository auditLogRepository;

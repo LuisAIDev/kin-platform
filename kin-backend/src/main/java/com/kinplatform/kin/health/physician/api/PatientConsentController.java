@@ -28,7 +28,10 @@ import org.springframework.web.bind.annotation.RestController;
  * body; solo se acepta una invitación dirigida a ese mismo usuario.</p>
  */
 @RestController
-@RequestMapping("/health/patient/consent")
+@RequestMapping({
+    "/health/patient/consent",
+    "/medical/patient/consent"
+})
 public class PatientConsentController {
 
     private static final Logger log = LoggerFactory.getLogger(PatientConsentController.class);

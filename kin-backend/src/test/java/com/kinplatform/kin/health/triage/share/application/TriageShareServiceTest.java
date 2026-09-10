@@ -63,6 +63,11 @@ class TriageShareServiceTest {
             }
 
             @Override
+            public Integer getTriagesUsed(UUID userId) {
+                return 0;
+            }
+
+            @Override
             public boolean hasEligibleSubscription(
                     UUID userId, ProductVertical vertical, SubscriptionStatus... statuses) {
                 return eligible;

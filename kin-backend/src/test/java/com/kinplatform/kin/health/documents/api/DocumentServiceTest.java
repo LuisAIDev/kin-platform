@@ -11,6 +11,7 @@ import com.kinplatform.kin.health.documents.InMemoryClinicalDocumentRepository;
 import com.kinplatform.kin.health.documents.config.DocumentProperties;
 import com.kinplatform.kin.health.documents.event.DocumentUploadedEvent;
 import com.kinplatform.kin.health.documents.infrastructure.DocumentStorage;
+import com.kinplatform.kin.health.documents.port.DocumentStorageQuotaPort;
 import com.kinplatform.kin.health.physician.InMemoryPhysicianRepositories;
 import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
 import com.kinplatform.kin.health.physician.access.RelationshipNotActiveException;
@@ -47,7 +48,8 @@ class DocumentServiceTest {
                 auditService(false),
                 properties,
                 bus,
-                null);
+                null,
+                permissiveStorageQuota());
     }
 
     private InMemoryPhysicianRepositories activePhysicians() {
@@ -64,6 +66,25 @@ class DocumentServiceTest {
 
     private static byte[] content(String text) {
         return text.getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static DocumentStorageQuotaPort permissiveStorageQuota() {
+        return new DocumentStorageQuotaPort() {
+            @Override
+            public long getStorageUsedBytes(UUID userId) {
+                return 0;
+            }
+
+            @Override
+            public long getStorageLimitBytes(UUID userId) {
+                return Long.MAX_VALUE;
+            }
+
+            @Override
+            public boolean canUpload(UUID userId, long fileSizeBytes) {
+                return true;
+            }
+        };
     }
 
     @Test
@@ -87,7 +108,8 @@ class DocumentServiceTest {
                 auditService(false),
                 properties,
                 bus,
-                null);
+                null,
+                permissiveStorageQuota());
 
         assertThrows(RelationshipNotActiveException.class,
                 () -> service.uploadDocument(PHYSICIAN, PATIENT, "x.pdf", "application/pdf", content("x"), null));

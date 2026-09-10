@@ -46,7 +46,10 @@ import org.springframework.web.bind.annotation.RestController;
  * el paciente opera solo sobre sus propios datos (userId del JWT).</p>
  */
 @RestController
-@RequestMapping("/health/followup")
+@RequestMapping({
+    "/health/followup",
+    "/medical/followup"
+})
 public class FollowUpController {
 
     private static final Logger log = LoggerFactory.getLogger(FollowUpController.class);

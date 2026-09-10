@@ -31,7 +31,10 @@ import java.util.UUID;
  * negocio.</p>
  */
 @RestController
-@RequestMapping("/enterprise")
+@RequestMapping({
+    "/enterprise",
+    "/empresas/enterprise"
+})
 @Tag(name = "Enterprise", description = "API del módulo Enterprise: dashboard "
     + "consolidado de una versión del proyecto empresarial.")
 public class EnterpriseDashboardController {

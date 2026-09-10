@@ -15,6 +15,8 @@ import com.kinplatform.user.PhysicianVerificationStatus;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -251,6 +253,7 @@ public class AuthServiceImpl implements AuthService {
                                 ? null
                                 : user.getPhysicianVerificationStatus().name())
                 .physicianCapability(PhysicianAccess.isPhysician(user))
+                .verticalAccess(computeVerticalAccess(user))
                 .build();
     }
 
@@ -284,6 +287,7 @@ public class AuthServiceImpl implements AuthService {
                                 ? null
                                 : user.getPhysicianVerificationStatus().name())
                 .physicianCapability(PhysicianAccess.isPhysician(user))
+                .verticalAccess(computeVerticalAccess(user))
                 .build();
     }
 
@@ -365,6 +369,32 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException(
                     "Debes aceptar el consentimiento para el tratamiento de tus datos de salud");
         }
+    }
+
+    /**
+     * Calcula las verticales de acceso basándose en el rol del usuario y
+     * en {@link PhysicianAccess#isPhysician(User)}.
+     */
+    private List<String> computeVerticalAccess(User user) {
+        List<String> access = new ArrayList<>();
+
+        // Empresas: roles FREE, PREMIUM, FACILITADOR, ADMIN
+        UserRole role = user.getRole();
+        if (role == UserRole.FREE
+                || role == UserRole.PREMIUM
+                || role == UserRole.FACILITADOR
+                || role == UserRole.ADMIN) {
+            access.add("empresas");
+        }
+
+        // Medical: PATIENT, PHYSICIAN, o physicianCapability == true
+        if (role == UserRole.PATIENT
+                || role == UserRole.PHYSICIAN
+                || PhysicianAccess.isPhysician(user)) {
+            access.add("medical");
+        }
+
+        return access;
     }
 
     /**
