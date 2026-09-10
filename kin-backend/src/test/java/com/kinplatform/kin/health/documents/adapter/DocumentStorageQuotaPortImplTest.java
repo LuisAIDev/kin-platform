@@ -3,7 +3,6 @@ package com.kinplatform.kin.health.documents.adapter;
 import com.kinplatform.kin.health.documents.domain.ClinicalDocument;
 import com.kinplatform.kin.health.documents.domain.DocumentStatus;
 import com.kinplatform.kin.health.documents.port.DocumentStorageQuotaPort;
-import com.kinplatform.kin.health.documents.port.ClinicalDocumentRepository;
 import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.PricingPlanRepository;
 import com.kinplatform.pricing.ProductVertical;
@@ -50,7 +49,7 @@ class DocumentStorageQuotaPortImplTest {
     private UserRepository userRepository;
 
     @Mock
-    private ClinicalDocumentRepository documentRepository;
+    private ClinicalDocumentJpaRepository documentRepository;
 
     private DocumentStorageQuotaPortImpl service;
 
@@ -113,7 +112,7 @@ class DocumentStorageQuotaPortImplTest {
         when(subscriptionRepository.findByUserIdAndStatusAndEndDateAfter(any(), any(), any()))
                 .thenReturn(Optional.empty());
 
-        var storageUsed = 10 * 1024 * 1024; // 10 MB
+        long storageUsed = 10L * 1024 * 1024; // 10 MB
         when(documentRepository.sumFileSizeByUserIdAndStatus(any(), any()))
                 .thenReturn(storageUsed);
 
