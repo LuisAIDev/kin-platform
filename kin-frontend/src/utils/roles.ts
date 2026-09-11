@@ -1,18 +1,12 @@
 /**
- * Utilidades de segmentación por rol y vertical.
+ * Utilidades de segmentación por rol — KIN Empresas.
  *
- * Dos verticales de negocio: **Empresa** (estructuración de proyectos) y
- * **Salud** (triaje, portal médico, telemedicina), más la vertical **Admin**
- * que agrupa a los administradores con acceso a todo.
+ * Este frontend corresponde ÚNICAMENTE a la vertical Empresa (estructuración
+ * de proyectos). La vertical Salud vive en `kin-frontend-medical`.
  *
  * Roles del backend (UserRole): FREE, PREMIUM, FACILITADOR (empresarial),
  * PATIENT, PHYSICIAN (salud) y ADMIN.
  */
-
-import {
-  isSelectedVertical,
-  type SelectedVertical,
-} from "@/services/session";
 
 export type UserRole =
   | "FREE"
@@ -23,46 +17,26 @@ export type UserRole =
   | "ADMIN"
   | "USER";
 
-export type Vertical = "empresa" | "salud" | "admin";
+/** Verticales de navegación disponibles en Empresas: empresa y admin. */
+export type Vertical = "empresa" | "admin";
 
-const HEALTH_ROLES: string[] = ["PATIENT", "PHYSICIAN"];
-
-/** Vertical por defecto según el rol (cuando no hay selección explícita). */
+/** Vertical por defecto según el rol. */
 export function verticalForRole(role?: string | null): Vertical {
-  if (!role) return "empresa";
   if (role === "ADMIN") return "admin";
-  if (HEALTH_ROLES.includes(role)) return "salud";
   return "empresa";
 }
 
 /**
- * Resuelve la vertical de NAVEGACIÓN a partir del rol y la vertical
- * seleccionada por el usuario.
- *
- * ROLE ≠ VERTICAL: el rol determina autorización; la selección determina el
- * módulo/hub en el que trabaja el usuario.
- * - ADMIN → admin (ignora selección; mantiene su hub).
- * - Roles de salud (PATIENT/PHYSICIAN) → salud (ignoran selección).
- * - Roles empresariales → respetan la selección explícita (empresa/salud);
- *   sin selección conservan el comportamiento previo (empresa).
+ * Resuelve la vertical de NAVEGACIÓN. En Empresas solo existen "empresa" y
+ * "admin"; la vertical Salud ya no está disponible en este frontend.
  */
-export function resolveVertical(
-  role?: string | null,
-  selected?: SelectedVertical | null,
-): Vertical {
-  const base = verticalForRole(role);
-  if (base === "admin" || base === "salud") return base;
-  return isSelectedVertical(selected) ? selected : "empresa";
+export function resolveVertical(_role?: string | null, _selected?: unknown): Vertical {
+  return verticalForRole(_role);
 }
 
-/** Página de inicio según rol y vertical de navegación seleccionada. */
-export function homePathForRole(
-  role?: string | null,
-  selected?: SelectedVertical | null,
-): string {
-  const vertical = resolveVertical(role, selected);
-  if (vertical === "admin") return "/dashboard/admin";
-  if (vertical === "salud") return "/dashboard/salud";
+/** Página de inicio según rol. */
+export function homePathForRole(role?: string | null, _selected?: unknown): string {
+  if (verticalForRole(role) === "admin") return "/dashboard/admin";
   return "/dashboard/empresa";
 }
 
@@ -70,126 +44,79 @@ export function isAdminRole(role?: string | null): boolean {
   return role === "ADMIN";
 }
 
-export function isHealthRole(role?: string | null): boolean {
-  return verticalForRole(role) === "salud";
+/** En Empresas no existe la vertical Salud. */
+export function isHealthRole(_role?: string | null): boolean {
+  return false;
 }
 
 export function isBusinessRole(role?: string | null): boolean {
-  return verticalForRole(role) === "empresa";
+  return role !== "ADMIN";
 }
 
-export function isPatientRole(role?: string | null): boolean {
-  return role === "PATIENT";
+/** En Empresas no existen subáreas de paciente/médico. */
+export function isPatientRole(_role?: string | null): boolean {
+  return false;
 }
 
-export function isPhysicianRole(
-  roleOrUser?: string | null | PhysicianContext,
-): boolean {
-  if (typeof roleOrUser === "string" || roleOrUser == null) {
-    // Compatibilidad con llamadas existentes que pasan el role (p. ej.
-    // dashboard/salud, Sidebar). Para sesiones nuevas se prefiere el contexto.
-    return roleOrUser === "PHYSICIAN";
-  }
-  return hasPhysicianCapability(roleOrUser);
+export function isPhysicianRole(_role?: string | null): boolean {
+  return false;
 }
 
-/** Contexto de rol/capacidad devuelto por el backend (/auth/me, login). */
+/** Contexto de rol devuelto por el backend (/auth/me, login). */
 export interface PhysicianContext {
   role?: string | null;
   verificationStatus?: string | null;
-  /** Capacidad profesional derivada por el backend. Fuente de verdad. */
   physicianCapability?: boolean;
 }
-
-/**
- * Determina si el usuario tiene CAPACIDAD profesional (médico).
- *
- * Java decide: el valor proviene de {@code physicianCapability} (calculado por
- * {@code PhysicianAccess} en el backend), NO de {@code role === "PHYSICIAN"}.
- * FREE/PREMIUM/PATIENT + APPROVED también son médicos.
- *
- * Fallback de compatibilidad: si el contexto no trae {@code physicianCapability}
- * (sesiones antiguas en localStorage), se conserva el comportamiento previo
- * ({@code role === "PHYSICIAN"}) para no romper sesiones existentes.
- */
-export function hasPhysicianCapability(user?: PhysicianContext | null): boolean {
-  if (!user) return false;
-  if (user.physicianCapability !== undefined) {
-    return user.physicianCapability === true;
-  }
-  return user.role === "PHYSICIAN";
-}
-
-/** Estado de verificación de identidad de un médico (auto-registro). */
-export type PhysicianVerificationStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface RoleContext {
   role?: string | null;
   verificationStatus?: string | null;
 }
 
-/** Un médico con la cuenta pendiente de revisión por un administrador. */
-export function isAccountPendingReview(user?: RoleContext | null): boolean {
-  return user?.role === "PHYSICIAN" && user?.verificationStatus === "PENDING";
+/** Sin subárea de médico en Empresas: no hay cuentas "en revisión". */
+export function isAccountPendingReview(_user?: RoleContext | null): boolean {
+  return false;
 }
 
-/** Un médico con la cuenta rechazada. */
-export function isAccountRejected(user?: RoleContext | null): boolean {
-  return user?.role === "PHYSICIAN" && user?.verificationStatus === "REJECTED";
+export function isAccountRejected(_user?: RoleContext | null): boolean {
+  return false;
 }
 
-/** Cuenta médica no habilitada (pendiente o rechazada). */
-export function isAccountUnderReview(user?: RoleContext | null): boolean {
-  return isAccountPendingReview(user) || isAccountRejected(user);
+export function isAccountUnderReview(_user?: RoleContext | null): boolean {
+  return false;
 }
 
 /**
  * Determina si un usuario puede acceder a un pathname del dashboard.
  *
- * Acepta el role como string (compatibilidad con llamadas existentes) o un
- * contexto de usuario ({@link PhysicianContext}) que puede incluir
- * {@code physicianCapability} (fuente de verdad del backend).
- *
- * Reglas:
+ * Reglas (solo Empresas):
  * - ADMIN accede a todo.
- * - `/dashboard/settings` es común a todas las verticales.
- * - Hubs: `/dashboard/empresa` (empresarial), `/dashboard/salud` (salud), `/dashboard/admin` (admin).
- * - `/dashboard/patient/*` solo para la persona paciente (no PHYSICIAN legado).
- * - `/dashboard/physician/*` requiere CAPACIDAD profesional (physicianCapability),
- *   no solo `role === "PHYSICIAN"` (FREE/PREMIUM/PATIENT + APPROVED también acceden).
- * - Segmentos empresariales (projects, analytics, insights, recommendations,
- *   reports, pricing, subscription) solo para la vertical empresa.
+ * - `/dashboard/settings` es común.
+ * - `/dashboard/empresa` es el hub empresarial.
+ * - `/dashboard/admin` solo para ADMIN (ya cubierto por la regla anterior).
+ * - Las subáreas de salud (patient/physician/salud) NO son accesibles.
  */
 export function canAccessPath(
   roleOrUser: string | null | undefined | PhysicianContext,
   pathname: string,
-  selected?: SelectedVertical | null,
+  selected?: unknown,
 ): boolean {
-  const role = typeof roleOrUser === "string" || roleOrUser == null ? roleOrUser : roleOrUser.role;
+  const role =
+    typeof roleOrUser === "string" || roleOrUser == null ? roleOrUser : roleOrUser.role;
   const vertical = resolveVertical(role, selected);
   if (vertical === "admin") return true;
 
   const rest = pathname.replace(/^\/dashboard\/?/, "");
   const segment = rest.split("/")[0] ?? "";
 
-  if (segment === "") return true; // /dashboard → el hub decide el redirect
+  if (segment === "") return true;
   if (segment === "settings") return true;
   if (segment === "empresa") return vertical === "empresa";
-  if (segment === "salud") return vertical === "salud";
-  // Subárea de paciente: permitida en la vertical Salud a todo rol que no sea
-  // el rol PHYSICIAN legado (el backend ya la autoriza para roles empresariales).
-  if (segment === "patient") return vertical === "salud" && role !== "PHYSICIAN";
-  // Portal médico: requiere CAPACIDAD profesional (no solo role PHYSICIAN).
-  // Un FREE/PREMIUM/PATIENT con physicianCapability=true (APPROVED) también
-  // accede, independientemente de la vertical de persona seleccionada.
-  if (segment === "physician") return hasPhysicianCapability(
-      typeof roleOrUser === "string" || roleOrUser == null ? { role: roleOrUser } : roleOrUser,
-    );
   if (segment === "admin") return false;
-  // Página de destino del enlace de invitación (aceptar consentimiento y
-  // vincularse): accesible a cualquier usuario autenticado.
   if (segment === "accept-invitation") return true;
+  // La vertical Salud no existe en este frontend.
+  if (segment === "patient" || segment === "physician" || segment === "salud") return false;
 
-  // Segmentos empresariales (projects, analytics, insights, ...).
   return vertical === "empresa";
 }
