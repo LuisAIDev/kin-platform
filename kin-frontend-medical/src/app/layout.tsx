@@ -1,34 +1,55 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "@/styles/globals.css";
 
+const SITE_URL = "https://www.kin-platform-medical.com";
+const SITE_NAME = "KIN Medical";
+const SITE_TITLE = "KIN Medical | El Sistema Operativo de la Atención Médica Moderna";
+const SITE_DESCRIPTION =
+  "Triaje digital con IA, telemedicina, historia clínica, agenda y gestión de pacientes. Plataforma clínica escalable desde el consultorio hasta la red hospitalaria. Para médicos, clínicas, hospitales, IPS y EPS.";
+
+const GOOGLE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
+const BING_VERIFICATION = process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION;
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "KIN Medical | El Sistema Operativo de la Atención Médica Moderna",
+    default: SITE_TITLE,
     template: "%s | KIN Medical",
   },
-  description:
-    "Triaje digital con IA, telemedicina, gestión de pacientes, agenda y documentos clínicos. Escalable desde el consultorio hasta la red hospitalaria. Para médicos, clínicas, hospitales, IPS y EPS.",
+  description: SITE_DESCRIPTION,
   keywords: [
     "sistema operativo médico",
+    "software médico",
     "gestión clínica",
     "triaje digital",
+    "triaje con IA",
     "telemedicina",
-    "IA médica",
-    "historia clínica",
-    "plataforma hospitalaria",
+    "historia clínica electrónica",
     "gestión de pacientes",
+    "plataforma hospitalaria",
+    "software para clínicas",
     "IPS",
     "EPS",
-    "clínicas",
+    "médicos",
     "hospitales",
+    "Colombia",
+    "Latinoamérica",
   ],
-  authors: [{ name: "KIN Platform" }],
+  authors: [{ name: "KIN Platform", url: "https://kin-platform.com" }],
+  creator: "KIN Platform",
+  publisher: "KIN Platform",
+  category: "Salud",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "KIN Medical — El Sistema Operativo de la Atención Médica Moderna",
+    type: "website",
+    locale: "es_ES",
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
     description:
       "Triaje digital, IA clínica, telemedicina y gestión de pacientes. Escalable desde el consultorio hasta la red hospitalaria.",
-    url: "https://kin-platform-medical.com",
-    siteName: "KIN Medical",
     images: [
       {
         url: "/og-image.png",
@@ -37,17 +58,35 @@ export const metadata: Metadata = {
         alt: "KIN Medical — El Sistema Operativo de la Atención Médica",
       },
     ],
-    locale: "es_ES",
-    type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "KIN Medical — El Sistema Operativo de la Atención Médica Moderna",
+    title: SITE_TITLE,
     description:
       "Triaje digital, IA clínica, telemedicina y gestión de pacientes. Escalable desde el consultorio hasta la red hospitalaria.",
     images: ["/og-image.png"],
   },
-  robots: { index: true, follow: true },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  verification: {
+    ...(GOOGLE_VERIFICATION ? { google: GOOGLE_VERIFICATION } : {}),
+    ...(BING_VERIFICATION ? { other: { "msvalidate.01": BING_VERIFICATION } } : {}),
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
