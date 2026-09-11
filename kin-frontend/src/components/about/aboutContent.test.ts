@@ -21,14 +21,6 @@ describe("aboutContent — narrativa de /sobre-kin", () => {
     expect(ABOUT_CONTENT.audience.items[3].title).toBe("Personas que están aprendiendo");
   });
 
-  it("la vertical de Salud usa lenguaje orientativo con disclaimers", () => {
-    expect(ABOUT_CONTENT.health.disclaimers.length).toBeGreaterThanOrEqual(3);
-    const joined = ABOUT_CONTENT.health.disclaimers.join(" ").toLowerCase();
-    expect(joined).toContain("no sustituye");
-    expect(joined).toContain("orientativa");
-    expect(joined).not.toContain("diagnóstico médico real garantizado");
-  });
-
   it("GitHub enlaza el perfil del creador, no el repositorio privado", () => {
     expect(ABOUT_LINKS.github.href).toBe("https://github.com/LuisAIDev");
     expect(ABOUT_LINKS.github.href).not.toContain("/kin-platform");

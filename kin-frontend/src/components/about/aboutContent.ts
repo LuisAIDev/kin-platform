@@ -354,7 +354,7 @@ export const ABOUT_CONTENT = {
       "KIN es una plataforma de inteligencia y estructuración estratégica orientada a emprendedores, empresarios, organizaciones y personas que necesitan estructurar una idea o un proyecto, o analizar y evolucionar uno existente.",
       "Su propósito es ayudar a transformar información dispersa en contexto estructurado, evaluación, conocimiento, riesgos, oportunidades, recomendaciones y documentación profesional reproducible.",
       "KIN no es un chatbot con una interfaz atractiva: es una plataforma tecnológica en la que la inteligencia artificial es un componente dentro de una arquitectura mayor, con un motor determinista que decide y una capa de IA que comunica.",
-      "KIN es una herramienta de apoyo al análisis y a la toma de decisiones: no garantiza éxito empresarial ni reemplaza consultores, médicos, abogados u otros profesionales.",
+      "KIN es una herramienta de apoyo al análisis y a la toma de decisiones: no garantiza éxito empresarial ni reemplaza consultores, abogados u otros profesionales.",
     ],
   },
   whyBorn: {
@@ -404,18 +404,12 @@ export const ABOUT_CONTENT = {
     ctaLabel: "Ver detalles técnicos",
     ctaHref: "/arquitectura",
   },
-  health: {
+  adaptability: {
     eyebrow: "Una plataforma adaptable",
     title: "Capacidad de adaptarse a diferentes contextos",
     paragraphs: [
       "KIN fue diseñada para trabajar con diferentes categorías o verticales de proyecto. Cada proyecto se clasifica en una de 19 categorías y el análisis se adapta a ese contexto.",
-      "Una de las capacidades específicas implementadas corresponde a la vertical de Salud, con etapas de evaluación digital orientativa: triaje de síntomas, evaluación y diagnóstico diferencial como apoyo informativo.",
-      "La vertical de Salud es una capacidad específica dentro de una plataforma más amplia, no el propósito exclusivo de KIN.",
-    ],
-    disclaimers: [
-      "Es una evaluación digital orientativa, no un diagnóstico médico real.",
-      "No sustituye la evaluación ni el diagnóstico de un profesional de la salud.",
-      "No se realizan prescripciones, tratamientos ni certificaciones clínicas.",
+      "Esta flexibilidad permite que KIN se adapte a distintos sectores y tipos de proyecto, siempre con el mismo motor determinista y la misma arquitectura.",
     ],
   },
   creator: {
