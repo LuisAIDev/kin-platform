@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authService } from "@/services/auth";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 export default function PatientRegisterPage() {
   const router = useRouter();
@@ -86,12 +87,17 @@ export default function PatientRegisterPage() {
               </div>
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-1.5">
-                Contraseña
-              </label>
-              <input id="password" name="password" type="password" autoComplete="new-password" required minLength={8} value={form.password} onChange={handleChange} className="input-field" />
-            </div>
+                        <PasswordInput
+              id="password"
+              name="password"
+              label="Contraseña"
+              autoComplete="new-password"
+              required
+              minLength={8}
+              value={form.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
