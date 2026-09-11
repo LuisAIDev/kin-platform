@@ -1,0 +1,12 @@
+{
+  "name": "kin-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo tooling for KIN Platform (KIN Empresas + KIN Medical)",
+  "scripts": {
+    "generate:og": "node scripts/generate-og-image.js"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.4"
+  }
+}
