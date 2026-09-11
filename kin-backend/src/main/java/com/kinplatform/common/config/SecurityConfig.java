@@ -36,12 +36,17 @@ public class SecurityConfig {
     @Value("${app.cors.allowed-origins:http://localhost:3000}")
     private String allowedOrigins;
 
-    /**
-     * Orígenes de frontend que nunca se pierden, incluso si ALLOWED_ORIGINS
-     * está definido sin incluirlos. KIN Platform utiliza el dominio propio:
-     * https://kin-platform.com
-     */
-    private static final List<String> GUARANTEED_ORIGINS = List.of("https://kin-platform.com");
+/**
+ * Orígenes de frontend que nunca se pierden, incluso si ALLOWED_ORIGINS
+ * está definido sin incluirlos. KIN Platform utiliza el dominio propio:
+ * https://www.kin-platform-medical.com
+ */
+    private static final List<String> GUARANTEED_ORIGINS = List.of(
+        "https://www.kin-platform-medical.com",
+        "https://kin-platform-medical.com",
+        "https://kin-frontend-medical-*.vercel.app",
+        "https://*.vercel.app"
+    );
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -173,9 +178,9 @@ public class SecurityConfig {
             }
         }
         var config = new CorsConfiguration();
-        config.setAllowedOrigins(origins);
+        config.setAllowedOriginPatterns(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
         var source = new UrlBasedCorsConfigurationSource();
