@@ -1,14 +1,13 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authService } from "@/services/auth";
 import {
   checkForceLogout,
   getSelectedVertical,
   setPendingEmail,
-  setSelectedVertical,
   storeSession,
 } from "@/services/session";
 import { PasswordInput } from "@/components/auth/PasswordInput";
@@ -16,8 +15,6 @@ import { homePathForRole } from "@/utils/roles";
 
 function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const verticalSalud = searchParams.get("vertical") === "salud";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -30,10 +27,6 @@ function LoginForm() {
       sessionStorage.clear();
     }
 
-    // El parámetro ?vertical=salud es parte del flujo de selección de vertical:
-    // solo fija el contexto de navegación, nunca otorga permisos.
-    if (verticalSalud) setSelectedVertical("salud");
-
     // Con cookie HttpOnly, verificamos la sesión con un fetch raw (un 401 aquí
     // es esperado si no hay sesión: NO debe disparar forceLogout ni recargar).
     authService
@@ -45,7 +38,7 @@ function LoginForm() {
         }
       })
       .finally(() => setChecking(false));
-  }, [router, verticalSalud]);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,9 +68,7 @@ function LoginForm() {
         }
         return;
       }
-      // La vertical seleccionada (o el parámetro ?vertical=salud) determina el
-      // hub de destino; el rol solo autoriza, no decide el módulo.
-      if (verticalSalud) setSelectedVertical("salud");
+      // El rol determina el hub de destino.
       router.push(homePathForRole(result.data?.role, getSelectedVertical()));
     } catch (err) {
       // Defensivo: authService.login nunca lanza (devuelve {error}), pero si
@@ -104,13 +95,6 @@ function LoginForm() {
         className="w-full max-w-sm flex flex-col gap-4"
       >
         <h1 className="text-2xl font-bold text-center mb-2">Iniciar sesion</h1>
-
-        {verticalSalud && (
-          <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-lg">
-            Acceso al portal de salud. Las cuentas de pacientes y médicos las
-            crea tu institución o el administrador del piloto.
-          </p>
-        )}
 
         {error && (
           <p className="text-sm text-red-600 bg-red-50 px-4 py-2 rounded-lg">
