@@ -80,7 +80,7 @@ export default function Home() {
 
   useEffect(() => {
     subscriptionApi
-      .getPlans()
+      .getPlansByVertical("EMPRESAS")
       .then(setPlans)
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -124,8 +124,7 @@ export default function Home() {
             </h1>
 
             <p className="mt-6 text-lg leading-8 text-neutral-500 sm:text-xl max-w-2xl mx-auto">
-              Estructura tu proyecto en menos de 60 minutos con asistencia de IA,
-              o accede al portal de salud para pacientes y médicos.
+              Estructura tu proyecto en menos de 60 minutos con asistencia de IA.
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -138,106 +137,12 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                 </svg>
               </Link>
-              <Link
-                href="/register/salud"
-                className="inline-flex items-center gap-2 rounded-xl border-2 border-primary-200 bg-white/80 px-8 py-3.5 text-sm font-semibold text-primary-700 shadow-sm hover:bg-primary-50 hover:border-primary-300 hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 backdrop-blur-sm"
-              >
-                Soy Paciente o Médico: portal de salud
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
-                </svg>
-              </Link>
             </div>
 
             <div className="mt-6">
               <Link href="/login" className="text-sm font-medium text-neutral-500 hover:text-primary-600 transition-colors">
                 ¿Ya tienes cuenta? Inicia sesión
               </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Elige tu espacio ────────────────────────────────── */}
-      <section className="border-y border-neutral-100 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-semibold text-primary-600 tracking-widest uppercase mb-3">
-              Elige tu espacio
-            </p>
-            <h2 className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
-              Una plataforma, dos soluciones
-            </h2>
-            <p className="mt-4 text-lg text-neutral-500">
-              Elige la vertical que se ajusta a tu caso de uso. Cada espacio tiene su
-              propio flujo, menú y herramientas.
-            </p>
-          </div>
-
-          <div className="mx-auto mt-14 grid max-w-4xl grid-cols-1 gap-8 lg:grid-cols-2">
-            <div className="flex flex-col rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50 ring-1 ring-primary-100">
-                <svg className="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
-                </svg>
-              </div>
-              <h3 className="mt-6 text-xl font-bold text-neutral-900">Para Empresas</h3>
-              <p className="mt-2 text-sm leading-6 text-neutral-500">
-                Emprendedores, empresarios y consultores: estructura tu idea, recibe
-                scoring de viabilidad, analytics, insights, reportes y planes de
-                suscripción.
-              </p>
-              <ul className="mt-6 space-y-2 text-sm text-neutral-600">
-                <li className="flex items-center gap-2">
-                  <span className="text-primary-500">✓</span> Estructuración de proyectos con IA
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-primary-500">✓</span> Scoring de viabilidad y reportes
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-primary-500">✓</span> Analytics, insights y recomendaciones
-                </li>
-              </ul>
-              <div className="mt-8 flex-1 flex items-end">
-                <Link
-                  href="/register"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-primary-600/20 hover:bg-primary-500 hover:shadow-lg transition-all duration-200"
-                >
-                  Empezar proyecto
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex flex-col rounded-2xl border-2 border-emerald-200 bg-white p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 ring-1 ring-emerald-100">
-                <svg className="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
-                </svg>
-              </div>
-              <h3 className="mt-6 text-xl font-bold text-neutral-900">Para Salud</h3>
-              <p className="mt-2 text-sm leading-6 text-neutral-500">
-                Pacientes y médicos: triaje digital, mi salud, portal médico,
-                citas de telemedicina y mensajería segura.
-              </p>
-              <ul className="mt-6 space-y-2 text-sm text-neutral-600">
-                <li className="flex items-center gap-2">
-                  <span className="text-emerald-500">✓</span> Triaje de síntomas con sugerencia de acción
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-emerald-500">✓</span> Portal médico con alertas de urgencia
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-emerald-500">✓</span> Mensajería segura y citas de telemedicina
-                </li>
-              </ul>
-              <div className="mt-8 flex-1 flex items-end">
-                <Link
-                  href="/register/salud"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-500 hover:shadow-lg transition-all duration-200"
-                >
-                  Acceder al portal de salud
-                </Link>
-              </div>
             </div>
           </div>
         </div>
