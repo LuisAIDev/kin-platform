@@ -33,7 +33,7 @@ test.describe("Landing KIN Medical", () => {
 
     await expect(
       page.getByRole("heading", {
-        name: /KIN Medical: infraestructura inteligente para tu práctica clínica/i,
+        name: /KIN Medical: el sistema operativo de la atención médica moderna/i,
       })
     ).toBeVisible();
 

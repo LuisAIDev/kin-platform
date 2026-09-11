@@ -41,9 +41,10 @@ const CLINIC_FEATURES = [
 ];
 
 const IPS_FEATURES = [
-  "Gestión de redes de prestadores",
-  "Autorizaciones y flujos de referencia",
+  "Redes de prestadores",
+  "Autorizaciones y referencias",
   "Reportes regulatorios",
+  "Indicadores poblacionales",
 ];
 
 const PLANS = [
@@ -51,7 +52,7 @@ const PLANS = [
     name: "Medical Free",
     price: "$0",
     period: "/mes",
-    description: "Para empezar a digitalizar tu práctica.",
+    description: "Para empezar a digitalizar tu consulta.",
     features: ["3 pacientes", "10 triajes/mes", "Portal Médico básico"],
     cta: "Comenzar gratis",
     href: "/register/salud/medico",
@@ -61,7 +62,7 @@ const PLANS = [
     name: "Medical Pro",
     price: "$29",
     period: "/mes",
-    description: "Para médicos independientes con práctica activa.",
+    description: "Para médicos independientes con consulta activa.",
     features: ["100 pacientes", "Triajes ilimitados", "Seguimiento y agenda", "Telemedicina"],
     cta: "Solicitar acceso",
     href: "/register/salud/medico",
@@ -114,11 +115,11 @@ export default function HomePage() {
         <span className="inline-flex items-center rounded-full bg-medical-50 px-3 py-1 text-xs font-semibold text-medical-700">
           Plataforma clínica para médicos, clínicas y redes de atención
         </span>
-        <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-bold tracking-tight text-balance sm:text-5xl">
-          KIN Medical: infraestructura inteligente para tu práctica clínica.
+        <h1 className="mx-auto mt-6 max-w-4xl text-4xl font-bold tracking-tight text-balance sm:text-5xl">
+          KIN Medical: el sistema operativo de la atención médica moderna.
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-neutral-600">
-          Gestiona pacientes, agenda, seguimiento y telemedicina en un único lugar.
+        <p className="mx-auto mt-6 max-w-3xl text-lg text-neutral-600">
+          Triaje digital, IA clínica, telemedicina y gestión de pacientes en una sola plataforma. Escalable desde el consultorio hasta la red hospitalaria.
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <Link href="/register/salud/medico" className="btn-primary px-6 py-3">Soy Médico</Link>
@@ -131,7 +132,7 @@ export default function HomePage() {
       <section id="medicos" className="border-t border-neutral-100 bg-neutral-50">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="max-w-2xl">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Tu práctica clínica, organizada e inteligente.</h2>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Para médicos independientes: tu consulta, potenciada por inteligencia clínica.</h2>
             <p className="mt-4 text-lg text-neutral-600">
               Todo lo que necesitas para atender mejor, con menos carga administrativa.
             </p>
@@ -163,10 +164,10 @@ export default function HomePage() {
               <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
                 Próximamente
               </span>
-              <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">¿Tienes una clínica o hospital?</h2>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Para clínicas y hospitales: gestión integral de equipos médicos.</h2>
               <p className="mt-4 text-lg text-neutral-600">
-                Estamos preparando KIN Medical para equipos médicos: multi-médico, multi-sede,
-                dashboards institucionales y gestión de equipos.
+                KIN Medical se prepara para el entorno hospitalario: multi-médico, multi-sede,
+                dashboards institucionales, gestión de equipos y trazabilidad clínica completa.
               </p>
               <ul className="mt-6 space-y-3">
                 {CLINIC_FEATURES.map((f) => (
@@ -207,12 +208,12 @@ export default function HomePage() {
             <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-primary-100">
               Futuro
             </span>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">KIN Medical para redes de atención.</h2>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Para IPS y EPS: inteligencia para redes de atención.</h2>
             <p className="mt-4 text-lg text-primary-100">
-              Diseñado para IPS y EPS: gestión de redes de prestadores, autorizaciones y reportes regulatorios.
+              Diseñado para gestionar redes de prestadores: autorizaciones, seguimiento poblacional y reportes regulatorios. La base tecnológica para una atención conectada.
             </p>
           </div>
-          <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {IPS_FEATURES.map((f) => (
               <li key={f} className="rounded-xl border border-white/10 bg-white/5 p-5 text-sm text-primary-50">
                 {f}
@@ -292,6 +293,20 @@ export default function HomePage() {
             </a>
             <Link href="/register" className="btn-secondary px-6 py-3">Crear cuenta</Link>
           </div>
+        </div>
+      </section>
+
+      {/* Visión */}
+      <section className="border-t border-neutral-100">
+        <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold tracking-tight text-balance sm:text-4xl">
+            Una sola plataforma, toda la red de atención.
+          </h2>
+          <p className="mx-auto mt-4 max-w-3xl text-lg text-neutral-600">
+            KIN Medical conecta médicos, clínicas, hospitales, IPS y EPS en una infraestructura
+            digital común. Desde la primera consulta hasta la gestión poblacional, todo en un mismo
+            sistema.
+          </p>
         </div>
       </section>
 
