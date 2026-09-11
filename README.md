@@ -4,9 +4,9 @@
 
 ### Intelligent SaaS Platform
 
-**Plataforma SaaS de inteligencia y estructuración estratégica para empresas, consultorías, emprendedores, dueños de empresa y profesionales.**
+**Plataforma SaaS con dos productos independientes: KIN Empresas (estructuración estratégica) y KIN Medical (infraestructura clínica).**
 
-**🌐 Demo en producción:** [https://kin-platform.com](https://kin-platform.com)
+**🌐 KIN Empresas:** [https://kin-platform.com](https://kin-platform.com) · **🏥 KIN Medical:** [https://kin-platform-medical.com](https://kin-platform-medical.com)
 
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?style=flat&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-6DB33F?style=flat&logo=spring&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -45,11 +45,17 @@
 
 ## Descripción
 
-KIN es una plataforma SaaS de **inteligencia y estructuración estratégica** que combina un
-motor de análisis determinista escrito en Java con una capa de IA (LLM) orientada a la
-comunicación. Transforma la información dispersa de un proyecto o negocio en **contexto
-estructurado, análisis de viabilidad, riesgos, oportunidades, recomendaciones y documentación
-profesional reproducible**.
+KIN es una plataforma tecnológica con **dos productos independientes** que comparten el mismo backend, base de datos y sistema de identidad:
+
+### KIN Empresas — [kin-platform.com](https://kin-platform.com)
+
+Plataforma SaaS de **inteligencia y estructuración estratégica** para emprendedores, empresarios y consultores. Transforma la información dispersa de un proyecto en contexto estructurado, análisis de viabilidad, riesgos, oportunidades, recomendaciones y documentación profesional reproducible.
+
+### KIN Medical — [kin-platform-medical.com](https://kin-platform-medical.com)
+
+Plataforma de **infraestructura inteligente** para médicos, pacientes y (futuro) clínicas, hospitales, IPS y EPS. Incluye triaje digital, IA asistencial, telemedicina, seguimiento de pacientes, agenda y documentos clínicos.
+
+Cada producto tiene su **propio frontend y dominio**, pero ambos comparten el núcleo arquitectónico: un motor de análisis determinista escrito en Java y una capa de IA (LLM) orientada a la comunicación.
 
 El proyecto integra de forma real —no solo documental— las siguientes capacidades:
 
@@ -93,11 +99,12 @@ profesional reproducible.
 - **Product Intelligence** (analítica de uso e insights, 100 % local).
 - **Planes y suscripciones** (roles, límites de uso y pagos con Stripe).
 
-### KIN Salud
+### KIN Medical
 
-Solución de **infraestructura inteligente para profesionales de la salud** y sus pacientes.
-No es un marketplace ni un buscador de médicos: proporciona a cada profesional el marco para
-trabajar con **sus propios pacientes**, con permisos granulares y trazabilidad completa.
+Solución de **infraestructura inteligente para profesionales de la salud** y sus pacientes
+(y, en el futuro, clínicas, hospitales, IPS y EPS). No es un marketplace ni un buscador de
+médicos: proporciona a cada profesional el marco para trabajar con **sus propios pacientes**,
+con permisos granulares y trazabilidad completa.
 
 - **Relación médico-paciente** con estados (invitación, aceptación, rechazo) y **permisos
   granulares por relación** (solo acceso a relaciones `ACTIVE`).
@@ -111,6 +118,7 @@ trabajar con **sus propios pacientes**, con permisos granulares y trazabilidad c
 - **IA Asistencial** (resume, organiza, explica y redacta; nunca diagnostica) y
   **Automatizaciones** (reglas deterministas SI/ENTONCES escritas en Java).
 - **Monetización** del ejercicio profesional: planes y suscripciones con pagos (Stripe).
+- **Futuro:** multi-médico, multi-sede, dashboards institucionales y reportes regulatorios (IPS/EPS).
 
 > Ambas verticales comparten el mismo backend, el mismo sistema de identidad y el principio
 > rector de KIN: **"Java decide. El LLM únicamente comunica."**
@@ -119,18 +127,20 @@ trabajar con **sus propios pacientes**, con permisos granulares y trazabilidad c
 
 ## Demo en producción
 
-La plataforma está **desplegada y disponible públicamente**:
+Ambos productos están **desplegados y disponibles públicamente**:
 
-- **🌐 Plataforma:** [https://kin-platform.com](https://kin-platform.com)
-- **📖 Sobre KIN:** [https://kin-platform.com/sobre-kin](https://kin-platform.com/sobre-kin)
+- 🌐 **KIN Empresas:** [https://kin-platform.com](https://kin-platform.com)
+- 🏥 **KIN Medical:** [https://kin-platform-medical.com](https://kin-platform-medical.com)
+- 📖 **Sobre KIN:** [https://kin-platform.com/sobre-kin](https://kin-platform.com/sobre-kin)
 
-Infraestructura de despliegue verificada en `render.yaml` y perfiles de Spring:
+Infraestructura de despliegue verificada en `render.yaml`, Vercel y perfiles de Spring:
 
 | Componente | Entorno | Evidencia |
 |---|---|---|
-| Frontend (Next.js) | Producción pública `kin-platform.com` | Verificado en línea |
-| Backend (Spring Boot) | Render (`kin-backend.onrender.com`, autoDeploy) | `render.yaml` + healthcheck `/api/v1/actuator/health` |
-| Base de datos | PostgreSQL gestionada (Neon / Render) | `render.yaml`, perfil `prod` (Flyway `ddl-auto: validate`) |
+| Frontend Empresas (Next.js 16) | Vercel — `kin-platform.com` | Root Directory `kin-frontend/` |
+| Frontend Medical (Next.js 16) | Vercel — `kin-platform-medical.com` | Root Directory `kin-frontend-medical/` |
+| Backend (Spring Boot) | Render (`kin-backend-lwmy.onrender.com`, autoDeploy) | `render.yaml` + healthcheck `/api/v1/actuator/health` |
+| Base de datos | PostgreSQL gestionada (Neon) | `render.yaml`, perfil `prod` (Flyway `ddl-auto: validate`) |
 | CI/CD | GitHub Actions (5 workflows) | `.github/workflows/` |
 
 ---
@@ -318,6 +328,15 @@ flowchart TB
     LLM -->|Respuesta IA| F
 ```
 
+### Frontends y contexto por producto
+
+| Producto | Dominio | Framework | Root Directory |
+|----------|---------|-----------|----------------|
+| KIN Empresas | kin-platform.com | Next.js 16 | `kin-frontend/` |
+| KIN Medical | kin-platform-medical.com | Next.js 16 | `kin-frontend-medical/` |
+
+Un **solo backend** (Spring Boot) sirve a ambos productos mediante **alias de rutas por contexto**: `/api/v1/empresas/*` (Empresas), `/api/v1/medical/*` (Medical) y `/api/v1/auth|admin|stripe|pricing-plans|subscriptions/*` (común). Una sola base de datos PostgreSQL con tablas compartidas y específicas por vertical.
+
 **Bounded contexts del backend:**
 
 | Paquete | Bounded context |
@@ -471,7 +490,7 @@ Medidas implementadas en código (`SecurityConfig`, filtros y dominio):
   que un usuario con consentimiento (FREE/PREMIUM/PHYSICIAN/…) puede ser invitado por un médico
   (`RelationshipService.invitePatient`) y aceptar la relación sin cambiar su persona ni relogin.
   Sin migración ni backfill.
-- **Permisos granulares por relación (Área 5)**: en KIN Salud toda operación sobre datos de un
+- **Permisos granulares por relación (Área 5)**: en KIN Medical toda operación sobre datos de un
   paciente (mensajes, citas, seguimiento, agenda, documentos, IA, automatizaciones) exige una
   relación médico-paciente `ACTIVE` verificada por `RelationshipAccessValidator`; el paciente
   solo opera sobre sus propios datos (aislamiento por `userId` del JWT).
@@ -789,6 +808,12 @@ Todos los endpoints se sirven bajo el prefijo global **`/api/v1`** (`server.serv
 **151 endpoints** verificados en 40 controllers (inventario completo de Spring). Autenticación:
 **Public**, **Bearer JWT** o **ADMIN**.
 
+**Rutas por contexto (alias):** los controladores de cada vertical exponen su ruta legacy (`/health/*`, `/projects`, `/enterprise`) **y** un alias por producto:
+
+- **Empresas:** `/api/v1/empresas/projects/*`, `/api/v1/empresas/enterprise/*`, `/api/v1/empresas/categories/*`.
+- **Medical:** `/api/v1/medical/triage/*`, `/api/v1/medical/physician/*`, `/api/v1/medical/telemedicine/*`, `/api/v1/medical/documents/*`, `/api/v1/medical/followup/*`, `/api/v1/medical/scheduling/*`, `/api/v1/medical/differential/*`, `/api/v1/medical/dashboard/*`, `/api/v1/medical/audit/*`, `/api/v1/medical/aiassist/*`, `/api/v1/medical/automation/*`.
+- **Común:** `/api/v1/auth/*`, `/api/v1/admin/*`, `/api/v1/stripe/*`, `/api/v1/pricing-plans/*`, `/api/v1/subscriptions/*`.
+
 | Método | Endpoint | Auth | Descripción |
 |---|---|---|---|
 | `POST` | `/auth/register` | Public | Registro de usuario (201) |
@@ -892,7 +917,7 @@ Todos los endpoints se sirven bajo el prefijo global **`/api/v1`** (`server.serv
 | `POST` | `/admin/users/{userId}/reset-password-link` | ADMIN | Generar enlace de reset de contraseña sin correo |
 | `POST` | `/admin/security/rate-limit/reset?ip=...` | ADMIN | Desbloquear una IP del rate limiting |
 
-### Endpoints de KIN Salud 2.0 (Áreas 9-14)
+### Endpoints de KIN Medical 2.0 (Áreas 9-14)
 
 | Método | Endpoint | Rol | Descripción |
 |---|---|---|---|
@@ -1673,7 +1698,7 @@ Usuario → Registro/Login → Plan → Suscripción → Acceso a funcionalidade
 - **Acceso** condicionado por plan y rol (filtro de suscripción).
 - Los precios comerciales son datos del producto, no están fijados en el código.
 
-> **KIN Salud no es un marketplace ni un buscador de médicos.** KIN proporciona a cada
+> **KIN Medical no es un marketplace ni un buscador de médicos.** KIN proporciona a cada
 > profesional la infraestructura para trabajar con **sus propios pacientes** (relación
 > médico-paciente con estados, permisos granulares y trazabilidad). La monetización de la
 > plataforma (planes y suscripciones con Stripe) es común a ambas verticales; no existe un
@@ -1706,7 +1731,10 @@ Usuario → Registro/Login → Plan → Suscripción → Acceso a funcionalidade
   fallo o deshabilitado)
 - ✅ Testing (backend + frontend + E2E) y CI/CD (5 workflows)
 - ✅ Despliegue en producción (`kin-platform.com`, Render, Neon/PostgreSQL)
-- ✅ **KIN Salud (vertical)** — relación médico-paciente con estados (V30), triaje digital y
+- ✅ **Separación en dos productos** (Commits 0–5.1): frontend `kin-frontend-medical` independiente,
+  alias de rutas por contexto (`/empresas/*`, `/medical/*`), Empresas 100 % limpio de Salud y URLs
+  de compartición de triaje apuntando directamente a `kin-platform-medical.com`
+- ✅ **KIN Medical (vertical)** — relación médico-paciente con estados (V30), triaje digital y
   diagnóstico diferencial (ADR-028/029), dashboard del paciente (ADR-030), portal del médico
   (ADR-031), telemedicina cifrada (ADR-032), seguimiento de pacientes (ADR-033), agenda y
   disponibilidad (ADR-034), auditoría de accesos (ADR-035), documentos clínicos (ADR-036),
@@ -1723,6 +1751,10 @@ Usuario → Registro/Login → Plan → Suscripción → Acceso a funcionalidade
 - [ ] KIN 2.4 — EventBus async + persistencia (outbox)
 - [ ] KIN 2.5 — Context Analyzer NLP
 - [ ] KIN 3.0 — multi-tenant, plugin system, separación completa en Bounded Contexts
+- [ ] Multi-tenant para clínicas y hospitales (multi-médico, multi-sede)
+- [ ] Integración con EHR (HL7 FHIR)
+- [ ] Reportes regulatorios para IPS/EPS
+- [ ] App móvil nativa
 
 ---
 
@@ -1730,9 +1762,10 @@ Usuario → Registro/Login → Plan → Suscripción → Acceso a funcionalidade
 
 Información comprobada contra el código y la configuración del repositorio:
 
-- 🟢 **Plataforma disponible en producción** — `https://kin-platform.com` (+ `/sobre-kin`)
-- 🟢 **Backend implementado** — Spring Boot 3.2.5, 151 endpoints, 13-stage pipeline
-- 🟢 **Frontend implementado** — Next.js 16.2.9, App Router, TypeScript strict
+- 🟢 **KIN Empresas** — `https://kin-platform.com` (frontend `kin-frontend`, Next.js 16; landing limpia de Salud)
+- 🟢 **KIN Medical** — `https://kin-platform-medical.com` (frontend `kin-frontend-medical`, Next.js 16; landing B2B)
+- 🟢 **Backend implementado** — Spring Boot 3.2.5, 151 endpoints, 13-stage pipeline, alias `/empresas/*` y `/medical/*`
+- 🟢 **Frontend implementado** — Next.js 16.2.9, App Router, TypeScript strict (dos productos)
 - 🟢 **Enterprise Document Generation** — 9 tipos de documento, PDF/DOCX/PPTX, versionado
 - 🟢 **Project Export** — DOCX/PDF/Markdown (módulo `kin.export`)
 - 🟢 **Product Intelligence** — analítica de uso offline
