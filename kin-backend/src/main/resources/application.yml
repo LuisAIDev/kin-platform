@@ -479,6 +479,15 @@ app:
     #     window: 60s
 
 # -----------------------------------------------------------
+# Frontend Medical (KIN Medical) — base URL para enlaces públicos.
+# El dominio Medical es independiente del de Empresas (app.frontend.base-url);
+# se usa para construir los enlaces de compartición de triaje.
+# -----------------------------------------------------------
+medical:
+  frontend:
+    base-url: ${MEDICAL_FRONTEND_BASE_URL:https://www.kin-platform-medical.com}
+
+# -----------------------------------------------------------
 # Logging
 # -----------------------------------------------------------
 logging:
