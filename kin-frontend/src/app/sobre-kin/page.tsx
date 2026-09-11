@@ -147,25 +147,14 @@ export default function SobreKinPage() {
           </div>
         </section>
 
-        {/* ── Vertical de Salud ────────────────────────────── */}
+        {/* ── Una plataforma adaptable ─────────────────────── */}
         <section className="border-y border-neutral-100 bg-neutral-50/50 py-20 sm:py-24">
           <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-            <SectionHeading eyebrow={content.health.eyebrow} title={content.health.title} />
+            <SectionHeading eyebrow={content.adaptability.eyebrow} title={content.adaptability.title} />
             <div className="mt-10 space-y-5 text-base leading-7 text-neutral-600 sm:text-lg sm:leading-8">
-              {content.health.paragraphs.map((paragraph) => (
+              {content.adaptability.paragraphs.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
-            </div>
-            <div className="mt-8 rounded-xl border border-neutral-200 bg-white p-6">
-              <p className="text-sm font-semibold text-neutral-900">Importante</p>
-              <ul className="mt-3 space-y-2" role="list">
-                {content.health.disclaimers.map((disclaimer) => (
-                  <li key={disclaimer} className="flex items-start gap-2.5 text-sm leading-6 text-neutral-600">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary-500" aria-hidden="true" />
-                    {disclaimer}
-                  </li>
-                ))}
-              </ul>
             </div>
           </div>
         </section>
