@@ -63,12 +63,12 @@ export default function AcceptInvitationPage() {
             Aceptaste el consentimiento de tratamiento de datos de salud y la relación
             con tu médico quedó activa. Ya pueden verse, escribirse y gestionar citas.
           </p>
-          <Link
-            href="/dashboard/salud"
+          <a
+            href="https://kin-platform-medical.com/dashboard/patient/health"
             className="mt-6 inline-flex rounded-lg bg-primary-600 px-5 py-2 text-sm font-semibold text-white hover:bg-primary-500"
           >
             Ir a Mi Salud
-          </Link>
+          </a>
         </div>
       )}
 

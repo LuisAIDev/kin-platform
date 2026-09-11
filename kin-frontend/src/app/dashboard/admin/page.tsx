@@ -21,16 +21,6 @@ const SECTIONS: AdminSection[] = [
     ],
   },
   {
-    title: "Vertical Salud",
-    description: "Portal de salud para pacientes y médicos.",
-    links: [
-      { label: "Mi Salud", href: "/dashboard/patient/health" },
-      { label: "Triaje Digital", href: "/dashboard/patient/triage" },
-      { label: "Portal Médico", href: "/dashboard/physician" },
-      { label: "Mensajes", href: "/dashboard/patient/messages" },
-    ],
-  },
-  {
     title: "Administración",
     description: "Herramientas de administración de la plataforma.",
     links: [
@@ -56,7 +46,7 @@ export default function AdminHubPage() {
         </p>
       </div>
 
-      <section className="grid grid-cols-1 gap-4 mt-8 lg:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 mt-8 lg:grid-cols-2">
         {SECTIONS.map((section) => (
           <div key={section.title} className="rounded-xl border border-neutral-200 bg-white p-6">
             <h2 className="text-base font-bold text-neutral-900">{section.title}</h2>
