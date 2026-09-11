@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL = "https://kin-platform.com";
+const SITE_URL = "https://www.kin-platform.com";
 const SITE_NAME = "KIN — Knowledge, Innovation & Navigation";
 const SITE_TITLE = "KIN | Knowledge, Innovation & Navigation";
 const SITE_DESCRIPTION =
