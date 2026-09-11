@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "@/styles/globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
 
 const SITE_URL = "https://www.kin-platform-medical.com";
 const SITE_NAME = "KIN Medical";
@@ -96,7 +99,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="h-full antialiased">
-      <body className="min-h-full w-full flex flex-col">{children}</body>
+      <body className={`min-h-full w-full flex flex-col ${inter.className}`}>{children}</body>
     </html>
   );
 }

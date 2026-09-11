@@ -1,32 +1,31 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-medical-50: #eff8ff;
+  --color-medical-100: #dbeefe;
+  --color-medical-200: #bfe2fe;
+  --color-medical-300: #93d0fd;
+  --color-medical-400: #60b4fa;
+  --color-medical-500: #0EA5E9;
+  --color-medical-600: #0284C7;
+  --color-medical-700: #0369a1;
+  --color-medical-800: #075985;
+  --color-medical-900: #0c4a6e;
+  --color-medical-950: #082c4d;
 
-  /* Paleta KIN Medical: azul médico + verde clínico */
-  --color-primary-50: #eff8ff;
-  --color-primary-100: #dbeefe;
-  --color-primary-200: #bfe2fe;
-  --color-primary-300: #93d0fd;
-  --color-primary-400: #60b4fa;
-  --color-primary-500: #3b97f6;
-  --color-primary-600: #2478eb;
-  --color-primary-700: #1c60d8;
-  --color-primary-800: #1e4fae;
-  --color-primary-900: #1e4589;
-  --color-primary-950: #172b53;
+  --color-accent-50: #ecfdf5;
+  --color-accent-100: #d1fae5;
+  --color-accent-200: #a7f3d0;
+  --color-accent-300: #6ee7b7;
+  --color-accent-400: #34d399;
+  --color-accent-500: #10B981;
+  --color-accent-600: #059669;
+  --color-accent-700: #047857;
+  --color-accent-800: #065f46;
+  --color-accent-900: #064e3b;
+  --color-accent-950: #022c22;
 
-  --color-medical-50: #f0fdf4;
-  --color-medical-100: #dcfce7;
-  --color-medical-200: #bbf7d0;
-  --color-medical-300: #86efac;
-  --color-medical-400: #4ade80;
-  --color-medical-500: #22c55e;
-  --color-medical-600: #16a34a;
-  --color-medical-700: #15803d;
-  --color-medical-800: #166534;
-  --color-medical-900: #14532d;
-  --color-medical-950: #052e16;
+  --color-neutral-900: #0F172A;
 }
 
 body {
@@ -37,15 +36,15 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors bg-medical-600 hover:bg-medical-700 focus:outline-none focus:ring-2 focus:ring-medical-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold text-neutral-700 transition-colors bg-white border border-neutral-300 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold text-neutral-700 transition-colors bg-white border border-neutral-300 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-medical-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
   }
   .input-field {
-    @apply w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors disabled:bg-neutral-100 disabled:cursor-not-allowed;
+    @apply w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-medical-500 focus:border-transparent transition-colors disabled:bg-neutral-100 disabled:cursor-not-allowed;
   }
   .card {
-    @apply rounded-xl border border-neutral-200 bg-white p-6 shadow-sm;
+    @apply rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200;
   }
 }

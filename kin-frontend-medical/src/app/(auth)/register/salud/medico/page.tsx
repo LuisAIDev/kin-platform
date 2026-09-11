@@ -53,10 +53,15 @@ export default function PhysicianRegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-medical-50 via-white to-accent-50">
+      <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="rounded-2xl shadow-xl border border-neutral-200 bg-white p-8 sm:p-10">
           <div className="text-center mb-8">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-medical-500 to-medical-600">
+              <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
             <h1 className="text-2xl font-bold text-neutral-900">Registro de Médico</h1>
             <p className="text-neutral-500 mt-2">Solicita tu acceso profesional a KIN Medical</p>
           </div>
@@ -140,18 +145,18 @@ export default function PhysicianRegisterPage() {
               />
               <span className="text-sm text-neutral-600">
                 Acepto el tratamiento de mis datos de salud según la{" "}
-                <a href="/privacidad" className="text-primary-600 hover:underline">Política de Privacidad</a>
+                <a href="/privacidad" className="text-medical-600 hover:underline font-medium">Política de Privacidad</a>
               </span>
             </label>
 
-            <button type="submit" disabled={loading} className="btn-primary w-full py-3">
+            <button type="submit" disabled={loading} className="btn-primary w-full py-3 bg-gradient-to-r from-medical-600 to-medical-500 hover:from-medical-500 hover:to-medical-400 shadow-lg shadow-medical-600/25">
               {loading ? "Enviando solicitud..." : "Solicitar acceso"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-neutral-500">
             ¿Ya tienes cuenta?{" "}
-            <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">Inicia sesión</Link>
+            <Link href="/login" className="text-medical-600 hover:text-medical-700 font-semibold">Inicia sesión</Link>
           </p>
         </div>
       </div>

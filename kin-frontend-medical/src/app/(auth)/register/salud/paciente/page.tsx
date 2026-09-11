@@ -51,10 +51,15 @@ export default function PatientRegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-medical-50 via-white to-accent-50">
+      <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="rounded-2xl shadow-xl border border-neutral-200 bg-white p-8 sm:p-10">
           <div className="text-center mb-8">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-medical-500 to-medical-600">
+              <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
             <h1 className="text-2xl font-bold text-neutral-900">Registro de Paciente</h1>
             <p className="text-neutral-500 mt-2">Completa tus datos para crear tu cuenta</p>
           </div>
@@ -126,18 +131,18 @@ export default function PatientRegisterPage() {
               />
               <span className="text-sm text-neutral-600">
                 Acepto el tratamiento de mis datos de salud según la{" "}
-                <a href="/privacidad" className="text-primary-600 hover:underline">Política de Privacidad</a>
+                <a href="/privacidad" className="text-medical-600 hover:underline font-medium">Política de Privacidad</a>
               </span>
             </label>
 
-            <button type="submit" disabled={loading} className="btn-primary w-full py-3">
+            <button type="submit" disabled={loading} className="btn-primary w-full py-3 bg-gradient-to-r from-medical-600 to-medical-500 hover:from-medical-500 hover:to-medical-400 shadow-lg shadow-medical-600/25">
               {loading ? "Creando cuenta..." : "Crear cuenta"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-neutral-500">
             ¿Ya tienes cuenta?{" "}
-            <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">Inicia sesión</Link>
+            <Link href="/login" className="text-medical-600 hover:text-medical-700 font-semibold">Inicia sesión</Link>
           </p>
         </div>
       </div>
