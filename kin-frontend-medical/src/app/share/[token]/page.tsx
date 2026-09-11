@@ -84,13 +84,13 @@ export default function SharedTriagePage({ params }: Props) {
         {/* Header del documento */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-medical-600 flex items-center justify-center shrink-0">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="4 7 12 12 4 17" />
                 <polyline points="12 7 20 12 12 17" />
               </svg>
             </div>
-            <span className="text-lg font-bold tracking-tight text-neutral-800">KIN</span>
+            <span className="text-lg font-bold tracking-tight text-neutral-800">KIN Medical</span>
           </div>
           <button
             type="button"

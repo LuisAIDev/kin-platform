@@ -12,7 +12,6 @@ function VerifyEmailContent() {
 
   const token = searchParams.get("token");
   const queryEmail = searchParams.get("email");
-  const pendingReview = searchParams.get("pending") === "1";
 
   const [email, setEmail] = useState<string>(() => queryEmail ?? getPendingEmail() ?? "");
   const [status, setStatus] = useState<"verifying" | "verified" | "error" | "idle">(
@@ -112,24 +111,10 @@ function VerifyEmailContent() {
           <div className="w-12 h-12 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-2xl">
             ✓
           </div>
-          {pendingReview ? (
-            <>
-              <h1 className="text-2xl font-bold">Correo verificado</h1>
-              <p className="text-sm text-neutral-600">
-                Tu cuenta de médico está <strong>en revisión</strong>. Un
-                administrador verificará tu cédula profesional y recibirás un
-                correo cuando sea aprobada. Mientras tanto no podrás iniciar
-                sesión.
-              </p>
-            </>
-          ) : (
-            <>
-              <h1 className="text-2xl font-bold">Correo verificado correctamente</h1>
-              <p className="text-sm text-neutral-600">
-                Tu cuenta está activa. Ya puedes iniciar sesión.
-              </p>
-            </>
-          )}
+          <h1 className="text-2xl font-bold">Correo verificado correctamente</h1>
+          <p className="text-sm text-neutral-600">
+            Tu cuenta está activa. Ya puedes iniciar sesión.
+          </p>
           <button
             onClick={() => router.push("/login")}
             className="rounded-lg bg-primary-600 py-2 px-6 text-sm font-medium text-white hover:bg-primary-700 transition min-h-11"
