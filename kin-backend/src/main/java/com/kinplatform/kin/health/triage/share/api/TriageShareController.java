@@ -36,8 +36,8 @@ public class TriageShareController {
     private final TriageShareService shareService;
     private final UserRepository userRepository;
 
-    @Value("${app.frontend.base-url:http://localhost:3000}")
-    private String frontendBaseUrl;
+    @Value("${medical.frontend.base-url:https://www.kin-platform-medical.com}")
+    private String medicalFrontendBaseUrl;
 
     public TriageShareController(TriageShareService shareService, UserRepository userRepository) {
         this.shareService = shareService;
@@ -74,9 +74,9 @@ public class TriageShareController {
     }
 
     private TriageShareResponse toResponse(TriageShareLink link) {
-        String base = frontendBaseUrl == null || frontendBaseUrl.isBlank()
-                ? "https://www.kin-platform.com"
-                : frontendBaseUrl;
+        String base = medicalFrontendBaseUrl == null || medicalFrontendBaseUrl.isBlank()
+                ? "https://www.kin-platform-medical.com"
+                : medicalFrontendBaseUrl;
         String url = base + "/share/" + link.token();
         return new TriageShareResponse(link.token(), url, link.expiresAt());
     }
