@@ -1,14 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+
+interface ValidationResult {
+  valid: boolean;
+  message?: string;
+}
 
 interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
+  validation?: (value: string) => ValidationResult;
 }
 
-export function PasswordInput({ label, className, ...props }: PasswordInputProps) {
+export function PasswordInput({ label, className, validation, ...props }: PasswordInputProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+  const value = props.value as string || '';
+
+  useEffect(() => {
+    if (validation && value) {
+      setValidationResult(validation(value));
+    }
+  }, [value, validation]);
 
   return (
     <div className="w-full">
@@ -33,6 +47,11 @@ export function PasswordInput({ label, className, ...props }: PasswordInputProps
           {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
         </button>
       </div>
+      {validationResult?.message && (
+        <p className={`mt-1 text-sm ${validationResult.valid ? 'text-green-600' : 'text-red-600'}`}>
+          {validationResult.message}
+        </p>
+      )}
     </div>
   );
 }

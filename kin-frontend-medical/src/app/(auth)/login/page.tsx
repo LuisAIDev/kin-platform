@@ -74,16 +74,16 @@ export default function LoginPage() {
             />
           </div>
 
-          <PasswordInput
-              id="password"
-              label="Contraseña"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              disabled={loading}
-            />
+                    <PasswordInput
+            id="password"
+            label="Contraseña"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            disabled={loading}
+          />
 
           <button type="submit" disabled={loading} className="btn-primary w-full py-3">
             {loading ? "Iniciando sesión..." : "Iniciar sesión"}
@@ -92,7 +92,7 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-sm text-neutral-500">
           ¿No tienes cuenta?{" "}
-          <Link href="/register" className="text-primary-600 hover:text-primary-700 font-medium">
+          <Link href="/register" className="text-medical-600 hover:text-medical-700 font-medium">
             Regístrate
           </Link>
         </p>

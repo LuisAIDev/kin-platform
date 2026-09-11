@@ -7,11 +7,13 @@ import com.kinplatform.kin.health.physician.domain.RelationshipStatus;
 import com.kinplatform.kin.health.triage.api.TriageHistoryResponse;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
+import com.kinplatform.user.PhysicianVerificationStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,6 +92,32 @@ public class PhysicianController {
         PhysicianApplicationService.ApplicationStatusResponse status = applicationService.getApplicationStatus(userId);
         log.info("=== PHYSICIAN APPLICATION STATUS === userId={}, status={}", userId, status.status());
         return ResponseEntity.ok(status);
+    }
+
+    @GetMapping("/verification-status")
+    public ResponseEntity<Map<String, Object>> getVerificationStatus(
+            Authentication authentication) {
+        UUID userId = AuthenticatedUsers.require(userRepository, authentication).getId();
+        PhysicianApplicationService.ApplicationStatusResponse appStatus = applicationService.getApplicationStatus(userId);
+        PhysicianVerificationStatus verificationStatus = appStatus.physicianVerificationStatus();
+        String statusStr = verificationStatus != null ? verificationStatus.name() : "NOT_FOUND";
+
+        Map<String, Object> response = new java.util.LinkedHashMap<>();
+        response.put("emailVerified", true);
+        response.put("physicianVerificationStatus", statusStr);
+        response.put("estimatedReviewTime", "24 hours");
+        if ("PENDING".equals(statusStr)) {
+            response.put("message", "Tu cédula está siendo verificada por nuestro equipo.");
+        } else if ("APPROVED".equals(statusStr)) {
+            response.put("message", "¡Tu verificación está completa! Bienvenido a KIN Medical.");
+        } else if ("REJECTED".equals(statusStr)) {
+            response.put("message", "Tu cédula no pudo ser verificada. Contacta a soporte.");
+        } else {
+            response.put("message", "No se ha encontrado una solicitud de verificación.");
+        }
+        response.put("estado", statusStr);
+        log.info("=== PHYSICIAN VERIFICATION STATUS === userId={}, status={}", userId, statusStr);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/patients")
