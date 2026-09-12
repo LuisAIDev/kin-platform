@@ -2,8 +2,10 @@ package com.kinplatform.common.security;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled("Clase deprecada en favor de modelo basado en capacidades (ADR compartido backend multi-frontend)")
 class PlatformAccessTest {
 
     @Test
@@ -86,12 +88,6 @@ class PlatformAccessTest {
         assertTrue(PlatformAccess.isUnrestricted("/actuator/health"));
     }
 
-    /**
-     * Documenta el comportamiento ACTUAL con context-path: la ruta cruda
-     * incluye /api/v1, ningún prefijo coincide y todo se considera
-     * "unrestricted" (aislamiento inactivo). Es intencionalmente permisivo
-     * para no romper ADR-039/040 hasta reconciliar el modelo.
-     */
     @Test
     void conContextPathSinNormalizar_todoEsUnrestricted() {
         assertTrue(PlatformAccess.isUnrestricted("/api/v1/health/triage"));

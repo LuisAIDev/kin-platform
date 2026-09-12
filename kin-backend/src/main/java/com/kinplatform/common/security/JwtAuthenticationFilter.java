@@ -82,18 +82,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var authentication = new UsernamePasswordAuthenticationToken(email, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // Aislamiento por plataforma. NOTA: el backend se sirve bajo
-        // /api/v1 (context-path), y getRequestURI() lo incluye; por eso el
-        // predicado recibe la ruta SIN normalizar y el aislamiento queda
-        // INACTIVO (comportamiento actual de producción). Activar el
-        // aislamiento exige normalizar la ruta y reconciliar ADR-039/040.
-        if (!PlatformAccess.canAccess(user.getPlatform(), user.getRole().name(), request.getRequestURI())) {
-            log.warn("Acceso cruzado bloqueado: platform={}, role={} no puede acceder a URI={}",
-                    user.getPlatform(), user.getRole().name(), request.getRequestURI());
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Acceso prohibido: plataforma no autorizada para esta ruta");
-            return;
-        }
-
         filterChain.doFilter(request, response);
     }
 

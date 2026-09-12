@@ -25,6 +25,16 @@ import java.util.Set;
  * EMPRESAS puede obtener capacidad de paciente/médico sin cambiar de
  * {@code platform}). No activar sin ese trabajo previo.</p>
  */
+/**
+ * @deprecated Esta clase se mantiene solo como referencia histórica.
+ * El aislamiento por plataforma fue removido porque:
+ * - Los frontends están completamente separados (kin-platform.com vs kin-platform-medical.com).
+ * - Las reglas de negocio (ADR-039/040) permiten capacidades cruzadas.
+ * - La seguridad real está en {@code physician_verification_status} y {@code health_data_consent}.
+ *
+ * <p>Ver: {@link AUDITORIA_ARQUITECTURA_KIN}.</p>
+ */
+@Deprecated
 public final class PlatformAccess {
 
     private static final Map<String, Set<String>> PATH_PLATFORM_MAP = Map.of(
