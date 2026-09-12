@@ -370,7 +370,7 @@ cd kin-frontend-medical && npm run build
 cd kin-backend && ./mvnw.cmd clean package -DskipTests
 
 # Verificar estado del backend
-curl https://kin-backend-lmwy.onrender.com/api/v1/actuator/health
+curl https://kin-backend-lwmy.onrender.com/api/v1/actuator/health
 
 # Verificar build frontend
 curl https://www.kin-platform-medical.com

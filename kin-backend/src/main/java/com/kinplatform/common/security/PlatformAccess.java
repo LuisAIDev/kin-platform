@@ -14,6 +14,16 @@ import java.util.Set;
  *   <li>{@code /health/**} y {@code /medical/**} → solo {@code SALUD_PERSONAL} o {@code SALUD_PROFESIONAL}</li>
  *   <li>Rutas sin prefijo mapeado (auth, actuator, pricing-plans, etc.) → siempre permitidas.</li>
  * </ul>
+ *
+ * <p><b>Nota de contexto (IMPORTANTE):</b> el backend se sirve bajo
+ * {@code server.servlet.context-path=/api/v1}. {@code request.getRequestURI()}
+ * INCLUYE ese prefijo, por lo que ninguna clave de {@link #PATH_PLATFORM_MAP}
+ * coincide y {@link #isUnrestricted(String)} devuelve {@code true} para todas
+ * las rutas: el aislamiento queda INACTIVO. Activarlo requiere normalizar la
+ * ruta (quitar el context-path) ANTES de llamar a este predicado y, además,
+ * reconciliarlo con las capacidades desacopladas de ADR-039/040 (un usuario
+ * EMPRESAS puede obtener capacidad de paciente/médico sin cambiar de
+ * {@code platform}). No activar sin ese trabajo previo.</p>
  */
 public final class PlatformAccess {
 
@@ -30,7 +40,7 @@ public final class PlatformAccess {
      *
      * @param platform      plataforma del usuario (EMPRESAS, SALUD_PERSONAL, SALUD_PROFESIONAL).
      * @param role          rol del usuario (FREE, PREMIUM, FACILITADOR, PATIENT, PHYSICIAN, ADMIN).
-     * @param requestPath   ruta de la petición (ej. "/empresas/projects/abc").
+     * @param requestPath   ruta de la petición.
      * @return {@code true} si el acceso está permitido.
      */
     public static boolean canAccess(String platform, String role, String requestPath) {
@@ -41,7 +51,6 @@ public final class PlatformAccess {
             return true;
         }
         String normalizedPath = requestPath.startsWith("/") ? requestPath : "/" + requestPath;
-        // Rutas sin prefijo mapeado son siempre permitidas (auth, actuator, pricing-plans, etc.)
         if (isUnrestricted(normalizedPath)) {
             return true;
         }

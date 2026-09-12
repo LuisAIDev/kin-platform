@@ -2,7 +2,6 @@ package com.kinplatform.common.security;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class PlatformAccessTest {
@@ -85,5 +84,17 @@ class PlatformAccessTest {
         assertTrue(PlatformAccess.canAccess("SALUD_PERSONAL", "PATIENT", "/pricing-plans/basic"));
         assertTrue(PlatformAccess.isUnrestricted("/auth/login"));
         assertTrue(PlatformAccess.isUnrestricted("/actuator/health"));
+    }
+
+    /**
+     * Documenta el comportamiento ACTUAL con context-path: la ruta cruda
+     * incluye /api/v1, ningún prefijo coincide y todo se considera
+     * "unrestricted" (aislamiento inactivo). Es intencionalmente permisivo
+     * para no romper ADR-039/040 hasta reconciliar el modelo.
+     */
+    @Test
+    void conContextPathSinNormalizar_todoEsUnrestricted() {
+        assertTrue(PlatformAccess.isUnrestricted("/api/v1/health/triage"));
+        assertTrue(PlatformAccess.canAccess("EMPRESAS", "FREE", "/api/v1/health/triage"));
     }
 }

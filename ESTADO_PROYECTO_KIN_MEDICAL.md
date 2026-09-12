@@ -50,7 +50,7 @@ KIN Medical es una plataforma SaaS B2B para el sector salud que permite a médic
 |---|---|---|
 | **Frontend (Vercel)** | `https://www.kin-platform-medical.com` | Producción |
 | **Frontend Preview** | `https://kin-frontend-medical-*.vercel.app` | Despliegues preview |
-| **Backend (Render)** | `https://kin-backend-lmwy.onrender.com` | Spring Boot + PostgreSQL |
+| **Backend (Render)** | `https://kin-backend-lwmy.onrender.com` | Spring Boot + PostgreSQL |
 | **API Base** | `/api/v1` | `context-path` en `application.yml` |
 
 ---
@@ -145,7 +145,7 @@ KIN Medical es una plataforma SaaS B2B para el sector salud que permite a médic
 - **Framework:** Next.js 16 + Turbopack
 
 ### 5.2 Backend (Render)
-- **URL:** `https://kin-backend-lmwy.onrender.com`
+- **URL:** `https://kin-backend-lwmy.onrender.com`
 - **Context path:** `/api/v1` (configurado en `application.yml`)
 - **Base de datos:** PostgreSQL (Render starter)
 - **Health check:** `/api/v1/actuator/health`
@@ -165,7 +165,7 @@ KIN Medical es una plataforma SaaS B2B para el sector salud que permite a médic
 ### 5.4 Variables de Entorno Principales
 | Variable | Valor |
 |---|---|
-| `NEXT_PUBLIC_API_URL` | `https://kin-backend-lmwy.onrender.com/api/v1` |
+| `NEXT_PUBLIC_API_URL` | `https://kin-backend-lwmy.onrender.com/api/v1` |
 | `SPRING_PROFILES_ACTIVE` | `render,shadow` |
 | `ALLOWED_ORIGINS` | `https://kin-frontend.onrender.com,https://kin-platform.com` |
 | `MEDICAL_FRONTEND_BASE_URL` | `https://www.kin-platform-medical.com` |
