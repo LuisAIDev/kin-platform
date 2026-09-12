@@ -25,7 +25,7 @@ class JwtServiceTest {
     @Test
     void generateToken_deberiaCrearTokenValido() {
         UUID userId = UUID.randomUUID();
-        String token = jwtService.generateToken(userId, "a@kin.com", "ADMIN");
+        String token = jwtService.generateToken(userId, "a@kin.com", "ADMIN", "EMPRESAS");
 
         assertNotNull(token);
         assertTrue(jwtService.isTokenValid(token));
@@ -35,7 +35,7 @@ class JwtServiceTest {
 
     @Test
     void tokenManipulado_deberiaSerInvalido() {
-        String token = jwtService.generateToken(UUID.randomUUID(), "a@kin.com", "FREE");
+        String token = jwtService.generateToken(UUID.randomUUID(), "a@kin.com", "FREE", "EMPRESAS");
         String tampered = token.substring(0, token.length() - 3) + "abc";
 
         assertFalse(jwtService.isTokenValid(tampered));
@@ -52,7 +52,7 @@ class JwtServiceTest {
         String otherSecret =
                 Base64.getEncoder().encodeToString("kin-other-secret-key-for-different-signature".getBytes());
         JwtService other = new JwtService(otherSecret, 86_400_000L, 604_800_000L, new MockEnvironment());
-        String token = other.generateToken(UUID.randomUUID(), "b@kin.com", "FREE");
+        String token = other.generateToken(UUID.randomUUID(), "b@kin.com", "FREE", "EMPRESAS");
 
         assertFalse(jwtService.isTokenValid(token));
     }
@@ -60,7 +60,7 @@ class JwtServiceTest {
     @Test
     void tokenBlacklistado_deberiaSerInvalido() {
         UUID userId = UUID.randomUUID();
-        String token = jwtService.generateToken(userId, "a@kin.com", "FREE");
+        String token = jwtService.generateToken(userId, "a@kin.com", "FREE", "EMPRESAS");
         assertTrue(jwtService.isTokenValid(token));
 
         jwtService.blacklistToken(token);
@@ -70,8 +70,8 @@ class JwtServiceTest {
 
     @Test
     void blacklistToken_deberiaMantenerValidoOtroToken() {
-        String t1 = jwtService.generateToken(UUID.randomUUID(), "a@kin.com", "FREE");
-        String t2 = jwtService.generateToken(UUID.randomUUID(), "b@kin.com", "FREE");
+        String t1 = jwtService.generateToken(UUID.randomUUID(), "a@kin.com", "FREE", "EMPRESAS");
+        String t2 = jwtService.generateToken(UUID.randomUUID(), "b@kin.com", "FREE", "EMPRESAS");
 
         jwtService.blacklistToken(t1);
 
@@ -119,7 +119,7 @@ class JwtServiceTest {
         // 32 bytes = 256 bits (mínimo para HS256)
         String validSecret = Base64.getEncoder().encodeToString("kin-test-secret-key-32-bytes-long!!".getBytes());
         JwtService service = new JwtService(validSecret, 86_400_000L, 604_800_000L, new MockEnvironment());
-        String token = service.generateToken(UUID.randomUUID(), "test@kin.com", "FREE");
+        String token = service.generateToken(UUID.randomUUID(), "test@kin.com", "FREE", "EMPRESAS");
         assertTrue(service.isTokenValid(token));
     }
 
@@ -137,7 +137,7 @@ class JwtServiceTest {
     @Test
     void refreshToken_deberiaEmitirNuevoAccessToken() {
         UUID userId = UUID.randomUUID();
-        String refresh = jwtService.generateRefreshToken(userId, "a@kin.com", "PATIENT");
+        String refresh = jwtService.generateRefreshToken(userId, "a@kin.com", "PATIENT", "EMPRESAS");
 
         String newAccess = jwtService.refreshAccessToken(refresh);
 
@@ -148,7 +148,7 @@ class JwtServiceTest {
 
     @Test
     void refreshConAccessToken_deberiaRechazarse() {
-        String access = jwtService.generateToken(UUID.randomUUID(), "a@kin.com", "PATIENT");
+        String access = jwtService.generateToken(UUID.randomUUID(), "a@kin.com", "PATIENT", "EMPRESAS");
 
         assertTrue(jwtService.refreshAccessToken(access) == null);
     }

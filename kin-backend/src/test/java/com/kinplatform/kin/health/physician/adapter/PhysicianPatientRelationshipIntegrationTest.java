@@ -364,7 +364,7 @@ class PhysicianPatientRelationshipIntegrationTest extends PostgresTestSupport {
 
     private String token(User user) {
         return jwtService.generateToken(
-                user.getId(), user.getEmail(), user.getRole().name());
+                user.getId(), user.getEmail(), user.getRole().name(), "EMPRESAS");
     }
 
     private HttpRequest getRequest(String url, String token) {

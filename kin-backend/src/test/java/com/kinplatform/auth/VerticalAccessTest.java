@@ -76,7 +76,7 @@ class VerticalAccessTest {
     private AuthResponse login(User user) {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
-        when(jwtService.generateToken(any(UUID.class), anyString(), anyString())).thenReturn(TOKEN);
+        when(jwtService.generateToken(any(UUID.class), anyString(), anyString(), anyString())).thenReturn(TOKEN);
         var req = new LoginRequest();
         req.setEmail(EMAIL);
         req.setPassword("password123");

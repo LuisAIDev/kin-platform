@@ -170,7 +170,7 @@ class AuthServiceImplTest {
         var user = verifiedUser();
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
-        when(jwtService.generateToken(user.getId(), EMAIL, "FREE")).thenReturn(TOKEN);
+        when(jwtService.generateToken(user.getId(), EMAIL, "FREE", "EMPRESAS")).thenReturn(TOKEN);
 
         var req = new LoginRequest();
         req.setEmail(EMAIL);
@@ -307,7 +307,7 @@ class AuthServiceImplTest {
 
         authService.verifyEmail("tok");
 
-        verify(jwtService, never()).generateToken(any(), anyString(), anyString());
+        verify(jwtService, never()).generateToken(any(), anyString(), anyString(), anyString());
     }
 
     @Test
@@ -632,7 +632,7 @@ class AuthServiceImplTest {
         when(userRepository.findByEmail(EMAIL))
                 .thenReturn(Optional.of(physicianUser(PhysicianVerificationStatus.APPROVED)));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
-        when(jwtService.generateToken(any(UUID.class), anyString(), anyString()))
+        when(jwtService.generateToken(any(UUID.class), anyString(), anyString(), anyString()))
                 .thenReturn(TOKEN);
 
         AuthResponse response = authService.login(loginRequest());
@@ -646,7 +646,7 @@ class AuthServiceImplTest {
         // M�dicos del piloto/admin tienen verificationStatus null  equivalen a aprobados.
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(physicianUser(null)));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
-        when(jwtService.generateToken(any(UUID.class), anyString(), anyString()))
+        when(jwtService.generateToken(any(UUID.class), anyString(), anyString(), anyString()))
                 .thenReturn(TOKEN);
 
         AuthResponse response = authService.login(loginRequest());
@@ -672,7 +672,7 @@ class AuthServiceImplTest {
                 .build();
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
-        when(jwtService.generateToken(any(UUID.class), anyString(), anyString())).thenReturn(TOKEN);
+        when(jwtService.generateToken(any(UUID.class), anyString(), anyString(), anyString())).thenReturn(TOKEN);
 
         AuthResponse response = authService.login(loginRequest());
 
@@ -692,7 +692,7 @@ class AuthServiceImplTest {
                 .build();
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
-        when(jwtService.generateToken(any(UUID.class), anyString(), anyString())).thenReturn(TOKEN);
+        when(jwtService.generateToken(any(UUID.class), anyString(), anyString(), anyString())).thenReturn(TOKEN);
 
         AuthResponse response = authService.login(loginRequest());
 
@@ -704,7 +704,7 @@ class AuthServiceImplTest {
         when(userRepository.findByEmail(EMAIL))
                 .thenReturn(Optional.of(physicianUser(PhysicianVerificationStatus.APPROVED)));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
-        when(jwtService.generateToken(any(UUID.class), anyString(), anyString())).thenReturn(TOKEN);
+        when(jwtService.generateToken(any(UUID.class), anyString(), anyString(), anyString())).thenReturn(TOKEN);
 
         AuthResponse response = authService.login(loginRequest());
 

@@ -134,7 +134,7 @@ class FollowUpIntegrationTest extends PostgresTestSupport {
     }
 
     private String token(User user) {
-        return jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        return jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name(), "EMPRESAS");
     }
 
     private HttpRequest getRequest(String url, String token) {

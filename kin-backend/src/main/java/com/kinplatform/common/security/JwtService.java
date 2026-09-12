@@ -61,24 +61,25 @@ public class JwtService {
         }
     }
 
-    public String generateToken(UUID userId, String email, String role) {
-        return buildToken(userId, email, role, "access", expirationMs);
+    public String generateToken(UUID userId, String email, String role, String platform) {
+        return buildToken(userId, email, role, platform, "access", expirationMs);
     }
 
     /**
      * Genera un refresh token (tipo {@code refresh}) con mayor expiración, para
      * renovar el access token sin re-autenticar (fase de producción).
      */
-    public String generateRefreshToken(UUID userId, String email, String role) {
-        return buildToken(userId, email, role, "refresh", refreshExpirationMs);
+    public String generateRefreshToken(UUID userId, String email, String role, String platform) {
+        return buildToken(userId, email, role, platform, "refresh", refreshExpirationMs);
     }
 
-    private String buildToken(UUID userId, String email, String role, String type, long ttlMs) {
+    private String buildToken(UUID userId, String email, String role, String platform, String type, long ttlMs) {
         var now = new Date();
         return Jwts.builder()
                 .subject(email)
                 .claim("userId", userId.toString())
                 .claim("role", role)
+                .claim("platform", platform)
                 .claim("type", type)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + ttlMs))
@@ -104,6 +105,7 @@ public class JwtService {
                     UUID.fromString(claims.get("userId", String.class)),
                     claims.getSubject(),
                     claims.get("role", String.class),
+                    claims.get("platform", String.class),
                     "access",
                     expirationMs);
         } catch (Exception e) {

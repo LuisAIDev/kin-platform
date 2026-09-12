@@ -39,13 +39,16 @@ public class SecurityConfig {
 /**
  * Orígenes de frontend que nunca se pierden, incluso si ALLOWED_ORIGINS
  * está definido sin incluirlos. KIN Platform utiliza el dominio propio:
- * https://www.kin-platform-medical.com
+ * https://www.kin-platform-medical.com y https://kin-platform.com.
+ * No se permite *.vercel.app genérico (riesgo de acceso no autorizado).
  */
     private static final List<String> GUARANTEED_ORIGINS = List.of(
         "https://www.kin-platform-medical.com",
         "https://kin-platform-medical.com",
-        "https://kin-frontend-medical-*.vercel.app",
-        "https://*.vercel.app"
+        "https://kin-platform.com",
+        "https://www.kin-platform.com",
+        "https://kin-frontend-medical.vercel.app",
+        "https://kin-frontend.vercel.app"
     );
 
     @Bean

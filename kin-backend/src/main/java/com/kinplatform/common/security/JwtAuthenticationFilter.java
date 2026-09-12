@@ -29,11 +29,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private static final String TOKEN_COOKIE = "kin_token_v2";
 
-    /**
-     * Atributo de request donde se guarda el {@link User} resuelto desde la
-     * base de datos para REUTILIZARLO en el resto de filtros/controllers de la
-     * misma request (evita N+1 consultas por request autenticada).
-     */
     public static final String AUTHENTICATED_USER_ATTRIBUTE = JwtAuthenticationFilter.class.getName() + ".authenticatedUser";
 
     private final JwtService jwtService;
@@ -64,9 +59,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         var email = jwtService.extractEmail(token);
 
-        // "Java decide": las authorities se derivan SIEMPRE del estado
-        // persistido (User en BD), nunca de claims del JWT (que podrían quedar
-        // obsoletos). Si la cuenta ya no existe, no se autentica.
         User user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
             log.warn("Token válido pero usuario inexistente en BD para email={}, URI={}", email, request.getRequestURI());
@@ -76,20 +68,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         List<GrantedAuthority> authorities = new ArrayList<>();
         if (user.getRole() != UserRole.PHYSICIAN && user.getRole() != UserRole.PATIENT) {
-            // Persona comercial/funcional (FREE/PREMIUM/FACILITADOR/ADMIN). La
-            // persona PATIENT no añade ROLE_PATIENT aquí: esa autoridad se deriva
-            // abajo desde PatientAccess (capacidad desacoplada de users.role).
             authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
         }
         if (PhysicianAccess.isPhysician(user)) {
-            // Capacidad profesional desacoplada de users.role (Alternativa B).
-            // Se omite deliberadamente para PHYSICIAN legacy en PENDING/REJECTED.
             authorities.add(new SimpleGrantedAuthority("ROLE_PHYSICIAN"));
         }
         if (PatientAccess.isPatient(user)) {
-            // Capacidad de paciente desacoplada de users.role (ADR-040): cualquier
-            // persona (FREE/PREMIUM/PHYSICIAN/…) con health_data_consent=true, o un
-            // PATIENT legacy, obtiene ROLE_PATIENT sin cambiar users.role ni relogin.
             authorities.add(new SimpleGrantedAuthority("ROLE_PATIENT"));
         }
 
@@ -97,6 +81,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         var authentication = new UsernamePasswordAuthenticationToken(email, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // /auth/** es permitido sin restricción de plataforma
+        if (!request.getRequestURI().startsWith("/auth/")
+                && !PlatformAccess.canAccess(user.getPlatform(), user.getRole().name(), request.getRequestURI())) {
+            log.warn("Acceso cruzado bloqueado: platform={}, role={} no puede acceder a URI={}", user.getPlatform(), user.getRole().name(), request.getRequestURI());
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Acceso prohibido: plataforma no autorizada para esta ruta");
+            return;
+        }
+
         filterChain.doFilter(request, response);
     }
 

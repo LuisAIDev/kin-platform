@@ -104,7 +104,7 @@ class ChatStreamSecurityAsyncTest extends PostgresTestSupport {
         var project = projectRepository.save(
                 Project.builder().user(user).title("Proyecto Async").build());
         var token = jwtService.generateToken(
-                user.getId(), user.getEmail(), user.getRole().name());
+                user.getId(), user.getEmail(), user.getRole().name(), "EMPRESAS");
 
         when(conversationOrchestrator.orchestrateStreamWithOutcome(any()))
                 .thenReturn(new StreamingTurnOutcome(Flux.just("hola", "mundo"), null, null));

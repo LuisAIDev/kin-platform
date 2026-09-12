@@ -37,6 +37,10 @@ public class User {
     @Column(name = "role", nullable = false)
     private UserRole role;
 
+    @Column(name = "platform", nullable = false, length = 20)
+    @Builder.Default
+    private String platform = "EMPRESAS";
+
     @Column(name = "avatar_url", length = 512)
     private String avatarUrl;
 

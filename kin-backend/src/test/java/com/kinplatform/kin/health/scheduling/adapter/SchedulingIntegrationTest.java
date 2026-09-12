@@ -121,7 +121,7 @@ class SchedulingIntegrationTest extends PostgresTestSupport {
     }
 
     private String token(User user) {
-        return jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        return jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name(), user.getPlatform());
     }
 
     private HttpResponse<String> get(String token, String path) throws Exception {

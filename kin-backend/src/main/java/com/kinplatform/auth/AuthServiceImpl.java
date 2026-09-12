@@ -10,6 +10,7 @@ import com.kinplatform.auth.email.EmailSender;
 import com.kinplatform.auth.verification.EmailVerificationTokenService;
 import com.kinplatform.auth.verification.VerifyEmailOutcome;
 import com.kinplatform.common.security.JwtService;
+import com.kinplatform.common.security.PatientAccess;
 import com.kinplatform.common.security.PhysicianAccess;
 import com.kinplatform.user.PhysicianVerificationStatus;
 import com.kinplatform.user.User;
@@ -56,6 +57,7 @@ public class AuthServiceImpl implements AuthService {
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName().trim())
                 .role(UserRole.FREE)
+                .platform("EMPRESAS")
                 .emailVerified(false)
                 .build();
 
@@ -83,6 +85,7 @@ public class AuthServiceImpl implements AuthService {
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName().trim())
                 .role(UserRole.PATIENT)
+                .platform("SALUD_PERSONAL")
                 .emailVerified(false)
                 .dateOfBirth(request.getDateOfBirth())
                 .sex(request.getSex() == null ? null : request.getSex().trim())
@@ -116,6 +119,7 @@ public class AuthServiceImpl implements AuthService {
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName().trim())
                 .role(UserRole.PHYSICIAN)
+                .platform("SALUD_PROFESIONAL")
                 .emailVerified(false)
                 .licenseNumber(license)
                 .specialty(request.getSpecialty().trim())
@@ -240,7 +244,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         var token = jwtService.generateToken(
-                user.getId(), user.getEmail(), user.getRole().name());
+                user.getId(), user.getEmail(), user.getRole().name(), user.getPlatform());
 
         return AuthResponse.builder()
                 .token(token)
