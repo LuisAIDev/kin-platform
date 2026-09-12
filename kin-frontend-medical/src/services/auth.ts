@@ -138,8 +138,9 @@ export const authService = {
     try {
       const res = await fetch("/api/v1/auth/me", { credentials: "include" });
       if (res.status === 401) {
-        const body = await res.json().catch(() => null);
-        throw new Error("unauthorized");
+        const error = new Error("unauthorized") as Error & { status?: number };
+        error.status = 401;
+        throw error;
       }
       if (!res.ok) return null;
       const body = await res.json();

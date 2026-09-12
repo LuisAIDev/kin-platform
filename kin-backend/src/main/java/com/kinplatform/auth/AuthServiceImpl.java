@@ -391,10 +391,12 @@ public class AuthServiceImpl implements AuthService {
             access.add("empresas");
         }
 
-        // Medical: PATIENT, PHYSICIAN, o physicianCapability == true
-        if (role == UserRole.PATIENT
-                || role == UserRole.PHYSICIAN
-                || PhysicianAccess.isPhysician(user)) {
+        // Medical: PHYSICIAN, physicianCapability, o capacidad de paciente
+        // (ADR-040: PatientAccess.isPatient cubre rol PATIENT legacy y
+        // health_data_consent=true). Única fuente de verdad, no comparar role.
+        if (role == UserRole.PHYSICIAN
+                || PhysicianAccess.isPhysician(user)
+                || PatientAccess.isPatient(user)) {
             access.add("medical");
         }
 

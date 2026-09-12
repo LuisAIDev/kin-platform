@@ -56,7 +56,11 @@ export default function PatientDashboardPage() {
     async function init() {
       try {
         const currentUser = await authService.fetchCurrentUser();
-        if (!currentUser || currentUser.role !== "PATIENT") {
+        // Aceptar CUALQUIER usuario autenticado. La capacidad de paciente está
+        // desacoplada del rol (ADR-040): FREE/PREMIUM con health_data_consent=true
+        // son pacientes. Si el backend responde 403 en endpoints específicos, se
+        // maneja con mensaje; nunca se cierra la sesión desde aquí.
+        if (!currentUser) {
           router.push("/login");
           setLoading(false);
           return;
