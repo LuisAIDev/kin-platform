@@ -5,8 +5,8 @@ import { EMPTY_COUNTS, type NotificationCounts } from "@/services/notifications"
 
 /**
  * Contadores de novedades del sidebar (mensajes, citas, tareas, invitaciones).
- * Hace polling cada 30 s contra /notifications/counts (ruta legacy común a
- * ambas verticales; el backend autoriza por identidad).
+ * Hace polling cada 30 s contra /health/notifications/counts (ruta canónica
+ * del backend; el backend autoriza por identidad/rol).
  */
 export function useNotificationCounts(_role?: string | null): NotificationCounts | null {
   const [counts, setCounts] = useState<NotificationCounts | null>(null);
@@ -16,7 +16,7 @@ export function useNotificationCounts(_role?: string | null): NotificationCounts
 
     async function fetchCounts() {
       try {
-        const res = await fetch("/api/v1/notifications/counts", { credentials: "include" });
+        const res = await fetch("/api/v1/health/notifications/counts", { credentials: "include" });
         if (!res.ok) return;
         const data = (await res.json()) as NotificationCounts;
         if (!cancelled) setCounts(data);
