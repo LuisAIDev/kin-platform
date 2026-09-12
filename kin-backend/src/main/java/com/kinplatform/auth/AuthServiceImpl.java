@@ -33,7 +33,7 @@ public class AuthServiceImpl implements AuthService {
     private final EmailVerificationTokenService tokenService;
     private final EmailSender emailSender;
 
-    @Value("${app.frontend.base-url:http://localhost:3000}")
+    @Value("${app.frontend.base-url:https://www.kin-platform-medical.com}")
     private String frontendBaseUrl;
 
     @Override

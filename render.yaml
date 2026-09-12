@@ -82,8 +82,8 @@ services:
         value: "false"
       - key: MAIL_DEBUG_FALLBACK_ALLOWLIST
         sync: false
-      - key: FRONTEND_BASE_URL
-        value: "https://kin-platform.com"
+      - key: APP_FRONTEND_BASE_URL
+        value: "https://www.kin-platform-medical.com"
       # Bypass de cuota de invitaciones (fase piloto E2E): fuerza true en el
       # blueprint para que Render lo aplique por encima de cualquier valor
       # previo del dashboard. Para GA: cambiar a "false" y redeploy.
