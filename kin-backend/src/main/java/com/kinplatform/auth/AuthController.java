@@ -14,6 +14,7 @@ import com.kinplatform.auth.verification.VerifyEmailOutcome;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -39,10 +41,10 @@ public class AuthController {
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
 
-    @Value("${app.session.cookie-secure:false}")
+    @Value("${app.session.cookie-secure:true}")
     private boolean cookieSecure;
 
-    @Value("${app.session.cookie-same-site:Lax}")
+    @Value("${app.session.cookie-same-site:None}")
     private String cookieSameSite;
 
     @PostMapping("/register")
@@ -170,6 +172,10 @@ public class AuthController {
     }
 
     private void setTokenCookie(HttpServletResponse response, String token) {
+        log.info("COOKIE DEBUG: secure={}, sameSite={}, springProfiles={}", 
+            cookieSecure, cookieSameSite, 
+            System.getProperty("spring.profiles.active", "desconocido"));
+        
         var cookie = ResponseCookie.from(TOKEN_COOKIE, token)
                 .httpOnly(true)
                 .secure(cookieSecure)
