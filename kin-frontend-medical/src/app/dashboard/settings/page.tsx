@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useSettings } from "@/hooks/useSettings";
 import { useToast } from "@/components/ui/ToastProvider";
+import { useTheme } from "@/components/providers/ThemeProvider";
 import { analytics } from "@/services/analytics";
 import type { Language, Theme } from "@/services/settings";
 
 export default function SettingsPage() {
   const { settings, update } = useSettings();
+  const { theme, setTheme } = useTheme();
   const { success } = useToast();
   const [saved, setSaved] = useState(false);
 
@@ -50,8 +52,8 @@ export default function SettingsPage() {
             <label className="block">
               <span className="text-sm font-medium text-neutral-700">Tema</span>
               <select
-                value={settings.theme}
-                onChange={(e) => update({ theme: e.target.value as Theme })}
+                value={theme}
+                onChange={(e) => setTheme(e.target.value as Theme)}
                 className="mt-1 block w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
               >
                 <option value="system">Sistema</option>
