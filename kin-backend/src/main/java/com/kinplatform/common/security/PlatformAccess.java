@@ -4,35 +4,13 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Predicado central para decidir si un {@link User} con una {@code platform}
- * y un {@code role} dados tienen acceso a un prefijo de ruta específico.
- *
- * <p>Reglas de aislamiento:</p>
- * <ul>
- *   <li>{@code ADMIN} tiene acceso total a TODAS las rutas, independientemente de la plataforma.</li>
- *   <li>{@code /empresas/**} → solo {@code EMPRESAS}</li>
- *   <li>{@code /health/**} y {@code /medical/**} → solo {@code SALUD_PERSONAL} o {@code SALUD_PROFESIONAL}</li>
- *   <li>Rutas sin prefijo mapeado (auth, actuator, pricing-plans, etc.) → siempre permitidas.</li>
- * </ul>
- *
- * <p><b>Nota de contexto (IMPORTANTE):</b> el backend se sirve bajo
- * {@code server.servlet.context-path=/api/v1}. {@code request.getRequestURI()}
- * INCLUYE ese prefijo, por lo que ninguna clave de {@link #PATH_PLATFORM_MAP}
- * coincide y {@link #isUnrestricted(String)} devuelve {@code true} para todas
- * las rutas: el aislamiento queda INACTIVO. Activarlo requiere normalizar la
- * ruta (quitar el context-path) ANTES de llamar a este predicado y, además,
- * reconciliarlo con las capacidades desacopladas de ADR-039/040 (un usuario
- * EMPRESAS puede obtener capacidad de paciente/médico sin cambiar de
- * {@code platform}). No activar sin ese trabajo previo.</p>
- */
-/**
  * @deprecated Esta clase se mantiene solo como referencia histórica.
  * El aislamiento por plataforma fue removido porque:
  * - Los frontends están completamente separados (kin-platform.com vs kin-platform-medical.com).
  * - Las reglas de negocio (ADR-039/040) permiten capacidades cruzadas.
  * - La seguridad real está en {@code physician_verification_status} y {@code health_data_consent}.
  *
- * <p>Ver: {@link AUDITORIA_ARQUITECTURA_KIN}.</p>
+ * <p>Ver: docs/adr/ADR-042_SHARED_BACKEND_MULTI_FRONTEND.md.</p>
  */
 @Deprecated
 public final class PlatformAccess {
