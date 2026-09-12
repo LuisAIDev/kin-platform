@@ -143,6 +143,10 @@ export const authService = {
         `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"}/auth/me`,
         { credentials: "include" }
       );
+      if (res.status === 401) {
+        const body = await res.json().catch(() => null);
+        throw new Error("unauthorized");
+      }
       if (!res.ok) return null;
       const body = await res.json();
       if (!body?.role) return null;
@@ -155,7 +159,10 @@ export const authService = {
         verificationStatus: body.verificationStatus ?? null,
         physicianCapability: body.physicianCapability === true,
       };
-    } catch {
+    } catch (err: any) {
+      if (err?.message === "unauthorized") {
+        throw err;
+      }
       return null;
     }
   },
