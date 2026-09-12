@@ -12,7 +12,7 @@ import java.util.Set;
  *   <li>{@code ADMIN} tiene acceso total a TODAS las rutas, independientemente de la plataforma.</li>
  *   <li>{@code /empresas/**} → solo {@code EMPRESAS}</li>
  *   <li>{@code /health/**} y {@code /medical/**} → solo {@code SALUD_PERSONAL} o {@code SALUD_PROFESIONAL}</li>
- *   <li>{@code /auth/**} → siempre permitido (login/registro sin restricción)</li>
+ *   <li>Rutas sin prefijo mapeado (auth, actuator, pricing-plans, etc.) → siempre permitidas.</li>
  * </ul>
  */
 public final class PlatformAccess {
@@ -37,23 +37,25 @@ public final class PlatformAccess {
         if (requestPath == null) {
             return false;
         }
-        // ADMIN tiene acceso total a todas las rutas
         if ("ADMIN".equals(role)) {
+            return true;
+        }
+        String normalizedPath = requestPath.startsWith("/") ? requestPath : "/" + requestPath;
+        // Rutas sin prefijo mapeado son siempre permitidas (auth, actuator, pricing-plans, etc.)
+        if (isUnrestricted(normalizedPath)) {
             return true;
         }
         if (platform == null) {
             return false;
         }
-        String normalizedPath = requestPath.startsWith("/") ? requestPath : "/" + requestPath;
         return PATH_PLATFORM_MAP.entrySet().stream()
             .filter(entry -> normalizedPath.startsWith(entry.getKey()))
-            .anyMatch(entry -> entry.getValue().contains(platform))
-            || isUnrestricted(normalizedPath);
+            .anyMatch(entry -> entry.getValue().contains(platform));
     }
 
     /**
      * Determina si el acceso está permitido sin restricción de plataforma.
-     * Rutas como /auth/** y /pricing-plans/** pasan por aquí.
+     * Rutas como /auth/**, /actuator/**, /pricing-plans/** pasan por aquí.
      */
     public static boolean isUnrestricted(String requestPath) {
         return requestPath == null || PATH_PLATFORM_MAP.keySet().stream()

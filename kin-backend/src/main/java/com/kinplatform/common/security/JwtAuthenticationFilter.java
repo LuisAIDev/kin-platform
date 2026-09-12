@@ -35,6 +35,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserRepository userRepository;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return uri.startsWith("/auth/")
+                || uri.startsWith("/actuator/")
+                || uri.startsWith("/pricing-plans/")
+                || uri.startsWith("/stripe/")
+                || uri.startsWith("/knowledge/");
+    }
+
+    @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
