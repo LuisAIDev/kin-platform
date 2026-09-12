@@ -12,10 +12,7 @@ export default function VerificationStatusPage() {
     const fetchStatus = async () => {
       try {
         const token = localStorage.getItem('kin_user_v2');
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1'}/health/physician/application`,
-          { credentials: 'include' }
-        );
+const res = await fetch("/api/v1/health/physician/application", { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           const verificationStatus = data.physicianVerificationStatus || data.status;

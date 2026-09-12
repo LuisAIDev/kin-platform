@@ -16,10 +16,7 @@ export function useNotificationCounts(_role?: string | null): NotificationCounts
 
     async function fetchCounts() {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"}/notifications/counts`,
-          { credentials: "include" }
-        );
+        const res = await fetch("/api/v1/notifications/counts", { credentials: "include" });
         if (!res.ok) return;
         const data = (await res.json()) as NotificationCounts;
         if (!cancelled) setCounts(data);

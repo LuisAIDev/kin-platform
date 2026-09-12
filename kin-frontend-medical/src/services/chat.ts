@@ -39,7 +39,7 @@ function streamError(message: string, hadTokens: boolean): ChatStreamError {
   return err;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+const API_URL = "/api/v1";
 
 export const chatService = {
   sendMessage: (projectId: string, content: string) => {
@@ -70,7 +70,7 @@ export const chatService = {
       let receivedTokens = false;
       let receivedStarted = false;
       try {
-        const url = `${API_URL}/projects/${projectId}/chat/stream`;
+        const url = `/api/v1/projects/${projectId}/chat/stream`;
 
         const res = await fetch(url, {
           method: "POST",

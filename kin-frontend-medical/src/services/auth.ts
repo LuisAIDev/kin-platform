@@ -121,10 +121,7 @@ export const authService = {
 
   async logout(): Promise<void> {
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"}/auth/logout`,
-        { method: "POST", credentials: "include" }
-      );
+      await fetch("/api/v1/auth/logout", { method: "POST", credentials: "include" });
     } catch {
       // best-effort
     }
@@ -139,10 +136,7 @@ export const authService = {
 
   async fetchCurrentUser(): Promise<AuthResponse | null> {
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"}/auth/me`,
-        { credentials: "include" }
-      );
+      const res = await fetch("/api/v1/auth/me", { credentials: "include" });
       if (res.status === 401) {
         const body = await res.json().catch(() => null);
         throw new Error("unauthorized");

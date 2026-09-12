@@ -1,4 +1,4 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1";
+export const API_URL = "/api/v1";
 
 let _forceLogoutInProgress = false;
 
@@ -96,7 +96,7 @@ export async function forceLogout() {
   _forceLogoutInProgress = true;
 
   try {
-    await fetch(`${API_URL}/auth/logout`, { method: "POST", credentials: "include" });
+    await fetch("/api/v1/auth/logout", { method: "POST", credentials: "include" });
   } catch {
     // best-effort
   }
