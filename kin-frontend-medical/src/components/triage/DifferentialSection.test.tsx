@@ -67,7 +67,7 @@ describe("DifferentialSection", () => {
     const user = userEvent.setup();
     render(<DifferentialSection symptoms={["fiebre"]} />);
 
-    await user.click(screen.getByRole("button", { name: "fumador" }));
+    await user.click(screen.getByRole("button", { name: "Fumador" }));
     await user.click(screen.getByRole("button", { name: /Analizar diagnóstico diferencial/ }));
 
     await screen.findByRole("heading", { name: "Gripe" });

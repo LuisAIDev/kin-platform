@@ -20,14 +20,148 @@ const URGENCY_COLORS: Record<string, string> = {
 
 const RISK_FACTOR_OPTIONS = [
   "fumador",
-  "embarazo",
-  "edad avanzada",
-  "obesidad",
-  "inmunodepresión",
-  "alcohol",
+  "ex-fumador",
   "diabetes",
-  "hipertensión",
-];
+  "hipertension",
+  "obesidad",
+  "dislipidemia",
+  "enfermedad-cardiovascular-previa",
+  "trombosis-previa",
+  "anticoagulantes",
+  "sedentarismo",
+  "epoc",
+  "asma",
+  "apnea-sueno",
+  "inmunodepresion",
+  "vih",
+  "cancer-activo",
+  "hospitalizacion-reciente",
+  "contacto-enfermos",
+  "viaje-reciente",
+  "enfermedad-renal-cronica",
+  "enfermedad-hepatica",
+  "embarazo",
+  "postparto-lactancia",
+  "anticonceptivos",
+  "terapia-hormonal",
+  "menopausia",
+  "alcohol",
+  "drogas-ilicitas",
+  "estres-cronico",
+  "dieta-inadecuada",
+  "falta-sueno",
+  "antecedentes-familiares-cv",
+  "antecedentes-familiares-cancer",
+  "antecedentes-familiares-diabetes",
+  "edad-avanzada",
+  "edad-pediatrica",
+  "alergias-conocidas",
+  "cirugia-reciente",
+] as const;
+
+const RISK_FACTOR_LABELS: Record<string, string> = {
+  "fumador": "Fumador",
+  "ex-fumador": "Ex-fumador",
+  "diabetes": "Diabetes",
+  "hipertension": "Hipertensión",
+  "obesidad": "Obesidad",
+  "dislipidemia": "Dislipidemia",
+  "enfermedad-cardiovascular-previa": "Enfermedad cardiovascular previa",
+  "trombosis-previa": "Trombosis previa",
+  "anticoagulantes": "Anticoagulantes",
+  "sedentarismo": "Sedentarismo",
+  "epoc": "EPOC",
+  "asma": "Asma",
+  "apnea-sueno": "Apnea del sueño",
+  "inmunodepresion": "Inmunodepresión",
+  "vih": "VIH",
+  "cancer-activo": "Cáncer activo",
+  "hospitalizacion-reciente": "Hospitalización reciente",
+  "contacto-enfermos": "Contacto con enfermos",
+  "viaje-reciente": "Viaje reciente",
+  "enfermedad-renal-cronica": "Enfermedad renal crónica",
+  "enfermedad-hepatica": "Enfermedad hepática",
+  "embarazo": "Embarazo",
+  "postparto-lactancia": "Postparto / lactancia",
+  "anticonceptivos": "Anticonceptivos",
+  "terapia-hormonal": "Terapia hormonal",
+  "menopausia": "Menopausia",
+  "alcohol": "Alcohol",
+  "drogas-ilicitas": "Drogas ilícitas",
+  "estres-cronico": "Estrés crónico",
+  "dieta-inadecuada": "Dieta inadecuada",
+  "falta-sueno": "Falta de sueño",
+  "antecedentes-familiares-cv": "Antecedentes familiares CV",
+  "antecedentes-familiares-cancer": "Antecedentes familiares cáncer",
+  "antecedentes-familiares-diabetes": "Antecedentes familiares diabetes",
+  "edad-avanzada": "Edad avanzada",
+  "edad-pediatrica": "Edad pediátrica",
+  "alergias-conocidas": "Alergias conocidas",
+  "cirugia-reciente": "Cirugía reciente",
+};
+
+const RISK_FACTOR_CATEGORIES: Record<string, string> = {
+  "fumador": "cardiometabolicos",
+  "ex-fumador": "cardiometabolicos",
+  "diabetes": "cardiometabolicos",
+  "hipertension": "cardiometabolicos",
+  "obesidad": "cardiometabolicos",
+  "dislipidemia": "cardiometabolicos",
+  "enfermedad-cardiovascular-previa": "cardiometabolicos",
+  "trombosis-previa": "cardiometabolicos",
+  "anticoagulantes": "cardiometabolicos",
+  "sedentarismo": "cardiometabolicos",
+  "epoc": "respiratorios",
+  "asma": "respiratorios",
+  "apnea-sueno": "respiratorios",
+  "inmunodepresion": "inmunologicos",
+  "vih": "inmunologicos",
+  "cancer-activo": "inmunologicos",
+  "hospitalizacion-reciente": "inmunologicos",
+  "contacto-enfermos": "inmunologicos",
+  "viaje-reciente": "inmunologicos",
+  "enfermedad-renal-cronica": "renales-hepaticos",
+  "enfermedad-hepatica": "renales-hepaticos",
+  "embarazo": "hormonales-reproductivos",
+  "postparto-lactancia": "hormonales-reproductivos",
+  "anticonceptivos": "hormonales-reproductivos",
+  "terapia-hormonal": "hormonales-reproductivos",
+  "menopausia": "hormonales-reproductivos",
+  "alcohol": "estilo-vida",
+  "drogas-ilicitas": "estilo-vida",
+  "estres-cronico": "estilo-vida",
+  "dieta-inadecuada": "estilo-vida",
+  "falta-sueno": "estilo-vida",
+  "antecedentes-familiares-cv": "familiares",
+  "antecedentes-familiares-cancer": "familiares",
+  "antecedentes-familiares-diabetes": "familiares",
+  "edad-avanzada": "otros",
+  "edad-pediatrica": "otros",
+  "alergias-conocidas": "otros",
+  "cirugia-reciente": "otros",
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  cardiometabolicos: "Cardiometabólicos",
+  respiratorios: "Respiratorios",
+  inmunologicos: "Inmunológicos e infecciosos",
+  "renales-hepaticos": "Renales y hepáticos",
+  "hormonales-reproductivos": "Hormonales y reproductivos",
+  "estilo-vida": "Estilo de vida",
+  familiares: "Familiares",
+  otros: "Otros",
+};
+
+const CATEGORY_ORDER = [
+  "cardiometabolicos",
+  "respiratorios",
+  "inmunologicos",
+  "renales-hepaticos",
+  "hormonales-reproductivos",
+  "estilo-vida",
+  "familiares",
+  "otros",
+] as const;
 
 export default function DifferentialSection({
   symptoms,
@@ -75,23 +209,38 @@ export default function DifferentialSection({
 
       <div className="flex flex-col gap-2">
         <p className="text-sm font-medium">Factores de riesgo (opcional)</p>
-        <div className="flex flex-wrap gap-2">
-          {RISK_FACTOR_OPTIONS.map((factor) => {
-            const isSelected = riskFactors.has(factor);
+        <div className="flex flex-col gap-3">
+          {CATEGORY_ORDER.map((categoryKey) => {
+            const factorsInCategory = RISK_FACTOR_OPTIONS.filter(
+              (f) => RISK_FACTOR_CATEGORIES[f] === categoryKey
+            );
+            if (factorsInCategory.length === 0) return null;
             return (
-              <button
-                key={factor}
-                type="button"
-                onClick={() => toggleRisk(factor)}
-                aria-pressed={isSelected}
-                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                  isSelected
-                    ? "bg-indigo-600 border-indigo-600 text-white"
-                    : "border-neutral-300 text-neutral-700 hover:bg-indigo-50 hover:border-indigo-400"
-                }`}
-              >
-                {factor}
-              </button>
+              <div key={categoryKey} className="flex flex-col gap-1.5">
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide">
+                  {CATEGORY_LABELS[categoryKey]}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {factorsInCategory.map((factor) => {
+                    const isSelected = riskFactors.has(factor);
+                    return (
+                      <button
+                        key={factor}
+                        type="button"
+                        onClick={() => toggleRisk(factor)}
+                        aria-pressed={isSelected}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                          isSelected
+                            ? "bg-indigo-600 border-indigo-600 text-white"
+                            : "border-neutral-300 text-neutral-700 hover:bg-indigo-50 hover:border-indigo-400"
+                        }`}
+                      >
+                        {RISK_FACTOR_LABELS[factor] || factor}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
