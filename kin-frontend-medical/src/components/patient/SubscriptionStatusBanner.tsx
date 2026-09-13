@@ -53,21 +53,55 @@ export function SubscriptionStatusBanner() {
   const isFreePlan = planCode === "FREE";
   const isActive = isActiveFromStatus && subscriptionEndDate ? new Date(subscriptionEndDate) > new Date() : isActiveFromStatus;
 
+  // Determinar el estado visual correcto
+  // - Plan FREE: "Activo (Gratuito)" - azul
+  // - Plan pagado activo: "Activa" - verde
+  // - Plan pagado inactivo/expirado: "Inactiva" - rojo
+  const isFreePlanActive = isFreePlan && isActive;
+  const isPaidActive = !isFreePlan && isActive;
+  const isInactive = !isActive;
+
+  const statusLabel = isFreePlan
+    ? "Activo (Gratuito)"
+    : isActive
+    ? "Activa"
+    : "Inactiva";
+
+  const statusColor = isFreePlan
+    ? "bg-blue-100 text-blue-700"
+    : isActive
+    ? "bg-green-100 text-green-700"
+    : "bg-red-100 text-red-700";
+
+  const statusDotColor = isFreePlan
+    ? "bg-blue-500"
+    : isActive
+    ? "bg-green-500"
+    : "bg-red-500";
+
+  const statusText = isFreePlan
+    ? "Activo (Gratuito)"
+    : isActive
+    ? "Activa"
+    : "Inactiva";
+
   return (
     <section className="rounded-xl border border-neutral-200 bg-white p-5">
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
           <h2 className="text-base font-semibold">{planName}</h2>
           <p className="text-xs text-neutral-500 mt-0.5">
-            {isActive ? "Suscripción activa" : "Sin suscripción activa"} · {planCode}
+            {isFreePlan
+              ? "Activo (Gratuito)"
+              : isActive
+              ? "Suscripción activa"
+              : "Sin suscripción activa"} · {planCode}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-            isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-          }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-green-500" : "bg-red-500"}`} />
-            {isActive ? "Activa" : "Inactiva"}
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${statusDotColor}`} />
+            {statusText}
           </span>
           {subscriptionEndDate && (
             <span className="text-xs text-neutral-500">
