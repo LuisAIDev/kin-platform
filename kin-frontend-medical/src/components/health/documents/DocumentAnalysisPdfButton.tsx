@@ -33,6 +33,27 @@ function sanitizeName(name: string): string {
   return name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_ÁÉÍÓÚáéíóúñÑ.\-]/g, "");
 }
 
+/**
+ * Sanitiza el texto para el PDF: elimina markdown residual y caracteres problemáticos.
+ * El prompt ahora pide texto plano, pero por seguridad limpiamos residuales.
+ */
+function sanitizeForPdf(text: string): string {
+  if (!text) return "";
+  return text
+    // Eliminar markdown residual
+    .replace(/\*\*/g, "") // **negrita**
+    .replace(/\*/g, "") // *cursiva*
+    .replace(/^#+\s*/gm, "") // # encabezados
+    .replace(/\|/g, "") // tablas |
+    .replace(/&b/gi, "") // artefactos &b
+    .replace(/&[a-z]+;/g, "") // entidades HTML
+    // Normalizar saltos de línea
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    // Limitar líneas muy largas (opcional, jspdf lo maneja)
+    .trim();
+}
+
 export default function DocumentAnalysisPdfButton({ document, messages }: Props) {
   const handleClick = async () => {
     const { default: jsPDF } = await import("jspdf");
@@ -118,7 +139,8 @@ export default function DocumentAnalysisPdfButton({ document, messages }: Props)
         const label = isUser ? "TÚ" : "ASISTENTE KIN";
         const time = formatDate(msg.createdAt);
         const prefix = `[${time}] ${label}:`;
-        const contentLines = doc.splitTextToSize(msg.content || "", cw - 4);
+        const sanitized = sanitizeForPdf(msg.content || "");
+        const contentLines = doc.splitTextToSize(sanitized, cw - 4);
 
         const boxH = Math.max(12, 8 + 5 + contentLines.length * 5);
         if (y + boxH > 275) {

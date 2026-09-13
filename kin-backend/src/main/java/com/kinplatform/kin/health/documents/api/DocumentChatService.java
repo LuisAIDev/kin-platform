@@ -147,8 +147,8 @@ public class DocumentChatService {
         prompt.append(whoVerificationService.promptSection(verification)).append('\n');
 
         prompt.append("## REGLAS OBLIGATORIAS\n")
-                .append("1. Responde en español, con lenguaje sencillo y empático. Estructura la respuesta ")
-                .append("cuando ayude (listas, valores).\n")
+                .append("1. Responde en español, con lenguaje sencillo y empático. NO uses markdown (sin #, **, |, tablas). ")
+                .append("Usa TEXTO PLANO con secciones claras y saltos de línea.\n")
                 .append("2. Usa ÚNICAMENTE los valores y datos presentes en el contenido extraído. ")
                 .append("NUNCA inventes valores, unidades ni resultados.\n")
                 .append("3. Si un dato no está en el documento, indícalo explícitamente.\n");
@@ -165,6 +165,11 @@ public class DocumentChatService {
         prompt.append("5. Recuerda al paciente que consulte con su profesional de la salud para interpretar ")
                 .append("sus resultados.\n")
                 .append("6. No compartas ni repitas contenido confidencial fuera del análisis que se te pide.\n");
+        prompt.append("7. IMPORTANTE: NO uses markdown (sin #, **, |, tablas). Usa TEXTO PLANO con ");
+        prompt.append("secciones separadas por líneas en blanco. Usa MAYÚSCULAS para títulos de sección, ");
+        prompt.append("guiones (-) para listas, y líneas en blanco entre secciones.\n");
+        prompt.append("8. IMPORTANTE: Cuando termines el análisis, DETENTE. No agregues texto adicional. ");
+        prompt.append("No repitas información. No inventes conclusiones.\n");
         return prompt.toString();
     }
 
