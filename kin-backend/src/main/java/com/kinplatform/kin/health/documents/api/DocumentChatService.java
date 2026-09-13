@@ -168,7 +168,11 @@ public class DocumentChatService {
         prompt.append("7. IMPORTANTE: NO uses markdown (sin #, **, |, tablas). Usa TEXTO PLANO con ");
         prompt.append("secciones separadas por líneas en blanco. Usa MAYÚSCULAS para títulos de sección, ");
         prompt.append("guiones (-) para listas, y líneas en blanco entre secciones.\n");
-        prompt.append("8. IMPORTANTE: Cuando termines el análisis, DETENTE. No agregues texto adicional. ");
+        prompt.append("8. IMPORTANTE: SOLO CARACTERES ASCII BÁSICOS + acentos españoles (áéíóúñÁÉÍÓÚÑ¿¡). ");
+        prompt.append("PROHIBIDO: ≥ ≤ → → • ● ▪ × € € % º ª ® © § ¶ † ‡ • º ª. ");
+        prompt.append("Usa solo: >= <= -> x . No uses ≥ ≤ → • ● ▪ × •. ");
+        prompt.append("No uses emojis, no uses emojis, no símbolos matemáticos Unicode.\n");
+        prompt.append("9. IMPORTANTE: Cuando termines el análisis, DETENTE. No agregues texto adicional. ");
         prompt.append("No repitas información. No inventes conclusiones.\n");
         return prompt.toString();
     }

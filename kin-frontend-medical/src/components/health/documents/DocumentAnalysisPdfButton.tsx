@@ -34,8 +34,7 @@ function sanitizeName(name: string): string {
 }
 
 /**
- * Sanitiza el texto para el PDF: elimina markdown residual y caracteres problemáticos.
- * El prompt ahora pide texto plano, pero por seguridad limpiamos residuales.
+ * Sanitiza el texto ANTES de pasarlo a jspdf: elimina markdown y Unicode problemático.
  */
 function sanitizeForPdf(text: string): string {
   if (!text) return "";
@@ -47,14 +46,60 @@ function sanitizeForPdf(text: string): string {
     .replace(/\|/g, "") // tablas |
     .replace(/&b/gi, "") // artefactos &b
     .replace(/&[a-z]+;/g, "") // entidades HTML
+    // Reemplazar Unicode problemático por equivalentes ASCII
+    .replace(/[•●▪→]/g, "-") // bullets
+    .replace(/[≥]/g, ">=")
+    .replace(/[≤]/g, "<=")
+    .replace(/[→]/g, "->")
+    .replace(/[×]/g, "x")
+    .replace(/[≥]/g, ">=")
+    .replace(/[≤]/g, "<=")
+    .replace(/[×]/g, "x")
+    .replace(/[•]/g, "-")
+    .replace(/[●]/g, "-")
+    .replace(/[▪]/g, "-")
+    .replace(/[→]/g, "->")
+    .replace(/[≥]/g, ">=")
+    .replace(/[≤]/g, "<=")
+    .replace(/[×]/g, "x")
+    .replace(/[€]/g, "EUR")
+    .replace(/[™]/g, "(TM)")
+    .replace(/[©]/g, "(c)")
+    .replace(/[®]/g, "(R)")
+    // Eliminar artefactos &b, &p, etc.
+    .replace(/&\s*[a-z]+\s*;?/gi, "")
+    // Eliminar comillas raras y caracteres de control
+    .replace(/['"`´`]/g, "'")
+    .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, "")
     // Normalizar saltos de línea
     .replace(/\r\n/g, "\n")
     .replace(/\r/g, "\n")
-    // Limitar líneas muy largas (opcional, jspdf lo maneja)
     .trim();
 }
 
-export default function DocumentAnalysisPdfButton({ document, messages }: Props) {
+/**
+ * Sanitiza líneas DESPUÉS de que jspdf las procese con splitTextToSize.
+ * jspdf corrompe Unicode (convierte ≥ a &b, • a &b, etc).
+ * Esta función limpia los residuos que jspdf deja.
+ */
+function sanitizeLinesAfterJspdf(lines: string[]): string[] {
+  return lines.map((line) =>
+    line
+      // Artefactos que jspdf deja al renderizar Unicode
+      .replace(/&\s*b\b/gi, "") // &b
+      .replace(/&\s*p\b/gi, "") // &p
+      .replace(/&[a-z]{1,4}\b/gi, "") // &xxx
+      // Caracteres corruptos comunes que deja jspdf
+      .replace(/["'`´`]/g, "'")
+      .replace(/[^\x20-\x7E\u00C0-\u017F\n]/g, "") // Solo ASCII + latinos básicos
+      .trim()
+  );
+}
+
+export default function DocumentAnalysisPdfButton({
+  document,
+  messages,
+}: Props) {
   const handleClick = async () => {
     const { default: jsPDF } = await import("jspdf");
     const doc = new jsPDF("p", "mm", "a4");
@@ -140,7 +185,9 @@ export default function DocumentAnalysisPdfButton({ document, messages }: Props)
         const time = formatDate(msg.createdAt);
         const prefix = `[${time}] ${label}:`;
         const sanitized = sanitizeForPdf(msg.content || "");
-        const contentLines = doc.splitTextToSize(sanitized, cw - 4);
+        let contentLines = doc.splitTextToSize(sanitized, cw - 4);
+        // Post-sanitize: jspdf corrompe Unicode, limpiamos las líneas resultantes
+        contentLines = sanitizeLinesAfterJspdf(contentLines);
 
         const boxH = Math.max(12, 8 + 5 + contentLines.length * 5);
         if (y + boxH > 275) {
