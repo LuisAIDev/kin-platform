@@ -40,12 +40,28 @@ public class TriageExportAssembler {
         String subtitle = doc.patientName() != null ? doc.patientName() : "Paciente";
 
         List<ExportSection> sections = List.of(
+                buildDisclaimerSection(),
                 buildTriageSection(doc),
                 buildAdvisorySection(),
                 buildMetadataSection(doc)
         );
 
         return new ExportDocument(title, subtitle, doc.generatedAt(), sections);
+    }
+
+    private ExportSection buildDisclaimerSection() {
+        String disclaimerTitle = "Triaje procesado por KIN Medical.";
+        String disclaimerBody =
+                "Las decisiones clinicas las toma un motor de reglas fijas basado en guias "
+                        + "medicas verificables (CIE-10, rangos de referencia estandar y protocolos "
+                        + "clinicos). Siempre aplica las mismas reglas, sin improvisaciones. La "
+                        + "inteligencia artificial solo redacta el resultado en lenguaje sencillo.\n\n"
+                        + "Este triaje es de apoyo informativo y no sustituye la evaluacion ni el "
+                        + "diagnostico de un profesional de la salud.";
+
+        ExportBlock titleBlock = ExportBlock.paragraph(disclaimerTitle);
+        ExportBlock bodyBlock = ExportBlock.paragraph(disclaimerBody);
+        return ExportSection.of("Procesamiento", List.of(titleBlock, bodyBlock));
     }
 
     private ExportSection buildTriageSection(TriageExportDocument doc) {
