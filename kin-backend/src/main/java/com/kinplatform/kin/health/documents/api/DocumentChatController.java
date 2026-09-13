@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
  * servicio: un paciente solo puede conversar sobre SUS documentos.
  */
 @RestController
-@RequestMapping("/health/documents/{documentId}/chat")
+@RequestMapping({"/health/documents/{documentId}/chat", "/medical/documents/{documentId}/chat"})
 public class DocumentChatController {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentChatController.class);

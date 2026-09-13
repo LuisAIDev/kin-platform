@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Alimenta los badges del sidebar sin necesidad de consultar cada módulo.</p>
  */
 @RestController
-@RequestMapping("/health/notifications")
+@RequestMapping({"/health/notifications", "/medical/notifications"})
 public class NotificationCountsController {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationCountsController.class);

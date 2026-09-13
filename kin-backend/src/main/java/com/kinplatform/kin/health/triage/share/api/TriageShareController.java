@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
  * </ul>
  */
 @RestController
-@RequestMapping("/health/triage")
+@RequestMapping({"/health/triage", "/medical/triage"})
 public class TriageShareController {
 
     private final TriageShareService shareService;
