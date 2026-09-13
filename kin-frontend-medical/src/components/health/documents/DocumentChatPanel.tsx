@@ -9,6 +9,7 @@ import {
   type VerificationStatus,
 } from "@/services/documentChat";
 import DocumentAnalysisPdfButton from "@/components/health/documents/DocumentAnalysisPdfButton";
+import { RefreshCw } from "lucide-react";
 
 /** Mensaje canónico del botón "Importar información": extrae los datos relevantes del PDF. */
 export const IMPORT_PROMPT =
@@ -99,6 +100,21 @@ export default function DocumentChatPanel({ document }: Props) {
     sendMessage(IMPORT_PROMPT);
   };
 
+  const handleRegenerate = async () => {
+    if (!document.analyzable || sending) return;
+    if (!confirm("¿Regenerar el análisis? Se borrará el actual y se generará uno nuevo.")) return;
+    setError("");
+    setNotice("");
+    try {
+      await documentChatService.clear(document.id);
+      setMessages([]);
+      setLastVerification("");
+      await sendMessage(IMPORT_PROMPT);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
   const handleClear = async () => {
     if (messages.length === 0) return;
     setError("");
@@ -144,6 +160,17 @@ export default function DocumentChatPanel({ document }: Props) {
               Importar información
             </button>
           )}
+          {document.analyzable && messages.length > 0 && (
+            <button
+              type="button"
+              onClick={handleRegenerate}
+              disabled={sending}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-100 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-200 transition disabled:opacity-60"
+            >
+              <RefreshCw className="w-3 h-3" />
+              Regenerar análisis
+            </button>
+          )}
           <DocumentAnalysisPdfButton document={document} messages={messages} />
           {messages.length > 0 && (
             <button
@@ -159,7 +186,9 @@ export default function DocumentChatPanel({ document }: Props) {
 
       {error && <p className="mx-4 mt-3 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
       {notice && (
-        <p className="mx-4 mt-3 text-xs text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg">{notice}</p>
+        <p className="mx-4 mt-3 text-xs text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg">
+          {notice}
+        </p>
       )}
       {verificationNote && (
         <p className="mx-4 mt-3 text-xs text-sky-800 bg-sky-50 px-3 py-2 rounded-lg">
@@ -183,10 +212,10 @@ export default function DocumentChatPanel({ document }: Props) {
             ) : (
               <>
                 <p className="text-sm font-medium text-neutral-600">
-                  Pregunta sobre este documento o pulsa “Importar información”.
+                  Pregunta sobre este documento o pulsa "Importar información".
                 </p>
                 <p className="text-xs text-neutral-400 mt-1">
-                  Ej.: “¿Qué significa mi nivel de glucosa?” · “Explícame este examen en lenguaje sencillo”.
+                  Ej.: "¿Qué significa mi nivel de glucosa?" · "Explícame este examen en lenguaje sencillo".
                 </p>
               </>
             )}
