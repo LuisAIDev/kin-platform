@@ -8,6 +8,7 @@ import {
   type TriageSymptom,
 } from "@/services/triage";
 import DifferentialSection from "@/components/triage/DifferentialSection";
+import { TriageDisclaimer } from "@/components/ui/TriageDisclaimer";
 
 const SEVERITY_COLORS: Record<string, string> = {
   LEVE: "bg-emerald-100 text-emerald-800",
@@ -215,6 +216,7 @@ function Results({
 
   return (
     <section className="flex flex-col gap-4">
+      <TriageDisclaimer variant="ui" />
       <h2 className="text-lg font-semibold">Posibles condiciones</h2>
       <div className="flex flex-col gap-4">
         {results.map((r) => (
