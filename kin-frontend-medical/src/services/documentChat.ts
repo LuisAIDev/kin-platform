@@ -32,7 +32,7 @@ export const VERIFICATION_LABELS: Record<string, string> = {
 
 export const documentChatService = {
   history: (documentId: string) =>
-    api.get<DocumentChatMessage[]>(`/medical/documents/${documentId}/chat/messages`),
+    api.get<DocumentChatMessage[]>(`/health/documents/${documentId}/chat/messages`),
 
   send: (documentId: string, content: string): Promise<DocumentChatTurnResponse> => {
     if (isChatMessageTooLong(content)) {
@@ -42,11 +42,11 @@ export const documentChatService = {
         ),
       );
     }
-    return api.post<DocumentChatTurnResponse>(`/medical/documents/${documentId}/chat/messages`, {
+    return api.post<DocumentChatTurnResponse>(`/health/documents/${documentId}/chat/messages`, {
       content,
     });
   },
 
   clear: (documentId: string) =>
-    api.delete<void>(`/medical/documents/${documentId}/chat/messages`),
+    api.delete<void>(`/health/documents/${documentId}/chat/messages`),
 };
