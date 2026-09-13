@@ -1,0 +1,136 @@
+src\app\(auth)\register\page.tsx:          <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+src\app\(auth)\verify-email\page.tsx:          <Link href="/login" className="text-primary-600 underline hover:text-primary-700">
+src\app\dashboard\accept-invitation\page.tsx:            className="mt-6 inline-flex rounded-lg bg-primary-600 px-5 py-2 text-sm font-semibold text-white hover:bg-primary-500"
+src\app\dashboard\patient\documents\page.tsx:            className="rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 transition"
+src\app\dashboard\patient\documents\page.tsx:                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\patient\documents\page.tsx:                className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:bg-primary-300"
+src\app\dashboard\patient\documents\page.tsx:                        ? "border-primary-500 bg-primary-50"
+src\app\dashboard\patient\documents\page.tsx:                        : "border-neutral-200 bg-white hover:border-primary-300"
+src\app\dashboard\patient\health\page.tsx:              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition"
+src\app\dashboard\patient\health\page.tsx:                    <span className="text-sm font-bold text-primary-700">
+src\app\dashboard\patient\plans\page.tsx:                  <span className="text-lg font-bold text-primary-700 shrink-0">
+src\app\dashboard\patient\plans\page.tsx:                      <span className="text-primary-600">•</span>
+src\app\dashboard\patient\plans\page.tsx:                      className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-40"
+src\app\dashboard\patient\schedule\page.tsx:              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\patient\schedule\page.tsx:              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\patient\schedule\page.tsx:                    className="rounded-lg border border-primary-200 text-primary-700 px-3 py-2 text-sm font-medium hover:bg-primary-50 transition"
+src\app\dashboard\physician\documents\page.tsx:              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\physician\documents\page.tsx:              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\physician\documents\page.tsx:            className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:bg-primary-300"
+src\app\dashboard\physician\documents\page.tsx:                    className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 transition"
+src\app\dashboard\physician\followup\page.tsx:                    ? "bg-primary-600 text-white border-primary-600"
+src\app\dashboard\physician\followup\page.tsx:                    : "border-neutral-300 text-neutral-700 hover:bg-primary-50"
+src\app\dashboard\physician\followup\page.tsx:                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\physician\followup\page.tsx:                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\physician\followup\page.tsx:                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\physician\followup\page.tsx:                  className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\physician\followup\page.tsx:                className="self-start rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:bg-primary-300"
+src\app\dashboard\physician\page.tsx:                      ? "bg-primary-600 text-white shadow-sm"
+src\app\dashboard\physician\plans\page.tsx:                    <span className="text-lg font-bold text-primary-700 shrink-0">
+src\app\dashboard\physician\plans\page.tsx:                        <span className="text-primary-600">•</span>
+src\app\dashboard\physician\plans\page.tsx:                        className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+src\app\dashboard\physician\schedule\page.tsx:              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\physician\schedule\page.tsx:              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\physician\schedule\page.tsx:              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\physician\schedule\page.tsx:              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\physician\schedule\page.tsx:              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition"
+src\app\dashboard\physician\schedule\page.tsx:                        className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\physician\schedule\page.tsx:                        className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\app\dashboard\physician\schedule\page.tsx:                          className="rounded-lg border border-primary-200 text-primary-700 px-3 py-1.5 text-xs font-medium hover:bg-primary-50 transition"
+src\app\dashboard\settings\page.tsx:              className="mt-1 block w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none"
+src\app\dashboard\settings\page.tsx:            className="rounded-lg bg-primary-600 px-5 py-2 text-sm font-medium text-white hover:bg-primary-700 transition focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none min-h-11"
+src\app\share\[token]\page.tsx:                    <span className="text-xl font-bold text-primary-700 shrink-0">
+src\components\auth\ConsentCheckbox.tsx:        className="mt-0.5 h-4 w-4 shrink-0 rounded border-neutral-300 accent-primary-600"
+src\components\auth\PasswordInput.tsx:        className={className ?? "rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11 w-full pr-10"}
+src\components\auth\PasswordInput.tsx:        className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded p-1"
+src\components\auth\PatientRegisterForm.tsx:        className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+src\components\auth\PatientRegisterForm.tsx:        className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+src\components\auth\PatientRegisterForm.tsx:        className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11 w-full pr-10"
+src\components\auth\PatientRegisterForm.tsx:            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+src\components\auth\PatientRegisterForm.tsx:            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11 bg-white"
+src\components\auth\PatientRegisterForm.tsx:        className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+src\components\auth\PhysicianRegisterForm.tsx:        className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+src\components\auth\PhysicianRegisterForm.tsx:        className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+src\components\auth\PhysicianRegisterForm.tsx:        className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11 w-full pr-10"
+src\components\auth\PhysicianRegisterForm.tsx:        className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+src\components\auth\PhysicianRegisterForm.tsx:            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11 bg-white"
+src\components\auth\PhysicianRegisterForm.tsx:            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+src\components\auth\PhysicianRegisterForm.tsx:        className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+src\components\auth\RegisterShell.tsx:          <Link href="/login" className="text-primary-600 underline hover:text-primary-700">
+src\components\followup\EvolutionForm.tsx:          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+src\components\followup\EvolutionForm.tsx:              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\components\followup\EvolutionForm.tsx:          className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+src\components\followup\EvolutionForm.tsx:          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+src\components\followup\EvolutionForm.tsx:        className="self-start rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:bg-primary-300"
+src\components\followup\FollowUpPlanCard.tsx:                      className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 transition"
+src\components\followup\FollowUpPlanCard.tsx:              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\components\followup\FollowUpPlanCard.tsx:              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\components\followup\FollowUpPlanCard.tsx:            className="self-start rounded-lg border border-primary-200 text-primary-700 px-3 py-1.5 text-xs font-medium hover:bg-primary-50 transition disabled:opacity-40"
+src\components\health\documents\DocumentChatPanel.tsx:                      ? "bg-primary-600 text-white rounded-br-sm"
+src\components\health\documents\DocumentChatPanel.tsx:                  <p className={`text-[10px] mb-0.5 ${isUser ? "text-primary-100" : "text-neutral-400"}`}>
+src\components\health\documents\DocumentChatPanel.tsx:            className="flex-1 resize-none rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\components\health\documents\DocumentChatPanel.tsx:            className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:bg-primary-300"
+src\components\health\FeedbackButton.tsx:      className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 shadow-sm hover:border-primary-300 hover:text-primary-700"
+src\components\health\HealthSummaryCards.tsx:          <span className="text-2xl font-bold text-primary-700">{card.value}</span>
+src\components\health\HealthSummaryCards.tsx:                className="rounded-full bg-primary-50 text-primary-700 px-3 py-1.5 text-sm font-medium"
+src\components\health\HistoryList.tsx:                      className="rounded-lg border border-primary-200 text-primary-700 px-3 py-1.5 text-xs font-medium hover:bg-primary-50 transition"
+src\components\health\InvitationsList.tsx:                className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:bg-primary-300"
+src\components\health\ProfileEditor.tsx:                  ? "bg-primary-600 border-primary-600 text-white"
+src\components\health\ProfileEditor.tsx:                  : "border-neutral-300 text-neutral-700 hover:bg-primary-50 hover:border-primary-400"
+src\components\health\ProfileEditor.tsx:          className="rounded-lg border border-neutral-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\components\health\ProfileEditor.tsx:          className="rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-primary-700 transition disabled:bg-primary-300"
+src\components\health\ShareTriageModal.tsx:              className="rounded-lg bg-primary-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary-700 transition"
+src\components\health\ShareTriageModal.tsx:                className="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition"
+src\components\health\SymptomEvolutionChart.tsx:              className="w-full max-w-10 rounded-t bg-primary-600"
+src\components\layout\Navbar.tsx:  "text-sm font-medium text-neutral-500 hover:text-primary-600 transition-colors duration-200";
+src\components\layout\Navbar.tsx:  "text-sm font-medium text-primary-600 transition-colors duration-200";
+src\components\layout\Navbar.tsx:          ? "bg-white/80 backdrop-blur-xl border-b border-primary-100/50 shadow-sm"
+src\components\layout\Navbar.tsx:            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-sm">
+src\components\layout\Navbar.tsx:            <span className="text-lg font-bold text-primary-900 tracking-tight">KIN</span>
+src\components\layout\Navbar.tsx:              className="text-sm font-medium text-neutral-600 hover:text-primary-600 transition-colors duration-200 px-3 py-2 rounded-lg"
+src\components\layout\Navbar.tsx:              className="text-sm font-semibold text-white bg-primary-600 hover:bg-primary-500 px-4 py-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
+src\components\onboarding\OnboardingChecklist.tsx:    <section aria-label="Checklist de bienvenida" className="mx-6 mt-6 rounded-2xl border border-primary-200 bg-gradient-to-b from-primary-50 to-white p-5 sm:p-6">
+src\components\onboarding\OnboardingChecklist.tsx:          <h2 className="text-lg font-bold text-primary-900">Bienvenido a KIN 🎉</h2>
+src\components\onboarding\OnboardingChecklist.tsx:                    : "text-neutral-700 hover:bg-primary-50"
+src\components\patient\SubscriptionStatusBanner.tsx:              <div className="h-full bg-primary-600 transition-all" style={{ width: `${maxTriagesPerMonth ? Math.min(100, (triagesUsed ?? 0) / maxTriagesPerMonth * 100) : 0}%` }} />
+src\components\patient\SubscriptionStatusBanner.tsx:              <div className="h-full bg-primary-600 transition-all" style={{ width: `${maxStorageMb ? Math.min(100, (storageUsedMb ?? 0) / maxStorageMb * 100) : 0}%` }} />
+src\components\patient\SubscriptionStatusBanner.tsx:              <div className="h-full bg-primary-600 transition-all" style={{ width: `${Math.min(100, Math.max(0, (Number(aiBudgetRemaining) / Number(aiBudgetUsd)) * 100))}%` }} />
+src\components\patient\SubscriptionStatusBanner.tsx:              <span className="w-2 h-2 rounded-full bg-primary-500" />
+src\components\PdfReportButton.tsx:        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white transition cursor-pointer bg-primary-600 hover:bg-primary-700"
+src\components\physician\InvitePatientModal.tsx:                className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\components\physician\InvitePatientModal.tsx:                className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+src\components\physician\InvitePatientModal.tsx:                className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:bg-primary-300"
+src\components\physician\PatientDetailView.tsx:              <span key={c} className="rounded-full bg-primary-50 text-primary-700 px-3 py-1 text-xs font-medium">
+src\components\physician\PatientList.test.tsx:    expect(row).toHaveClass("bg-primary-50");
+src\components\physician\PatientList.tsx:                } ${selectedPatientId === p.patientId ? "bg-primary-50" : ""}`}
+src\components\physician\PatientList.tsx:                    <svg className="w-5 h-5 text-primary-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+src\components\physician\PatientList.tsx:                      className="rounded-lg border border-primary-200 text-primary-700 px-3 py-1.5 text-xs font-medium hover:bg-primary-50 transition"
+src\components\physician\PhysicianApplicationWidget.tsx:    <div className="rounded-xl border border-primary-200 bg-white px-5 py-4 mb-4">
+src\components\physician\PhysicianApplicationWidget.tsx:            className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+src\components\physician\PhysicianApplicationWidget.tsx:            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11 bg-white"
+src\components\physician\PhysicianApplicationWidget.tsx:            className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+src\components\physician\PhysicianApplicationWidget.tsx:            className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-11"
+src\components\physician\PhysicianApplicationWidget.tsx:          className="rounded-lg bg-primary-600 py-2 text-sm font-medium text-white hover:bg-primary-700 transition min-h-11 disabled:opacity-50 disabled:cursor-not-allowed"
+src\components\telemedicine\AppointmentForm.tsx:              className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\components\telemedicine\AppointmentForm.tsx:            className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\components\telemedicine\AppointmentForm.tsx:            className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\components\telemedicine\AppointmentForm.tsx:          className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+src\components\telemedicine\AppointmentForm.tsx:          className="rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-primary-700 transition disabled:bg-primary-300"
+src\components\telemedicine\ChatView.tsx:                    ? "bg-primary-600 text-white rounded-br-sm"
+src\components\telemedicine\ChatView.tsx:                <span className={`text-[10px] ${mine ? "text-primary-100" : "text-neutral-400"}`}>
+src\components\telemedicine\ChatView.tsx:          className="flex-1 rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\components\telemedicine\ChatView.tsx:          className="rounded-lg bg-primary-600 px-5 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:bg-primary-300"
+src\components\telemedicine\MessagesPage.tsx:              className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 transition"
+src\components\telemedicine\MessagesPage.tsx:              <span className="rounded-full bg-primary-600 text-white px-3 py-1 text-sm font-medium">
+src\components\telemedicine\MessagesPage.tsx:                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\components\telemedicine\MessagesPage.tsx:                  selected?.otherId === c.otherId ? "bg-primary-50" : ""
+src\components\telemedicine\MessagesPage.tsx:                  <span className="rounded-full bg-primary-600 text-white px-2 py-0.5 text-[10px] font-bold shrink-0">
+src\components\triage\TriageForm.tsx:              className="rounded-lg bg-primary-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary-700 transition"
+src\components\triage\TriageForm.tsx:            className="rounded-lg border border-neutral-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+src\components\triage\TriageForm.tsx:                    ? "bg-primary-600 border-primary-600 text-white"
+src\components\triage\TriageForm.tsx:                    : "border-neutral-300 text-neutral-700 hover:bg-primary-50 hover:border-primary-400"
+src\components\triage\TriageForm.tsx:            className="rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-primary-700 transition disabled:bg-primary-300"
+src\components\triage\TriageForm.tsx:              <span className="text-lg font-bold text-primary-700 shrink-0">
+src\components\triage\TriageForm.tsx:                className="h-full bg-primary-600"
+src\utils\badgeColors.test.ts:    expect(statusBadge("IN_PROGRESS")).toContain("bg-primary-100");
+src\utils\badgeColors.ts:  IN_PROGRESS: "bg-primary-100 text-primary-700",
