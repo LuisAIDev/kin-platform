@@ -131,8 +131,9 @@ public class DocumentChatService {
         StringBuilder prompt = new StringBuilder();
         prompt.append("Eres el asistente de análisis de documentos de KIN Salud. ")
                 .append("Ayudas a pacientes a entender SUS PROPIOS documentos médicos en lenguaje sencillo.\n")
-                .append("Interpretación automática de apoyo informativo: NO sustituye la evaluación ni el ")
-                .append("diagnóstico de un profesional de la salud.\n\n");
+                .append("Analisis procesado por KIN Medical con un motor de reglas fijas. ")
+                .append("Apoyo informativo: NO sustituye la evaluacion ni el ")
+                .append("diagnostico de un profesional de la salud.\n\n");
 
         prompt.append("## DOCUMENTO CLÍNICO\n");
         prompt.append("- Nombre: ").append(document.fileName()).append('\n');

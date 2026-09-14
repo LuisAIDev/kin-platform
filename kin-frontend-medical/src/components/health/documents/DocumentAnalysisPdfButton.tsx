@@ -151,10 +151,23 @@ export default function DocumentAnalysisPdfButton({
     doc.setFont("helvetica", "italic");
     doc.setFontSize(8);
     doc.setTextColor(180, 83, 9);
-    const disclaimerLines = doc.splitTextToSize(
-      "Este documento es una interpretación automática generada por IA. No sustituye la evaluación ni el diagnóstico de un profesional de la salud. Consulta a tu médico para interpretar tus resultados.",
-      cw,
-    );
+    const disclaimerLines = [
+      "Analisis procesado por KIN Medical.",
+      "",
+      "Las decisiones clinicas las toma un motor de reglas fijas que aplica guias",
+      "medicas verificables. Trabajamos con datos reales de fuentes publicas y",
+      "confiables: la Organizacion Mundial de la Salud (OMS), clasificaciones",
+      "internacionales de enfermedades (CIE-10), rangos de referencia de",
+      "laboratorios y protocolos clinicos.",
+      "",
+      "Que significa esto? Que cada vez que analizamos tus documentos medicos,",
+      "aplicamos las mismas reglas medicas validadas, sin improvisaciones ni",
+      "variaciones. La inteligencia artificial solo se encarga de redactar el",
+      "resultado en palabras sencillas para ti.",
+      "",
+      "Este informe es de apoyo informativo y no sustituye la evaluacion ni el",
+      "diagnostico de un profesional de la salud. Siempre consulta a tu medico.",
+    ];
     doc.text(disclaimerLines, ml, y);
     y += disclaimerLines.length * 5 + 8;
 

@@ -145,7 +145,7 @@ export default function DocumentChatPanel({ document }: Props) {
             </p>
           ) : (
             <p className="text-xs text-neutral-500">
-              Conversación contextual sobre el documento. Interpretación automática de apoyo.
+              Conversación contextual sobre el documento. Análisis procesado por KIN Medical con reglas médicas verificables.
             </p>
           )}
         </div>
@@ -197,7 +197,7 @@ export default function DocumentChatPanel({ document }: Props) {
       )}
 
       <div className="px-4 py-2 text-xs text-neutral-500 border-b border-neutral-100">
-        ⚠️ Interpretación automática. No sustituye la consulta con un profesional de la salud.
+        ⚠️ Análisis de apoyo informativo. Las decisiones clínicas se toman con un motor de reglas fijas verificables. No sustituye la consulta con un profesional de la salud.
       </div>
 
       <div className="flex-1 min-h-[260px] max-h-[420px] overflow-y-auto p-4 flex flex-col gap-3">
