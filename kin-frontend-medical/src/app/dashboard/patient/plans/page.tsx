@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import {
   patientPlansService,
   type PatientPlan,
+  type PatientSubscriptionStatusResponse,
 } from "@/services/patientPlans";
 import { subscriptionApi } from "@/services/subscriptionApi";
 
 export default function PatientPlansPage() {
   const [plans, setPlans] = useState<PatientPlan[]>([]);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<PatientSubscriptionStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [banner, setBanner] = useState<"success" | "canceled" | null>(null);
@@ -20,10 +22,15 @@ export default function PatientPlansPage() {
     else if (params.get("canceled") === "true") setBanner("canceled");
 
     let cancelled = false;
-    patientPlansService
-      .getPatientPlans()
-      .then((data) => {
-        if (!cancelled) setPlans(data);
+    Promise.all([
+      patientPlansService.getPatientPlans(),
+      subscriptionApi.getPatientStatus(),
+    ])
+      .then(([plansData, statusData]) => {
+        if (!cancelled) {
+          setPlans(plansData);
+          setSubscriptionStatus(statusData);
+        }
       })
       .catch((err) => {
         if (!cancelled) setError((err as Error).message);
@@ -63,10 +70,7 @@ export default function PatientPlansPage() {
     }
   };
 
-  const paidPlan = plans.find(
-    (p) => p.code === "PERSONAL_PLUS" || p.maxTriagesPerMonth === null
-  );
-  const freePlan = plans.find((p) => p.code === "FREE" || p.price === 0);
+  const activePlanCode = subscriptionStatus?.planCode;
 
   return (
     <main className="flex-1 flex items-start justify-center px-6 pt-10 pb-12">
@@ -105,81 +109,83 @@ export default function PatientPlansPage() {
           </p>
         ) : (
           <section className="grid gap-4 md:grid-cols-2">
-            {plans.map((plan) => (
-              <div
-                key={plan.id}
-                className="rounded-xl border border-neutral-200 bg-white p-5 flex flex-col gap-3"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-base font-semibold text-neutral-800">
-                      {plan.name}
-                    </h2>
-                    <p className="text-sm text-neutral-500 mt-0.5">
-                      {plan.description}
-                    </p>
-                  </div>
-                  <span className="text-lg font-bold text-primary-700 shrink-0">
-                    ${plan.price}
-                    <span className="text-xs font-normal text-neutral-400">
-                      /mes
+            {plans.map((plan) => {
+              const isCurrentPlan = plan.code === activePlanCode;
+              const isActiveSubscription = subscriptionStatus?.isActive;
+
+              return (
+                <div
+                  key={plan.id}
+                  className="rounded-xl border border-neutral-200 bg-white p-5 flex flex-col gap-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-base font-semibold text-neutral-800">
+                        {plan.name}
+                      </h2>
+                      <p className="text-sm text-neutral-500 mt-0.5">
+                        {plan.description}
+                      </p>
+                    </div>
+                    <span className="text-lg font-bold text-primary-700 shrink-0">
+                      ${plan.price}
+                      <span className="text-xs font-normal text-neutral-400">
+                        /mes
+                      </span>
                     </span>
-                  </span>
-                </div>
+                  </div>
 
-                <ul className="flex flex-col gap-1.5 text-sm text-neutral-600">
-                  {plan.features.map((f, i) => (
-                    <li key={i} className="flex gap-2">
-                      <span className="text-primary-600">•</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
+                  <ul className="flex flex-col gap-1.5 text-sm text-neutral-600">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex gap-2">
+                        <span className="text-primary-600">•</span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
 
-                <p className="text-xs text-neutral-500">
-                  {plan.maxTriagesPerMonth !== null
-                    ? `${plan.maxTriagesPerMonth} triajes por mes`
-                    : "Triajes ilimitados"}
-                  {plan.trialDays != null &&
-                    plan.trialDays > 0 &&
-                    ` · ${plan.trialDays} días de prueba`}
-                </p>
+                  <p className="text-xs text-neutral-500">
+                    {plan.maxTriagesPerMonth !== null
+                      ? `${plan.maxTriagesPerMonth} triajes por mes`
+                      : "Triajes ilimitados"}
+                    {plan.trialDays != null &&
+                      plan.trialDays > 0 &&
+                      ` · ${plan.trialDays} días de prueba`}
+                  </p>
 
-                <div className="mt-auto pt-2">
-                  {plan.maxTriagesPerMonth !== null ? (
-                    <>
-                      <div className="rounded-lg bg-neutral-100 px-4 py-2 text-center text-xs font-medium text-neutral-600 mb-2">
-                        Tu plan actual
-                      </div>
+                  <div className="mt-auto pt-2">
+                    {isCurrentPlan && isActiveSubscription ? (
+                      <>
+                        <div className="rounded-lg bg-green-50 px-4 py-2 text-center text-xs font-medium text-green-700 mb-2">
+                          Tu plan actual
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleCancelSubscription}
+                          disabled={cancelling === "cancel"}
+                          className="w-full rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition disabled:opacity-40"
+                        >
+                          {cancelling === "cancel" ? "Cancelando..." : "Cancelar suscripción"}
+                        </button>
+                      </>
+                    ) : (
                       <button
                         type="button"
-                        onClick={handleCancelSubscription}
-                        disabled={cancelling === "cancel"}
-                        className="w-full rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition disabled:opacity-40"
+                        onClick={() => handleSubscribe(plan.id)}
+                        className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition"
                       >
-                        {cancelling === "cancel" ? "Cancelando..." : "Cancelar suscripción"}
+                        {plan.price === 0 ? "Cambiar a este plan" : `Contratar por $${plan.price}/mes`}
                       </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleSubscribe(plan.id)}
-                      disabled={paidPlan?.id !== plan.id}
-                      className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-40"
-                    >
-                      Contratar por ${plan.price}/mes
-                    </button>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </section>
         )}
 
         <p className="text-xs text-neutral-400">
-          {freePlan && paidPlan
-            ? `Compara tu plan gratuito (${freePlan.maxTriagesPerMonth ?? 0} triajes/mes) con ${paidPlan.name} ($${paidPlan.price}/mes) para triajes ilimitados.`
-            : "Los pagos se procesan de forma segura a través de Stripe."}
+          Los pagos se procesan de forma segura a través de Stripe.
         </p>
       </div>
     </main>

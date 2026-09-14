@@ -83,6 +83,38 @@ const IPS_FEATURES = [
   "Indicadores poblacionales",
 ];
 
+const PATIENT_PLANS = [
+  {
+    name: "Personal Free",
+    price: 0,
+    period: "/mes",
+    description: "Para consultas de triaje ocasionales",
+    features: [
+      "Hasta 3 triajes por mes",
+      "Historial básico",
+      "Exportación PDF limitada",
+    ],
+    cta: "Comenzar gratis",
+    href: "/register/salud/paciente",
+    highlighted: false,
+  },
+  {
+    name: "Personal+",
+    price: 9,
+    period: "/mes",
+    description: "Para consultas frecuentes",
+    features: [
+      "Triajes ilimitados al mes",
+      "PDF ilimitado",
+      "Compartir informes",
+      "Asistente IA PRO",
+    ],
+    cta: "Comenzar",
+    href: "/register/salud/paciente",
+    highlighted: true,
+  },
+];
+
 const PLANS = [
   {
     name: "Medical Free",
@@ -279,50 +311,92 @@ export default function HomePage() {
       {/* Planes */}
       <section id="planes" className="border-t border-neutral-100 py-24 sm:py-32">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Planes para cada etapa</h2>
-            <p className="mt-4 text-lg text-neutral-600">Empieza gratis y crece cuando tu práctica lo necesite.</p>
-          </div>
-          <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className={`rounded-2xl border p-8 ${plan.highlighted ? "border-medical-500 bg-white shadow-xl ring-1 ring-medical-500" : "border-neutral-200 bg-white"} hover:shadow-xl hover:-translate-y-1 transition-all duration-200`}
-              >
-                {plan.highlighted && (
-                  <span className="mb-3 inline-block rounded-full bg-medical-100 px-3 py-1 text-xs font-semibold text-medical-700">
-                    Más popular
-                  </span>
-                )}
-                <h3 className="text-xl font-semibold">{plan.name}</h3>
-                <p className="mt-1 text-sm text-neutral-500">{plan.description}</p>
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className="text-neutral-500">{plan.period}</span>
-                </div>
-                <ul className="mt-6 space-y-3">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-neutral-700">
-                      <svg className="h-4 w-4 text-medical-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href={plan.href}
-                  className={`mt-8 block w-full rounded-lg px-4 py-3 text-center text-sm font-semibold transition ${plan.highlighted ? "bg-medical-600 text-white hover:bg-medical-700" : "border border-neutral-300 text-neutral-700 hover:bg-neutral-50"}`}
+          {/* Planes para Pacientes */}
+          <div className="mb-16">
+            <div className="mx-auto max-w-2xl text-center mb-8">
+              <h3 className="text-2xl font-bold tracking-tight sm:text-3xl text-medical-700">Planes para Pacientes</h3>
+              <p className="mt-2 text-lg text-neutral-600">Cuida tu salud con triaje digital, historial y seguimiento personalizado.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+              {PATIENT_PLANS.map((plan) => (
+                <div
+                  key={plan.name}
+                  className={`rounded-2xl border p-8 ${plan.highlighted ? "border-medical-500 bg-white shadow-xl ring-1 ring-medical-500" : "border-neutral-200 bg-white"} hover:shadow-xl hover:-translate-y-1 transition-all duration-200`}
                 >
-                  {plan.cta}
-                </Link>
-              </div>
-            ))}
+                  {plan.highlighted && (
+                    <span className="mb-3 inline-block rounded-full bg-medical-100 px-3 py-1 text-xs font-semibold text-medical-700">
+                      Más popular
+                    </span>
+                  )}
+                  <h3 className="text-xl font-semibold">{plan.name}</h3>
+                  <p className="mt-1 text-sm text-neutral-500">{plan.description}</p>
+                  <div className="mt-6 flex items-baseline gap-1">
+                    <span className="text-4xl font-bold">${plan.price}</span>
+                    <span className="text-neutral-500">{plan.period}</span>
+                  </div>
+                  <ul className="mt-6 space-y-3">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-sm text-neutral-700">
+                        <svg className="h-4 w-4 text-medical-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href={plan.href}
+                    className={`mt-8 block w-full rounded-lg px-4 py-3 text-center text-sm font-semibold transition ${plan.highlighted ? "bg-medical-600 text-white hover:bg-medical-700" : "border border-neutral-300 text-neutral-700 hover:bg-neutral-50"}`}
+                  >
+                    {plan.cta}
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="mt-10 text-center">
-            <Link href="/dashboard/physician/plans" className="text-sm font-semibold text-medical-600 hover:text-medical-700">
-              Ver planes completos →
-            </Link>
+
+          {/* Planes para Médicos */}
+          <div>
+            <div className="mx-auto max-w-2xl text-center mb-8">
+              <h3 className="text-2xl font-bold tracking-tight sm:text-3xl text-medical-700">Planes para Médicos</h3>
+              <p className="mt-2 text-lg text-neutral-600">Digitaliza tu consulta con herramientas clínicas modernas.</p>
+            </div>
+            <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-3">
+              {PLANS.map((plan) => (
+                <div
+                  key={plan.name}
+                  className={`rounded-2xl border p-8 ${plan.highlighted ? "border-medical-500 bg-white shadow-xl ring-1 ring-medical-500" : "border-neutral-200 bg-white"} hover:shadow-xl hover:-translate-y-1 transition-all duration-200`}
+                >
+                  {plan.highlighted && (
+                    <span className="mb-3 inline-block rounded-full bg-medical-100 px-3 py-1 text-xs font-semibold text-medical-700">
+                      Más popular
+                    </span>
+                  )}
+                  <h3 className="text-xl font-semibold">{plan.name}</h3>
+                  <p className="mt-1 text-sm text-neutral-500">{plan.description}</p>
+                  <div className="mt-6 flex items-baseline gap-1">
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                    <span className="text-neutral-500">{plan.period}</span>
+                  </div>
+                  <ul className="mt-6 space-y-3">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-sm text-neutral-700">
+                        <svg className="h-4 w-4 text-medical-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href={plan.href}
+                    className={`mt-8 block w-full rounded-lg px-4 py-3 text-center text-sm font-semibold transition ${plan.highlighted ? "bg-medical-600 text-white hover:bg-medical-700" : "border border-neutral-300 text-neutral-700 hover:bg-neutral-50"}`}
+                  >
+                    {plan.cta}
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
