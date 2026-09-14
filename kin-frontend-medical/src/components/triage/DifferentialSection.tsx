@@ -357,29 +357,50 @@ function Results({ result }: { result: DifferentialResponse }) {
   );
 }
 
-/** Enlaces a información externa (Wikipedia + MedlinePlus) por condición. */
+/** Enlaces a información externa (fuentes médicas confiables) por condición. */
 function ExternalLinks({ condition }: { condition: string }) {
   const encodedCondition = encodeURIComponent(condition);
-  const wikipediaUrl = `https://es.wikipedia.org/wiki/Special:Search?search=${encodedCondition}`;
-  const medlineUrl = `https://medlineplus.gov/spanish/search/?query=${encodedCondition}`;
+
+  const links = [
+    {
+      label: "MedlinePlus",
+      url: `https://vsearch.nlm.nih.gov/vivisimo/cgi-bin/query-meta?v%3Aproject=medlineplus&v%3Asources=medlineplus-bundle&query=${encodedCondition}`,
+    },
+    {
+      label: "Mayo Clinic",
+      url: `https://www.mayoclinic.org/es/search?query=${encodedCondition}`,
+    },
+    {
+      label: "MSD Manuals",
+      url: `https://www.msdmanuals.com/es/hogar/searchresults?query=${encodedCondition}`,
+    },
+    {
+      label: "CDC",
+      url: `https://www.cdc.gov/spanish/enfermedades/index.html`,
+    },
+    {
+      label: "OMS",
+      url: `https://www.who.int/es/health-topics`,
+    },
+    {
+      label: "AAFP",
+      url: `https://www.aafp.org/family-physician/patient-care/conditions-diseases.html`,
+    },
+  ];
+
   return (
-    <span className="inline-flex gap-2">
-      <a
-        href={wikipediaUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="rounded-full bg-neutral-100 px-2.5 py-1 font-medium text-neutral-600 hover:bg-neutral-200"
-      >
-        Wikipedia
-      </a>
-      <a
-        href={medlineUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="rounded-full bg-neutral-100 px-2.5 py-1 font-medium text-neutral-600 hover:bg-neutral-200"
-      >
-        MedlinePlus
-      </a>
-    </span>
+    <div className="flex flex-wrap gap-2 mt-2">
+      {links.map((link) => (
+        <a
+          key={link.label}
+          href={link.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-200 transition"
+        >
+          {link.label}
+        </a>
+      ))}
+    </div>
   );
 }

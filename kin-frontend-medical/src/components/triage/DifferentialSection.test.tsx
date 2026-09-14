@@ -52,14 +52,31 @@ describe("DifferentialSection", () => {
     expect(screen.getByText("62%")).toBeInTheDocument();
     expect(screen.getByText("fumador · Tabaquismo")).toBeInTheDocument();
     expect(screen.getByText(/PCR respiratoria/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Wikipedia" })).toHaveAttribute(
-      "href",
-      "https://es.wikipedia.org/wiki/Special:Search?search=Gripe",
-    );
     expect(screen.getByRole("link", { name: "MedlinePlus" })).toHaveAttribute(
       "href",
-      "https://medlineplus.gov/spanish/search/?query=Gripe",
+      "https://vsearch.nlm.nih.gov/vivisimo/cgi-bin/query-meta?v%3Aproject=medlineplus&v%3Asources=medlineplus-bundle&query=Gripe",
     );
+    expect(screen.getByRole("link", { name: "Mayo Clinic" })).toHaveAttribute(
+      "href",
+      "https://www.mayoclinic.org/es/search?query=Gripe",
+    );
+    expect(screen.getByRole("link", { name: "MSD Manuals" })).toHaveAttribute(
+      "href",
+      "https://www.msdmanuals.com/es/hogar/searchresults?query=Gripe",
+    );
+    expect(screen.getByRole("link", { name: "CDC" })).toHaveAttribute(
+      "href",
+      "https://www.cdc.gov/spanish/enfermedades/index.html",
+    );
+    expect(screen.getByRole("link", { name: "OMS" })).toHaveAttribute(
+      "href",
+      "https://www.who.int/es/health-topics",
+    );
+    expect(screen.getByRole("link", { name: "AAFP" })).toHaveAttribute(
+      "href",
+      "https://www.aafp.org/family-physician/patient-care/conditions-diseases.html",
+    );
+    expect(screen.queryByRole("link", { name: "Wikipedia" })).not.toBeInTheDocument();
     expect(differentialService.analyze).toHaveBeenCalledWith(["fiebre", "tos"], []);
   });
 
