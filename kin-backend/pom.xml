@@ -236,6 +236,13 @@
             <version>24.0.0</version>
         </dependency>
 
+        <!-- Google Cloud Vision — OCR para imágenes de documentos clínicos -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-vision</artifactId>
+            <version>3.45.0</version>
+        </dependency>
+
         <!-- Flyway — migraciones gestionadas (PostgreSQL vía flyway-database-postgresql,
              módulo separado desde Flyway 10). Versión 11.x explícita (desde Flyway 11,
              el group de OSS sigue siendo org.flywaydb; Spring Boot 3.2.5 solo gestiona 9.22.3). -->

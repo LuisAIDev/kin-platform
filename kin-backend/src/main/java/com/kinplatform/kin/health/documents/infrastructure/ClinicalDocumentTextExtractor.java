@@ -1,5 +1,6 @@
 package com.kinplatform.kin.health.documents.infrastructure;
 
+import com.kinplatform.kin.health.documents.application.GoogleVisionOcrService;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -23,7 +24,8 @@ import org.springframework.stereotype.Component;
  * <p>Port de la extracción de documentos del módulo Empresa ({@code projectdoc})
  * al dominio de salud, pero sobre {@code byte[]} (el archivo vive en el
  * filesystem local, no en un {@code MultipartFile}). Formatos soportados:
- * PDF (PDFBox), DOCX/XLSX (Apache POI) y TXT/CSV (UTF-8).</p>
+ * PDF (PDFBox), DOCX/XLSX (Apache POI), TXT/CSV (UTF-8) e imágenes
+ * (JPG/PNG/HEIC/WebP) vía Google Cloud Vision OCR.</p>
  *
  * <p>Comportamiento tolerante: un PDF escaneado (sin capa de texto), un formato
  * no soportado o un archivo corrupto devuelven texto vacío — nunca una excepción
@@ -41,6 +43,12 @@ public class ClinicalDocumentTextExtractor {
     private static final String MIME_XLSX =
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
+    private final GoogleVisionOcrService googleVisionOcrService;
+
+    public ClinicalDocumentTextExtractor(GoogleVisionOcrService googleVisionOcrService) {
+        this.googleVisionOcrService = googleVisionOcrService;
+    }
+
     /**
      * Extrae el texto del documento.
      *
@@ -52,6 +60,22 @@ public class ClinicalDocumentTextExtractor {
         }
         String ext = extension(fileName);
         String mime = mimeType == null ? "" : mimeType;
+        
+        // Detectar si es imagen y usar OCR
+        if (mime.startsWith("image/")) {
+            try {
+                String ocrText = googleVisionOcrService.extractText(content);
+                if (ocrText.isBlank()) {
+                    throw new RuntimeException(
+                        "No se detectó texto en la imagen. Intenta con mejor iluminación o sube un PDF."
+                    );
+                }
+                return ocrText;
+            } catch (IOException e) {
+                throw new RuntimeException("Error al procesar la imagen con OCR", e);
+            }
+        }
+
         try {
             if ("pdf".equals(ext) || MIME_PDF.equalsIgnoreCase(mime)) {
                 return extractPdf(content);

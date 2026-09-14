@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import DocumentChatPanel from "@/components/health/documents/DocumentChatPanel";
 import { documentsService, type ClinicalDocument } from "@/services/documents";
+import { Camera } from "lucide-react";
 
-const ALLOWED_EXTENSIONS = ["pdf", "docx", "xlsx", "txt", "csv"];
+const ALLOWED_EXTENSIONS = ["pdf", "docx", "xlsx", "txt", "csv", "jpg", "jpeg", "png", "heic", "webp"];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 function formatSize(bytes: number) {
@@ -20,7 +21,7 @@ function formatDate(iso: string) {
 function validateFile(file: File): string {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   if (!ALLOWED_EXTENSIONS.includes(ext)) {
-    return "Formato no permitido. Sube PDF, DOCX, XLSX, TXT o CSV.";
+    return "Formato no permitido. Sube PDF, DOCX, XLSX, TXT, CSV, JPG, PNG, HEIC o WebP.";
   }
   if (file.size > MAX_FILE_SIZE) {
     return "El archivo supera el tamaño máximo de 10 MB.";
@@ -40,6 +41,7 @@ export default function PatientDocumentsPage() {
   const [description, setDescription] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const loadDocuments = useCallback(async (preferredId?: string) => {
     try {
@@ -141,13 +143,13 @@ export default function PatientDocumentsPage() {
           <section className="rounded-xl border border-neutral-200 bg-white p-5 flex flex-col gap-3">
             <h2 className="text-base font-semibold">Agregar documento</h2>
             <p className="text-xs text-neutral-500">
-              Formatos admitidos: PDF, DOCX, XLSX, TXT, CSV · máximo 10 MB. Un PDF con texto (p. ej.
-              informe de laboratorio) permite el análisis automático.
+              Formatos admitidos: PDF, DOCX, XLSX, TXT, CSV, JPG, PNG, HEIC, WebP · máximo 10 MB.
+              Las fotos se procesan con OCR para extraer el texto automáticamente.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
                 type="file"
-                accept=".pdf,.docx,.xlsx,.txt,.csv"
+                accept=".pdf,.docx,.xlsx,.txt,.csv,image/jpeg,image/png,image/heic,image/webp"
                 onChange={(e) => {
                   setFile(e.target.files?.[0] ?? null);
                   setUploadError("");
@@ -163,6 +165,28 @@ export default function PatientDocumentsPage() {
                 aria-label="Descripción del documento"
                 className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
+            </div>
+            <div className="flex gap-3">
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => {
+                  setFile(e.target.files?.[0] ?? null);
+                  setUploadError("");
+                }}
+                aria-label="Tomar foto con la cámara"
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition"
+              >
+                <Camera className="w-4 h-4" />
+                Tomar foto
+              </button>
             </div>
             {uploadError && <p className="text-sm text-red-600">{uploadError}</p>}
             <div>
