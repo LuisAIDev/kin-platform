@@ -115,7 +115,7 @@ export default function TriageForm() {
       <div className="w-full max-w-3xl flex flex-col gap-6">
         <div>
           <h1 className="text-2xl font-bold">Triaje Digital</h1>
-          <p className="text-sm text-neutral-500 mt-1">
+          <p className="text-sm text-neutral-700 mt-1">
             Selecciona tus síntomas y obtén una orientación inicial de posibles
             condiciones.
           </p>
@@ -167,7 +167,7 @@ export default function TriageForm() {
             );
           })}
           {filtered.length === 0 && (
-            <p className="text-sm text-neutral-400">Sin resultados de búsqueda.</p>
+            <p className="text-sm text-neutral-600">Sin resultados de búsqueda.</p>
           )}
         </div>
 
@@ -208,7 +208,7 @@ function Results({
 }) {
   if (results.length === 0) {
     return (
-      <div className="rounded-lg border border-neutral-200 px-5 py-6 text-center text-sm text-neutral-500">
+      <div className="rounded-lg border border-neutral-200 px-5 py-6 text-center text-sm text-neutral-700">
         No encontramos condiciones compatibles con los síntomas seleccionados.
       </div>
     );
@@ -228,7 +228,7 @@ function Results({
               <div>
                 <h3 className="text-base font-semibold">{r.condition}</h3>
                 {r.description && (
-                  <p className="text-sm text-neutral-500 mt-0.5">{r.description}</p>
+                  <p className="text-sm text-neutral-600 mt-0.5">{r.description}</p>
                 )}
               </div>
               <span className="text-lg font-bold text-primary-700 shrink-0">
@@ -257,14 +257,14 @@ function Results({
             )}
 
             {r.matchedSymptoms.length > 0 && (
-              <p className="text-xs text-neutral-400">
+              <p className="text-xs text-neutral-600">
                 Síntomas coincidentes: {r.matchedSymptoms.join(", ")}
               </p>
             )}
           </article>
         ))}
       </div>
-      <p className="text-xs text-neutral-400">{disclaimer}</p>
+      <p className="text-xs text-neutral-600">{disclaimer}</p>
     </section>
   );
 }

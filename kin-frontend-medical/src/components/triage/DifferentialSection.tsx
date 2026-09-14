@@ -201,7 +201,7 @@ export default function DifferentialSection({
     <section className="flex flex-col gap-4 border-t border-neutral-200 pt-6">
       <div>
         <h2 className="text-lg font-semibold">Diagnóstico diferencial</h2>
-        <p className="text-sm text-neutral-500 mt-1">
+        <p className="text-sm text-neutral-700 mt-1">
           Análisis más elaborado de las posibles condiciones con factores de
           riesgo y pruebas sugeridas.
         </p>
@@ -217,7 +217,7 @@ export default function DifferentialSection({
             if (factorsInCategory.length === 0) return null;
             return (
               <div key={categoryKey} className="flex flex-col gap-1.5">
-                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide">
+                <p className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
                   {CATEGORY_LABELS[categoryKey]}
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -269,7 +269,7 @@ export default function DifferentialSection({
 function Results({ result }: { result: DifferentialResponse }) {
   if (result.items.length === 0) {
     return (
-      <div className="rounded-lg border border-neutral-200 px-5 py-6 text-center text-sm text-neutral-500">
+      <div className="rounded-lg border border-neutral-200 px-5 py-6 text-center text-sm text-neutral-700">
         No se pudo construir un diagnóstico diferencial con los síntomas
         seleccionados.
       </div>
@@ -287,7 +287,7 @@ function Results({ result }: { result: DifferentialResponse }) {
             <div>
               <h3 className="text-base font-semibold">{item.condition}</h3>
               {item.description && (
-                <p className="text-sm text-neutral-500 mt-0.5">{item.description}</p>
+                <p className="text-sm text-neutral-600 mt-0.5">{item.description}</p>
               )}
             </div>
             <span className="text-lg font-bold text-indigo-700 shrink-0">
@@ -318,7 +318,7 @@ function Results({ result }: { result: DifferentialResponse }) {
 
           {item.riskFactors.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <p className="text-xs font-semibold uppercase text-neutral-400">
+              <p className="text-xs font-semibold uppercase text-neutral-600">
                 Factores de riesgo
               </p>
               <div className="flex flex-wrap gap-2">
@@ -337,7 +337,7 @@ function Results({ result }: { result: DifferentialResponse }) {
 
           {item.recommendedTests.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <p className="text-xs font-semibold uppercase text-neutral-400">
+              <p className="text-xs font-semibold uppercase text-neutral-600">
                 Pruebas sugeridas
               </p>
               <ul className="flex flex-col gap-1">
@@ -352,7 +352,7 @@ function Results({ result }: { result: DifferentialResponse }) {
           )}
         </article>
       ))}
-      <p className="text-xs text-neutral-400">{result.disclaimer}</p>
+      <p className="text-xs text-neutral-600">{result.disclaimer}</p>
     </div>
   );
 }
