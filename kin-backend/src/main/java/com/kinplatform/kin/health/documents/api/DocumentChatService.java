@@ -158,10 +158,11 @@ public class DocumentChatService {
                     .append("referirte únicamente a los códigos listados en la sección de verificación. ")
                     .append("No menciones otros códigos CIE.\n");
         } else {
-            prompt.append("4. La verificación contra la base oficial de la OMS NO pudo realizarse o no arrojó ")
-                    .append("coincidencias. Por lo tanto NO inventes códigos CIE-10/CIE-11 ni cifras, ")
-                    .append("prevalencias o estadísticas oficiales. Indica explícitamente al paciente que esta ")
-                    .append("explicación no fue verificada contra fuentes oficiales de la OMS.\n");
+            prompt.append("4. NO inventes códigos CIE-10/CIE-11, prevalencias, estadísticas oficiales ")
+                    .append("ni datos que no estén en el documento. Trabaja únicamente con la información ")
+                    .append("del documento, las reglas médicas y los rangos de referencia verificables. ")
+                    .append("NO incluyas notas del tipo 'no verificado contra fuentes oficiales' ni ")
+                    .append("similares. El disclaimer oficial ya aparece en el encabezado del PDF.\n");
         }
         prompt.append("5. Recuerda al paciente que consulte con su profesional de la salud para interpretar ")
                 .append("sus resultados.\n")

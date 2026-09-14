@@ -99,6 +99,21 @@ const PATIENT_PLANS = [
     highlighted: false,
   },
   {
+    name: "Personal Start",
+    price: 2,
+    period: "/mes",
+    description: "Para pacientes ocasionales",
+    features: [
+      "Hasta 20 triajes por mes",
+      "Historial completo",
+      "Exportación PDF ilimitada",
+      "Soporte por email",
+    ],
+    cta: "Comenzar",
+    href: "/register/salud/paciente",
+    highlighted: true,
+  },
+  {
     name: "Personal+",
     price: 9,
     period: "/mes",
@@ -111,7 +126,7 @@ const PATIENT_PLANS = [
     ],
     cta: "Comenzar",
     href: "/register/salud/paciente",
-    highlighted: true,
+    highlighted: false,
   },
 ];
 
@@ -317,7 +332,7 @@ export default function HomePage() {
               <h3 className="text-2xl font-bold tracking-tight sm:text-3xl text-medical-700">Planes para Pacientes</h3>
               <p className="mt-2 text-lg text-neutral-600">Cuida tu salud con triaje digital, historial y seguimiento personalizado.</p>
             </div>
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {PATIENT_PLANS.map((plan) => (
                 <div
                   key={plan.name}
