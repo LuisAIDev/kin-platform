@@ -359,8 +359,9 @@ function Results({ result }: { result: DifferentialResponse }) {
 
 /** Enlaces a información externa (Wikipedia + MedlinePlus) por condición. */
 function ExternalLinks({ condition }: { condition: string }) {
-  const wikipediaUrl = `https://es.wikipedia.org/wiki/${encodeURIComponent(condition)}`;
-  const medlineUrl = `https://medlineplus.gov/spanish/ency/article/`;
+  const encodedCondition = encodeURIComponent(condition);
+  const wikipediaUrl = `https://es.wikipedia.org/wiki/Special:Search?search=${encodedCondition}`;
+  const medlineUrl = `https://medlineplus.gov/spanish/search/?query=${encodedCondition}`;
   return (
     <span className="inline-flex gap-2">
       <a

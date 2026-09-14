@@ -54,11 +54,11 @@ describe("DifferentialSection", () => {
     expect(screen.getByText(/PCR respiratoria/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Wikipedia" })).toHaveAttribute(
       "href",
-      "https://es.wikipedia.org/wiki/Gripe",
+      "https://es.wikipedia.org/wiki/Special:Search?search=Gripe",
     );
     expect(screen.getByRole("link", { name: "MedlinePlus" })).toHaveAttribute(
       "href",
-      "https://medlineplus.gov/spanish/ency/article/",
+      "https://medlineplus.gov/spanish/search/?query=Gripe",
     );
     expect(differentialService.analyze).toHaveBeenCalledWith(["fiebre", "tos"], []);
   });
