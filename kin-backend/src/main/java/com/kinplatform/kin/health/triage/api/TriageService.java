@@ -11,6 +11,8 @@ import com.kinplatform.kin.health.triage.domain.TriageResult;
 import com.kinplatform.kin.health.triage.engine.TriageEngine;
 import com.kinplatform.kin.health.triage.port.TriageConsultationRepository;
 import com.kinplatform.kin.health.triage.port.TriageKnowledgeRepository;
+import com.kinplatform.user.User;
+import com.kinplatform.user.UserRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -38,18 +40,21 @@ public class TriageService {
     private final TriageConsultationRepository consultationRepository;
     private final TriageProperties properties;
     private final HealthQuotaPort healthQuotaPort;
+    private final UserRepository userRepository;
 
     public TriageService(
             TriageEngine engine,
             TriageKnowledgeRepository knowledgeRepository,
             TriageConsultationRepository consultationRepository,
             TriageProperties properties,
-            HealthQuotaPort healthQuotaPort) {
+            HealthQuotaPort healthQuotaPort,
+            UserRepository userRepository) {
         this.engine = engine;
         this.knowledgeRepository = knowledgeRepository;
         this.consultationRepository = consultationRepository;
         this.properties = properties;
         this.healthQuotaPort = healthQuotaPort;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -67,16 +72,23 @@ public class TriageService {
         if (userId == null) {
             throw new IllegalArgumentException("userId no puede ser null");
         }
-        Integer limit = healthQuotaPort.getMaxTriagesPerMonth(userId);
-        if (limit != null) {
-            OffsetDateTime startOfMonth = OffsetDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
-            OffsetDateTime endOfMonth = startOfMonth.plusMonths(1);
-            long count = consultationRepository.countByUserIdAndCreatedAtBetween(userId, startOfMonth, endOfMonth);
-            if (count >= limit) {
-                throw new QuotaExceededException(
-                        "Has alcanzado el límite de triajes de tu plan.",
-                        "QUOTA_EXCEEDED",
-                        "/dashboard/patient/plans");
+
+        // Defensa en profundidad: check directo del flag unlimitedAccess
+        User user = userRepository.findById(userId).orElse(null);
+        boolean isUnlimited = user != null && Boolean.TRUE.equals(user.getUnlimitedAccess());
+
+        if (!isUnlimited) {
+            Integer limit = healthQuotaPort.getMaxTriagesPerMonth(userId);
+            if (limit != null) {
+                OffsetDateTime startOfMonth = OffsetDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+                OffsetDateTime endOfMonth = startOfMonth.plusMonths(1);
+                long count = consultationRepository.countByUserIdAndCreatedAtBetween(userId, startOfMonth, endOfMonth);
+                if (count >= limit) {
+                    throw new QuotaExceededException(
+                            "Has alcanzado el límite de triajes de tu plan.",
+                            "QUOTA_EXCEEDED",
+                            "/dashboard/patient/plans");
+                }
             }
         }
         TriageCatalog catalog = knowledgeRepository.loadCatalog();

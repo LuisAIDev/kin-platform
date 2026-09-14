@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.kinplatform.kin.health.triage.InMemoryTriageConsultationRepository;
 import com.kinplatform.kin.health.triage.InMemoryTriageKnowledgeRepository;
@@ -17,7 +19,11 @@ import com.kinplatform.kin.health.triage.domain.SymptomConditionRelation;
 import com.kinplatform.kin.health.triage.domain.TriageCatalog;
 import com.kinplatform.kin.health.triage.domain.Urgency;
 import com.kinplatform.kin.health.triage.engine.TriageEngine;
+import com.kinplatform.user.User;
+import com.kinplatform.user.UserRepository;
+import com.kinplatform.user.UserRole;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -73,21 +79,36 @@ class TriageServiceTest {
         };
     }
 
-    private static TriageService service(boolean enabled) {
+    private static UserRepository userRepository(UUID userId, boolean unlimited) {
+        User user = User.builder()
+                .id(userId)
+                .email("test@test.com")
+                .fullName("Test User")
+                .role(UserRole.PATIENT)
+                .unlimitedAccess(unlimited)
+                .build();
+        UserRepository mock = mock(UserRepository.class);
+        when(mock.findById(userId)).thenReturn(Optional.of(user));
+        when(mock.findById(UUID.randomUUID())).thenReturn(Optional.empty());
+        return mock;
+    }
+
+    private static TriageService service(boolean enabled, UserRepository userRepo) {
         var knowledge = repo();
         return new TriageService(
                 new TriageEngine(knowledge),
                 knowledge,
                 new InMemoryTriageConsultationRepository(),
                 properties(enabled),
-                healthQuotaPort());
+                healthQuotaPort(),
+                userRepo);
     }
 
     @Test
     void analyze_deberiaPersistirLaConsulta() {
         var knowledge = repo();
         var history = new InMemoryTriageConsultationRepository();
-        var service = new TriageService(new TriageEngine(knowledge), knowledge, history, properties(true), healthQuotaPort());
+        var service = new TriageService(new TriageEngine(knowledge), knowledge, history, properties(true), healthQuotaPort(), mock(UserRepository.class));
 
         var result = service.analyze(USER_ID, List.of("fiebre"));
 
@@ -99,33 +120,90 @@ class TriageServiceTest {
 
     @Test
     void analyze_conModuloDeshabilitado_deberiaLanzar() {
-        assertThrows(TriageDisabledException.class, () -> service(false).analyze(USER_ID, List.of("fiebre")));
+        assertThrows(TriageDisabledException.class, () -> service(false, mock(UserRepository.class)).analyze(USER_ID, List.of("fiebre")));
     }
 
     @Test
     void analyze_sinUserId_deberiaRechazar() {
-        assertThrows(IllegalArgumentException.class, () -> service(true).analyze(null, List.of("fiebre")));
+        assertThrows(IllegalArgumentException.class, () -> service(true, mock(UserRepository.class)).analyze(null, List.of("fiebre")));
     }
 
     @Test
     void listSymptoms_deberiaDevolverElCatalogo() {
-        assertFalse(service(true).listSymptoms().isEmpty());
+        assertFalse(service(true, mock(UserRepository.class)).listSymptoms().isEmpty());
     }
 
     @Test
     void listSymptoms_conModuloDeshabilitado_deberiaLanzar() {
-        assertThrows(TriageDisabledException.class, () -> service(false).listSymptoms());
+        assertThrows(TriageDisabledException.class, () -> service(false, mock(UserRepository.class)).listSymptoms());
     }
 
     @Test
     void history_deberiaDevolverSoloLasConsultasDelUsuario() {
         var knowledge = repo();
         var history = new InMemoryTriageConsultationRepository();
-        var service = new TriageService(new TriageEngine(knowledge), knowledge, history, properties(true), healthQuotaPort());
+        var service = new TriageService(new TriageEngine(knowledge), knowledge, history, properties(true), healthQuotaPort(), mock(UserRepository.class));
         service.analyze(USER_ID, List.of("fiebre"));
         service.analyze(UUID.randomUUID(), List.of("fiebre"));
 
         assertEquals(1, service.history(USER_ID).size());
         assertTrue(service.history(null).isEmpty());
+    }
+
+    @Test
+    void analyze_usuarioConUnlimitedAccess_deberiaSaltarCuota() {
+        var knowledge = repo();
+        var history = new InMemoryTriageConsultationRepository();
+        var userRepo = userRepository(USER_ID, true);
+        var quotaPort = new HealthQuotaPort() {
+            @Override
+            public Integer getMaxTriagesPerMonth(UUID userId) {
+                return 3; // Límite normal
+            }
+            @Override
+            public Integer getMaxPatients(UUID physicianId) { return null; }
+            @Override
+            public Integer getTrialDays(UUID userId) { return null; }
+            @Override
+            public Integer getTriagesUsed(UUID userId) { return 0; }
+        };
+        var service = new TriageService(
+                new TriageEngine(knowledge), knowledge, history, properties(true), quotaPort, userRepo);
+
+        // Simular 4 triajes (más del límite de 3)
+        for (int i = 0; i < 4; i++) {
+            service.analyze(USER_ID, List.of("fiebre"));
+        }
+
+        assertEquals(4, history.all().size());
+    }
+
+    @Test
+    void analyze_usuarioSinUnlimitedAccess_deberiaRespetarCuota() {
+        var knowledge = repo();
+        var history = new InMemoryTriageConsultationRepository();
+        var userRepo = userRepository(USER_ID, false);
+        var quotaPort = new HealthQuotaPort() {
+            @Override
+            public Integer getMaxTriagesPerMonth(UUID userId) {
+                return 3;
+            }
+            @Override
+            public Integer getMaxPatients(UUID physicianId) { return null; }
+            @Override
+            public Integer getTrialDays(UUID userId) { return null; }
+            @Override
+            public Integer getTriagesUsed(UUID userId) { return 0; }
+        };
+        var service = new TriageService(
+                new TriageEngine(knowledge), knowledge, history, properties(true), quotaPort, userRepo);
+
+        // 3 triajes deberían funcionar
+        service.analyze(USER_ID, List.of("fiebre"));
+        service.analyze(USER_ID, List.of("fiebre"));
+        service.analyze(USER_ID, List.of("fiebre"));
+
+        // El 4to debería lanzar
+        assertThrows(QuotaExceededException.class, () -> service.analyze(USER_ID, List.of("fiebre")));
     }
 }

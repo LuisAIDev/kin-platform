@@ -39,6 +39,10 @@ public class HealthQuotaPortImpl implements HealthQuotaPort {
 
     @Override
     public Integer getMaxTriagesPerMonth(UUID userId) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user != null && Boolean.TRUE.equals(user.getUnlimitedAccess())) {
+            return null; // Sin limite
+        }
         return resolvePlan(userId).getMaxTriagesPerMonth();
     }
 
@@ -73,6 +77,10 @@ public class HealthQuotaPortImpl implements HealthQuotaPort {
     @Override
     public boolean hasEligibleSubscription(
             UUID userId, ProductVertical vertical, SubscriptionStatus... statuses) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user != null && Boolean.TRUE.equals(user.getUnlimitedAccess())) {
+            return true;
+        }
         List<SubscriptionStatus> allowed =
                 statuses == null || statuses.length == 0
                         ? List.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL)

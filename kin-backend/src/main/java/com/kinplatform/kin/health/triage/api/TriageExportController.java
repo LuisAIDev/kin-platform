@@ -59,17 +59,23 @@ public class TriageExportController {
         UUID userId = extractUserId(principal);
         TriageConsultation consultation = loadTriageConsultation(triageId, userId);
 
-        // La exportación PDF es una funcionalidad del plan de pago Personal+
-        // (pdf_export = FALSE en el plan gratuito). Un paciente en plan FREE se
-        // bloquea aunque todavía tenga triajes gratuitos disponibles este mes.
-        boolean eligible = healthQuotaPort.hasEligibleSubscription(
-                userId, ProductVertical.SALUD_PERSONAL,
-                SubscriptionStatus.ACTIVE);
-        if (!eligible) {
-            throw new QuotaExceededException(
-                    "La exportación PDF del informe de triaje requiere el plan Personal+ ($9/mes).",
-                    "QUOTA_EXCEEDED",
-                    "/dashboard/patient/plans");
+        // Defensa en profundidad: check directo del flag unlimitedAccess
+        User user = userRepository.findById(userId).orElse(null);
+        boolean isUnlimited = user != null && Boolean.TRUE.equals(user.getUnlimitedAccess());
+
+        if (!isUnlimited) {
+            // La exportación PDF es una funcionalidad del plan de pago Personal+
+            // (pdf_export = FALSE en el plan gratuito). Un paciente en plan FREE se
+            // bloquea aunque todavía tenga triajes gratuitos disponibles este mes.
+            boolean eligible = healthQuotaPort.hasEligibleSubscription(
+                    userId, ProductVertical.SALUD_PERSONAL,
+                    SubscriptionStatus.ACTIVE);
+            if (!eligible) {
+                throw new QuotaExceededException(
+                        "La exportación PDF del informe de triaje requiere el plan Personal+ ($9/mes).",
+                        "QUOTA_EXCEEDED",
+                        "/dashboard/patient/plans");
+            }
         }
 
         TriageExportDocument doc = buildExportDocument(triageId, userId, consultation);

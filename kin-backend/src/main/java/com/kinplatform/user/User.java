@@ -96,6 +96,11 @@ public class User {
     @Builder.Default
     private Boolean healthDataConsent = false;
 
+    /** Acceso ilimitado (fundador/VIP): sin limite de triajes ni paywall de exportacion. */
+    @Column(name = "unlimited_access", nullable = false)
+    @Builder.Default
+    private Boolean unlimitedAccess = false;
+
     /** Proyectos COMPLETADOS en el período vigente (persistente; no decrece al eliminar). */
     @Column(name = "completed_projects", nullable = false)
     @Builder.Default
