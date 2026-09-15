@@ -11,15 +11,18 @@ type Props = {
 function formatDate(iso: string | undefined | null): string {
   if (!iso) return "(fecha desconocida)";
   try {
-    return new Date(iso).toLocaleString("es-ES", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "(fecha invalida)";
+    
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   } catch {
-    return "(fecha inválida)";
+    return "(fecha invalida)";
   }
 }
 
@@ -145,11 +148,8 @@ export default function DocumentAnalysisPdfButton({
         const lines = doc.splitTextToSize(sanitized, w);
         drawLines(lines, x);
     }
-    const reportDate = new Date().toLocaleDateString("es-ES", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    const _d = new Date();
+    const reportDate = `${String(_d.getDate()).padStart(2, "0")}/${String(_d.getMonth() + 1).padStart(2, "0")}/${_d.getFullYear()}`;
 
     doc.setFillColor(245, 245, 245);
     doc.rect(0, 0, PAGE_WIDTH, 40, "F");
@@ -243,9 +243,9 @@ export default function DocumentAnalysisPdfButton({
       for (let msgIdx = 0; msgIdx < messages.length; msgIdx++) {
         const msg = messages[msgIdx];
         const isUser = msg.role === "USER";
-        const label = isUser ? "TÚ" : "ASISTENTE KIN";
-        const time = formatDate(msg.createdAt);
-        const prefix = sanitizeForPdf(`[${time}] ${label}:`);
+        const label = isUser ? "TU" : "ASISTENTE KIN";
+        const time = sanitizeForPdf(formatDate(msg.createdAt));
+        const prefix = `[${time}] ${label}:`;
         const sanitized = sanitizeForPdf(msg.content || "");
         const contentLines = doc.splitTextToSize(sanitized, cw - 6);
         // Post-sanitize: jspdf corrompe Unicode, limpiamos las líneas resultantes
@@ -253,9 +253,6 @@ export default function DocumentAnalysisPdfButton({
 
         const boxH = cleanLines.length * LINE_HEIGHT + 15;
         checkPageBreak(cleanLines.length + 2);
-
-        doc.setFillColor(isUser ? 239 : 249, isUser ? 244 : 250, isUser ? 255 : 251);
-        doc.roundedRect(MARGIN_LEFT, y, cw, boxH, 2, 2, "F");
 
         doc.setFont("helvetica", "bold");
         doc.setFontSize(7);
