@@ -34,7 +34,7 @@ function sanitizeName(name: string): string {
 }
 
 /**
- * Sanitiza el texto ANTES de pasarlo a jspdf: elimina markdown y Unicode problemático.
+ * Sanitiza el texto ANTES de pasarlo a jspdf: elimina markdown y TODO Unicode no-ASCII.
  */
 function sanitizeForPdf(text: string): string {
   if (!text) return "";
@@ -46,34 +46,29 @@ function sanitizeForPdf(text: string): string {
     .replace(/\|/g, "") // tablas |
     .replace(/&b/gi, "") // artefactos &b
     .replace(/&[a-z]+;/g, "") // entidades HTML
-    // Reemplazar Unicode problemático por equivalentes ASCII
-    .replace(/[•●▪→]/g, "-") // bullets
+    // Reemplazos específicos con equivalente ASCII
     .replace(/[≥]/g, ">=")
     .replace(/[≤]/g, "<=")
     .replace(/[→]/g, "->")
+    .replace(/[←]/g, "<-")
     .replace(/[×]/g, "x")
-    .replace(/[≥]/g, ">=")
-    .replace(/[≤]/g, "<=")
-    .replace(/[×]/g, "x")
-    .replace(/[•]/g, "-")
-    .replace(/[●]/g, "-")
-    .replace(/[▪]/g, "-")
-    .replace(/[→]/g, "->")
-    .replace(/[≥]/g, ">=")
-    .replace(/[≤]/g, "<=")
-    .replace(/[×]/g, "x")
-    .replace(/[€]/g, "EUR")
-    .replace(/[™]/g, "(TM)")
-    .replace(/[©]/g, "(c)")
-    .replace(/[®]/g, "(R)")
-    // Eliminar artefactos &b, &p, etc.
-    .replace(/&\s*[a-z]+\s*;?/gi, "")
-    // Eliminar comillas raras y caracteres de control
-    .replace(/['"`´`]/g, "'")
-    .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F]/g, "")
-    // Normalizar saltos de línea
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
+    .replace(/[•●▪◦]/g, "-")
+    .replace(/[—–]/g, "-")
+    .replace(/[…]/g, "...")
+    .replace(/[""]/g, '"')
+    .replace(/['']/g, "'")
+    // Tildes -> sin tilde (conservar la letra base)
+    .replace(/[áàäâã]/gi, (c) => c === c.toUpperCase() ? "A" : "a")
+    .replace(/[éèëê]/gi, (c) => c === c.toUpperCase() ? "E" : "e")
+    .replace(/[íìïî]/gi, (c) => c === c.toUpperCase() ? "I" : "i")
+    .replace(/[óòöôõ]/gi, (c) => c === c.toUpperCase() ? "O" : "o")
+    .replace(/[úùüû]/gi, (c) => c === c.toUpperCase() ? "U" : "u")
+    .replace(/[ñ]/g, "n")
+    .replace(/[Ñ]/g, "N")
+    .replace(/[ç]/g, "c")
+    .replace(/[Ç]/g, "C")
+    // Eliminar cualquier otro carácter fuera de ASCII imprimible
+    .replace(/[^\x20-\x7E\n]/g, "")
     .trim();
 }
 
@@ -91,7 +86,7 @@ function sanitizeLinesAfterJspdf(lines: string[]): string[] {
       .replace(/&[a-z]{1,4}\b/gi, "") // &xxx
       // Caracteres corruptos comunes que deja jspdf
       .replace(/["'`´`]/g, "'")
-      .replace(/[^\x20-\x7E\u00C0-\u017F\n]/g, "") // Solo ASCII + latinos básicos
+      .replace(/[^\x20-\x7E\n]/g, "") // Solo ASCII imprimible
       .trim()
   );
 }
@@ -145,8 +140,9 @@ export default function DocumentAnalysisPdfButton({
      * Dibuja un texto con wrap automático respetando saltos de página.
      */
     function drawText(text: string, x: number = MARGIN_LEFT, maxWidth?: number) {
+        const sanitized = sanitizeForPdf(text);
         const w = maxWidth ?? (PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT);
-        const lines = doc.splitTextToSize(text, w);
+        const lines = doc.splitTextToSize(sanitized, w);
         drawLines(lines, x);
     }
     const reportDate = new Date().toLocaleDateString("es-ES", {
@@ -160,11 +156,11 @@ export default function DocumentAnalysisPdfButton({
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
     doc.setTextColor(26, 26, 26);
-    doc.text("KIN Salud", MARGIN_LEFT, 18);
+    doc.text(sanitizeForPdf("KIN Salud"), MARGIN_LEFT, 18);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(107, 114, 128);
-    doc.text(`Análisis de Documento Clínico  •  ${reportDate}`, MARGIN_LEFT, 26);
+    doc.text(sanitizeForPdf(`Análisis de Documento Clínico  •  ${reportDate}`), MARGIN_LEFT, 26);
     doc.setDrawColor(220, 220, 220);
     doc.line(MARGIN_LEFT, 32, PAGE_WIDTH - MARGIN_RIGHT, 32);
 
@@ -180,7 +176,7 @@ export default function DocumentAnalysisPdfButton({
     doc.setTextColor(107, 114, 128);
     const meta = `${formatSize(document.fileSize)}  •  ${formatDate(document.uploadedAt)}`;
     checkPageBreak(1);
-    doc.text(meta, MARGIN_LEFT, y);
+    doc.text(sanitizeForPdf(meta), MARGIN_LEFT, y);
     y += LINE_HEIGHT;
     if (document.description) {
       drawText(`Descripción: ${document.description}`, MARGIN_LEFT);
@@ -213,7 +209,7 @@ export default function DocumentAnalysisPdfButton({
         continue;
       }
       checkPageBreak(1);
-      doc.text(line, MARGIN_LEFT, y);
+      doc.text(sanitizeForPdf(line), MARGIN_LEFT, y);
       y += LINE_HEIGHT;
     }
     y += 8;
@@ -227,7 +223,7 @@ export default function DocumentAnalysisPdfButton({
     doc.setFontSize(13);
     doc.setTextColor(26, 26, 26);
     checkPageBreak(1);
-    doc.text("Conversación de análisis", MARGIN_LEFT, y);
+    doc.text(sanitizeForPdf("Conversación de análisis"), MARGIN_LEFT, y);
     y += 2;
     doc.setDrawColor(16, 163, 42);
     doc.setLineWidth(1.2);
@@ -240,7 +236,7 @@ export default function DocumentAnalysisPdfButton({
       doc.setFontSize(9);
       doc.setTextColor(156, 163, 175);
       checkPageBreak(1);
-      doc.text("(aún no hay mensajes en esta conversación)", MARGIN_LEFT, y);
+      doc.text(sanitizeForPdf("(aún no hay mensajes en esta conversación)"), MARGIN_LEFT, y);
       y += 10;
     } else {
       const cw = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
@@ -249,7 +245,7 @@ export default function DocumentAnalysisPdfButton({
         const isUser = msg.role === "USER";
         const label = isUser ? "TÚ" : "ASISTENTE KIN";
         const time = formatDate(msg.createdAt);
-        const prefix = `[${time}] ${label}:`;
+        const prefix = sanitizeForPdf(`[${time}] ${label}:`);
         const sanitized = sanitizeForPdf(msg.content || "");
         const contentLines = doc.splitTextToSize(sanitized, cw - 6);
         // Post-sanitize: jspdf corrompe Unicode, limpiamos las líneas resultantes
@@ -291,8 +287,8 @@ export default function DocumentAnalysisPdfButton({
       doc.setFont("helvetica", "normal");
       doc.setFontSize(7);
       doc.setTextColor(156, 163, 175);
-      doc.text("Generado por KIN Platform — Knowledge, Innovation & Navigation", MARGIN_LEFT, PAGE_HEIGHT - 8);
-      doc.text(`Página ${i} de ${totalPages}  •  ${reportDate}`, PAGE_WIDTH - MARGIN_RIGHT, PAGE_HEIGHT - 8, { align: "right" });
+      doc.text(sanitizeForPdf("Generado por KIN Platform — Knowledge, Innovation & Navigation"), MARGIN_LEFT, PAGE_HEIGHT - 8);
+      doc.text(sanitizeForPdf(`Página ${i} de ${totalPages}  •  ${reportDate}`), PAGE_WIDTH - MARGIN_RIGHT, PAGE_HEIGHT - 8, { align: "right" });
     }
 
     const base = sanitizeName(document.fileName).replace(/\.\w+$/, "") || "documento";
