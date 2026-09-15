@@ -122,10 +122,7 @@ export default function DocumentAnalysisPdfButton({
     function checkPageBreak(linesToAdd: number) {
         const requiredSpace = linesToAdd * LINE_HEIGHT;
         const availableSpace = PAGE_HEIGHT - MARGIN_BOTTOM;
-        const willBreak = y + requiredSpace > availableSpace;
-        console.log(`[PDF] checkPageBreak: y=${y}, required=${requiredSpace}, available=${availableSpace}, willBreak=${willBreak}, linesToAdd=${linesToAdd}`);
-        if (willBreak) {
-            console.log(`[PDF] ADDING PAGE. New y=${MARGIN_TOP}, page=${doc.getNumberOfPages() + 1}`);
+        if (y + requiredSpace > availableSpace) {
             doc.addPage();
             y = MARGIN_TOP;
         }
@@ -175,24 +172,19 @@ export default function DocumentAnalysisPdfButton({
     doc.setFont("helvetica", "bold");
     doc.setFontSize(15);
     doc.setTextColor(26, 26, 26);
-    console.log(`[PDF] Before title: y=${y}`);
     drawText(document.fileName, MARGIN_LEFT);
     y += 5;
-    console.log(`[PDF] After title: y=${y}`);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(107, 114, 128);
     const meta = `${formatSize(document.fileSize)}  •  ${formatDate(document.uploadedAt)}`;
     checkPageBreak(1);
-    console.log(`[PDF] Before meta: y=${y}`);
     doc.text(meta, MARGIN_LEFT, y);
     y += LINE_HEIGHT;
     if (document.description) {
-      console.log(`[PDF] Before description: y=${y}`);
       drawText(`Descripción: ${document.description}`, MARGIN_LEFT);
       y += 5;
-      console.log(`[PDF] After description: y=${y}`);
     }
 
     doc.setFont("helvetica", "italic");
@@ -215,7 +207,6 @@ export default function DocumentAnalysisPdfButton({
       "Este informe es de apoyo informativo y no sustituye la evaluacion ni el",
       "diagnostico de un profesional de la salud. Siempre consulta a tu medico.",
     ];
-    console.log(`[PDF] Before disclaimer: y=${y}, lines=${disclaimerLines.length}`);
     for (const line of disclaimerLines) {
       if (line === "") {
         y += 3;
@@ -225,12 +216,10 @@ export default function DocumentAnalysisPdfButton({
       doc.text(line, MARGIN_LEFT, y);
       y += LINE_HEIGHT;
     }
-    console.log(`[PDF] After disclaimer: y=${y}`);
     y += 8;
 
     doc.setDrawColor(230, 230, 230);
     checkPageBreak(1);
-    console.log(`[PDF] Before conversation header: y=${y}`);
     doc.line(MARGIN_LEFT, y, PAGE_WIDTH - MARGIN_RIGHT, y);
     y += 10;
 
@@ -245,7 +234,6 @@ export default function DocumentAnalysisPdfButton({
     checkPageBreak(1);
     doc.line(MARGIN_LEFT, y, MARGIN_LEFT + 40, y);
     y += 10;
-    console.log(`[PDF] After conversation header: y=${y}`);
 
     if (messages.length === 0) {
       doc.setFont("helvetica", "italic");
@@ -267,8 +255,6 @@ export default function DocumentAnalysisPdfButton({
         // Post-sanitize: jspdf corrompe Unicode, limpiamos las líneas resultantes
         const cleanLines = sanitizeLinesAfterJspdf(contentLines);
 
-        console.log(`[PDF] Message ${msgIdx} (${label}): y=${y}, lines=${cleanLines.length}, boxH=${cleanLines.length * LINE_HEIGHT + 15}`);
-
         const boxH = cleanLines.length * LINE_HEIGHT + 15;
         checkPageBreak(cleanLines.length + 2);
 
@@ -284,18 +270,20 @@ export default function DocumentAnalysisPdfButton({
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8.5);
         doc.setTextColor(55, 65, 81);
-        const boxY = y + 12;
+        let lineY = y + 12;
         for (let i = 0; i < cleanLines.length; i++) {
-          doc.text(cleanLines[i], MARGIN_LEFT + 3, boxY + i * LINE_HEIGHT);
+          checkPageBreak(1);
+          lineY = y + 12;
+          doc.text(cleanLines[i], MARGIN_LEFT + 3, lineY);
+          y += LINE_HEIGHT;
+          lineY += LINE_HEIGHT;
         }
 
-        y += boxH + 4;
-        console.log(`[PDF] After message ${msgIdx}: y=${y}`);
+        y += 4;
       }
     }
 
     const totalPages = doc.getNumberOfPages();
-    console.log(`[PDF] Before footer: totalPages=${totalPages}, final y=${y}`);
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
       doc.setDrawColor(220, 220, 220);
@@ -306,7 +294,6 @@ export default function DocumentAnalysisPdfButton({
       doc.text("Generado por KIN Platform — Knowledge, Innovation & Navigation", MARGIN_LEFT, PAGE_HEIGHT - 8);
       doc.text(`Página ${i} de ${totalPages}  •  ${reportDate}`, PAGE_WIDTH - MARGIN_RIGHT, PAGE_HEIGHT - 8, { align: "right" });
     }
-    console.log(`[PDF] After footer: done`);
 
     const base = sanitizeName(document.fileName).replace(/\.\w+$/, "") || "documento";
     doc.save(`KIN_Analisis_${base}.pdf`);
