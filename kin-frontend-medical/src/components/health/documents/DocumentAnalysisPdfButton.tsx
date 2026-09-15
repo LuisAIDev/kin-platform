@@ -104,11 +104,50 @@ export default function DocumentAnalysisPdfButton({
     const { default: jsPDF } = await import("jspdf");
     const doc = new jsPDF("p", "mm", "a4");
 
-    const pw = doc.internal.pageSize.getWidth();
-    const ml = 20;
-    const mr = 20;
-    const cw = pw - ml - mr;
-    let y = 20;
+    const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
+    const PAGE_WIDTH = doc.internal.pageSize.getWidth();
+    const MARGIN_TOP = 20;
+    const MARGIN_BOTTOM = 20;
+    const MARGIN_LEFT = 15;
+    const MARGIN_RIGHT = 15;
+    const LINE_HEIGHT = 6;
+
+    let y = MARGIN_TOP;
+
+    /**
+     * Verifica si el contenido cabe en la página actual.
+     * Si no cabe, agrega una nueva página y reinicia y = MARGIN_TOP.
+     * @param linesToAdd Número de líneas que se van a dibujar
+     */
+    function checkPageBreak(linesToAdd: number) {
+        const requiredSpace = linesToAdd * LINE_HEIGHT;
+        if (y + requiredSpace > PAGE_HEIGHT - MARGIN_BOTTOM) {
+            doc.addPage();
+            y = MARGIN_TOP;
+        }
+    }
+
+    /**
+     * Dibuja un array de líneas respetando saltos de página.
+     * @param lines Array de strings (ya procesados con splitTextToSize)
+     * @param x Posición X
+     */
+    function drawLines(lines: string[], x: number = MARGIN_LEFT) {
+        for (const line of lines) {
+            checkPageBreak(1);
+            doc.text(line, x, y);
+            y += LINE_HEIGHT;
+        }
+    }
+
+    /**
+     * Dibuja un texto con wrap automático respetando saltos de página.
+     */
+    function drawText(text: string, x: number = MARGIN_LEFT, maxWidth?: number) {
+        const w = maxWidth ?? (PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT);
+        const lines = doc.splitTextToSize(text, w);
+        drawLines(lines, x);
+    }
     const reportDate = new Date().toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
@@ -116,36 +155,35 @@ export default function DocumentAnalysisPdfButton({
     });
 
     doc.setFillColor(245, 245, 245);
-    doc.rect(0, 0, pw, 40, "F");
+    doc.rect(0, 0, PAGE_WIDTH, 40, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
     doc.setTextColor(26, 26, 26);
-    doc.text("KIN Salud", ml, 18);
+    doc.text("KIN Salud", MARGIN_LEFT, 18);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(107, 114, 128);
-    doc.text(`Análisis de Documento Clínico  •  ${reportDate}`, ml, 26);
+    doc.text(`Análisis de Documento Clínico  •  ${reportDate}`, MARGIN_LEFT, 26);
     doc.setDrawColor(220, 220, 220);
-    doc.line(ml, 32, pw - mr, 32);
+    doc.line(MARGIN_LEFT, 32, PAGE_WIDTH - MARGIN_RIGHT, 32);
 
-    y = 50;
+    y += 10;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(15);
     doc.setTextColor(26, 26, 26);
-    const titleLines = doc.splitTextToSize(document.fileName, cw);
-    doc.text(titleLines, ml, y);
-    y += titleLines.length * 7 + 4;
+    drawText(document.fileName, MARGIN_LEFT);
+    y += 5;
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(107, 114, 128);
     const meta = `${formatSize(document.fileSize)}  •  ${formatDate(document.uploadedAt)}`;
-    doc.text(meta, ml, y);
-    y += 6;
+    checkPageBreak(1);
+    doc.text(meta, MARGIN_LEFT, y);
+    y += LINE_HEIGHT;
     if (document.description) {
-      const descLines = doc.splitTextToSize(`Descripción: ${document.description}`, cw);
-      doc.text(descLines, ml, y);
-      y += descLines.length * 5 + 4;
+      drawText(`Descripción: ${document.description}`, MARGIN_LEFT);
+      y += 5;
     }
 
     doc.setFont("helvetica", "italic");
@@ -168,71 +206,88 @@ export default function DocumentAnalysisPdfButton({
       "Este informe es de apoyo informativo y no sustituye la evaluacion ni el",
       "diagnostico de un profesional de la salud. Siempre consulta a tu medico.",
     ];
-    doc.text(disclaimerLines, ml, y);
-    y += disclaimerLines.length * 5 + 8;
+    for (const line of disclaimerLines) {
+      if (line === "") {
+        y += 3;
+        continue;
+      }
+      checkPageBreak(1);
+      doc.text(line, MARGIN_LEFT, y);
+      y += LINE_HEIGHT;
+    }
+    y += 8;
 
     doc.setDrawColor(230, 230, 230);
-    doc.line(ml, y, pw - mr, y);
+    checkPageBreak(1);
+    doc.line(MARGIN_LEFT, y, PAGE_WIDTH - MARGIN_RIGHT, y);
     y += 10;
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(26, 26, 26);
-    doc.text("Conversación de análisis", ml, y);
+    checkPageBreak(1);
+    doc.text("Conversación de análisis", MARGIN_LEFT, y);
     y += 2;
     doc.setDrawColor(16, 163, 42);
     doc.setLineWidth(1.2);
-    doc.line(ml, y, ml + 40, y);
+    checkPageBreak(1);
+    doc.line(MARGIN_LEFT, y, MARGIN_LEFT + 40, y);
     y += 10;
 
     if (messages.length === 0) {
       doc.setFont("helvetica", "italic");
       doc.setFontSize(9);
       doc.setTextColor(156, 163, 175);
-      doc.text("(aún no hay mensajes en esta conversación)", ml, y);
+      checkPageBreak(1);
+      doc.text("(aún no hay mensajes en esta conversación)", MARGIN_LEFT, y);
       y += 10;
     } else {
+      const cw = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
       for (const msg of messages) {
         const isUser = msg.role === "USER";
         const label = isUser ? "TÚ" : "ASISTENTE KIN";
         const time = formatDate(msg.createdAt);
         const prefix = `[${time}] ${label}:`;
         const sanitized = sanitizeForPdf(msg.content || "");
-        let contentLines = doc.splitTextToSize(sanitized, cw - 4);
+        const contentLines = doc.splitTextToSize(sanitized, cw - 6);
         // Post-sanitize: jspdf corrompe Unicode, limpiamos las líneas resultantes
-        contentLines = sanitizeLinesAfterJspdf(contentLines);
+        const cleanLines = sanitizeLinesAfterJspdf(contentLines);
 
-        const boxH = Math.max(12, 8 + 5 + contentLines.length * 5);
-        if (y + boxH > 275) {
-          doc.addPage();
-          y = 20;
-        }
+        const boxH = cleanLines.length * LINE_HEIGHT + 15;
+        checkPageBreak(cleanLines.length + 2);
 
         doc.setFillColor(isUser ? 239 : 249, isUser ? 244 : 250, isUser ? 255 : 251);
-        doc.roundedRect(ml, y, cw, boxH, 2, 2, "F");
+        doc.roundedRect(MARGIN_LEFT, y, cw, boxH, 2, 2, "F");
 
         doc.setFont("helvetica", "bold");
         doc.setFontSize(7);
         doc.setTextColor(isUser ? 37 : 22, isUser ? 99 : 101, isUser ? 235 : 52);
-        doc.text(prefix, ml + 3, y + 5);
+        checkPageBreak(1);
+        doc.text(prefix, MARGIN_LEFT + 3, y + 5);
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8.5);
         doc.setTextColor(55, 65, 81);
-        doc.text(contentLines, ml + 3, y + 12);
+        const boxY = y + 12;
+        for (let i = 0; i < cleanLines.length; i++) {
+          doc.text(cleanLines[i], MARGIN_LEFT + 3, boxY + i * LINE_HEIGHT);
+        }
 
         y += boxH + 4;
       }
     }
 
-    const fy = 285;
-    doc.setDrawColor(220, 220, 220);
-    doc.line(ml, fy, pw - mr, fy);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    doc.setTextColor(156, 163, 175);
-    doc.text("Generado por KIN Platform — Knowledge, Innovation & Navigation", ml, fy + 5);
-    doc.text(reportDate, pw - mr, fy + 5, { align: "right" });
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(220, 220, 220);
+      doc.line(MARGIN_LEFT, PAGE_HEIGHT - 15, PAGE_WIDTH - MARGIN_RIGHT, PAGE_HEIGHT - 15);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(156, 163, 175);
+      doc.text("Generado por KIN Platform — Knowledge, Innovation & Navigation", MARGIN_LEFT, PAGE_HEIGHT - 8);
+      doc.text(`Página ${i} de ${totalPages}  •  ${reportDate}`, PAGE_WIDTH - MARGIN_RIGHT, PAGE_HEIGHT - 8, { align: "right" });
+    }
 
     const base = sanitizeName(document.fileName).replace(/\.\w+$/, "") || "documento";
     doc.save(`KIN_Analisis_${base}.pdf`);
