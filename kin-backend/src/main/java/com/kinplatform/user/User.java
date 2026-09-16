@@ -68,6 +68,11 @@ public class User {
     @Column(name = "phone", length = 30)
     private String phone;
 
+    /** Opt-in para recibir avisos por WhatsApp de sus pacientes. */
+    @Column(name = "whatsapp_notifications_enabled", nullable = false)
+    @Builder.Default
+    private Boolean whatsappNotificationsEnabled = false;
+
     /** Número de cédula profesional del médico (validado por ADMIN). */
     @Column(name = "license_number", length = 60)
     private String licenseNumber;

@@ -3,6 +3,7 @@ package com.kinplatform.kin.health.telemedicine.api;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -16,6 +17,7 @@ import com.kinplatform.kin.health.physician.api.RelationshipService;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment.AppointmentStatus;
 import com.kinplatform.kin.health.telemedicine.domain.Message;
+import com.kinplatform.kin.health.telemedicine.port.MessageRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
@@ -56,6 +58,9 @@ class TelemedicineControllerTest {
     private RelationshipService relationshipService;
 
     @Mock
+    private MessageRepository messageRepository;
+
+    @Mock
     private Authentication authentication;
 
     private MockMvc mockMvc;
@@ -66,8 +71,9 @@ class TelemedicineControllerTest {
         var user = User.builder().id(USER).email(EMAIL).role(UserRole.PATIENT).build();
         lenient().when(authentication.getName()).thenReturn(EMAIL);
         lenient().when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        var messageRepository = mock(MessageRepository.class);
         mockMvc = MockMvcBuilders.standaloneSetup(
-                        new TelemedicineController(telemedicineService, userRepository, relationshipService))
+                        new TelemedicineController(telemedicineService, userRepository, relationshipService, messageRepository))
                 .setCustomArgumentResolvers(new org.springframework.data.web.PageableHandlerMethodArgumentResolver())
                 .defaultRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request(
                                 org.springframework.http.HttpMethod.GET, "/")

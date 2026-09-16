@@ -3,6 +3,7 @@ package com.kinplatform.routes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
@@ -12,6 +13,7 @@ import com.kinplatform.kin.health.documents.api.DocumentService;
 import com.kinplatform.kin.health.physician.api.RelationshipService;
 import com.kinplatform.kin.health.telemedicine.api.TelemedicineController;
 import com.kinplatform.kin.health.telemedicine.api.TelemedicineService;
+import com.kinplatform.kin.health.telemedicine.port.MessageRepository;
 import com.kinplatform.project.CategoryController;
 import com.kinplatform.project.CategoryResponse;
 import com.kinplatform.project.CategoryService;
@@ -57,6 +59,9 @@ class RouteAliasMockMvcTest {
 
     @Mock
     private RelationshipService relationshipService;
+
+    @Mock
+    private MessageRepository messageRepository;
 
     @Mock
     private DocumentService documentService;
@@ -119,8 +124,9 @@ class RouteAliasMockMvcTest {
         stubUser();
         when(telemedicineService.allMessagesFor(USER_ID)).thenReturn(List.of());
 
+        var messageRepository = mock(MessageRepository.class);
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(
-                        new TelemedicineController(telemedicineService, userRepository, relationshipService))
+                        new TelemedicineController(telemedicineService, userRepository, relationshipService, messageRepository))
                 .build();
 
         assertSameResponse(

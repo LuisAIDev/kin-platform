@@ -5,6 +5,7 @@ import {
   telemedicineService,
   type TelemedicineMessage,
 } from "@/services/telemedicine";
+import { MessageCircle } from "lucide-react";
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleString("es-ES", {
@@ -78,6 +79,33 @@ export default function ChatView({
     }
   };
 
+  const handleNotifyWhatsApp = async (messageId: string) => {
+    try {
+      const res = await fetch(`/api/v1/patient/messages/${messageId}/whatsapp-link`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || 'No se pudo generar el aviso');
+        return;
+      }
+
+      const { whatsappUrl } = await res.json();
+      window.open(whatsappUrl, '_blank');
+    } catch {
+      alert('Error al generar el aviso');
+    }
+  };
+
+  // Verifica si un mensaje del paciente ya tiene respuesta del médico
+  const hasPhysicianReply = (messageId: string, messageCreatedAt: string) => {
+    return messages.some(
+      (m) => !m.mine && m.createdAt > messageCreatedAt
+    );
+  };
+
   if (!otherId) return null;
 
   return (
@@ -90,6 +118,7 @@ export default function ChatView({
         )}
         {messages.map((m) => {
           const mine = m.mine;
+          const showWhatsAppBtn = mine && !hasPhysicianReply(m.id, m.createdAt);
           return (
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
               <div
@@ -100,9 +129,21 @@ export default function ChatView({
                 }`}
               >
                 <span>{m.content}</span>
-                <span className={`text-[10px] ${mine ? "text-primary-100" : "text-neutral-400"}`}>
-                  {formatTime(m.createdAt)}
-                </span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`text-[10px] ${mine ? "text-primary-100" : "text-neutral-400"}`}>
+                    {formatTime(m.createdAt)}
+                  </span>
+                  {showWhatsAppBtn && (
+                    <button
+                      onClick={() => handleNotifyWhatsApp(m.id)}
+                      className="text-xs text-green-600 hover:text-green-700 inline-flex items-center gap-1"
+                      title="Avisar por WhatsApp"
+                    >
+                      <MessageCircle className="w-3 h-3" />
+                      Avisar por WhatsApp
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           );
