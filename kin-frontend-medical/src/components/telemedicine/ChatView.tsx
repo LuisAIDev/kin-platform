@@ -118,7 +118,6 @@ export default function ChatView({
         )}
         {messages.map((m) => {
           const mine = m.mine;
-          const showWhatsAppBtn = mine && !hasPhysicianReply(m.id, m.createdAt);
           return (
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
               <div
@@ -133,15 +132,18 @@ export default function ChatView({
                   <span className={`text-[10px] ${mine ? "text-primary-100" : "text-neutral-400"}`}>
                     {formatTime(m.createdAt)}
                   </span>
-                  {showWhatsAppBtn && (
-                    <button
-                      onClick={() => handleNotifyWhatsApp(m.id)}
-                      className="text-xs text-green-600 hover:text-green-700 inline-flex items-center gap-1"
-                      title="Avisar por WhatsApp"
-                    >
-                      <MessageCircle className="w-3 h-3" />
-                      Avisar por WhatsApp
-                    </button>
+                  {mine && !hasPhysicianReply(m.id, m.createdAt) && (
+                    <div className="flex justify-end mt-2 mb-1">
+                      <button
+                        onClick={() => handleNotifyWhatsApp(m.id)}
+                        style={{ minHeight: "44px" }}
+                        className="inline-flex items-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-base font-semibold text-white shadow-md hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 transition"
+                        aria-label="Avisar al médico por WhatsApp que tiene un mensaje pendiente"
+                      >
+                        <MessageCircle className="w-5 h-5" aria-hidden="true" />
+                        Avisar por WhatsApp
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
