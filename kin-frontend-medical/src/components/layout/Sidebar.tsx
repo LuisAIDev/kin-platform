@@ -36,7 +36,7 @@ const PHYSICIAN_ITEMS: NavItem[] = [
   { label: "Citas", href: "/dashboard/physician/appointments" },
   { label: "Seguimiento", href: "/dashboard/physician/followup" },
   { label: "Documentos", href: "/dashboard/physician/documents" },
-  { label: "Configuración", href: "/dashboard/physician/settings" },
+  { label: "Configuración", href: "/dashboard/settings" },
 ];
 
 export function countForNavItem(href: string, counts: NotificationCounts | null): number {
