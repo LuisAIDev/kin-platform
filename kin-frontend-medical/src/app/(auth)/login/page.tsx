@@ -85,6 +85,15 @@ export default function LoginPage() {
             disabled={loading}
           />
 
+          <div className="flex justify-end mt-2">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-medical-600 hover:text-medical-700 font-medium"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
+
           <button type="submit" disabled={loading} className="btn-primary w-full py-3">
             {loading ? "Iniciando sesión..." : "Iniciar sesión"}
           </button>

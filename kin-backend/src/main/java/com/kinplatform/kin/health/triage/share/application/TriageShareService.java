@@ -35,7 +35,7 @@ public class TriageShareService {
     private final HealthQuotaPort healthQuotaPort;
     private final UserRepository userRepository;
 
-    @Value("${app.frontend.base-url:http://localhost:3000}")
+    @Value("${medical.frontend.base-url:https://www.kin-platform-medical.com}")
     private String frontendBaseUrl;
 
     public TriageShareService(

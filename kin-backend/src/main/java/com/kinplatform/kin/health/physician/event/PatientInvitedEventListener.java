@@ -44,7 +44,7 @@ public class PatientInvitedEventListener {
     private final UserRepository userRepository;
     private final PhysicianProperties properties;
 
-    @Value("${app.frontend.base-url:http://localhost:3000}")
+    @Value("${medical.frontend.base-url:https://www.kin-platform-medical.com}")
     private String frontendBaseUrl;
 
     public PatientInvitedEventListener(
