@@ -12,8 +12,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -194,69 +192,4 @@ public class TelemedicineController {
             return List.copyOf(out);
         }
     }
-
-    // ---------- WhatsApp Notification ----------
-
-    /**
-     * Genera un enlace de WhatsApp para avisar al médico de un mensaje pendiente.
-     * Requiere que el médico tenga activado el opt-in (whatsapp_notifications_enabled)
-     * y tenga un número de teléfono configurado. No incluye datos clínicos en el mensaje.
-     */
-    @PostMapping("/patient/messages/{messageId}/whatsapp-link")
-    public ResponseEntity<WhatsAppLinkResponse> generateWhatsAppLink(
-            @PathVariable UUID messageId,
-            Authentication authentication) {
-
-        User patient = AuthenticatedUsers.require(userRepository, authentication);
-        Message message = messageRepository.findById(messageId)
-                .orElseThrow(() -> new IllegalArgumentException("Mensaje no encontrado"));
-
-        // Validar que el paciente es el emisor
-        if (!message.senderId().equals(patient.getId())) {
-            throw new IllegalStateException("No puedes generar avisos de mensajes que no enviaste");
-        }
-
-        User physician = userRepository.findById(message.receiverId())
-                .orElseThrow(() -> new IllegalArgumentException("Médico no encontrado"));
-
-        // Validar opt-in del médico
-        if (!Boolean.TRUE.equals(physician.getWhatsappNotificationsEnabled())) {
-            throw new IllegalStateException("El médico no tiene activados los avisos por WhatsApp");
-        }
-        if (physician.getPhone() == null || physician.getPhone().isBlank()) {
-            throw new IllegalStateException("El médico no tiene un número de WhatsApp configurado");
-        }
-
-        // Validar que el médico no haya respondido ya
-        boolean alreadyReplied = messageRepository.findByConversationId(message.conversationId()).stream()
-                .anyMatch(m -> m.senderId().equals(physician.getId()) && m.createdAt().isAfter(message.createdAt()));
-        if (alreadyReplied) {
-            throw new IllegalStateException("El médico ya respondió a este mensaje");
-        }
-
-        // Generar el mensaje genérico (SIN datos clínicos)
-        String physicianFirstName = physician.getFullName() != null
-                ? physician.getFullName().split(" ")[0]
-                : "Doctor";
-        String patientName = patient.getFullName() != null ? patient.getFullName() : "un paciente";
-        String chatUrl = "https://www.kin-platform-medical.com/dashboard/physician/messages";
-
-        String genericMessage = String.format(
-                "Hola %s, soy %s. Te escribí por KIN Medical y me gustaría que revises mi mensaje cuando puedas. " +
-                "Por seguridad no incluyo el contenido aquí. Podrás leerlo completo en: %s",
-                physicianFirstName, patientName, chatUrl);
-
-        // Limpiar el teléfono (solo dígitos para wa.me)
-        String phoneDigits = physician.getPhone().replaceAll("[^0-9]", "");
-
-        String whatsappUrl = "https://wa.me/" + phoneDigits + "?text=" +
-                URLEncoder.encode(genericMessage, StandardCharsets.UTF_8);
-
-        log.info("TelemedicineController: enlace WhatsApp generado para mensaje {} de paciente {} a médico {}",
-                messageId, patient.getId(), physician.getId());
-
-        return ResponseEntity.ok(new WhatsAppLinkResponse(whatsappUrl));
-    }
-
-    public record WhatsAppLinkResponse(String whatsappUrl) {}
 }
