@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { telemedicineService, type Conversation, type Contact } from "@/services/telemedicine";
 import ChatView from "@/components/telemedicine/ChatView";
+import { InvitePhysicianModal } from "./InvitePhysicianModal";
+import { UserPlus } from "lucide-react";
+import { authService } from "@/services/auth";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString("es-ES", {
@@ -21,8 +24,24 @@ export default function MessagesPage() {
   const [filteredContacts, setFilteredContacts] = useState<Contact[]>([]);
   const [contactSearch, setContactSearch] = useState("");
   const [showNew, setShowNew] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [unread, setUnread] = useState(0);
   const [error, setError] = useState("");
+  const [currentUser, setCurrentUser] = useState<{ id: string; fullName: string } | null>(null);
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const user = await authService.fetchCurrentUser();
+        if (user?.id) {
+          setCurrentUser({ id: user.id, fullName: user.fullName });
+        }
+      } catch {
+        // ignore
+      }
+    }
+    loadUser();
+  }, []);
 
   const loadConversations = async () => {
     try {
@@ -84,7 +103,8 @@ export default function MessagesPage() {
   };
 
   return (
-    <main className="flex-1 flex items-start justify-center px-6 pt-10 pb-12">
+    <>
+      <main className="flex-1 flex items-start justify-center px-6 pt-10 pb-12">
       <div className="w-full max-w-5xl flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
@@ -94,6 +114,14 @@ export default function MessagesPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowInviteModal(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-medical-50 px-3 py-2 text-sm font-medium text-medical-700 hover:bg-medical-100 transition"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span className="hidden sm:inline">Invitar médico</span>
+            </button>
             <button
               type="button"
               onClick={openNewConversation}
@@ -141,11 +169,21 @@ export default function MessagesPage() {
                 aria-label="Buscar contactos"
               />
               {filteredContacts.length === 0 ? (
-                <p className="text-sm text-neutral-400 text-center py-4">
-                  {contactSearch
-                    ? "No se encontraron contactos con ese nombre."
-                    : "No tienes contactos con relación activa. Un médico o paciente debe vincularte primero."}
-                </p>
+                <div className="text-center">
+                  <p className="text-neutral-500 mb-4">
+                    Aún no tienes médicos vinculados en KIN Medical.
+                  </p>
+                  <button
+                    onClick={() => setShowInviteModal(true)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-medical-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-medical-700 transition"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Compartir con mi médico
+                  </button>
+                  <p className="text-xs text-neutral-400 mt-3">
+                    Invita a tu médico a KIN Medical
+                  </p>
+                </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto">
                   {filteredContacts.map((c) => (
@@ -227,5 +265,12 @@ export default function MessagesPage() {
         </div>
       </div>
     </main>
+      <InvitePhysicianModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        patientId={currentUser?.id ?? ''}
+        patientName={currentUser?.fullName}
+      />
+    </>
   );
 }

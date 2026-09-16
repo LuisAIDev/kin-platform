@@ -56,6 +56,7 @@ export function getToken(): string | null {
 }
 
 export function storeSession(res: {
+  id: string;
   token: string | null;
   email: string;
   fullName: string;
@@ -67,6 +68,7 @@ export function storeSession(res: {
   localStorage.setItem(
     "kin_user_v2",
     JSON.stringify({
+      id: res.id,
       email: res.email,
       fullName: res.fullName,
       role: res.role,

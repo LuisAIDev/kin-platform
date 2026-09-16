@@ -28,6 +28,7 @@ export interface LoginRequest {
 }
 
 export interface AuthResponse {
+  id: string;
   token: string | null;
   email: string;
   fullName: string;
@@ -146,6 +147,7 @@ export const authService = {
       const body = await res.json();
       if (!body?.role) return null;
       return {
+        id: body.id ?? "",
         token: null,
         email: body.email ?? "",
         fullName: body.fullName ?? "",
