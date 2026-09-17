@@ -20,5 +20,5 @@ public class TelemedicineProperties {
     private boolean enabled = true;
 
     /** Clave para cifrar el contenido de mensajes en reposo (AES/GCM). */
-    private String cryptoSecret = "kin-telemedicine-dev-key";
+    private String cryptoSecret;
 }

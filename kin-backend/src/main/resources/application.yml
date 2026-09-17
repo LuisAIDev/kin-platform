@@ -284,8 +284,9 @@ kin:
     # Master switch del módulo.
     enabled: ${KIN_HEALTH_TELEMEDICINE_ENABLED:true}
     # Clave para cifrar el contenido de mensajes en reposo (AES/GCM).
-    # En producción DEBE configurarse con un secreto propio.
-    crypto-secret: ${KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET:kin-telemedicine-dev-key}
+    # En producción ES OBLIGATORIA — sin valor, el arranque falla.
+    # En dev, se sobrescribe en application-dev.yml.
+    crypto-secret: ${KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET:}
 
   # -----------------------------------------------------------
   # Seguimiento de pacientes (ADR-033) — planes, tareas y evolución

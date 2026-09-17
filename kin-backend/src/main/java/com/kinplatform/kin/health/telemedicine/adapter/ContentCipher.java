@@ -1,5 +1,6 @@
 package com.kinplatform.kin.health.telemedicine.adapter;
 
+import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -8,6 +9,8 @@ import java.util.List;
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 /**
  * Cifrado en reposo del contenido de mensajes de telemedicina (ADR-032).
@@ -17,31 +20,69 @@ import javax.crypto.spec.SecretKeySpec;
  * antigua; la primera ({@code active}) se usa para cifrar y, al descifrar, se
  * prueban todas las claves en orden (permite leer datos cifrados con claves
  * anteriores durante la rotación). El dominio nunca ve el contenido cifrado.</p>
+ *
+ * <p>La clave se inyecta desde {@code KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET} y
+ * se valida en {@code @PostConstruct}. Si el valor es el default de desarrollo
+ * en un entorno no-dev, el arranque falla con un error explícito.</p>
  */
+@Component
 public final class ContentCipher {
 
     private static final int IV_LENGTH = 12;
     private static final int TAG_LENGTH = 128;
 
     private final List<SecretKeySpec> keys;
+    private final String cryptoSecret;
+    private final String springProfilesActive;
 
-    /**
-     * @param secrets claves separadas por comas; la primera es la activa. Si se
-     *                omite o está vacío, se usa un valor de desarrollo (no apto
-     *                para producción).
-     */
-    public ContentCipher(String secrets) {
+    public ContentCipher(
+            @Value("${kin.health.telemedicine.crypto-secret}") String cryptoSecret,
+            @Value("${spring.profiles.active:}") String springProfilesActive) {
+        this.cryptoSecret = cryptoSecret;
+        this.springProfilesActive = springProfilesActive;
+        this.keys = new ArrayList<>();
+        if (cryptoSecret != null && !cryptoSecret.isBlank()) {
+            for (String secret : split(cryptoSecret)) {
+                keys.add(toKey(secret));
+            }
+        }
+    }
+
+    ContentCipher(String secrets) {
         this.keys = new ArrayList<>();
         for (String secret : split(secrets)) {
             keys.add(toKey(secret));
         }
-        if (keys.isEmpty()) {
-            keys.add(toKey("kin-telemedicine-dev-key"));
-        }
+        this.cryptoSecret = secrets;
+        this.springProfilesActive = "dev";
     }
 
     ContentCipher(List<SecretKeySpec> keys) {
         this.keys = List.copyOf(keys);
+        this.cryptoSecret = null;
+        this.springProfilesActive = "dev";
+    }
+
+    @PostConstruct
+    public void validate() {
+        if (cryptoSecret == null || cryptoSecret.isBlank()) {
+            throw new IllegalStateException(
+                "KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET no está configurada. " +
+                "Esta variable es OBLIGATORIA en producción para proteger los mensajes médicos."
+            );
+        }
+        if (cryptoSecret.equals("kin-telemedicine-dev-key")
+                && !"dev".equals(springProfilesActive)) {
+            throw new IllegalStateException(
+                "La clave de cifrado de telemedicina está usando el valor de DESARROLLO en un " +
+                "entorno no-dev. Configura KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET con un valor seguro."
+            );
+        }
+        if (cryptoSecret.length() < 32) {
+            throw new IllegalStateException(
+                "KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET debe tener al menos 32 caracteres."
+            );
+        }
     }
 
     public String encrypt(String plaintext) {

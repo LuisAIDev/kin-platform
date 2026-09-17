@@ -46,6 +46,9 @@ kin:
     physician:
       # Desarrollo/pruebas: invitaciones sin cuota (sin plan ni límite de pacientes).
       allow-unlimited-invites: true
+    telemedicine:
+      # Dev: clave de desarrollo para cifrado de mensajes.
+      crypto-secret: kin-telemedicine-dev-key
   outbox:
     relay:
       # Dev: polling más rápido para desarrollo

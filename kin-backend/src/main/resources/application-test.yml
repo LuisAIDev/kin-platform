@@ -19,6 +19,10 @@ app:
     enabled: false
 
 kin:
+  health:
+    telemedicine:
+      # Tests: clave de cifrado de telemedicina para tests de integración.
+      crypto-secret: kin-telemedicine-dev-key
   ai:
     # Tests: sin precios de DeepSeek configurados; el control de costo queda
     # desactivado (el fail-fast no aplica) y los tests ejercitan el gate a
