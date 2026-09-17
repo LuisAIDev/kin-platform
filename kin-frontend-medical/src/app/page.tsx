@@ -183,6 +183,7 @@ export default function HomePage() {
             <a href="#clinicas" className="text-sm font-medium text-neutral-500 hover:text-medical-600">Para clínicas</a>
             <a href="#ips" className="text-sm font-medium text-neutral-500 hover:text-medical-600">IPS/EPS</a>
             <a href="#planes" className="text-sm font-medium text-neutral-500 hover:text-medical-600">Planes</a>
+            <a href="/sobre" className="text-sm font-medium text-neutral-500 hover:text-medical-600">Sobre KIN Medical</a>
           </nav>
           <div className="flex items-center gap-3">
             <Link href="/login" className="rounded-lg px-3 py-2 text-sm font-medium text-neutral-600 hover:text-medical-600">

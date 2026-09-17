@@ -6,13 +6,9 @@ import Link from "next/link";
 interface NavbarProps {
   /**
    * "landing": navegación del sitio público con anclas de la portada.
-   * "about": navegación de las páginas públicas secundarias (Sobre KIN / Arquitectura).
+   * "about": navegación de las páginas públicas secundarias (Sobre KIN Medical / Arquitectura).
    */
   variant?: "landing" | "about";
-  /**
-   * Ruta actual para marcar aria-current en la variante "about".
-   * Por defecto "/sobre-kin" (comportamiento histórico).
-   */
   activePath?: string;
 }
 
@@ -21,7 +17,7 @@ const NAV_LINK_CLASS =
 const NAV_ACTIVE_CLASS =
   "text-sm font-medium text-primary-600 transition-colors duration-200";
 
-export default function Navbar({ variant = "landing", activePath = "/sobre-kin" }: NavbarProps) {
+export default function Navbar({ variant = "landing", activePath = "/sobre" }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -54,11 +50,11 @@ export default function Navbar({ variant = "landing", activePath = "/sobre-kin" 
                   Plataforma
                 </Link>
                 <Link
-                  href="/sobre-kin"
-                  aria-current={activePath === "/sobre-kin" ? "page" : undefined}
-                  className={activePath === "/sobre-kin" ? NAV_ACTIVE_CLASS : NAV_LINK_CLASS}
+href="/sobre"
+                   aria-current={activePath === "/sobre" ? "page" : undefined}
+                   className={activePath === "/sobre" ? NAV_ACTIVE_CLASS : NAV_LINK_CLASS}
                 >
-                  Sobre KIN
+                  Sobre KIN Medical
                 </Link>
                 <Link
                   href="/arquitectura"
@@ -79,9 +75,9 @@ export default function Navbar({ variant = "landing", activePath = "/sobre-kin" 
                 <a href="#contacto" className={NAV_LINK_CLASS}>
                   Contacto
                 </a>
-                <Link href="/sobre-kin" className={NAV_LINK_CLASS}>
-                  Sobre KIN
-                </Link>
+<Link href="/sobre" className={NAV_LINK_CLASS}>
+                   Sobre KIN Medical
+                 </Link>
                 <Link href="/arquitectura" className={NAV_LINK_CLASS}>
                   Arquitectura técnica
                 </Link>
