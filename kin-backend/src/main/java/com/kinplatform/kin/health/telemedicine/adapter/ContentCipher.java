@@ -9,6 +9,7 @@ import java.util.List;
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -35,6 +36,7 @@ public final class ContentCipher {
     private final String cryptoSecret;
     private final String springProfilesActive;
 
+    @Autowired
     public ContentCipher(
             @Value("${kin.health.telemedicine.crypto-secret}") String cryptoSecret,
             @Value("${spring.profiles.active:}") String springProfilesActive) {
@@ -48,7 +50,7 @@ public final class ContentCipher {
         }
     }
 
-    ContentCipher(String secrets) {
+    private ContentCipher(String secrets) {
         this.keys = new ArrayList<>();
         for (String secret : split(secrets)) {
             keys.add(toKey(secret));
@@ -57,7 +59,7 @@ public final class ContentCipher {
         this.springProfilesActive = "dev";
     }
 
-    ContentCipher(List<SecretKeySpec> keys) {
+    private ContentCipher(List<SecretKeySpec> keys) {
         this.keys = List.copyOf(keys);
         this.cryptoSecret = null;
         this.springProfilesActive = "dev";
