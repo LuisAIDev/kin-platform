@@ -144,14 +144,6 @@ export default function PatientDashboardPage() {
                       </div>
                     </div>
                   </a>
-
-                  {isProximoamente && (
-                    <div
-                      className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-medical-600 to-transparent p-3 text-xs font-medium text-medical-600"
-                    >
-                      Proximoamente
-                    </div>
-                  )}
                 </div>
               );
             })}
