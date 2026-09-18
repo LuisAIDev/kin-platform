@@ -2,8 +2,10 @@ package com.kinplatform.kin.health.telemedicine.api;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.physician.api.RelationshipService;
+import com.kinplatform.kin.health.telemedicine.domain.Appointment;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment.AppointmentStatus;
 import com.kinplatform.kin.health.telemedicine.domain.Message;
+import com.kinplatform.kin.health.telemedicine.port.AppointmentRepository;
 import com.kinplatform.kin.health.telemedicine.port.MessageRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -62,13 +64,16 @@ public class TelemedicineController {
     private final UserRepository userRepository;
     private final RelationshipService relationshipService;
     private final MessageRepository messageRepository;
+    private final AppointmentRepository appointmentRepository;
 
     public TelemedicineController(TelemedicineService telemedicineService, UserRepository userRepository,
-            RelationshipService relationshipService, MessageRepository messageRepository) {
+            RelationshipService relationshipService, MessageRepository messageRepository,
+            AppointmentRepository appointmentRepository) {
         this.telemedicineService = telemedicineService;
         this.userRepository = userRepository;
         this.relationshipService = relationshipService;
         this.messageRepository = messageRepository;
+        this.appointmentRepository = appointmentRepository;
     }
 
     // ---------- Mensajería ----------
@@ -141,6 +146,58 @@ public class TelemedicineController {
                 .map(AppointmentResponse::from)
                 .toList());
     }
+
+    // ---------- Videollamada Jitsi Meet (ADR-042) ----------
+
+    @PostMapping("/appointments/{appointmentId}/video-room")
+    public ResponseEntity<VideoRoomResponse> getOrCreateVideoRoom(
+            @PathVariable UUID appointmentId,
+            Authentication auth) {
+        UUID userId = AuthenticatedUsers.require(userRepository, auth).getId();
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Cita no encontrada"));
+
+        // Validar participante (1 llamada)
+        if (!appointment.involves(userId)) {
+            throw new RuntimeException("No eres participante de esta cita");
+        }
+
+        // Validar estado (PENDIENTE o CONFIRMADA)
+        if (!appointment.isOpen()) {
+            throw new IllegalStateException(
+                    "La videollamada solo está disponible para citas pendientes o confirmadas"
+            );
+        }
+
+        // Validar ventana de tiempo (30 min antes a 2h después)
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime scheduled = appointment.scheduledAt();
+        OffsetDateTime windowStart = scheduled.minusMinutes(30);
+        OffsetDateTime windowEnd = scheduled.plusHours(2);
+
+        if (now.isBefore(windowStart) || now.isAfter(windowEnd)) {
+            throw new IllegalStateException(
+                    "La videollamada solo está disponible desde 30 minutos antes " +
+                    "hasta 2 horas después de la cita agendada"
+            );
+        }
+
+        // Obtener o crear el room ID (idempotente)
+        String roomId = appointment.videoRoomId();
+        if (roomId == null || roomId.isBlank()) {
+            String randomPart = UUID.randomUUID().toString().replace("-", "");
+            roomId = "kin-medical-" + randomPart;
+            OffsetDateTime createdAt = OffsetDateTime.now();
+            appointment = appointment.withVideoRoom(roomId, createdAt);
+            appointmentRepository.save(appointment);
+            log.info("Video room creado para cita {} por usuario {}", appointmentId, userId);
+        }
+
+        String videoUrl = "https://meet.jit.si/" + roomId;
+        return ResponseEntity.ok(new VideoRoomResponse(videoUrl, roomId));
+    }
+
+    public record VideoRoomResponse(String videoUrl, String roomId) {}
 
     // ---------- DTOs ----------
 

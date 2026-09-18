@@ -41,6 +41,8 @@ public class JpaAppointmentRepository implements AppointmentRepository {
         entity.setCancellationReason(appointment.cancellationReason());
         entity.setAvailabilitySlotId(appointment.availabilitySlotId());
         entity.setReminderSent(appointment.reminderSent());
+        entity.setVideoRoomId(appointment.videoRoomId());
+        entity.setVideoRoomCreatedAt(appointment.videoRoomCreatedAt());
         AppointmentEntity saved = repository.save(entity);
         return toDomain(saved);
     }
@@ -189,6 +191,8 @@ public class JpaAppointmentRepository implements AppointmentRepository {
                 entity.getRescheduledFrom(),
                 entity.getCancellationReason(),
                 entity.getAvailabilitySlotId(),
-                entity.isReminderSent());
+                entity.isReminderSent(),
+                entity.getVideoRoomId(),
+                entity.getVideoRoomCreatedAt());
     }
 }

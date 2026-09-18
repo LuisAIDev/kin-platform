@@ -61,4 +61,10 @@ export const telemedicineService = {
     api.put<Appointment>(`/medical/telemedicine/appointments/${appointmentId}/status`, { status }),
 
   appointments: () => api.get<Appointment[]>("/medical/telemedicine/appointments"),
+
+  getVideoRoom: (appointmentId: string) =>
+    api.post<{ videoUrl: string; roomId: string }>(
+      `/medical/telemedicine/appointments/${appointmentId}/video-room`,
+      {}
+    ),
 };

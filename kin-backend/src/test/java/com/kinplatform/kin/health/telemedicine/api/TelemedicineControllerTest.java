@@ -1,5 +1,7 @@
 package com.kinplatform.kin.health.telemedicine.api;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -17,6 +19,7 @@ import com.kinplatform.kin.health.physician.api.RelationshipService;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment.AppointmentStatus;
 import com.kinplatform.kin.health.telemedicine.domain.Message;
+import com.kinplatform.kin.health.telemedicine.port.AppointmentRepository;
 import com.kinplatform.kin.health.telemedicine.port.MessageRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -25,6 +28,8 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import jakarta.servlet.ServletException;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,6 +66,9 @@ class TelemedicineControllerTest {
     private MessageRepository messageRepository;
 
     @Mock
+    private AppointmentRepository appointmentRepository;
+
+    @Mock
     private Authentication authentication;
 
     private MockMvc mockMvc;
@@ -73,7 +81,7 @@ class TelemedicineControllerTest {
         lenient().when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         var messageRepository = mock(MessageRepository.class);
         mockMvc = MockMvcBuilders.standaloneSetup(
-                        new TelemedicineController(telemedicineService, userRepository, relationshipService, messageRepository))
+                        new TelemedicineController(telemedicineService, userRepository, relationshipService, messageRepository, appointmentRepository))
                 .setCustomArgumentResolvers(new org.springframework.data.web.PageableHandlerMethodArgumentResolver())
                 .defaultRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request(
                                 org.springframework.http.HttpMethod.GET, "/")
@@ -194,5 +202,94 @@ class TelemedicineControllerTest {
         mockMvc.perform(get("/health/telemedicine/appointments"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].status").value("PENDIENTE"));
+    }
+
+    // ---------- Videollamada (ADR-042) ----------
+
+    @Test
+    void getOrCreateVideoRoom_asParticipant_returnsRoom() throws Exception {
+        UUID appointmentId = UUID.randomUUID();
+        OffsetDateTime scheduled = OffsetDateTime.now().plusMinutes(30);
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(
+                Appointment.of(
+                        appointmentId, USER, OTHER, scheduled, 30, "Control",
+                        AppointmentStatus.CONFIRMADA, OffsetDateTime.now(),
+                        null, "", null, false)));
+        lenient().when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(
+                User.builder().id(USER).email(EMAIL).role(UserRole.PATIENT).build()));
+
+        mockMvc.perform(post("/health/telemedicine/appointments/{appointmentId}/video-room", appointmentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(request -> {
+                            request.setUserPrincipal(authentication);
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.videoUrl").value(Matchers.startsWith("https://meet.jit.si/kin-medical-")));
+    }
+
+@Test
+    void getOrCreateVideoRoom_asNonParticipant_throwsForbidden() throws Exception {
+        UUID appointmentId = UUID.randomUUID();
+        OffsetDateTime scheduled = OffsetDateTime.now().plusMinutes(30);
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(
+                Appointment.of(
+                        appointmentId, USER, OTHER, scheduled, 30, "Control",
+                        AppointmentStatus.CONFIRMADA, OffsetDateTime.now(),
+                        null, "", null, false)));
+        lenient().when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(
+                User.builder().id(UUID.randomUUID()).email("otro@kin.com").role(UserRole.PATIENT).build()));
+
+        assertThrows(ServletException.class, () -> mockMvc.perform(post(
+                        "/health/telemedicine/appointments/{appointmentId}/video-room", appointmentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(request -> {
+                            request.setUserPrincipal(authentication);
+                            return request;
+                        })));
+    }
+
+    @Test
+    void getOrCreateVideoRoom_outsideTimeWindow_throwsException() throws Exception {
+        UUID appointmentId = UUID.randomUUID();
+        OffsetDateTime scheduled = OffsetDateTime.now().plusHours(3);
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(
+                Appointment.of(
+                        appointmentId, USER, OTHER, scheduled, 30, "Control",
+                        AppointmentStatus.CONFIRMADA, OffsetDateTime.now(),
+                        null, "", null, false)));
+        lenient().when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(
+                User.builder().id(USER).email(EMAIL).role(UserRole.PATIENT).build()));
+
+assertThrows(ServletException.class, () -> mockMvc.perform(post(
+                        "/health/telemedicine/appointments/{appointmentId}/video-room", appointmentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(request -> {
+                            request.setUserPrincipal(authentication);
+                            return request;
+                        })));
+    }
+
+    @Test
+    void getOrCreateVideoRoom_idempotent_returnsSameRoomId() throws Exception {
+        UUID appointmentId = UUID.randomUUID();
+        OffsetDateTime scheduled = OffsetDateTime.now().plusMinutes(30);
+        String roomId = "kin-medical-" + UUID.randomUUID().toString().replace("-", "");
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(
+                Appointment.of(
+                        appointmentId, USER, OTHER, scheduled, 30, "Control",
+                        AppointmentStatus.CONFIRMADA, OffsetDateTime.now(),
+                        null, "", null, false, roomId, OffsetDateTime.now())));
+        lenient().when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(
+                User.builder().id(USER).email(EMAIL).role(UserRole.PATIENT).build()));
+
+        mockMvc.perform(post("/health/telemedicine/appointments/{appointmentId}/video-room", appointmentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(request -> {
+                            request.setUserPrincipal(authentication);
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.roomId").value(roomId));
     }
 }

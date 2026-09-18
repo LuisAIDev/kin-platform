@@ -63,6 +63,12 @@ public class AppointmentEntity {
     @Column(name = "reminder_sent", nullable = false)
     private boolean reminderSent;
 
+    @Column(name = "video_room_id", length = 100)
+    private String videoRoomId;
+
+    @Column(name = "video_room_created_at")
+    private OffsetDateTime videoRoomCreatedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = OffsetDateTime.now();

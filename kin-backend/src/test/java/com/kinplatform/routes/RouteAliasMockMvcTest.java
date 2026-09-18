@@ -13,6 +13,7 @@ import com.kinplatform.kin.health.documents.api.DocumentService;
 import com.kinplatform.kin.health.physician.api.RelationshipService;
 import com.kinplatform.kin.health.telemedicine.api.TelemedicineController;
 import com.kinplatform.kin.health.telemedicine.api.TelemedicineService;
+import com.kinplatform.kin.health.telemedicine.port.AppointmentRepository;
 import com.kinplatform.kin.health.telemedicine.port.MessageRepository;
 import com.kinplatform.project.CategoryController;
 import com.kinplatform.project.CategoryResponse;
@@ -126,7 +127,7 @@ class RouteAliasMockMvcTest {
 
         var messageRepository = mock(MessageRepository.class);
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(
-                        new TelemedicineController(telemedicineService, userRepository, relationshipService, messageRepository))
+                        new TelemedicineController(telemedicineService, userRepository, relationshipService, messageRepository, mock(AppointmentRepository.class)))
                 .build();
 
         assertSameResponse(

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { Video } from "lucide-react";
 import type { Appointment, AppointmentStatus } from "@/services/telemedicine";
 
 const STATUS_COLORS: Record<AppointmentStatus, string> = {
@@ -67,6 +69,16 @@ export default function AppointmentList({
                 Rechazar
               </button>
             </div>
+          )}
+
+          {(['PENDIENTE', 'CONFIRMADA'] as string[]).includes(a.status) && (
+            <Link
+              href={`/dashboard/video/${a.id}`}
+              className="inline-flex items-center gap-2 rounded-lg bg-medical-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-medical-700 transition shrink-0"
+            >
+              <Video className="w-4 h-4" />
+              Videollamada
+            </Link>
           )}
         </div>
       ))}

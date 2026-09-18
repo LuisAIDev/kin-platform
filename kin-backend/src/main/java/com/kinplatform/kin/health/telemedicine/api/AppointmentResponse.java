@@ -9,13 +9,15 @@ import java.util.UUID;
  * Cita de telemedicina en el endpoint REST (ADR-032).
  */
 public record AppointmentResponse(
-        UUID id,
-        UUID patientId,
-        UUID physicianId,
-        OffsetDateTime scheduledAt,
-        String reason,
-        AppointmentStatus status,
-        OffsetDateTime createdAt) {
+         UUID id,
+         UUID patientId,
+         UUID physicianId,
+         OffsetDateTime scheduledAt,
+         String reason,
+         AppointmentStatus status,
+         OffsetDateTime createdAt,
+         String videoRoomId,
+         OffsetDateTime videoRoomCreatedAt) {
 
     public static AppointmentResponse from(Appointment appointment) {
         return new AppointmentResponse(
@@ -25,6 +27,8 @@ public record AppointmentResponse(
                 appointment.scheduledAt(),
                 appointment.reason(),
                 appointment.status(),
-                appointment.createdAt());
+                appointment.createdAt(),
+                appointment.videoRoomId(),
+                appointment.videoRoomCreatedAt());
     }
 }
