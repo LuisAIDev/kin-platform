@@ -57,12 +57,12 @@ const PHYSICIAN_FEATURES = [
     link: "Comenzar →",
   },
   {
-    title: "Telemedicina",
+    title: "Mensajería y citas",
     description:
-      "Mensajería cifrada y gestión de citas para acompañar al paciente entre consultas.",
+      "Comunicación segura con tus pacientes y gestión de citas, con avisos por WhatsApp y email.",
     icon: (
       <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
       </svg>
     ),
     link: "Comenzar →",
