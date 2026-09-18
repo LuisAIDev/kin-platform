@@ -115,7 +115,7 @@ class DashboardControllerTest {
     @Test
     void history_deberiaDevolverPagina() throws Exception {
         var page = new PageImpl<>(List.of(consultation()), PageRequest.of(0, 10), 1);
-        when(dashboardService.history(eq(USER_ID), any())).thenReturn(page);
+        when(dashboardService.historyExcludingHidden(eq(USER_ID), any())).thenReturn(page);
 
         mockMvc.perform(get("/health/dashboard/history"))
                 .andExpect(status().isOk())

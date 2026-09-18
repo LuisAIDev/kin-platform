@@ -16,4 +16,8 @@ public interface TriageConsultationJpaRepository extends JpaRepository<TriageCon
     Page<TriageConsultationEntity> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
     long countByUserIdAndCreatedAtBetween(UUID userId, java.time.OffsetDateTime start, java.time.OffsetDateTime end);
+
+    Page<TriageConsultationEntity> findByUserIdAndHiddenAtIsNullOrderByCreatedAtDesc(UUID userId, Pageable pageable);
+
+    long countByUserIdAndHiddenAtIsNull(UUID userId);
 }

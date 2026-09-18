@@ -140,7 +140,7 @@ class TriageControllerTest {
     void history_deberiaDevolverSoloLasConsultasDelUsuarioAutenticado() throws Exception {
         var consultation =
                 TriageConsultation.of(UUID.randomUUID(), USER_ID, List.of("fiebre"), List.of(), OffsetDateTime.now());
-        when(triageService.history(USER_ID)).thenReturn(List.of(consultation));
+        when(triageService.historyExcludingHidden(USER_ID)).thenReturn(List.of(consultation));
 
         mockMvc.perform(get("/health/triage/history"))
                 .andExpect(status().isOk())

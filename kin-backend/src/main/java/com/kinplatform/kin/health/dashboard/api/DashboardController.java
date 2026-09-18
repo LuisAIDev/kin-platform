@@ -66,7 +66,7 @@ public class DashboardController {
     public ResponseEntity<PageResponse<TriageHistoryResponse>> history(
             Authentication authentication, @PageableDefault(size = 10) Pageable pageable) {
         UUID userId = AuthenticatedUsers.require(userRepository, authentication).getId();
-        var page = dashboardService.history(userId, pageable);
+        var page = dashboardService.historyExcludingHidden(userId, pageable);
         var response = PageResponse.from(page.map(TriageHistoryResponse::from));
         return ResponseEntity.ok(response);
     }

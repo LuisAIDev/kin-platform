@@ -3,6 +3,7 @@
 import type { PageResponse } from "@/types";
 import type { TriageHistoryEntry } from "@/services/triage";
 import { API_URL } from "@/services/api";
+import { EyeOff } from "lucide-react";
 
 function formatDate(iso: string | null) {
   if (!iso) return "—";
@@ -18,11 +19,13 @@ export default function HistoryList({
   onPageChange,
   onSelect,
   onShare,
+  onHide,
 }: {
   page: PageResponse<TriageHistoryEntry>;
   onPageChange: (page: number) => void;
   onSelect: (entry: TriageHistoryEntry) => void;
   onShare?: (entry: TriageHistoryEntry) => void;
+  onHide?: (entry: TriageHistoryEntry) => void;
 }) {
   const { content, totalElements, totalPages, currentPage } = page;
 
@@ -92,6 +95,17 @@ export default function HistoryList({
                     >
                       PDF
                     </button>
+                    {onHide && (
+                      <button
+                        type="button"
+                        onClick={() => onHide(entry)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100 transition"
+                        aria-label="Ocultar esta consulta de mi historial"
+                      >
+                        <EyeOff className="w-3.5 h-3.5" />
+                        Ocultar
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

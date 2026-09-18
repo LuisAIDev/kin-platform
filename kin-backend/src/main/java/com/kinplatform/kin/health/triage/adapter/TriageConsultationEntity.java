@@ -47,6 +47,12 @@ public class TriageConsultationEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
+    @Column(name = "hidden_at")
+    private OffsetDateTime hiddenAt;
+
+    @Column(name = "hidden_by")
+    private UUID hiddenBy;
+
     @PrePersist
     protected void onCreate() {
         createdAt = OffsetDateTime.now();

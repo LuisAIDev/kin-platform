@@ -81,6 +81,14 @@ public class DashboardService {
     }
 
     @Transactional(readOnly = true)
+    public Page<TriageConsultation> historyExcludingHidden(UUID userId, Pageable pageable) {
+        if (!properties.isEnabled()) {
+            throw new DashboardDisabledException();
+        }
+        return consultationRepository.findByUserIdExcludingHidden(userId, pageable);
+    }
+
+    @Transactional(readOnly = true)
     public TriageConsultation consultationDetail(UUID userId, UUID consultationId) {
         if (!properties.isEnabled()) {
             throw new DashboardDisabledException();

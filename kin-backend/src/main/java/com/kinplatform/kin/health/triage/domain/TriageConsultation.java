@@ -12,7 +12,13 @@ import java.util.UUID;
  * y cumple el requisito de confidencialidad (aislamiento por {@code userId}).</p>
  */
 public record TriageConsultation(
-        UUID id, UUID userId, List<String> symptoms, List<TriageConditionResult> results, OffsetDateTime createdAt) {
+        UUID id,
+        UUID userId,
+        List<String> symptoms,
+        List<TriageConditionResult> results,
+        OffsetDateTime createdAt,
+        OffsetDateTime hiddenAt,
+        UUID hiddenBy) {
 
     public TriageConsultation {
         if (id == null) {
@@ -32,6 +38,17 @@ public record TriageConsultation(
             List<String> symptoms,
             List<TriageConditionResult> results,
             OffsetDateTime createdAt) {
-        return new TriageConsultation(id, userId, symptoms, results, createdAt);
+        return new TriageConsultation(id, userId, symptoms, results, createdAt, null, null);
+    }
+
+    public static TriageConsultation of(
+            UUID id,
+            UUID userId,
+            List<String> symptoms,
+            List<TriageConditionResult> results,
+            OffsetDateTime createdAt,
+            OffsetDateTime hiddenAt,
+            UUID hiddenBy) {
+        return new TriageConsultation(id, userId, symptoms, results, createdAt, hiddenAt, hiddenBy);
     }
 }

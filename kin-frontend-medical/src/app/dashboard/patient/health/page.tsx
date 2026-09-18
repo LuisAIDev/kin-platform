@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import CarePlanView from "@/components/health/CarePlanView";
 import FeedbackButton from "@/components/health/FeedbackButton";
 import HealthSummaryCards from "@/components/health/HealthSummaryCards";
@@ -14,6 +14,7 @@ import { SubscriptionStatusBanner } from "@/components/patient/SubscriptionStatu
 import type { CarePlan, HealthSummary } from "@/services/dashboard";
 import type { PageResponse } from "@/types";
 import type { TriageHistoryEntry } from "@/services/triage";
+import { API_URL } from "@/services/api";
 
 export default function PatientHealthPage() {
   const [summary, setSummary] = useState<HealthSummary | null>(null);
@@ -23,6 +24,16 @@ export default function PatientHealthPage() {
   const [selected, setSelected] = useState<TriageHistoryEntry | null>(null);
   const [sharingTriage, setSharingTriage] = useState<TriageHistoryEntry | null>(null);
   const [error, setError] = useState("");
+
+  const loadHistory = useCallback(async (pageNumber = 0, size = 50) => {
+    try {
+      const historyData = await dashboardService.history(pageNumber, size);
+      setPage(historyData);
+      setHistory(historyData.content);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,11 +59,35 @@ export default function PatientHealthPage() {
 
   const handlePageChange = async (pageNumber: number) => {
     if (pageNumber < 0) return;
+    await loadHistory(pageNumber, 10);
+  };
+
+  const handleHide = async (entry: TriageHistoryEntry) => {
+    const confirmed = confirm(
+      "¿Ocultar esta consulta de tu historial?\n\n" +
+        "• Se ocultará de TU vista.\n" +
+        "• Seguirá disponible para TU MÉDICO.\n" +
+        "• No se borra permanentemente.\n\n" +
+        "¿Continuar?"
+    );
+
+    if (!confirmed) return;
+
     try {
-      const historyData = await dashboardService.history(pageNumber, 10);
-      setPage(historyData);
+      const res = await fetch(
+        `${API_URL}/medical/triage/consultations/${entry.id}/hide`,
+        { method: "DELETE", credentials: "include" }
+      );
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "No se pudo ocultar la consulta");
+      }
+
+      // Recargar el historial
+      await loadHistory(page?.currentPage ?? 0, page?.size ?? 10);
     } catch (err) {
-      setError((err as Error).message);
+      alert((err as Error).message);
     }
   };
 
@@ -124,6 +159,7 @@ export default function PatientHealthPage() {
               onPageChange={handlePageChange}
               onSelect={setSelected}
               onShare={setSharingTriage}
+              onHide={handleHide}
             />
           )}
         </section>

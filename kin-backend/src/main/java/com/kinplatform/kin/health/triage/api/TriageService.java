@@ -132,4 +132,35 @@ public class TriageService {
         }
         return consultationRepository.findByUserId(userId);
     }
+
+    /**
+     * Historial de consultas del paciente EXCLUYENDO las ocultas.
+     */
+    @Transactional(readOnly = true)
+    public List<TriageConsultation> historyExcludingHidden(UUID userId) {
+        if (!properties.isEnabled()) {
+            throw new TriageDisabledException();
+        }
+        if (userId == null) {
+            return List.of();
+        }
+        return consultationRepository.findByUserIdExcludingHidden(userId, org.springframework.data.domain.Pageable.unpaged()).getContent();
+    }
+
+    /**
+     * Oculta una consulta del historial del paciente (soft delete).
+     *
+     * @param consultationId id de la consulta a ocultar
+     * @param userId         id del paciente propietario
+     */
+    @Transactional
+    public void hideConsultation(UUID consultationId, UUID userId) {
+        if (!properties.isEnabled()) {
+            throw new TriageDisabledException();
+        }
+        if (consultationId == null || userId == null) {
+            throw new IllegalArgumentException("consultationId y userId no pueden ser null");
+        }
+        consultationRepository.hideConsultation(consultationId, userId);
+    }
 }

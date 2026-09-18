@@ -89,6 +89,45 @@ public class JpaTriageConsultationRepository implements TriageConsultationReposi
         return repository.countByUserIdAndCreatedAtBetween(userId, start, end);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<TriageConsultation> findByUserIdExcludingHidden(
+            UUID userId, org.springframework.data.domain.Pageable pageable) {
+        if (userId == null) {
+            return org.springframework.data.domain.Page.empty(pageable);
+        }
+        return repository.findByUserIdAndHiddenAtIsNullOrderByCreatedAtDesc(userId, pageable).map(this::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countByUserIdExcludingHidden(UUID userId) {
+        if (userId == null) {
+            return 0;
+        }
+        return repository.countByUserIdAndHiddenAtIsNull(userId);
+    }
+
+    @Override
+    @Transactional
+    public void hideConsultation(UUID consultationId, UUID userId) {
+        if (consultationId == null || userId == null) {
+            throw new IllegalArgumentException("consultationId y userId no pueden ser null");
+        }
+        TriageConsultationEntity entity = repository.findById(consultationId)
+                .orElseThrow(() -> new IllegalArgumentException("Consulta no encontrada"));
+        if (!userId.equals(entity.getUserId())) {
+            throw new IllegalArgumentException("No puedes ocultar consultas que no son tuyas");
+        }
+        if (entity.getHiddenAt() != null) {
+            return; // idempotente
+        }
+        entity.setHiddenAt(OffsetDateTime.now());
+        entity.setHiddenBy(userId);
+        repository.save(entity);
+        log.info("Consulta {} ocultada por paciente {}", consultationId, userId);
+    }
+
     private TriageConsultation toDomain(TriageConsultationEntity entity) {
         if (entity == null) {
             return null;
@@ -100,7 +139,9 @@ public class JpaTriageConsultationRepository implements TriageConsultationReposi
                 fromJson(
                         entity.getResults(),
                         new com.fasterxml.jackson.core.type.TypeReference<List<TriageConditionResult>>() {}),
-                entity.getCreatedAt());
+                entity.getCreatedAt(),
+                entity.getHiddenAt(),
+                entity.getHiddenBy());
     }
 
     private String toJson(Object value) {

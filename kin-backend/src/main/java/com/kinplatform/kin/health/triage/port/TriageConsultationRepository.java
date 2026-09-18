@@ -28,4 +28,10 @@ public interface TriageConsultationRepository {
     Optional<TriageConsultation> findByIdAndUserId(UUID id, UUID userId);
 
     long countByUserIdAndCreatedAtBetween(UUID userId, java.time.OffsetDateTime start, java.time.OffsetDateTime end);
+
+    Page<TriageConsultation> findByUserIdExcludingHidden(UUID userId, Pageable pageable);
+
+    long countByUserIdExcludingHidden(UUID userId);
+
+    void hideConsultation(UUID consultationId, UUID userId);
 }
