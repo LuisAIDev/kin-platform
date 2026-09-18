@@ -146,7 +146,7 @@ const PLANS = [
     price: "$29",
     period: "/mes",
     description: "Para médicos independientes con consulta activa.",
-    features: ["100 pacientes", "Triajes ilimitados", "Seguimiento y agenda", "Telemedicina"],
+    features: ["100 pacientes", "Triajes ilimitados", "Seguimiento y agenda", "Mensajería y citas"],
     cta: "Solicitar acceso",
     href: "/register/salud/medico",
     highlighted: true,
