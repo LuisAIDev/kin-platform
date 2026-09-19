@@ -5,8 +5,8 @@ import { EMPTY_COUNTS, type NotificationCounts } from "@/services/notifications"
 
 /**
  * Contadores de novedades del sidebar (mensajes, citas, tareas, invitaciones).
- * Hace polling cada 30 s contra /health/notifications/counts (ruta canónica
- * del backend; el backend autoriza por identidad/rol).
+ * Hace polling cada 5 min contra /health/notifications/counts.
+ * Se pausa cuando la pestaña no está activa (document.hidden).
  */
 export function useNotificationCounts(_role?: string | null): NotificationCounts | null {
   const [counts, setCounts] = useState<NotificationCounts | null>(null);
@@ -15,6 +15,7 @@ export function useNotificationCounts(_role?: string | null): NotificationCounts
     let cancelled = false;
 
     async function fetchCounts() {
+      if (document.hidden) return; // Pausar si pestaña inactiva
       try {
         const res = await fetch("/api/v1/health/notifications/counts", { credentials: "include" });
         if (!res.ok) return;
@@ -26,7 +27,7 @@ export function useNotificationCounts(_role?: string | null): NotificationCounts
     }
 
     fetchCounts();
-    const interval = setInterval(fetchCounts, 30000);
+    const interval = setInterval(fetchCounts, 5 * 60 * 1000); // 5 minutos
 
     return () => {
       cancelled = true;

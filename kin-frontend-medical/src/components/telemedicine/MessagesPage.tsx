@@ -70,7 +70,9 @@ export default function MessagesPage() {
           // no-op
         }
       });
-    const interval = setInterval(loadConversations, 30000);
+    const interval = setInterval(() => {
+      if (!document.hidden) loadConversations(); // Pausar si pestaña inactiva
+    }, 5 * 60 * 1000); // 5 minutos
     return () => {
       cancelled = true;
       clearInterval(interval);

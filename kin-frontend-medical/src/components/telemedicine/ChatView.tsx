@@ -52,7 +52,9 @@ export default function ChatView({
       .catch((err) => {
         if (!cancelled) setError((err as Error).message);
       });
-    const interval = setInterval(load, 15000);
+    const interval = setInterval(() => {
+      if (!document.hidden) load(); // Pausar si pestaña inactiva
+    }, 5 * 60 * 1000); // 5 minutos
     return () => {
       cancelled = true;
       clearInterval(interval);
