@@ -11,6 +11,8 @@ import com.kinplatform.auth.dto.UserDTO;
 import com.kinplatform.auth.email.EmailSender;
 import com.kinplatform.auth.verification.EmailVerificationTokenService;
 import com.kinplatform.common.security.JwtService;
+import com.kinplatform.pricing.PricingPlanRepository;
+import com.kinplatform.pricing.UserSubscriptionRepository;
 import com.kinplatform.user.PhysicianVerificationStatus;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -54,11 +56,17 @@ class VerticalAccessTest {
     @Mock
     private EmailSender emailSender;
 
+    @Mock
+    private PricingPlanRepository planRepository;
+
+    @Mock
+    private UserSubscriptionRepository subscriptionRepository;
+
     private AuthServiceImpl authService;
 
     @BeforeEach
     void setUp() {
-        authService = new AuthServiceImpl(userRepository, passwordEncoder, jwtService, tokenService, emailSender);
+        authService = new AuthServiceImpl(userRepository, passwordEncoder, jwtService, tokenService, emailSender, planRepository, subscriptionRepository);
     }
 
     private User user(UserRole role, PhysicianVerificationStatus status) {

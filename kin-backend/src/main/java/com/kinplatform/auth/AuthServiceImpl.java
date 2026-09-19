@@ -12,13 +12,22 @@ import com.kinplatform.auth.verification.VerifyEmailOutcome;
 import com.kinplatform.common.security.JwtService;
 import com.kinplatform.common.security.PatientAccess;
 import com.kinplatform.common.security.PhysicianAccess;
+import com.kinplatform.pricing.PricingPlan;
+import com.kinplatform.pricing.PricingPlanRepository;
+import com.kinplatform.pricing.ProductVertical;
+import com.kinplatform.pricing.SubscriptionStatus;
+import com.kinplatform.pricing.UserSubscription;
+import com.kinplatform.pricing.UserSubscriptionRepository;
 import com.kinplatform.user.PhysicianVerificationStatus;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
@@ -33,6 +43,8 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final EmailVerificationTokenService tokenService;
     private final EmailSender emailSender;
+    private final PricingPlanRepository planRepository;
+    private final UserSubscriptionRepository subscriptionRepository;
 
     @Value("${medical.frontend.base-url:https://www.kin-platform-medical.com}")
     private String frontendBaseUrl;
@@ -131,11 +143,55 @@ public class AuthServiceImpl implements AuthService {
 
         user = userRepository.save(user);
 
+        // Asignar plan TRIAL por defecto para médicos nuevos
+        assignTrialPlan(user);
+
         sendVerification(user);
 
         return genericRegisterResponse(
                 user.getEmail(), user.getFullName(), UserRole.PHYSICIAN, PhysicianVerificationStatus.PENDING,
                 AuthResponse.STATE_NEW_REGISTRATION);
+    }
+
+    /**
+     * Asigna el plan TRIAL por defecto a un médico recién registrado.
+     * Busca el plan con code=TRIAL y vertical=SALUD_PROFESIONAL, y crea una suscripción TRIAL.
+     */
+    private void assignTrialPlan(User user) {
+        Optional<PricingPlan> trialPlanOpt = planRepository.findByCodeAndVertical("TRIAL", ProductVertical.SALUD_PROFESIONAL);
+        if (trialPlanOpt.isEmpty()) {
+            log.warn("Plan TRIAL no encontrado para vertical SALUD_PROFESIONAL. El médico {} quedará sin plan.", user.getId());
+            return;
+        }
+        PricingPlan trialPlan = trialPlanOpt.get();
+
+        // Verificar si ya tiene suscripción activa (no debería pasar en registro nuevo)
+        if (subscriptionRepository.findByUserIdAndStatus(user.getId(), SubscriptionStatus.ACTIVE).isPresent()
+                || subscriptionRepository.findByUserIdAndStatus(user.getId(), SubscriptionStatus.TRIAL).isPresent()) {
+            return;
+        }
+
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime trialEnd = trialPlan.getTrialDays() != null && trialPlan.getTrialDays() > 0
+                ? now.plusDays(trialPlan.getTrialDays())
+                : now.plusDays(30); // fallback 30 días
+
+        UserSubscription subscription = UserSubscription.builder()
+                .user(user)
+                .plan(trialPlan)
+                .startDate(now)
+                .endDate(trialEnd)
+                .status(SubscriptionStatus.TRIAL)
+                .messagesUsed(0)
+                .lastResetDate(now)
+                .build();
+
+        UserSubscription saved = subscriptionRepository.save(subscription);
+        user.setCurrentPlan(trialPlan);
+        user.setSubscription(saved);
+        userRepository.save(user);
+
+        log.info("Plan TRIAL asignado a médico {} (suscripción {})", user.getId(), saved.getId());
     }
 
     /**
