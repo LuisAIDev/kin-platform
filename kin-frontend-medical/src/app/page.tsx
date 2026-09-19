@@ -148,7 +148,7 @@ const PLANS = [
     description: "Para médicos independientes con consulta activa.",
     features: ["100 pacientes", "Triajes ilimitados", "Seguimiento y agenda", "Mensajería y citas"],
     cta: "Solicitar acceso",
-    href: "/register/salud/medico",
+    href: "/register/salud/medico?plan=PROFESSIONAL",
     highlighted: true,
   },
 ];

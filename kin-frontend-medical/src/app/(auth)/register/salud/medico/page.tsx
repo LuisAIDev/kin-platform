@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authService } from "@/services/auth";
 import { PasswordInput } from "@/components/ui/PasswordInput";
@@ -20,8 +20,11 @@ const COUNTRY_LICENSE_PATTERNS: Record<string, { pattern: RegExp; label: string 
   ES: { pattern: /^\d{8}[A-Z]$/, label: "España (8 dígitos + letra)" },
 };
 
-export default function PhysicianRegisterPage() {
+function PhysicianRegisterContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedPlan = searchParams.get('plan');
+
   const [currentStep, setCurrentStep] = useState(1);
   const [form, setForm] = useState({
     fullName: "",
@@ -115,7 +118,13 @@ export default function PhysicianRegisterPage() {
     });
     setLoading(false);
     if (error) { setError(error); return; }
-    router.push("/auth/verify-email");
+
+    // Si el usuario vino con un plan seleccionado, redirigir a la página de planes destacando ese plan
+    if (selectedPlan) {
+      router.push(`/dashboard/physician/plans?highlight=${selectedPlan}`);
+    } else {
+      router.push("/auth/verify-email");
+    }
   };
 
   return (
@@ -285,5 +294,28 @@ export default function PhysicianRegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-medical-50 via-white to-accent-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-medical-500 to-medical-600">
+          <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <p className="text-neutral-500">Cargando...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function PhysicianRegisterPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <PhysicianRegisterContent />
+    </Suspense>
   );
 }

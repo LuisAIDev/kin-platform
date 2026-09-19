@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   physicianPlansService,
   type PhysicianPlan,
 } from "@/services/physicianPlans";
 
 export default function PhysicianPlansPage() {
+  const searchParams = useSearchParams();
+  const highlightCode = searchParams.get('highlight');
+
   const [plans, setPlans] = useState<PhysicianPlan[]>([]);
   const [currentPlanCode, setCurrentPlanCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -91,6 +95,14 @@ export default function PhysicianPlansPage() {
           </div>
         )}
 
+        {highlightCode && (
+          <div className="rounded-xl bg-medical-50 border border-medical-200 p-4 mb-4">
+            <p className="text-sm text-medical-900">
+              Continúa con tu registro: activa el plan <strong>{highlightCode}</strong> para comenzar.
+            </p>
+          </div>
+        )}
+
         {error && (
           <p className="text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-lg">
             {error}
@@ -107,10 +119,17 @@ export default function PhysicianPlansPage() {
           <section className="grid gap-4 md:grid-cols-2">
             {plans.map((plan) => {
               const isCurrent = currentPlanCode === plan.code;
+              const isHighlighted = highlightCode === plan.code;
               return (
                 <div
                   key={plan.id}
-                  className="rounded-xl border border-neutral-200 bg-white p-5 flex flex-col gap-3"
+                  className={`rounded-xl border p-5 flex flex-col gap-3 transition ${
+                    isCurrent
+                      ? 'border-medical-500 bg-medical-50'
+                      : isHighlighted
+                      ? 'border-medical-500 ring-2 ring-medical-200 shadow-lg'
+                      : 'border-neutral-200 bg-white'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
