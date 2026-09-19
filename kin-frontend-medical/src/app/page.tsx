@@ -143,23 +143,13 @@ const PLANS = [
   },
   {
     name: "Medical Pro",
-    price: "$29",
+    price: "$35",
     period: "/mes",
     description: "Para médicos independientes con consulta activa.",
     features: ["100 pacientes", "Triajes ilimitados", "Seguimiento y agenda", "Mensajería y citas"],
     cta: "Solicitar acceso",
     href: "/register/salud/medico",
     highlighted: true,
-  },
-  {
-    name: "Medical Clinic",
-    price: "$299",
-    period: "/mes",
-    description: "Para clínicas y equipos médicos.",
-    features: ["Multi-médico", "Multi-sede", "Dashboards institucionales"],
-    cta: "Próximamente",
-    href: "#contacto",
-    highlighted: false,
   },
 ];
 
@@ -378,7 +368,7 @@ export default function HomePage() {
               <h3 className="text-2xl font-bold tracking-tight sm:text-3xl text-medical-700">Planes para Médicos</h3>
               <p className="mt-2 text-lg text-neutral-600">Digitaliza tu consulta con herramientas clínicas modernas.</p>
             </div>
-            <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 max-w-3xl mx-auto">
               {PLANS.map((plan) => (
                 <div
                   key={plan.name}
