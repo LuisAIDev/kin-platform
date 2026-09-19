@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.kinplatform.payment.SubscriptionActivationService;
 import com.kinplatform.pricing.PricingPlanRepository;
 import com.kinplatform.pricing.UserSubscriptionRepository;
 import com.kinplatform.user.UserRepository;
@@ -34,14 +35,17 @@ class StripeServiceWebhookIdempotencyTest {
     private StripeWebhookEventRepository webhookEventRepository;
 
     @Mock
+    private SubscriptionActivationService activationService;
+
+    @Mock
     private Event event;
 
     private StripeService stripeService;
 
     @BeforeEach
     void setUp() {
-        stripeService =
-                new StripeService(planRepository, userRepository, subscriptionRepository, webhookEventRepository);
+        stripeService = new StripeService(
+                planRepository, userRepository, subscriptionRepository, webhookEventRepository, activationService);
     }
 
     @Test

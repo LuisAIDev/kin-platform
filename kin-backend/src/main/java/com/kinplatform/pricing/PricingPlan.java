@@ -45,6 +45,15 @@ public class PricingPlan {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
+    /**
+     * Precio en pesos colombianos (COP) para la pasarela Wompi. Wompi solo
+     * opera en COP, mientras que {@link #price} está en USD para Stripe. Si es
+     * {@code null}, el plan no puede pagarse con Wompi (el checkout falla con
+     * un error explícito). No se inventa un valor: lo define el negocio.
+     */
+    @Column(name = "price_cop", precision = 12, scale = 2)
+    private BigDecimal priceCop;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(nullable = false, columnDefinition = "json")
     private String features;

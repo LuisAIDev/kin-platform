@@ -436,11 +436,28 @@ management:
       endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:}
 
 # -----------------------------------------------------------
-# Stripe
+# Stripe (pagos internacionales, USD)
 # -----------------------------------------------------------
 stripe:
   secret-key: ${STRIPE_SECRET_KEY:}
   webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+
+# -----------------------------------------------------------
+# Wompi (pagos locales Colombia: PSE, Nequi, tarjetas, Botón
+# Bancolombia). Todos los secretos por variable de entorno.
+# Sin llaves configuradas la app arranca igual; el checkout con
+# Wompi falla con un error explícito. La URL de eventos se
+# configura en el dashboard de Wompi.
+# -----------------------------------------------------------
+payment:
+  wompi:
+    public-key: ${WOMPI_PUBLIC_KEY:}
+    private-key: ${WOMPI_PRIVATE_KEY:}
+    integrity-secret: ${WOMPI_INTEGRITY_SECRET:}
+    events-secret: ${WOMPI_EVENTS_SECRET:}
+    base-url: ${WOMPI_BASE_URL:https://production.wompi.co}
+    checkout-url: ${WOMPI_CHECKOUT_URL:https://checkout.wompi.co/p/}
+    sandbox: ${WOMPI_SANDBOX:false}
 
 # -----------------------------------------------------------
 # JWT

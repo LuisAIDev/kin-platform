@@ -1,8 +1,8 @@
 package com.kinplatform.pricing.stripe;
 
+import com.kinplatform.payment.PaymentGateway;
 import com.kinplatform.pricing.PricingPlanRepository;
 import com.kinplatform.pricing.SubscriptionStatus;
-import com.kinplatform.pricing.UserSubscription;
 import com.kinplatform.pricing.UserSubscriptionRepository;
 import com.kinplatform.user.UserRepository;
 import com.stripe.exception.StripeException;
@@ -11,7 +11,6 @@ import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import com.stripe.param.checkout.SessionCreateParams;
 import jakarta.annotation.PostConstruct;
-import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,12 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-public class StripeService {
+public class StripeService implements PaymentGateway {
 
     private final PricingPlanRepository planRepository;
     private final UserRepository userRepository;
     private final UserSubscriptionRepository subscriptionRepository;
     private final StripeWebhookEventRepository webhookEventRepository;
+    private final com.kinplatform.payment.SubscriptionActivationService activationService;
 
     @Value("${stripe.webhook-secret}")
     private String webhookSecret;
@@ -35,11 +35,13 @@ public class StripeService {
             PricingPlanRepository planRepository,
             UserRepository userRepository,
             UserSubscriptionRepository subscriptionRepository,
-            StripeWebhookEventRepository webhookEventRepository) {
+            StripeWebhookEventRepository webhookEventRepository,
+            com.kinplatform.payment.SubscriptionActivationService activationService) {
         this.planRepository = planRepository;
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.webhookEventRepository = webhookEventRepository;
+        this.activationService = activationService;
     }
 
     @PostConstruct
@@ -125,43 +127,9 @@ public class StripeService {
             var userId = UUID.fromString(session.getClientReferenceId());
             var planId = UUID.fromString(session.getMetadata().get("plan_id"));
 
-            var user = userRepository
-                    .findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-            var plan = planRepository
-                    .findById(planId)
-                    .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
+            activationService.activateNew(userId, planId);
 
-            subscriptionRepository
-                    .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
-                    .ifPresent(s -> {
-                        throw new IllegalArgumentException("User already has an active subscription");
-                    });
-
-            var now = OffsetDateTime.now();
-            var endDate = now.plusMonths(1);
-
-            var subscription = UserSubscription.builder()
-                    .user(user)
-                    .plan(plan)
-                    .startDate(now)
-                    .endDate(endDate)
-                    .status(SubscriptionStatus.ACTIVE)
-                    .messagesUsed(0)
-                    .lastResetDate(now)
-                    .build();
-
-            var saved = subscriptionRepository.save(subscription);
-
-            user.setCurrentPlan(plan);
-            user.setSubscription(saved);
-            userRepository.save(user);
-
-            log.info(
-                    "Subscription activated after checkout: user {} plan {} session {}",
-                    userId,
-                    plan.getName(),
-                    sessionId);
+            log.info("Subscription activated after checkout: user {} session {}", userId, sessionId);
         } catch (Exception e) {
             log.error("Failed to process checkout completed event for session {}", sessionId, e);
             throw new RuntimeException("Failed to activate subscription", e);
@@ -176,43 +144,9 @@ public class StripeService {
             var userId = UUID.fromString(session.getClientReferenceId());
             var planId = UUID.fromString(session.getMetadata().get("plan_id"));
 
-            var user = userRepository
-                    .findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-            var plan = planRepository
-                    .findById(planId)
-                    .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
+            activationService.activateNew(userId, planId);
 
-            subscriptionRepository
-                    .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
-                    .ifPresent(s -> {
-                        throw new IllegalArgumentException("User already has an active subscription");
-                    });
-
-            var now = OffsetDateTime.now();
-            var endDate = now.plusMonths(1);
-
-            var subscription = UserSubscription.builder()
-                    .user(user)
-                    .plan(plan)
-                    .startDate(now)
-                    .endDate(endDate)
-                    .status(SubscriptionStatus.ACTIVE)
-                    .messagesUsed(0)
-                    .lastResetDate(now)
-                    .build();
-
-            var saved = subscriptionRepository.save(subscription);
-
-            user.setCurrentPlan(plan);
-            user.setSubscription(saved);
-            userRepository.save(user);
-
-            log.info(
-                    "Patient subscription activated after checkout: user {} plan {} session {}",
-                    userId,
-                    plan.getName(),
-                    sessionId);
+            log.info("Patient subscription activated after checkout: user {} session {}", userId, sessionId);
         } catch (Exception e) {
             log.error("Failed to process patient checkout completed event for session {}", sessionId, e);
             throw new RuntimeException("Failed to activate patient subscription", e);
@@ -227,48 +161,9 @@ public class StripeService {
             var userId = UUID.fromString(session.getClientReferenceId());
             var planId = UUID.fromString(session.getMetadata().get("plan_id"));
 
-            var user = userRepository
-                    .findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-            var plan = planRepository
-                    .findById(planId)
-                    .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
+            activationService.activateOrRenew(userId, planId);
 
-            var now = OffsetDateTime.now();
-            var endDate = now.plusMonths(1);
-
-            var existingSubscription = subscriptionRepository
-                    .findByUserIdAndStatusAndEndDateAfter(userId, SubscriptionStatus.ACTIVE, now)
-                    .orElse(null);
-
-            if (existingSubscription != null) {
-                // Suscripción existente: actualizar fechas
-                existingSubscription.setEndDate(endDate);
-                existingSubscription.setMessagesUsed(0);
-                existingSubscription.setLastResetDate(now);
-                subscriptionRepository.save(existingSubscription);
-            } else {
-                // Crear nueva suscripción
-                var subscription = UserSubscription.builder()
-                        .user(user)
-                        .plan(plan)
-                        .startDate(now)
-                        .endDate(endDate)
-                        .status(SubscriptionStatus.ACTIVE)
-                        .messagesUsed(0)
-                        .lastResetDate(now)
-                        .build();
-                var saved = subscriptionRepository.save(subscription);
-                user.setCurrentPlan(plan);
-                user.setSubscription(saved);
-                userRepository.save(user);
-            }
-
-            log.info(
-                    "Subscription renewed after invoice payment: user {} plan {} session {}",
-                    userId,
-                    plan.getName(),
-                    sessionId);
+            log.info("Subscription renewed after invoice payment: user {} session {}", userId, sessionId);
         } catch (Exception e) {
             log.error("Failed to process invoice payment succeeded event for session {}", sessionId, e);
             throw new RuntimeException("Failed to renew subscription", e);
@@ -283,48 +178,9 @@ public class StripeService {
             var userId = UUID.fromString(session.getClientReferenceId());
             var planId = UUID.fromString(session.getMetadata().get("plan_id"));
 
-            var user = userRepository
-                    .findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-            var plan = planRepository
-                    .findById(planId)
-                    .orElseThrow(() -> new IllegalArgumentException("Plan not found: " + planId));
+            activationService.activateOrRenew(userId, planId);
 
-            var now = OffsetDateTime.now();
-            var endDate = now.plusMonths(1);
-
-            var existingSubscription = subscriptionRepository
-                    .findByUserIdAndStatusAndEndDateAfter(userId, SubscriptionStatus.ACTIVE, now)
-                    .orElse(null);
-
-            if (existingSubscription != null) {
-                // Suscripción existente: actualizar fechas
-                existingSubscription.setEndDate(endDate);
-                existingSubscription.setMessagesUsed(0);
-                existingSubscription.setLastResetDate(now);
-                subscriptionRepository.save(existingSubscription);
-            } else {
-                // Crear nueva suscripción
-                var subscription = UserSubscription.builder()
-                        .user(user)
-                        .plan(plan)
-                        .startDate(now)
-                        .endDate(endDate)
-                        .status(SubscriptionStatus.ACTIVE)
-                        .messagesUsed(0)
-                        .lastResetDate(now)
-                        .build();
-                var saved = subscriptionRepository.save(subscription);
-                user.setCurrentPlan(plan);
-                user.setSubscription(saved);
-                userRepository.save(user);
-            }
-
-            log.info(
-                    "Patient subscription renewed after invoice payment: user {} plan {} session {}",
-                    userId,
-                    plan.getName(),
-                    sessionId);
+            log.info("Patient subscription renewed after invoice payment: user {} session {}", userId, sessionId);
         } catch (Exception e) {
             log.error("Failed to process patient invoice payment succeeded event for session {}", sessionId, e);
             throw new RuntimeException("Failed to renew patient subscription", e);
@@ -457,5 +313,34 @@ public class StripeService {
             log.error("Webhook signature verification failed", e);
             throw new RuntimeException("Webhook signature verification failed", e);
         }
+    }
+
+    // PaymentGateway interface implementation
+    @Override
+    public String getGatewayCode() {
+        return "STRIPE";
+    }
+
+    @Override
+    public com.kinplatform.payment.PaymentGateway.CheckoutSession createCheckoutSession(
+            com.kinplatform.payment.PaymentGateway.CreateCheckoutRequest request) {
+
+        var response = createCheckoutSession(
+                request.userId(),
+                request.planId(),
+                request.successUrl(),
+                request.cancelUrl()
+        );
+
+        return new com.kinplatform.payment.PaymentGateway.CheckoutSession(
+                response.getSessionId(),
+                response.getUrl()
+        );
+    }
+
+    @Override
+    public void handleWebhook(String payload, String signature) {
+        Event event = constructWebhookEvent(payload, signature);
+        processWebhookEvent(event);
     }
 }

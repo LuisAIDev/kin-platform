@@ -27,6 +27,7 @@ public class PricingPlanResponse {
     private String name;
     private String description;
     private BigDecimal price;
+    private BigDecimal priceCop;
     private List<String> features;
     private Integer maxProjects;
     private Integer messagesPerMonth;
@@ -60,6 +61,7 @@ public class PricingPlanResponse {
                 .name(plan.getName())
                 .description(plan.getDescription())
                 .price(plan.getPrice())
+                .priceCop(plan.getPriceCop())
                 .features(featureList)
                 .maxProjects(plan.getMaxProjects())
                 .messagesPerMonth(plan.getMessagesPerMonth())

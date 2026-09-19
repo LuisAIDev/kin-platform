@@ -7,6 +7,7 @@ import {
   type PatientSubscriptionStatusResponse,
 } from "@/services/patientPlans";
 import { subscriptionApi } from "@/services/subscriptionApi";
+import { api } from "@/services/api";
 
 export default function PatientPlansPage() {
   const [plans, setPlans] = useState<PatientPlan[]>([]);
@@ -15,6 +16,7 @@ export default function PatientPlansPage() {
   const [error, setError] = useState("");
   const [banner, setBanner] = useState<"success" | "canceled" | null>(null);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [gateway, setGateway] = useState<'WOMPI' | 'STRIPE'>('WOMPI');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -46,7 +48,15 @@ export default function PatientPlansPage() {
   const handleSubscribe = async (planId: string) => {
     setError("");
     try {
-      const session = await patientPlansService.createCheckoutSession(planId);
+      const endpoint = gateway === 'WOMPI'
+        ? '/wompi/create-checkout-session'
+        : '/stripe/patient/create-checkout-session';
+
+      const session = await api.post<{ sessionId: string; url: string }>(endpoint, {
+        planId,
+        successUrl: window.location.origin + '/dashboard/patient/plans?success=true',
+        cancelUrl: window.location.href,
+      });
       window.location.href = session.url;
     } catch (err) {
       setError((err as Error).message);
@@ -101,6 +111,39 @@ export default function PatientPlansPage() {
           </p>
         )}
 
+        {/* Selector de pasarela de pago */}
+        <div>
+          <label className="block text-sm font-medium text-neutral-700 mb-2">
+            Método de pago
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setGateway('WOMPI')}
+              className={`p-3 rounded-lg border-2 transition ${
+                gateway === 'WOMPI'
+                  ? 'border-medical-500 bg-medical-50'
+                  : 'border-neutral-200 hover:border-neutral-300'
+              }`}
+            >
+              <p className="font-semibold">PSE, Nequi, Tarjetas</p>
+              <p className="text-xs text-neutral-500">Para Colombia (COP)</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setGateway('STRIPE')}
+              className={`p-3 rounded-lg border-2 transition ${
+                gateway === 'STRIPE'
+                  ? 'border-medical-500 bg-medical-50'
+                  : 'border-neutral-200 hover:border-neutral-300'
+              }`}
+            >
+              <p className="font-semibold">Tarjetas Internacionales</p>
+              <p className="text-xs text-neutral-500">Para otros países (USD)</p>
+            </button>
+          </div>
+        </div>
+
         {loading ? (
           <p className="text-sm text-neutral-500">Cargando planes...</p>
         ) : plans.length === 0 ? (
@@ -112,6 +155,12 @@ export default function PatientPlansPage() {
             {plans.map((plan) => {
               const isCurrentPlan = plan.code === activePlanCode;
               const isActiveSubscription = subscriptionStatus?.isActive;
+              const showCop = gateway === 'WOMPI';
+              const copAvailable = plan.priceCop != null && plan.priceCop > 0;
+              const displayPrice = showCop
+                ? (copAvailable ? `$${plan.priceCop!.toLocaleString('es-CO')}` : '—')
+                : `$${plan.price}`;
+              const displayCurrency = showCop ? 'COP' : 'USD';
 
               return (
                 <div
@@ -127,10 +176,10 @@ export default function PatientPlansPage() {
                         {plan.description}
                       </p>
                     </div>
-                    <span className="text-lg font-bold text-primary-700 shrink-0">
-                      ${plan.price}
+                    <span className="text-lg font-bold text-primary-700 shrink-0 text-right">
+                      {displayPrice}
                       <span className="text-xs font-normal text-neutral-400">
-                        /mes
+                        {' '}{displayCurrency}/mes
                       </span>
                     </span>
                   </div>
@@ -172,9 +221,14 @@ export default function PatientPlansPage() {
                       <button
                         type="button"
                         onClick={() => handleSubscribe(plan.id)}
-                        className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition"
+                        disabled={showCop && !copAvailable && plan.price > 0}
+                        className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        {plan.price === 0 ? "Cambiar a este plan" : `Contratar por $${plan.price}/mes`}
+                        {plan.price === 0
+                          ? "Cambiar a este plan"
+                          : showCop && !copAvailable
+                            ? "No disponible en COP"
+                            : `Contratar por ${displayPrice} ${displayCurrency}/mes`}
                       </button>
                     )}
                   </div>

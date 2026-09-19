@@ -62,6 +62,10 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/stripe/webhook")
                         .permitAll()
+                        // Webhook de Wompi (server-to-server): sin autenticación JWT;
+                        // la autenticidad se valida con el checksum X-Event-Checksum.
+                        .requestMatchers("/wompi/webhook")
+                        .permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info")
                         .permitAll()
                         .requestMatchers("/actuator/**")

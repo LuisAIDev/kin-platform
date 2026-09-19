@@ -6,6 +6,7 @@ import {
   physicianPlansService,
   type PhysicianPlan,
 } from "@/services/physicianPlans";
+import { api } from "@/services/api";
 
 export default function PhysicianPlansPage() {
   const searchParams = useSearchParams();
@@ -16,6 +17,7 @@ export default function PhysicianPlansPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [banner, setBanner] = useState<"success" | "canceled" | null>(null);
+  const [gateway, setGateway] = useState<'WOMPI' | 'STRIPE'>('WOMPI'); // Default para Colombia
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -62,7 +64,15 @@ export default function PhysicianPlansPage() {
   const handleSubscribe = async (planId: string) => {
     setError("");
     try {
-      const session = await physicianPlansService.createCheckoutSession(planId);
+      const endpoint = gateway === 'WOMPI'
+        ? '/wompi/create-checkout-session'
+        : '/stripe/create-checkout-session';
+
+      const session = await api.post<{ sessionId: string; url: string }>(endpoint, {
+        planId,
+        successUrl: window.location.origin + '/dashboard/physician/plans?success=true',
+        cancelUrl: window.location.href,
+      });
       window.location.href = session.url;
     } catch (err) {
       setError((err as Error).message);
@@ -109,6 +119,39 @@ export default function PhysicianPlansPage() {
           </p>
         )}
 
+        {/* Selector de pasarela de pago */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-neutral-700 mb-2">
+            Método de pago
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setGateway('WOMPI')}
+              className={`p-3 rounded-lg border-2 transition ${
+                gateway === 'WOMPI'
+                  ? 'border-medical-500 bg-medical-50'
+                  : 'border-neutral-200 hover:border-neutral-300'
+              }`}
+            >
+              <p className="font-semibold">PSE, Nequi, Tarjetas</p>
+              <p className="text-xs text-neutral-500">Para Colombia (COP)</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setGateway('STRIPE')}
+              className={`p-3 rounded-lg border-2 transition ${
+                gateway === 'STRIPE'
+                  ? 'border-medical-500 bg-medical-50'
+                  : 'border-neutral-200 hover:border-neutral-300'
+              }`}
+            >
+              <p className="font-semibold">Tarjetas Internacionales</p>
+              <p className="text-xs text-neutral-500">Para otros países (USD)</p>
+            </button>
+          </div>
+        </div>
+
         {loading ? (
           <p className="text-sm text-neutral-500">Cargando planes...</p>
         ) : plans.length === 0 ? (
@@ -120,6 +163,13 @@ export default function PhysicianPlansPage() {
             {plans.map((plan) => {
               const isCurrent = currentPlanCode === plan.code;
               const isHighlighted = highlightCode === plan.code;
+              const showCop = gateway === 'WOMPI';
+              const copAvailable = plan.priceCop != null && plan.priceCop > 0;
+              const displayPrice = showCop
+                ? (copAvailable ? `$${plan.priceCop!.toLocaleString('es-CO')}` : '—')
+                : `$${plan.price}`;
+              const displayCurrency = showCop ? 'COP' : 'USD';
+              const canPay = plan.price > 0 && paidPlan?.id === plan.id && (!showCop || copAvailable);
               return (
                 <div
                   key={plan.id}
@@ -140,10 +190,10 @@ export default function PhysicianPlansPage() {
                         {plan.description}
                       </p>
                     </div>
-                    <span className="text-lg font-bold text-primary-700 shrink-0">
-                      ${plan.price}
+                    <span className="text-lg font-bold text-primary-700 shrink-0 text-right">
+                      {displayPrice}
                       <span className="text-xs font-normal text-neutral-400">
-                        /mes
+                        {' '}{displayCurrency}/mes
                       </span>
                     </span>
                   </div>
@@ -174,12 +224,14 @@ export default function PhysicianPlansPage() {
                       <button
                         type="button"
                         onClick={() => handleSubscribe(plan.id)}
-                        disabled={plan.price <= 0 || paidPlan?.id !== plan.id}
+                        disabled={!canPay}
                         className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        {plan.price > 0
-                          ? `Contratar por $${plan.price}/mes`
-                          : "Sin costo inicial"}
+                        {plan.price <= 0
+                          ? "Sin costo inicial"
+                          : showCop && !copAvailable
+                            ? "No disponible en COP"
+                            : `Contratar por ${displayPrice} ${displayCurrency}/mes`}
                       </button>
                     )}
                   </div>
@@ -190,9 +242,10 @@ export default function PhysicianPlansPage() {
         )}
 
         <p className="text-xs text-neutral-400">
-          Los pagos se procesan de forma segura a través de Stripe. Al contratar
-          el plan Profesional obtienes hasta 100 pacientes propios y acceso
-          completo a triajes e historial.
+          Los pagos se procesan de forma segura a través de Stripe (internacional)
+          o Wompi (PSE, Nequi, tarjetas en Colombia). Al contratar el plan
+          Profesional obtienes hasta 100 pacientes propios y acceso completo a
+          triajes e historial.
         </p>
       </div>
     </main>

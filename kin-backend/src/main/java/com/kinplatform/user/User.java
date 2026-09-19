@@ -127,6 +127,10 @@ public class User {
     @Column(name = "last_login_at")
     private OffsetDateTime lastLoginAt;
 
+    @Column(name = "preferred_payment_gateway", length = 20)
+    @Builder.Default
+    private String preferredPaymentGateway = "STRIPE";
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 

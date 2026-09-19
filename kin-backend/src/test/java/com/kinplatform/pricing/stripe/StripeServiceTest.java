@@ -6,17 +6,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.kinplatform.payment.SubscriptionActivationService;
 import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.PricingPlanRepository;
-import com.kinplatform.pricing.SubscriptionStatus;
 import com.kinplatform.pricing.SupportLevel;
-import com.kinplatform.pricing.UserSubscription;
 import com.kinplatform.pricing.UserSubscriptionRepository;
 import com.kinplatform.pricing.ViabilityScoringDetail;
 import com.kinplatform.user.User;
@@ -60,12 +60,15 @@ class StripeServiceTest {
     @Mock
     private StripeWebhookEventRepository webhookEventRepository;
 
+    @Mock
+    private SubscriptionActivationService activationService;
+
     private StripeService stripeService;
 
     @BeforeEach
     void setUp() {
-        stripeService =
-                new StripeService(planRepository, userRepository, subscriptionRepository, webhookEventRepository);
+        stripeService = new StripeService(
+                planRepository, userRepository, subscriptionRepository, webhookEventRepository, activationService);
         ReflectionTestUtils.setField(stripeService, "webhookSecret", "whsec_test");
     }
 
@@ -191,20 +194,13 @@ class StripeServiceTest {
         var session = mock(Session.class);
         when(session.getClientReferenceId()).thenReturn(USER_ID.toString());
         when(session.getMetadata()).thenReturn(Map.of("plan_id", PLAN_ID.toString()));
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
-        when(planRepository.findById(PLAN_ID)).thenReturn(Optional.of(plan(true)));
-        when(subscriptionRepository.findByUserIdAndStatus(USER_ID, SubscriptionStatus.ACTIVE))
-                .thenReturn(Optional.empty());
-        when(subscriptionRepository.save(any(UserSubscription.class))).thenAnswer(i -> i.getArgument(0));
-        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
         try (MockedStatic<Session> mocked = mockStatic(Session.class)) {
             mocked.when(() -> Session.retrieve("cs_completed")).thenReturn(session);
 
             stripeService.handleCheckoutCompleted("cs_completed");
 
-            verify(subscriptionRepository).save(any(UserSubscription.class));
-            verify(userRepository).save(any(User.class));
+            verify(activationService).activateNew(USER_ID, PLAN_ID);
         }
     }
 
@@ -213,10 +209,9 @@ class StripeServiceTest {
         var session = mock(Session.class);
         when(session.getClientReferenceId()).thenReturn(USER_ID.toString());
         when(session.getMetadata()).thenReturn(Map.of("plan_id", PLAN_ID.toString()));
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
-        when(planRepository.findById(PLAN_ID)).thenReturn(Optional.of(plan(true)));
-        when(subscriptionRepository.findByUserIdAndStatus(USER_ID, SubscriptionStatus.ACTIVE))
-                .thenReturn(Optional.of(mock(UserSubscription.class)));
+        doThrow(new IllegalArgumentException("User already has an active subscription"))
+                .when(activationService)
+                .activateNew(USER_ID, PLAN_ID);
 
         try (MockedStatic<Session> mocked = mockStatic(Session.class)) {
             mocked.when(() -> Session.retrieve("cs_dup")).thenReturn(session);
@@ -239,12 +234,6 @@ class StripeServiceTest {
         when(event.getType()).thenReturn("checkout.session.completed");
         when(event.getDataObjectDeserializer()).thenReturn(deserializer);
         when(webhookEventRepository.saveAndFlush(any(StripeWebhookEvent.class))).thenAnswer(i -> i.getArgument(0));
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
-        when(planRepository.findById(PLAN_ID)).thenReturn(Optional.of(plan(true)));
-        when(subscriptionRepository.findByUserIdAndStatus(USER_ID, SubscriptionStatus.ACTIVE))
-                .thenReturn(Optional.empty());
-        when(subscriptionRepository.save(any(UserSubscription.class))).thenAnswer(i -> i.getArgument(0));
-        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
         try (MockedStatic<Session> mocked = mockStatic(Session.class)) {
             mocked.when(() -> Session.retrieve("cs_wh")).thenReturn(session);
