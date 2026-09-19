@@ -129,8 +129,16 @@ public class DocumentController {
 
     @DeleteMapping("/{documentId}")
     public ResponseEntity<Void> delete(Authentication authentication, @PathVariable UUID documentId) {
-        UUID userId = AuthenticatedUsers.require(userRepository, authentication).getId();
-        documentService.deleteDocument(documentId, userId);
+        User user = AuthenticatedUsers.require(userRepository, authentication);
+        UUID userId = user.getId();
+
+        // Paciente: soft delete (oculta de su vista)
+        if (user.getRole() != UserRole.PHYSICIAN && user.getRole() != UserRole.ADMIN) {
+            documentService.hideFromPatient(documentId, userId);
+        } else {
+            // Médico/ADMIN: hard delete (solo para documentos que subió)
+            documentService.deleteDocument(documentId, userId);
+        }
         return ResponseEntity.noContent().build();
     }
 

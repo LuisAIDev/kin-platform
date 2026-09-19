@@ -56,11 +56,11 @@ public class JpaClinicalDocumentRepository implements ClinicalDocumentRepository
 
     @Override
     @Transactional(readOnly = true)
-    public List<ClinicalDocument> findActiveByPatientId(UUID patientId) {
+    public List<ClinicalDocument> findVisibleByPatientId(UUID patientId) {
         if (patientId == null) {
             return List.of();
         }
-        return repository.findByPatientIdAndStatusOrderByUploadedAtDesc(patientId, DocumentStatus.ACTIVE).stream()
+        return repository.findVisibleByPatientId(patientId).stream()
                 .map(JpaClinicalDocumentRepository::toDomain)
                 .toList();
     }
@@ -92,11 +92,11 @@ public class JpaClinicalDocumentRepository implements ClinicalDocumentRepository
 
     @Override
     @Transactional(readOnly = true)
-    public long countActiveByPatientId(UUID patientId) {
+    public long countVisibleByPatientId(UUID patientId) {
         if (patientId == null) {
             return 0;
         }
-        return repository.countByPatientIdAndStatus(patientId, DocumentStatus.ACTIVE);
+        return repository.countVisibleByPatientId(patientId);
     }
 
     private static ClinicalDocument toDomain(ClinicalDocumentEntity e) {

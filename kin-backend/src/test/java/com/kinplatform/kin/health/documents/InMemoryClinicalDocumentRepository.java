@@ -28,9 +28,9 @@ public class InMemoryClinicalDocumentRepository implements ClinicalDocumentRepos
     }
 
     @Override
-    public List<ClinicalDocument> findActiveByPatientId(UUID patientId) {
+    public List<ClinicalDocument> findVisibleByPatientId(UUID patientId) {
         return documents.values().stream()
-                .filter(d -> d.patientId().equals(patientId) && d.isActive())
+                .filter(d -> d.patientId().equals(patientId) && d.isVisibleToPatient())
                 .sorted(Comparator.comparing(ClinicalDocument::uploadedAt).reversed())
                 .toList();
     }
@@ -52,9 +52,9 @@ public class InMemoryClinicalDocumentRepository implements ClinicalDocumentRepos
     }
 
     @Override
-    public long countActiveByPatientId(UUID patientId) {
+    public long countVisibleByPatientId(UUID patientId) {
         return documents.values().stream()
-                .filter(d -> d.patientId().equals(patientId) && d.isActive())
+                .filter(d -> d.patientId().equals(patientId) && d.isVisibleToPatient())
                 .count();
     }
 

@@ -99,4 +99,16 @@ public record ClinicalDocument(
                 id, fileName, fileSize, mimeType, storageKey, uploadedBy, patientId, physicianId,
                 description, DocumentStatus.DELETED, uploadedAt, createdAt, extractedText);
     }
+
+    /** Oculta el documento de la vista del paciente (soft delete real). */
+    public ClinicalDocument hidden() {
+        return new ClinicalDocument(
+                id, fileName, fileSize, mimeType, storageKey, uploadedBy, patientId, physicianId,
+                description, DocumentStatus.HIDDEN_FROM_PATIENT, uploadedAt, createdAt, extractedText);
+    }
+
+    /** {@code true} si el documento es visible para el paciente. */
+    public boolean isVisibleToPatient() {
+        return status == DocumentStatus.ACTIVE || status == DocumentStatus.ARCHIVED;
+    }
 }

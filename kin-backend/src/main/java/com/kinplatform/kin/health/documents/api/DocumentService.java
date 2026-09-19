@@ -196,7 +196,7 @@ public class DocumentService {
         if (patientId == null) {
             return List.of();
         }
-        return documentRepository.findActiveByPatientId(patientId);
+        return documentRepository.findVisibleByPatientId(patientId);
     }
 
     /** Resultado de una descarga (bytes + metadatos). */
@@ -234,13 +234,54 @@ public class DocumentService {
         log.info("DocumentService: documento {} eliminado por {}", documentId, userId);
     }
 
-    /** Contador de documentos activos del paciente (badge de notificaciones). */
+    /**
+     * Oculta un documento de la vista del paciente (soft delete real).
+     * El paciente dueño puede ocultar cualquier documento asociado a su perfil.
+     * NO borra el archivo del storage, NO marca como DELETED.
+     * Solo cambia status a HIDDEN_FROM_PATIENT.
+     */
+    @Transactional
+    public void hideFromPatient(UUID documentId, UUID userId) {
+        requireEnabled();
+        ClinicalDocument document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new DocumentNotFoundException(documentId));
+
+        // Validar ownership: solo el paciente dueño puede ocultar sus documentos
+        if (!document.patientId().equals(userId)) {
+            throw new DocumentAccessDeniedException("No puedes ocultar documentos que no son tuyos");
+        }
+
+        // Validar estado actual
+        if (document.status() == DocumentStatus.HIDDEN_FROM_PATIENT) {
+            return; // idempotente
+        }
+        if (document.status() == DocumentStatus.DELETED) {
+            throw new IllegalStateException("El documento ya fue eliminado permanentemente");
+        }
+
+        // Soft delete: NO borra storage, NO marca DELETED
+        ClinicalDocument hidden = document.hidden();
+        documentRepository.save(hidden);
+
+        log.info("Documento {} oculto para paciente {}", documentId, userId);
+    }
+
+    /** Contador de documentos visibles del paciente (badge de notificaciones). */
     @Transactional(readOnly = true)
-    public long activeDocumentCountForPatient(UUID patientId) {
+    public long visibleDocumentCountForPatient(UUID patientId) {
         if (!properties.isEnabled() || patientId == null) {
             return 0;
         }
-        return documentRepository.countActiveByPatientId(patientId);
+        return documentRepository.countVisibleByPatientId(patientId);
+    }
+
+    /**
+     * @deprecated Usar visibleDocumentCountForPatient. Se mantiene para compatibilidad.
+     */
+    @Deprecated
+    @Transactional(readOnly = true)
+    public long activeDocumentCountForPatient(UUID patientId) {
+        return visibleDocumentCountForPatient(patientId);
     }
 
     private ClinicalDocument requireActiveDocument(UUID documentId) {

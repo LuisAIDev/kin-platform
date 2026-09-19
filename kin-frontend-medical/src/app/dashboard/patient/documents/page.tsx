@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import DocumentChatPanel from "@/components/health/documents/DocumentChatPanel";
 import { documentsService, type ClinicalDocument } from "@/services/documents";
-import { Camera } from "lucide-react";
+import { Camera, Trash2 } from "lucide-react";
 
 const ALLOWED_EXTENSIONS = ["pdf", "docx", "xlsx", "txt", "csv", "jpg", "jpeg", "png", "heic", "webp"];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -98,6 +98,16 @@ export default function PatientDocumentsPage() {
   };
 
   const handleDelete = async (documentId: string) => {
+    const confirmed = confirm(
+      "¿Eliminar este documento de tu Centro de Documentos?\n\n" +
+        "• Se ocultará de TU vista.\n" +
+        "• Seguirá disponible para TU MÉDICO y auditoría médica.\n" +
+        "• El archivo se conserva cifrado.\n\n" +
+        "¿Continuar?"
+    );
+
+    if (!confirmed) return;
+
     setError("");
     setMessage("");
     try {
@@ -256,18 +266,18 @@ export default function PatientDocumentsPage() {
                       >
                         Descargar
                       </a>
-                      {d.physicianId === null && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(d.id);
-                          }}
-                          className="rounded-lg border border-red-200 text-red-700 px-2.5 py-1 text-xs font-medium hover:bg-red-50 transition"
-                        >
-                          Eliminar
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(d.id);
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition"
+                        aria-label="Eliminar este documento de mi centro"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Eliminar
+                      </button>
                     </div>
                   </button>
                 ))}

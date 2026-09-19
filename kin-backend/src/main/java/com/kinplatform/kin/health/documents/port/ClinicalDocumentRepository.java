@@ -14,8 +14,8 @@ public interface ClinicalDocumentRepository {
 
     Optional<ClinicalDocument> findById(UUID id);
 
-    /** Documentos activos de un paciente (vista del paciente). */
-    List<ClinicalDocument> findActiveByPatientId(UUID patientId);
+    /** Documentos visibles para el paciente (excluye HIDDEN_FROM_PATIENT y DELETED). */
+    List<ClinicalDocument> findVisibleByPatientId(UUID patientId);
 
     /** Documentos activos de los pacientes de un médico (vista del médico). */
     List<ClinicalDocument> findActiveByPhysicianId(UUID physicianId);
@@ -23,6 +23,6 @@ public interface ClinicalDocumentRepository {
     /** Documentos activos de un paciente creados por un médico (vista del médico por paciente). */
     List<ClinicalDocument> findActiveByPatientIdAndPhysicianId(UUID patientId, UUID physicianId);
 
-    /** Contador de documentos activos de un paciente (badge de notificaciones). */
-    long countActiveByPatientId(UUID patientId);
+    /** Contador de documentos visibles de un paciente (badge de notificaciones). */
+    long countVisibleByPatientId(UUID patientId);
 }

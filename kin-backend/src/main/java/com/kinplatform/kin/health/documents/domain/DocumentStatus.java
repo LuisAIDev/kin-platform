@@ -6,5 +6,6 @@ package com.kinplatform.kin.health.documents.domain;
 public enum DocumentStatus {
     ACTIVE,
     ARCHIVED,
+    HIDDEN_FROM_PATIENT,
     DELETED
 }

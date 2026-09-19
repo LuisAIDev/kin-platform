@@ -20,6 +20,17 @@ public interface ClinicalDocumentJpaRepository extends JpaRepository<ClinicalDoc
 
     long countByPatientIdAndStatus(UUID patientId, DocumentStatus status);
 
+    @Query("SELECT d FROM ClinicalDocumentEntity d " +
+           "WHERE d.patientId = :patientId " +
+           "AND d.status IN ('ACTIVE', 'ARCHIVED') " +
+           "ORDER BY d.createdAt DESC")
+    List<ClinicalDocumentEntity> findVisibleByPatientId(@org.springframework.data.repository.query.Param("patientId") UUID patientId);
+
+    @Query("SELECT COUNT(d) FROM ClinicalDocumentEntity d " +
+           "WHERE d.patientId = :patientId " +
+           "AND d.status IN ('ACTIVE', 'ARCHIVED')")
+    long countVisibleByPatientId(@org.springframework.data.repository.query.Param("patientId") UUID patientId);
+
     @Query("SELECT COALESCE(SUM(e.fileSize), 0) FROM ClinicalDocumentEntity e WHERE e.patientId = :userId AND e.status = :status")
     long sumFileSizeByUserIdAndStatus(UUID userId, DocumentStatus status);
 }
