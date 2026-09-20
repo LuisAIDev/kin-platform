@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   patientPlansService,
   type PatientPlan,
@@ -17,6 +17,19 @@ export default function PatientPlansPage() {
   const [banner, setBanner] = useState<"success" | "canceled" | null>(null);
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [gateway, setGateway] = useState<'WOMPI' | 'STRIPE'>('WOMPI');
+  const gatewaySelectedManually = useRef(false);
+
+  // Autodetección de pasarela al cargar. /auth/me no expone `country`, así que
+  // se usa el idioma del navegador (es* -> Colombia/COP por defecto). Si el
+  // usuario elige manualmente, se respeta su elección.
+  useEffect(() => {
+    if (gatewaySelectedManually.current) return;
+    const lang =
+      typeof navigator !== 'undefined' && navigator.language
+        ? navigator.language.toLowerCase()
+        : 'es-co';
+    setGateway(lang.startsWith('es') ? 'WOMPI' : 'STRIPE');
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -111,6 +124,14 @@ export default function PatientPlansPage() {
           </p>
         )}
 
+        {/* El plan y sus beneficios no dependen de la pasarela: solo la moneda */}
+        <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+          <p className="text-sm text-blue-900">
+            <strong>Elige cómo prefieres pagar.</strong> El plan y sus beneficios
+            son los mismos en ambas opciones. Solo cambia la moneda.
+          </p>
+        </div>
+
         {/* Selector de pasarela de pago */}
         <div>
           <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -119,27 +140,33 @@ export default function PatientPlansPage() {
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => setGateway('WOMPI')}
+              onClick={() => {
+                gatewaySelectedManually.current = true;
+                setGateway('WOMPI');
+              }}
               className={`p-3 rounded-lg border-2 transition ${
                 gateway === 'WOMPI'
                   ? 'border-medical-500 bg-medical-50'
                   : 'border-neutral-200 hover:border-neutral-300'
               }`}
             >
-              <p className="font-semibold">PSE, Nequi, Tarjetas</p>
-              <p className="text-xs text-neutral-500">Para Colombia (COP)</p>
+              <p className="font-semibold text-sm">🇨🇴 Colombia</p>
+              <p className="text-xs text-neutral-500">PSE, Nequi, Tarjetas (COP)</p>
             </button>
             <button
               type="button"
-              onClick={() => setGateway('STRIPE')}
+              onClick={() => {
+                gatewaySelectedManually.current = true;
+                setGateway('STRIPE');
+              }}
               className={`p-3 rounded-lg border-2 transition ${
                 gateway === 'STRIPE'
                   ? 'border-medical-500 bg-medical-50'
                   : 'border-neutral-200 hover:border-neutral-300'
               }`}
             >
-              <p className="font-semibold">Tarjetas Internacionales</p>
-              <p className="text-xs text-neutral-500">Para otros países (USD)</p>
+              <p className="font-semibold text-sm">🌎 Internacional</p>
+              <p className="text-xs text-neutral-500">Tarjetas (USD)</p>
             </button>
           </div>
         </div>
@@ -176,12 +203,21 @@ export default function PatientPlansPage() {
                         {plan.description}
                       </p>
                     </div>
-                    <span className="text-lg font-bold text-primary-700 shrink-0 text-right">
-                      {displayPrice}
-                      <span className="text-xs font-normal text-neutral-400">
-                        {' '}{displayCurrency}/mes
-                      </span>
-                    </span>
+                    <div className="shrink-0 text-right">
+                      <p className="text-lg font-bold text-primary-700">
+                        {displayPrice}
+                        <span className="text-xs font-normal text-neutral-400">
+                          {' '}{displayCurrency}/mes
+                        </span>
+                      </p>
+                      {plan.price > 0 && (showCop || copAvailable) && (
+                        <p className="text-xs text-neutral-500 mt-1">
+                          {showCop
+                            ? `También disponible en USD: $${plan.price}/mes`
+                            : `También disponible en COP: $${plan.priceCop!.toLocaleString('es-CO')}/mes`}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   <ul className="flex flex-col gap-1.5 text-sm text-neutral-600">
@@ -239,7 +275,9 @@ export default function PatientPlansPage() {
         )}
 
         <p className="text-xs text-neutral-400">
-          Los pagos se procesan de forma segura a través de Stripe.
+          Los pagos se procesan de forma segura a través de <strong>Wompi</strong>{' '}
+          (Colombia: PSE, Nequi, tarjetas) o <strong>Stripe</strong>{' '}
+          (internacional: tarjetas).
         </p>
       </div>
     </main>
