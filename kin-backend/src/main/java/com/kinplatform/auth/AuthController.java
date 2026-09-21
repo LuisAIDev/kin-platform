@@ -11,6 +11,7 @@ import com.kinplatform.auth.dto.ResetPasswordRequest;
 import com.kinplatform.auth.dto.UserDTO;
 import com.kinplatform.auth.password.PasswordResetService;
 import com.kinplatform.auth.verification.VerifyEmailOutcome;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.Map;
@@ -103,10 +104,20 @@ public class AuthController {
     }
 
     @GetMapping("/verify-email")
-    public ResponseEntity<Map<String, String>> verifyEmailGet(@RequestParam("token") String token) {
+    public ResponseEntity<Map<String, String>> verifyEmailGet(
+            @RequestParam(value = "token", required = false) String token,
+            HttpServletRequest request) {
+        
+        String referer = request.getHeader("Referer");
+        String queryString = request.getQueryString();
+        
         if (token == null || token.isBlank()) {
+            log.warn("GET /auth/verify-email SIN token — referer: {}, query: {}", referer, queryString);
             return ResponseEntity.badRequest().body(Map.of("error", "Token requerido"));
         }
+        
+        log.info("GET /auth/verify-email CON token — referer: {}", referer);
+        
         var outcome = authService.validateOnly(token);  // NO consume el token
         if (outcome == VerifyEmailOutcome.SUCCESS) {
             return ResponseEntity.ok(Map.of("valid", "true"));

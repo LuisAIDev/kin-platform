@@ -78,7 +78,7 @@ export default function PhysicianRegisterForm() {
           return;
         default:
           // NEW_REGISTRATION (o estado desconocido): se envió correo de verificación.
-          router.push(`/verify-email?email=${encodeURIComponent(email)}&pending=1`);
+          router.push(`/auth/check-email?email=${encodeURIComponent(email)}&pending=1`);
       }
     } finally {
       setLoading(false);

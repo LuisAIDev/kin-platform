@@ -42,7 +42,7 @@ export default function PatientRegisterForm() {
         setError(result.error);
         return;
       }
-      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+      router.push(`/auth/check-email?email=${encodeURIComponent(email)}`);
     } finally {
       setLoading(false);
     }
