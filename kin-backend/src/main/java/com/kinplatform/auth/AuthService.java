@@ -42,6 +42,9 @@ public interface AuthService {
     /** Verifica un token de correo. Devuelve el desenlace (éxito, inválido, expirado o ya usado). */
     VerifyEmailOutcome verifyEmail(String token);
 
+    /** Valida un token SIN consumirlo. Usado por GET para verificar validez sin marcar used_at. */
+    VerifyEmailOutcome validateOnly(String token);
+
     /**
      * Reenvía el correo de verificación y devuelve el resultado real
      * (SENT/ALREADY_VERIFIED/COOLDOWN/NO_ACCOUNT) para que la UI no afirme

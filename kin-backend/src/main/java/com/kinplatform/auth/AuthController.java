@@ -107,11 +107,9 @@ public class AuthController {
         if (token == null || token.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Token requerido"));
         }
-        var outcome = authService.verifyEmail(token);
-        // Con la idempotencia Capa 2: si el token ya fue usado pero email verificado,
-        // devuelve SUCCESS en lugar de error. Si no, retorna el resultado normal.
+        var outcome = authService.validateOnly(token);  // NO consume el token
         if (outcome == VerifyEmailOutcome.SUCCESS) {
-            return ResponseEntity.ok(Map.of("valid", "true", "message", "Correo verificado correctamente"));
+            return ResponseEntity.ok(Map.of("valid", "true"));
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of(

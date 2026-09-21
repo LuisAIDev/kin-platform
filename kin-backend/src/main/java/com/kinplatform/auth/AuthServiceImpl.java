@@ -365,6 +365,12 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public VerifyEmailOutcome validateOnly(String token) {
+        return tokenService.validateOnly(token);
+    }
+
+    @Override
     @Transactional
     public ResendVerificationStatus resendVerification(String email) {
         if (email == null || email.isBlank()) {

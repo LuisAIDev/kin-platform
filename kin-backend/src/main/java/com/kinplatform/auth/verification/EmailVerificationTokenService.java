@@ -103,6 +103,39 @@ public class EmailVerificationTokenService {
         return VerifyEmailOutcome.SUCCESS;
     }
 
+    /**
+     * Valida un token SIN consumirlo (no marca used_at).
+     * Usado por GET /verify-email para verificar si el token es válido
+     * sin ejecutar la verificación real.
+     */
+    public VerifyEmailOutcome validateOnly(String token) {
+        if (token == null || token.isBlank()) {
+            return VerifyEmailOutcome.INVALID;
+        }
+        var entity = tokenRepository.findByTokenHash(hash(token)).orElse(null);
+        if (entity == null) {
+            return VerifyEmailOutcome.INVALID;
+        }
+
+        // IDEMPOTENCIA: Si el token ya fue usado pero el email del usuario
+        // YA está verificado (ej. por un escáner de email), devolver SUCCESS
+        // en lugar de mostrar error al usuario final.
+        if (entity.getUsedAt() != null) {
+            var user = userRepository.findById(entity.getUserId()).orElse(null);
+            if (user != null && Boolean.TRUE.equals(user.getEmailVerified())) {
+                return VerifyEmailOutcome.SUCCESS;
+            }
+            return VerifyEmailOutcome.ALREADY_USED;
+        }
+
+        if (entity.getExpiresAt().isBefore(OffsetDateTime.now())) {
+            return VerifyEmailOutcome.EXPIRED;
+        }
+
+        // Token válido, NO consumido. Sin save(), sin marcar used_at.
+        return VerifyEmailOutcome.SUCCESS;
+    }
+
     private void invalidatePrevious(UUID userId) {
         tokenRepository.markAllUsedForUser(userId, OffsetDateTime.now());
     }
