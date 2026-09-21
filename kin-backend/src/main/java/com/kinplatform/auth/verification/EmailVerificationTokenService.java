@@ -72,9 +72,18 @@ public class EmailVerificationTokenService {
         if (entity == null) {
             return VerifyEmailOutcome.INVALID;
         }
+
+        // IDEMPOTENCIA: Si el token ya fue usado pero el email del usuario
+        // YA está verificado (ej. por un escáner de email), devolver SUCCESS
+        // en lugar de mostrar error al usuario final.
         if (entity.getUsedAt() != null) {
+            var user = userRepository.findById(entity.getUserId()).orElse(null);
+            if (user != null && Boolean.TRUE.equals(user.getEmailVerified())) {
+                return VerifyEmailOutcome.SUCCESS;
+            }
             return VerifyEmailOutcome.ALREADY_USED;
         }
+
         if (entity.getExpiresAt().isBefore(OffsetDateTime.now())) {
             return VerifyEmailOutcome.EXPIRED;
         }

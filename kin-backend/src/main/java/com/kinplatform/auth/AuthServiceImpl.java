@@ -387,7 +387,7 @@ public class AuthServiceImpl implements AuthService {
 
     private void sendVerification(User user) {
         String token = tokenService.createForUser(user);
-        String link = baseUrl() + "/verify-email?token=" + token;
+        String link = baseUrl() + "/verify-email/confirm?token=" + token;
         emailSender.sendVerificationEmail(user.getEmail(), user.getFullName(), link);
     }
 

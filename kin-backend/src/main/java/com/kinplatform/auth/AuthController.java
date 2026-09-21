@@ -103,15 +103,38 @@ public class AuthController {
     }
 
     @GetMapping("/verify-email")
-    public ResponseEntity<Map<String, String>> verifyEmail(@RequestParam("token") String token) {
+    public ResponseEntity<Map<String, String>> verifyEmailGet(@RequestParam("token") String token) {
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Token requerido"));
+        }
         var outcome = authService.verifyEmail(token);
+        // Con la idempotencia Capa 2: si el token ya fue usado pero email verificado,
+        // devuelve SUCCESS en lugar de error. Si no, retorna el resultado normal.
         if (outcome == VerifyEmailOutcome.SUCCESS) {
-            return ResponseEntity.ok(Map.of("message", "Correo verificado correctamente. Ya puedes iniciar sesión."));
+            return ResponseEntity.ok(Map.of("valid", "true", "message", "Correo verificado correctamente"));
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of(
                         "error", messageFor(outcome),
                         "code", outcome.name()));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<Map<String, String>> verifyEmailPost(@RequestBody Map<String, String> body) {
+        String token = body.get("token");
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Token requerido"));
+        }
+        var outcome = authService.verifyEmail(token);
+        return switch (outcome) {
+            case SUCCESS -> ResponseEntity.ok(Map.of("success", "true"));
+            case ALREADY_USED -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "El enlace ya fue utilizado"));
+            case EXPIRED -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "El enlace ha expirado"));
+            case INVALID -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Token inválido"));
+        };
     }
 
     @PostMapping("/resend-verification")
