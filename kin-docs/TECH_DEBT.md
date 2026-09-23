@@ -217,6 +217,18 @@ columna materializada + trigger.
 
 ---
 
+## Bug Crítico Resuelto (2026-09-23)
+
+### Doble prefijo /api/v1 en billing controllers
+- **Detectado**: Día 9 por smoke test / auditoría.
+- **Causa**: `server.servlet.context-path=/api/v1` + `@RequestMapping("/api/v1/billing/...")` en los 6 controllers de billing. URL real: `/api/v1/api/v1/billing/...`.
+- **Impacto**: 100% de KIN Billing inoperable en producción (404 en todas las llamadas); el smoke test sin token lo enmascaraba (403 por `anyRequest().authenticated()`), y `SecurityConfig` con matchers `/api/v1/billing/**` no coincidía con el servlet-path real.
+- **Fix**: 6 controllers (`Contract`, `Authorization`, `FevRips`, `Glosa`, `Cartera`, `Dashboard`) sin prefijo `/api/v1`; `SecurityConfig` actualizado a `/billing/**`; 3 tests actualizados.
+- **Prevención**: `BillingEndpointPathTest` (valida que el mapping no lleva `/api/v1` y que el path duplicado da 404).
+- **Nota**: pendiente validar en producción con token (smoke test E2E).
+
+---
+
 *Last Updated: 2026-09-23*  
 *Owner: Backend Team*  
 *Next Review: Sprint Planning*
