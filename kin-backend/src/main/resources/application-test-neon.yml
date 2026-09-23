@@ -1,0 +1,81 @@
+# ============================================================
+# KIN Platform - TEST profile (Neon PostgreSQL)
+# ============================================================
+# Sustituye a H2 como base de test; apunta a Neon con esquema kin_test
+# Las credenciales llegan por variables de entorno; nunca se versionan.
+
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://ep-spring-dawn-ayhwgk7a-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&options=-csearch_path=kin_test}
+    username: ${DATABASE_USER:neondb_owner}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 20000
+  jpa:
+    database: POSTGRESQL
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: kin_test
+    default-schema: kin_test
+    baseline-on-migrate: true
+    baseline-version: 0
+    callbacks: true
+    mixed: true
+    out-of-order: false
+    validate-on-migrate: true
+    clean-disabled: false
+
+# Disable rate limiting for tests
+app:
+  rate-limit:
+    enabled: false
+
+# Disable external services for tests
+kin:
+  ai:
+    cost-control:
+      enabled: false
+  knowledge:
+    external-enabled: false
+  health:
+    triage:
+      enabled: false
+    differential:
+      enabled: false
+    dashboard:
+      enabled: false
+    physician:
+      enabled: false
+    telemedicine:
+      enabled: false
+    followup:
+      enabled: false
+    scheduling:
+      enabled: false
+    audit:
+      enabled: false
+    documents:
+      enabled: false
+    verification:
+      enabled: false
+  outbox:
+    relay:
+      enabled: false
+
+# Disable email for tests
+app:
+  mail:
+    enabled: false

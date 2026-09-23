@@ -370,6 +370,44 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <executions>
+                    <!-- Primera pasada: solo procesar anotaciones (genere código en target/generated-sources/annotations) -->
+                    <execution>
+                        <id>process-annotations</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <annotationProcessorPaths>
+                                <path>
+                                    <groupId>org.projectlombok</groupId>
+                                    <artifactId>lombok</artifactId>
+                                    <version>1.18.34</version>
+                                </path>
+                            </annotationProcessorPaths>
+                            <proc>only</proc>
+                            <parameters>true</parameters>
+                        </configuration>
+                    </execution>
+                    <!-- Segunda pasada: compilar normal usando código generado -->
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <proc>none</proc>
+                            <parameters>true</parameters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
                 <version>4.8.5.0</version>
