@@ -1,8 +1,11 @@
 package com.kinplatform.billing.rips.generator;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.billing.contract.EpsContract;
 import com.kinplatform.billing.contract.EpsContractRepository;
 import com.kinplatform.billing.contract.TariffCups;
+import com.kinplatform.billing.rips.RipsSerializationException;
 import com.kinplatform.billing.rips.model.RipsBatch;
 import com.kinplatform.billing.rips.model.RipsRecord;
 import com.kinplatform.billing.rips.model.AcRecord;
@@ -19,6 +22,7 @@ import java.util.UUID;
 public class AcGenerator implements RipsGenerator {
 
     private final EpsContractRepository contractRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     public RipsBatch.RipsType getType() {
@@ -98,11 +102,10 @@ public class AcGenerator implements RipsGenerator {
 
     private String buildAcJsonLine(Object encounter, EpsContract contract, RipsGenerationContext context, AcRecord ac) {
         try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            return mapper.writeValueAsString(ac);
-        } catch (Exception e) {
-            log.warn("Error serializando AC a JSON", e);
-            return "{}";
+            return objectMapper.writeValueAsString(ac);
+        } catch (JsonProcessingException e) {
+            log.error("Error CRITICO serializando AC a JSON: {}", e.getMessage(), e);
+            throw new RipsSerializationException("No se pudo serializar AC: " + e.getMessage(), e);
         }
     }
 }

@@ -138,6 +138,18 @@ public class SecurityConfig {
                         .hasAnyRole("PHYSICIAN", "ADMIN")
                         .requestMatchers("/medical/aiassist/**")
                         .hasAnyRole("PHYSICIAN", "PATIENT", "ADMIN")
+                        // Facturacion RIPS / FEV: solo personal de la IPS (back-office).
+                        // No existe rol IPS_* aun; se usa el fallback ADMIN/PHYSICIAN.
+                        .requestMatchers("/api/v1/billing/contracts/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers("/api/v1/billing/authorizations/**")
+                        .hasAnyRole("PHYSICIAN", "ADMIN")
+                        .requestMatchers("/api/v1/billing/fev-rips/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers("/api/v1/billing/rips/**")
+                        .hasAnyRole("PHYSICIAN", "ADMIN")
+                        .requestMatchers("/api/v1/billing/**")
+                        .hasAnyRole("PHYSICIAN", "ADMIN")
                         .requestMatchers("/error")
                         .permitAll()
                         .requestMatchers("/test/**")

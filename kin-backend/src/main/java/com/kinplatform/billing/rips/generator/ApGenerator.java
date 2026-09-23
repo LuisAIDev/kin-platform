@@ -1,10 +1,13 @@
 package com.kinplatform.billing.rips.generator;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.billing.contract.EpsContract;
 import com.kinplatform.billing.contract.EpsContractRepository;
 import com.kinplatform.billing.contract.TariffCups;
 import com.kinplatform.billing.authorization.Authorization;
 import com.kinplatform.billing.authorization.AuthorizationRepository;
+import com.kinplatform.billing.rips.RipsSerializationException;
 import com.kinplatform.billing.rips.model.RipsBatch;
 import com.kinplatform.billing.rips.model.RipsRecord;
 import com.kinplatform.billing.rips.model.ApRecord;
@@ -23,6 +26,7 @@ public class ApGenerator implements RipsGenerator {
 
     private final EpsContractRepository contractRepository;
     private final AuthorizationRepository authRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     public RipsBatch.RipsType getType() {
@@ -104,13 +108,11 @@ public class ApGenerator implements RipsGenerator {
     }
 
     private String buildApJsonLine(Object order, ApRecord ap) {
-        // Convert ApRecord to JSON string for RIPS line data
         try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            return mapper.writeValueAsString(ap);
-        } catch (Exception e) {
-            log.warn("Error serializando AP a JSON", e);
-            return "{}";
+            return objectMapper.writeValueAsString(ap);
+        } catch (JsonProcessingException e) {
+            log.error("Error CRITICO serializando AP a JSON: {}", e.getMessage(), e);
+            throw new RipsSerializationException("No se pudo serializar AP: " + e.getMessage(), e);
         }
     }
 }
