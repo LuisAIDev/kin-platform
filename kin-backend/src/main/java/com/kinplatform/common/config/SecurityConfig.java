@@ -141,7 +141,7 @@ public class SecurityConfig {
                         // Facturacion RIPS / FEV: solo personal de la IPS (back-office).
                         // No existe rol IPS_* aun; se usa el fallback ADMIN/PHYSICIAN.
                         .requestMatchers("/billing/contracts/**")
-                        .hasRole("ADMIN")
+                        .hasAnyRole("PHYSICIAN", "ADMIN")
                         .requestMatchers("/billing/authorizations/**")
                         .hasAnyRole("PHYSICIAN", "ADMIN")
                         .requestMatchers("/billing/fev-rips/**")

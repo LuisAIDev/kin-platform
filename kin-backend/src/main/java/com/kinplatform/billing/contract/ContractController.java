@@ -8,6 +8,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
@@ -22,22 +23,26 @@ public class ContractController {
     private final ContractService contractService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('PHYSICIAN', 'ADMIN')")
     public ResponseEntity<Page<EpsContract>> list(
             @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(contractService.findAll(pageable));
     }
 
     @GetMapping("/active")
+    @PreAuthorize("hasAnyRole('PHYSICIAN', 'ADMIN')")
     public ResponseEntity<List<EpsContract>> listActiveForBilling() {
         return ResponseEntity.ok(contractService.findActiveForBilling());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('PHYSICIAN', 'ADMIN')")
     public ResponseEntity<EpsContract> get(@PathVariable UUID id) {
         return ResponseEntity.ok(contractService.findById(id));
     }
 
     @GetMapping("/validate-nit/{nit}")
+    @PreAuthorize("hasAnyRole('PHYSICIAN', 'ADMIN')")
     public ResponseEntity<Void> validateNit(@PathVariable String nit) {
         boolean exists = contractService.contractRepository().existsByOrganizationIdAndEpsNit(
                 com.kinplatform.common.security.TenantContext.get(), nit.trim().toUpperCase());
@@ -48,6 +53,7 @@ public class ContractController {
     }
 
     @GetMapping("/{id}/tariffs/stats")
+    @PreAuthorize("hasAnyRole('PHYSICIAN', 'ADMIN')")
     public ResponseEntity<TariffStatsResponse> getTariffStats(@PathVariable UUID id) {
         contractService.findById(id);
         long count = contractService.tariffRepository().countByContractId(id);
@@ -55,23 +61,27 @@ public class ContractController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EpsContract> create(@Valid @RequestBody ContractService.CreateContractRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(contractService.create(request));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EpsContract> update(@PathVariable UUID id, @Valid @RequestBody ContractService.UpdateContractRequest request) {
         return ResponseEntity.ok(contractService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         contractService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping(value = "/{contractId}/tariffs/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TariffImportResult> importTariffs(
             @PathVariable UUID contractId,
             @RequestPart("file") MultipartFile file) throws IOException {
@@ -89,6 +99,7 @@ public class ContractController {
     }
 
     @GetMapping("/{contractId}/tariffs/template")
+    @PreAuthorize("hasAnyRole('PHYSICIAN', 'ADMIN')")
     public ResponseEntity<byte[]> downloadTemplate() {
         byte[] template = generateTemplate();
         return ResponseEntity.ok()

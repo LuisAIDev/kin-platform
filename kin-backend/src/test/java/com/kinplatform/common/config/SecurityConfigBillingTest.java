@@ -1,5 +1,8 @@
 package com.kinplatform.common.config;
 
+import com.kinplatform.billing.contract.ContractController;
+import com.kinplatform.billing.contract.ContractService;
+import com.kinplatform.billing.contract.EpsContract;
 import com.kinplatform.billing.fev.FevRipsController;
 import com.kinplatform.billing.fev.FevRipsInvoice;
 import com.kinplatform.billing.fev.FevRipsService;
@@ -15,6 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,10 +29,12 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = FevRipsController.class)
+@WebMvcTest(controllers = {FevRipsController.class, ContractController.class})
 @Import(SecurityConfig.class)
 class SecurityConfigBillingTest {
 
@@ -35,6 +43,9 @@ class SecurityConfigBillingTest {
 
     @MockBean
     private FevRipsService fevRipsService;
+
+    @MockBean
+    private ContractService contractService;
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -46,7 +57,9 @@ class SecurityConfigBillingTest {
     private SubscriptionAccessFilter subscriptionAccessFilter;
 
     @BeforeEach
-    void passThroughFilters() throws Exception {
+    void setUp() throws Exception {
+        when(contractService.findAll(any(Pageable.class))).thenReturn(Page.empty());
+        when(contractService.create(any())).thenReturn(EpsContract.builder().id(UUID.randomUUID()).build());
         passThrough(jwtAuthenticationFilter);
         passThrough(rateLimitingFilter);
         passThrough(subscriptionAccessFilter);
@@ -89,6 +102,38 @@ class SecurityConfigBillingTest {
     @Test
     void billing_anonymous_isForbidden() throws Exception {
         mockMvc.perform(get("/billing/fev-rips/{id}/status", UUID.randomUUID()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "PHYSICIAN")
+    void contractsGET_asPhysician_returns200() throws Exception {
+        mockMvc.perform(get("/billing/contracts"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "PHYSICIAN")
+    void contractsPOST_asPhysician_returns403() throws Exception {
+        mockMvc.perform(post("/billing/contracts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void contractsPOST_asAdmin_returns201() throws Exception {
+        mockMvc.perform(post("/billing/contracts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    @WithMockUser(roles = "PHYSICIAN")
+    void contractsDELETE_asPhysician_returns403() throws Exception {
+        mockMvc.perform(delete("/billing/contracts/{id}", UUID.randomUUID()))
                 .andExpect(status().isForbidden());
     }
 }
