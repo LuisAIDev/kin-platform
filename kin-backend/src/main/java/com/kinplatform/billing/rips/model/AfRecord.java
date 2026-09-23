@@ -1,7 +1,6 @@
 package com.kinplatform.billing.rips.model;
 
 import com.kinplatform.billing.contract.EpsContract;
-import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -12,66 +11,25 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
-@Table(name = "rips_af_records")
 public class AfRecord {
 
-    @Id @GeneratedValue
-    @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
-
-    @Column(name = "batch_id", nullable = false)
     private UUID batchId;
-
-    @Column(name = "sequence_number", nullable = false)
     private Integer sequenceNumber;
-
-    @Column(name = "source_entity_type", nullable = false, length = 30)
     private String sourceEntityType;
-
-    @Column(name = "source_entity_id", nullable = false)
     private UUID sourceEntityId;
-
-    @Column(name = "rips_line_data", nullable = false, columnDefinition = "jsonb")
     private String ripsLineData;
-
-    @Column(name = "validation_status", length = 20)
     private String validationStatus;
-
-    @Column(name = "validation_error", length = 2000)
     private String validationError;
-
-    @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
-
-    @Column(name = "codigo_prestador", length = 12)
     private String codigoPrestador;
-
-    @Column(name = "nit_eps", length = 20)
     private String nitEps;
-
-    @Column(name = "periodo_inicio")
     private LocalDate periodoInicio;
-
-    @Column(name = "periodo_fin")
     private LocalDate periodoFin;
-
-    @Column(name = "numero_factura", length = 20)
     private String numeroFactura;
-
-    @Column(name = "fecha_factura")
     private LocalDate fechaFactura;
-
-    @Column(name = "valor_total", precision = 14, scale = 2)
     private BigDecimal valorTotal;
-
-    @Column(name = "tipo_factura", length = 2)
     private String tipoFactura;
-
-    @PrePersist
-    protected void onCreate() {
-        if (createdAt == null) createdAt = OffsetDateTime.now();
-    }
 
     public static AfRecord fromContract(EpsContract contract,
                                         LocalDate periodStart, LocalDate periodEnd,
