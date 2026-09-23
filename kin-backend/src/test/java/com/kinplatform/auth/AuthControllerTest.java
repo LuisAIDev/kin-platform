@@ -95,17 +95,17 @@ class AuthControllerTest {
 
     @Test
     void verifyEmail_conTokenValido_deberiaResponder200YNoEstablecerCookie() throws Exception {
-        when(authService.verifyEmail("valid-token")).thenReturn(VerifyEmailOutcome.SUCCESS);
+        when(authService.validateOnly("valid-token")).thenReturn(VerifyEmailOutcome.SUCCESS);
 
         mockMvc.perform(get("/auth/verify-email").param("token", "valid-token"))
                 .andExpect(status().isOk())
                 .andExpect(header().doesNotExist("Set-Cookie"))
-                .andExpect(jsonPath("$.message").value("Correo verificado correctamente. Ya puedes iniciar sesión."));
+                .andExpect(jsonPath("$.valid").value("true"));
     }
 
     @Test
     void verifyEmail_conTokenExpirado_deberiaResponder400ConCodigo() throws Exception {
-        when(authService.verifyEmail("expired")).thenReturn(VerifyEmailOutcome.EXPIRED);
+        when(authService.validateOnly("expired")).thenReturn(VerifyEmailOutcome.EXPIRED);
 
         mockMvc.perform(get("/auth/verify-email").param("token", "expired"))
                 .andExpect(status().isBadRequest())
@@ -114,7 +114,7 @@ class AuthControllerTest {
 
     @Test
     void verifyEmail_conTokenInvalido_deberiaResponder400() throws Exception {
-        when(authService.verifyEmail("bad")).thenReturn(VerifyEmailOutcome.INVALID);
+        when(authService.validateOnly("bad")).thenReturn(VerifyEmailOutcome.INVALID);
 
         mockMvc.perform(get("/auth/verify-email").param("token", "bad"))
                 .andExpect(status().isBadRequest())
@@ -123,7 +123,7 @@ class AuthControllerTest {
 
     @Test
     void verifyEmail_conTokenYaUsado_deberiaResponder400() throws Exception {
-        when(authService.verifyEmail("used")).thenReturn(VerifyEmailOutcome.ALREADY_USED);
+        when(authService.validateOnly("used")).thenReturn(VerifyEmailOutcome.ALREADY_USED);
 
         mockMvc.perform(get("/auth/verify-email").param("token", "used"))
                 .andExpect(status().isBadRequest())

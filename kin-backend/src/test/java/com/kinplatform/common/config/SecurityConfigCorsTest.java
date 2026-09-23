@@ -26,12 +26,12 @@ class SecurityConfigCorsTest {
         var cors = source.getCorsConfiguration(new MockHttpServletRequest());
 
         assertNotNull(cors);
-        assertTrue(cors.getAllowedOrigins().contains("http://localhost:3000"));
-        assertTrue(cors.getAllowedOrigins().contains("https://kin-frontend.onrender.com"));
-        assertTrue(cors.getAllowedOrigins().contains("https://kin-platform.com"));
+        assertTrue(cors.getAllowedOriginPatterns().contains("http://localhost:3000"));
+        assertTrue(cors.getAllowedOriginPatterns().contains("https://kin-frontend.onrender.com"));
+        assertTrue(cors.getAllowedOriginPatterns().contains("https://kin-platform.com"));
         assertTrue(cors.getAllowCredentials());
         assertTrue(cors.getAllowedMethods().contains("OPTIONS"));
-        assertTrue(cors.getAllowedHeaders().contains("Authorization"));
+        assertTrue(cors.getAllowedHeaders().contains("*"));
     }
 
     @Test
@@ -45,6 +45,6 @@ class SecurityConfigCorsTest {
         var source = config.corsConfigurationSource();
         var cors = source.getCorsConfiguration(new MockHttpServletRequest());
 
-        assertTrue(cors.getAllowedOrigins().contains("https://kin-platform.com"));
+        assertTrue(cors.getAllowedOriginPatterns().contains("https://kin-platform.com"));
     }
 }

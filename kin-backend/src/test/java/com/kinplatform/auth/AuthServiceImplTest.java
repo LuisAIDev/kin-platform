@@ -118,7 +118,7 @@ class AuthServiceImplTest {
         assertEquals("FREE", response.getRole());
         verify(tokenService).createForUser(user);
         verify(emailSender)
-                .sendVerificationEmail(EMAIL, "KIN User", "http://localhost:3000/verify-email?token=verify-token");
+                .sendVerificationEmail(EMAIL, "KIN User", "http://localhost:3000/verify-email/confirm?token=verify-token");
     }
 
     @Test
@@ -329,7 +329,7 @@ class AuthServiceImplTest {
 
         assertEquals(ResendVerificationStatus.SENT, result);
         verify(emailSender)
-                .sendVerificationEmail(EMAIL, "KIN User", "http://localhost:3000/verify-email?token=new-token");
+                .sendVerificationEmail(EMAIL, "KIN User", "http://localhost:3000/verify-email/confirm?token=new-token");
     }
 
     @Test
@@ -423,7 +423,7 @@ class AuthServiceImplTest {
         verify(userRepository)
                 .save(argThat(u -> u.getRole() == UserRole.PATIENT && Boolean.TRUE.equals(u.getHealthDataConsent())));
         verify(emailSender)
-                .sendVerificationEmail(EMAIL, "Ana Paciente", "http://localhost:3000/verify-email?token=verify-token");
+                .sendVerificationEmail(EMAIL, "Ana Paciente", "http://localhost:3000/verify-email/confirm?token=verify-token");
     }
 
     @Test
@@ -479,7 +479,7 @@ class AuthServiceImplTest {
                         && u.getPhysicianVerificationStatus() == PhysicianVerificationStatus.PENDING
                         && "CEDULA-12345".equals(u.getLicenseNumber())));
         verify(emailSender)
-                .sendVerificationEmail(EMAIL, "Dr. García", "http://localhost:3000/verify-email?token=verify-token");
+                .sendVerificationEmail(EMAIL, "Dr. García", "http://localhost:3000/verify-email/confirm?token=verify-token");
     }
 
     @Test
