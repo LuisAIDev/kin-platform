@@ -72,7 +72,6 @@ public class AuRecord {
         if (createdAt == null) createdAt = OffsetDateTime.now();
     }
 
-    // Explicit factory method for cross-compilation-unit visibility (Lombok @Builder may not work)
     public static AuRecord fromEncounter(
             Object encounter,
             com.kinplatform.billing.contract.EpsContract contract,
@@ -87,20 +86,47 @@ public class AuRecord {
             String estadoUsuario,
             String cupsCode,
             java.math.BigDecimal valorUrgencia) {
-        AuRecord record = new AuRecord();
-        record.setSourceEntityType("ENCOUNTER");
-        record.setSourceEntityId(java.util.UUID.randomUUID()); // placeholder
-        record.setBatchId(java.util.UUID.randomUUID()); // placeholder
-        record.setSequenceNumber(1);
-        record.setCreatedAt(OffsetDateTime.now());
-        record.setCodigoPrestador(contract.getOrganizationId().toString().substring(0, Math.min(12, contract.getOrganizationId().toString().length())));
-        record.setNumFactura(contract.getDianPrefix() + String.format("%010d", contract.getDianCurrentSequence() + 1));
-        record.setFechaUrgencia(LocalDate.parse(fechaUrgencia));
-        record.setMotivoUrgencia(motivoUrgencia);
-        record.setCodigoDiagnosticoSalida(codigoDiagnosticoSalida);
-        record.setDestinoUsuario(destinoUsuario);
-        record.setEstadoUsuario(estadoUsuario);
-        record.setValorUrgencia(valorUrgencia);
-        return record;
+        String codigoPrestador = contract.getOrganizationId().toString();
+        if (codigoPrestador.length() > 12) {
+            codigoPrestador = codigoPrestador.substring(0, 12);
+        }
+        String numFactura = contract.getDianPrefix() + String.format("%010d", contract.getDianCurrentSequence() + 1);
+        LocalDate fecha = LocalDate.parse(fechaUrgencia);
+
+        return AuRecord.builder()
+                .sourceEntityType("ENCOUNTER")
+                .sourceEntityId(resolveSourceId(encounter))
+                .codigoPrestador(codigoPrestador)
+                .numFactura(numFactura)
+                .fechaUrgencia(fecha)
+                .motivoUrgencia(motivoUrgencia)
+                .codigoDiagnosticoSalida(codigoDiagnosticoSalida)
+                .destinoUsuario(destinoUsuario)
+                .estadoUsuario(estadoUsuario)
+                .valorUrgencia(valorUrgencia)
+                .ripsLineData(buildJsonLine(codigoPrestador, numFactura, tipoDocumento, numeroDocumento,
+                        fecha, motivoUrgencia, codigoDiagnosticoSalida, destinoUsuario, estadoUsuario, valorUrgencia))
+                .build();
+    }
+
+    private static UUID resolveSourceId(Object encounter) {
+        try {
+            Object id = encounter.getClass().getMethod("getId").invoke(encounter);
+            if (id instanceof UUID uuid) {
+                return uuid;
+            }
+        } catch (Exception ignored) {
+            // fall through to random id
+        }
+        return UUID.randomUUID();
+    }
+
+    private static String buildJsonLine(String codigoPrestador, String numFactura, String tipoDocumento,
+            String numeroDocumento, LocalDate fecha, String motivoUrgencia, String codigoDiagnosticoSalida,
+            String destinoUsuario, String estadoUsuario, java.math.BigDecimal valorUrgencia) {
+        return String.format(
+                "{\"codigo_prestador\":\"%s\",\"num_factura\":\"%s\",\"tipo_documento\":\"%s\",\"numero_documento\":\"%s\",\"fecha_urgencia\":\"%s\",\"motivo_urgencia\":\"%s\",\"codigo_diagnostico_salida\":\"%s\",\"destino_usuario\":\"%s\",\"estado_usuario\":\"%s\",\"valor_urgencia\":%s}",
+                codigoPrestador, numFactura, tipoDocumento, numeroDocumento, fecha, motivoUrgencia,
+                codigoDiagnosticoSalida, destinoUsuario, estadoUsuario, valorUrgencia);
     }
 }

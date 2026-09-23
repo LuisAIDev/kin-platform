@@ -145,6 +145,45 @@ All tests extending `PostgresTestSupport` or using `@SpringBootTest` with databa
 
 ---
 
-*Last Updated: 2026-09-22*  
+## Deuda técnica: 38 tests fallidos (preexistentes)
+
+**Fecha detección**: 2026-09-23
+**Impacto**: Bloquea deploy a producción (CI/CD falla)
+**Prioridad**: ALTA — arreglar antes de Día 7
+
+**Evidencia (baseline → actual)**:
+```
+[INFO] Tests run: 3429, Failures: 4, Errors: 48, Skipped: 40   (test-output.txt, baseline)
+[INFO] Tests run: 3453, Failures: 4, Errors: 34, Skipped: 40   (test_output.txt, 2026-09-23)
+```
+Ambas ejecuciones: `mvn test`. El fix del compiler plugin (commit 3ccac6e) redujo los errores 48 → 34 y resolvió 6 errores de `login_*`; los 4 Failures persisten idénticos.
+
+### Grupo 1: 4 Failures AuthServiceImplTest (mock mismatch)
+- resend_conUsuarioNoVerificadoYFueraDeCooldown_deberiaEnviar
+- registerPatient_deberiaCrearPacienteEnviarVerificacionYSinToken
+- register_deberiaCrearUsuarioNoVerificadoYNoEntregarToken
+- registerPhysician_deberiaCrearMedicoPendienteEnviarVerificacion
+**Causa**: `Argument(s) are different! Wanted: emailSender.sendVerificationEmail(...)` en `AuthServiceImpl.java:397`. Mock espera `sendVerificationEmail(...)` pero el código cambió la firma o el flujo.
+**Fix**: Actualizar mocks o ajustar firma del método.
+
+### Grupo 2: 4 Errors VerifyEmailOutcome.ordinal() NPE (bug real)
+**Causa**: `outcome` es null en AuthControllerTest (`Cannot invoke "VerifyEmailOutcome.ordinal()" because "outcome" is null`).
+**Fix**: Añadir null check o default enum value.
+
+### Grupo 3: 19 Errors Docker/Testcontainers
+**Causa**: `Could not find a valid Docker environment` — Docker Desktop no disponible en entorno CI.
+**Fix**: Configurar Docker en CI o usar perfil test con Neon/H2.
+
+### Grupo 4: 2 Errors SecurityConfigCorsTest
+**Causa**: `CorsConfiguration.getAllowedOrigins()` null.
+**Fix**: Revisar test setup.
+
+### Grupo 5: ~7 Errors DataSource/Flyway
+**Causa**: `Failed to determine a suitable driver class` / Flyway en contexto de integración sin DB en test.
+**Fix**: Añadir @Disabled o configurar H2 para tests unitarios.
+
+---
+
+*Last Updated: 2026-09-23*  
 *Owner: Backend Team*  
 *Next Review: Sprint Planning*
