@@ -227,6 +227,12 @@ columna materializada + trigger.
 - **Prevención**: `BillingEndpointPathTest` (valida que el mapping no lleva `/api/v1` y que el path duplicado da 404).
 - **Nota**: pendiente validar en producción con token (smoke test E2E).
 
+## Fixed (2026-09-23): Dependencia circular ContractService ↔ TariffImportService
+- **Síntoma**: Render fallaba al arrancar: `Requested bean is currently in creation: Is there an unresolvable circular reference?` (`contractController`).
+- **Causa raíz**: `ContractService` inyectaba `TariffImportService` y este inyectaba `ContractService`.
+- **Fix**: `TariffImportService` ahora depende de `EpsContractRepository` (valida `findByIdAndOrganizationId(contractId, TenantContext.get())`), rompiendo el ciclo. No se usó `spring.main.allow-circular-references=true`.
+- **Nota**: la delegación `ContractService.importTariffs` se mantiene (ya no hay ciclo); no se requirió mover la orquestación al controller.
+
 ---
 
 *Last Updated: 2026-09-23*  
