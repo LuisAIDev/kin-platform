@@ -15,6 +15,8 @@ public interface RipsBatchRepository extends JpaRepository<RipsBatch, UUID> {
     Optional<RipsBatch> findByOrganizationIdAndContractIdAndPeriodStartAndPeriodEndAndRipsType(
             UUID organizationId, UUID contractId, LocalDate periodStart, LocalDate periodEnd, RipsBatch.RipsType ripsType);
 
+    List<RipsBatch> findByOrganizationId(UUID organizationId);
+
     List<RipsBatch> findByOrganizationIdAndPeriodStartBetween(UUID organizationId, LocalDate start, LocalDate end);
 
     List<RipsBatch> findByContractIdAndStatus(UUID contractId, RipsBatch.BatchStatus status);

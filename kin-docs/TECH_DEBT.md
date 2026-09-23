@@ -184,6 +184,39 @@ Ambas ejecuciones: `mvn test`. El fix del compiler plugin (commit 3ccac6e) reduj
 
 ---
 
+## Deuda técnica Día 7 (2026-09-23)
+
+### TD-D7-1: Roles IPS_* no implementados (security billing)
+**Prioridad**: Media  
+**Estado**: `SecurityConfig` protege `/api/v1/billing/**` con fallback
+`hasAnyRole("PHYSICIAN","ADMIN")` porque no existe `IPS_ADMIN`, `IPS_FACTURADOR`
+ni `IPS_MEDICO` en el sistema de roles.  
+**Fix**: Introducir roles IPS (ADR de personas/verticales) y migrar las reglas.
+
+### TD-D7-2: KmsXmlSigner / DianHttpClient son placeholders (prod)
+**Prioridad**: Alta (bloquea DIAN real)  
+**Estado**: `@Profile("prod")` con `UnsupportedOperationException`; el flujo real
+usa `StubXmlSigner`/`DianStubClient` (`@Profile("!prod")`).  
+**Fix**: Integrar certificado X.509 (HSM/AWS KMS) y servicio DIAN (sandbox→prod),
+sin secretos en el repo.
+
+### TD-D7-3: 38 tests preexistentes fallidos (sin cambios en Día 7)
+**Prioridad**: ALTA  
+**Estado**: suite completa `Tests run: 3524, Failures: 4, Errors: 34, Skipped: 40`.
+34 errores > 20 ⇒ no se intentó fix en Día 7 (regla de priorización).  
+**Fix**: Día 7+ / sprint de estabilización (ver grupos 1-5 arriba).
+
+### TD-D7-4: aging_bucket / days_overdue no son columnas generadas
+**Prioridad**: Baja  
+**Causa**: PostgreSQL exige expresiones `IMMUTABLE` en `GENERATED`; `CURRENT_DATE`
+es `STABLE`.  
+**Estado**: calculadas por `AgingCalculator` y persistidas; requieren el job
+nocturno (`@Scheduled`, `@Profile("!test")`) para refrescar.  
+**Fix**: Si se requiere frescura en tiempo real, recalcular en lectura o mover a
+columna materializada + trigger.
+
+---
+
 *Last Updated: 2026-09-23*  
 *Owner: Backend Team*  
 *Next Review: Sprint Planning*

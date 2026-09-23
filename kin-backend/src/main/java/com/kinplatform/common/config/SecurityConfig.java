@@ -152,6 +152,8 @@ public class SecurityConfig {
                         .hasAnyRole("PHYSICIAN", "ADMIN")
                         .requestMatchers("/api/v1/billing/cartera/**")
                         .hasAnyRole("PHYSICIAN", "ADMIN")
+                        .requestMatchers("/api/v1/billing/dashboard/**")
+                        .hasAnyRole("PHYSICIAN", "ADMIN")
                         .requestMatchers("/api/v1/billing/**")
                         .hasAnyRole("PHYSICIAN", "ADMIN")
                         .requestMatchers("/error")

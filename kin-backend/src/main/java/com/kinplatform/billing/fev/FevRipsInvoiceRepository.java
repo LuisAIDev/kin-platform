@@ -10,6 +10,8 @@ public interface FevRipsInvoiceRepository extends JpaRepository<FevRipsInvoice, 
 
     Optional<FevRipsInvoice> findByIdAndOrganizationId(UUID id, UUID organizationId);
 
+    List<FevRipsInvoice> findByOrganizationId(UUID organizationId);
+
     Optional<FevRipsInvoice> findByOrganizationIdAndInvoicePrefixAndInvoiceSequence(
             UUID organizationId, String invoicePrefix, Long invoiceSequence);
 
