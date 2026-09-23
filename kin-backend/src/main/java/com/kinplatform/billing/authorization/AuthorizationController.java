@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/billing/authorizations")
+@RequestMapping("/billing/authorizations")
 @RequiredArgsConstructor
 public class AuthorizationController {
 

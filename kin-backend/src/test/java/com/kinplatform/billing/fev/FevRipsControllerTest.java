@@ -34,7 +34,7 @@ class FevRipsControllerTest {
         FevRipsInvoice invoice = invoice(FevRipsInvoice.InvoiceStatus.DRAFT);
         when(fevRipsService.generateInvoiceFromBatch(batchId)).thenReturn(invoice);
 
-        mockMvc().perform(post("/api/v1/billing/fev-rips/generate/{batchId}", batchId))
+        mockMvc().perform(post("/billing/fev-rips/generate/{batchId}", batchId))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.invoiceNumber").value("FEV0000000001"));
     }
@@ -45,7 +45,7 @@ class FevRipsControllerTest {
         FevRipsInvoice invoice = invoice(FevRipsInvoice.InvoiceStatus.SIGNED);
         when(fevRipsService.sign(id)).thenReturn(invoice);
 
-        mockMvc().perform(post("/api/v1/billing/fev-rips/{id}/sign", id))
+        mockMvc().perform(post("/billing/fev-rips/{id}/sign", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SIGNED"));
     }
@@ -56,7 +56,7 @@ class FevRipsControllerTest {
         FevRipsInvoice invoice = invoice(FevRipsInvoice.InvoiceStatus.ACCEPTED);
         when(fevRipsService.sendToDian(id)).thenReturn(invoice);
 
-        mockMvc().perform(post("/api/v1/billing/fev-rips/{id}/send", id))
+        mockMvc().perform(post("/billing/fev-rips/{id}/send", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ACCEPTED"));
     }
@@ -67,7 +67,7 @@ class FevRipsControllerTest {
         FevRipsInvoice invoice = invoice(FevRipsInvoice.InvoiceStatus.CONTINGENCY);
         when(fevRipsService.getStatus(id)).thenReturn(invoice);
 
-        mockMvc().perform(get("/api/v1/billing/fev-rips/{id}/status", id))
+        mockMvc().perform(get("/billing/fev-rips/{id}/status", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CONTINGENCY"));
     }
@@ -78,7 +78,7 @@ class FevRipsControllerTest {
         FevRipsInvoice invoice = invoice(FevRipsInvoice.InvoiceStatus.CONTINGENCY);
         when(fevRipsService.enterContingency(eq(id), anyString())).thenReturn(invoice);
 
-        mockMvc().perform(post("/api/v1/billing/fev-rips/{id}/contingency", id)
+        mockMvc().perform(post("/billing/fev-rips/{id}/contingency", id)
                         .param("reason", "DIAN caida"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CONTINGENCY"));

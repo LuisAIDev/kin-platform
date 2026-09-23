@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/billing/dashboard")
+@RequestMapping("/billing/dashboard")
 @RequiredArgsConstructor
 public class BillingDashboardController {
 

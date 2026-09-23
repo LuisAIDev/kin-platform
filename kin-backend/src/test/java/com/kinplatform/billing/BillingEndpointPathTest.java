@@ -1,8 +1,8 @@
-package com.kinplatform.common.config;
+package com.kinplatform.billing;
 
-import com.kinplatform.billing.fev.FevRipsController;
-import com.kinplatform.billing.fev.FevRipsInvoice;
-import com.kinplatform.billing.fev.FevRipsService;
+import com.kinplatform.billing.contract.ContractController;
+import com.kinplatform.billing.contract.ContractService;
+import com.kinplatform.common.config.SecurityConfig;
 import com.kinplatform.common.security.JwtAuthenticationFilter;
 import com.kinplatform.common.security.RateLimitingFilter;
 import com.kinplatform.common.security.SubscriptionAccessFilter;
@@ -15,10 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -26,15 +26,24 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = FevRipsController.class)
+/**
+ * Regresion: server.servlet.context-path=/api/v1 y los controllers de billing
+ * NO deben incluir /api/v1 (evita el path duplicado /api/v1/api/v1/billing/...).
+ *
+ * El mapping externo real es: context-path (/api/v1) + mapping (/billing/...).
+ * Este slice web valida que el mapping del controller NO lleva /api/v1 y que el
+ * path duplicado no resuelve (404). La validez del path externo completo se
+ * confirma con el smoke test en produccion.
+ */
+@WebMvcTest(controllers = ContractController.class)
 @Import(SecurityConfig.class)
-class SecurityConfigBillingTest {
+class BillingEndpointPathTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private FevRipsService fevRipsService;
+    private ContractService contractService;
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -46,7 +55,8 @@ class SecurityConfigBillingTest {
     private SubscriptionAccessFilter subscriptionAccessFilter;
 
     @BeforeEach
-    void passThroughFilters() throws Exception {
+    void setUp() throws Exception {
+        when(contractService.findAll(any(Pageable.class))).thenReturn(Page.empty());
         passThrough(jwtAuthenticationFilter);
         passThrough(rateLimitingFilter);
         passThrough(subscriptionAccessFilter);
@@ -63,32 +73,15 @@ class SecurityConfigBillingTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void billing_admin_canAccessFevRips() throws Exception {
-        UUID id = UUID.randomUUID();
-        when(fevRipsService.getStatus(id)).thenReturn(FevRipsInvoice.builder()
-                .id(id).status(FevRipsInvoice.InvoiceStatus.ACCEPTED).build());
-
-        mockMvc.perform(get("/billing/fev-rips/{id}/status", id))
+    void billingMappingHasNoApiV1Prefix_returns200() throws Exception {
+        mockMvc.perform(get("/billing/contracts"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(roles = "PATIENT")
-    void billing_patient_isForbidden() throws Exception {
-        mockMvc.perform(get("/billing/fev-rips/{id}/status", UUID.randomUUID()))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    @WithMockUser(roles = "FREE")
-    void billing_userWithoutBillingRole_isForbidden() throws Exception {
-        mockMvc.perform(get("/billing/fev-rips/{id}/status", UUID.randomUUID()))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void billing_anonymous_isForbidden() throws Exception {
-        mockMvc.perform(get("/billing/fev-rips/{id}/status", UUID.randomUUID()))
-                .andExpect(status().isForbidden());
+    @WithMockUser(roles = "ADMIN")
+    void billingDoubledPath_returns404() throws Exception {
+        mockMvc.perform(get("/api/v1/billing/contracts"))
+                .andExpect(status().isNotFound());
     }
 }

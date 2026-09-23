@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/billing/cartera")
+@RequestMapping("/billing/cartera")
 @RequiredArgsConstructor
 public class CarteraController {
 
