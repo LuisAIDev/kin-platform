@@ -1,6 +1,7 @@
 package com.kinplatform.billing.contract;
 
 import com.kinplatform.common.security.TenantContext;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,12 +19,13 @@ import java.util.UUID;
 public class TariffImportService {
 
     private final TariffCupsRepository tariffRepository;
-    private final ContractService contractService;
+    private final EpsContractRepository contractRepository;
     private final CupsExcelImporter excelImporter;
 
     @Transactional
     public TariffImportResult importTariffs(UUID contractId, MultipartFile file) throws IOException {
-        contractService.findById(contractId);
+        contractRepository.findByIdAndOrganizationId(contractId, TenantContext.get())
+                .orElseThrow(() -> new EntityNotFoundException("Contract not found: " + contractId));
 
         List<TariffCups> tariffs = excelImporter.parse(file);
         log.info("Parsed {} tariffs from file for contract {}", tariffs.size(), contractId);
