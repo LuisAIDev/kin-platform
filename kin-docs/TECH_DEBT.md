@@ -316,6 +316,24 @@ Product Owner, pero no se pudo verificar visualmente el correo del formulario.
 - **TD-IPS-4**: `/billing/rips` sin controller REST (generación RIPS no expuesta).
 - **TD-IPS-5**: No existe `/institutional/admin/**` ni `/institutional/facturacion/**` con endpoints aún (reglas listas, rutas por implementar).
 
+## Deuda técnica resuelta (2026-09-23) - Multi-tenant + jsonb
+- ✅ `TenantContext` cableado en `JwtAuthenticationFilter` (org del usuario + fallback demo).
+- ✅ `users.organization_id` (V65).
+- ✅ 6 campos `String`→`jsonb` con `@JdbcTypeCode(SqlTypes.JSON)`: `Branch.servicesEnabled`,
+  `RipsRecord.ripsLineData`, `RipsBatch.validationErrors/dianResponse`,
+  `Authorization.cupsCodes/diagnosisCie10`.
+- ✅ Smoke test producción IPS_*: 8/8 PASS.
+
+## Deuda técnica pendiente (Fase 2.2)
+- **TD-IPS-6**: tabla `organizations` (catálogo real).
+- **TD-IPS-7**: FK `users.organization_id → organizations.id`.
+- **TD-IPS-8**: `organizationId` en el claim del JWT (opcional).
+- **TD-IPS-9**: endpoints `/institutional/admin/**` y `/institutional/facturacion/**`.
+- **TD-IPS-10/12**: `/billing/rips` sin controller REST.
+- **TD-IPS-11**: `computeVerticalAccess` para roles IPS_* (hoy 0 verticales).
+- **TD-IPS-13**: auditar más patrones `String`→`jsonb` en nuevos dominios.
+- **TD-IPS-14**: considerar `@Convert` custom para jsonb.
+
 ---
 
 *Last Updated: 2026-09-23*  

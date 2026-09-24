@@ -8,8 +8,8 @@ escala y operación multi-sede.
 
 | Fase | Entregable | Estado |
 |---|---|---|
-| 2.1 | Roles IPS_* + multi-sede + equipos médicos (V62–V64) | **En curso** |
-| 2.2 | Flujo de invitación de miembros por email + asignación de roles IPS | Pendiente |
+| 2.1 | Roles IPS_* + multi-sede + equipos médicos (V62–V65) | **✅ COMPLETADA** |
+| 2.2 | Catálogos CUPS/INVIMA (descarga, carga masiva, autocomplete) | **Siguiente** |
 | 2.3 | RIPS reales: generación/validación XSD end-to-end | Pendiente |
 | 2.4 | FEV-RIPS DIAN real (firma X.509 + envío) | Pendiente |
 | 2.5 | MIPRES real (autorizaciones) | Pendiente |
@@ -27,4 +27,11 @@ escala y operación multi-sede.
 
 ## Deuda técnica relacionada
 - Suite de tests no 100% verde (grupos A/D/E/F en `TECH_DEBT.md`).
-- Roles IPS_* no aplicados aún a `/billing/**` (hoy PHYSICIAN/ADMIN).
+- Roles IPS_* aplicados a `/billing/**` (commit `090cc21`).
+
+## Fase 2.1 — CERRADA (2026-09-23)
+- Roles IPS_* (V62) · Branches (V63) · OrganizationMembers (V64).
+- Multi-tenant cableado: `users.organization_id` (V65) + `TenantContext` en `JwtAuthenticationFilter` (commit `02b65a1`).
+- jsonb mapping corregido: 6 campos con `@JdbcTypeCode(SqlTypes.JSON)` (commit `367e863`).
+- Smoke test producción: 8/8 (IPS_ADMIN crea sede 201; IPS_FACTURADOR billing 200; POST billing 403).
+- Usuarios de prueba: `ips-admin-test@kin.internal`, `ips-facturador-test@kin.internal` (org demo `…0001`).
