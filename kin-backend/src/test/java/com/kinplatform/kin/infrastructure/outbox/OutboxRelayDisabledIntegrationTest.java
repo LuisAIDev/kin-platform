@@ -18,8 +18,12 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
-@SpringBootTest
+@SpringBootTest(properties = {
+    "spring.datasource.url=jdbc:tc:postgresql:18:///kin_test",
+    "spring.datasource.driver-class-name=org.testcontainers.jdbc.ContainerDatabaseDriver"
+})
 @ActiveProfiles("test")
+@Transactional
 class OutboxRelayDisabledIntegrationTest {
 
     @Autowired
