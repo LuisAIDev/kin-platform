@@ -10,7 +10,7 @@ escala y operación multi-sede.
 |---|---|---|
 | 2.1 | Roles IPS_* + multi-sede + equipos médicos (V62–V65) | **✅ COMPLETADA** |
 | 2.2 | Catálogos CUPS/INVIMA (descarga, carga masiva, autocomplete) | **Estructura lista; carga de datos pendiente** |
-| 2.3 | RIPS reales: generación/validación XSD end-to-end | 2.3a validación XSD **código listo (placeholder)**; 2.3b DIAN pendiente |
+| 2.3 | RIPS reales: generación/validación XSD end-to-end | **✅ 2.3a COMPLETADA** (validación Anexo Técnico 1); 2.3b DIAN pendiente |
 | 2.4 | FEV-RIPS DIAN real (firma X.509 + envío) | Pendiente |
 | 2.5 | MIPRES real (autorizaciones) | Pendiente |
 | 2.6 | Glosas: parser por EPS específico + apelación automatizada | Pendiente |
@@ -25,10 +25,15 @@ escala y operación multi-sede.
 ## Timeline estimado
 - 2.1: 1 semana · 2.2: 1 semana · 2.3–2.5: 3–4 semanas · 2.6–2.7: 2 semanas · 2.8: 1 semana.
 
-## Fase 2.3a — Validación XSD (en progreso)
+## Fase 2.3a — Validación RIPS según Resolución 2275 Anexo Técnico 1 — **✅ COMPLETADA (2026-09-24)**
 - Duración: ~1 semana · Sin dependencias externas.
-- Entregado: `RipsJsonToXmlMapper`, `XsdValidator` real (cache), placeholder XSD de test, 5 tests.
-- Pendiente: XSD oficiales MinSalud (TD-CAT-4) + ajustar mapper a estructura oficial.
+- Entregado:
+  - `RipsValidator`: 11 campos sector salud + 6 reglas críticas de negocio
+  - Tablas de referencia SISPRO (V71): `sispro_modalidad_pago`, `sispro_cobertura_plan`, `sispro_concepto_recaudo`, `sispro_tipo_id`
+  - Integración en `RipsGenerationOrchestrator` pipeline (XSD + Business + RIPS rules)
+  - 19 tests PASS (RipsValidatorTest) + 36 tests totales RIPS
+  - Migración V71 con seed oficial Anexo Técnico 1
+- Pendiente: XSD oficiales MinSalud (TD-CAT-4) + ajustar `RipsJsonToXmlMapper` a estructura oficial.
 
 ## Fase 2.3b — Firma DIAN (requiere trámites externos)
 Acciones del PO (en paralelo):
