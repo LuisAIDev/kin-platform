@@ -8,6 +8,7 @@ import com.kinplatform.billing.rips.model.RipsRecordRepository;
 import com.kinplatform.billing.rips.validator.ValidationResult;
 import com.kinplatform.billing.rips.validator.XsdValidator;
 import com.kinplatform.billing.rips.validator.BusinessRuleValidator;
+import com.kinplatform.billing.rips.validator.RipsValidator;
 import com.kinplatform.common.security.TenantContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class RipsGenerationOrchestrator {
     private final RipsRecordRepository recordRepository;
     private final XsdValidator xsdValidator;
     private final BusinessRuleValidator businessValidator;
+    private final RipsValidator ripsValidator;
     private final RipsContextBuilder contextBuilder;
 
     public RipsBatch execute(UUID organizationId, UUID contractId, LocalDate periodStart, LocalDate periodEnd, RipsBatch.RipsType ripsType) {
@@ -80,9 +82,10 @@ public class RipsGenerationOrchestrator {
 
             ValidationResult xsd = xsdValidator.validate(batch);
             ValidationResult biz = businessValidator.validate(batch, context);
+            ValidationResult rips = ripsValidator.validate(batch, context);
 
-            if (!xsd.isValid() || !biz.isValid()) {
-                String errors = mergeErrors(xsd, biz);
+            if (!xsd.isValid() || !biz.isValid() || !rips.isValid()) {
+                String errors = mergeErrors(xsd, biz, rips);
                 batch.markInvalid(errors);
                 batch = batchRepository.save(batch);
                 throw new RipsValidationException("Validación fallida: " + errors);
@@ -110,10 +113,11 @@ public class RipsGenerationOrchestrator {
                 .orElseThrow();
     }
 
-    private String mergeErrors(ValidationResult xsd, ValidationResult biz) {
+    private String mergeErrors(ValidationResult xsd, ValidationResult biz, ValidationResult rips) {
         StringBuilder sb = new StringBuilder();
         if (!xsd.isValid()) sb.append("XSD: ").append(xsd.getErrors()).append("; ");
-        if (!biz.isValid()) sb.append("Business: ").append(biz.getErrors());
+        if (!biz.isValid()) sb.append("Business: ").append(biz.getErrors()).append("; ");
+        if (!rips.isValid()) sb.append("RIPS: ").append(rips.getErrors());
         return sb.toString();
     }
 }
