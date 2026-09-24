@@ -54,9 +54,9 @@ class RipsGenerationOrchestratorTest {
                 .recordCount(2)
                 .build();
 
-        when(orchestrator.execute(contract.getId(), start, end, RipsBatch.RipsType.US)).thenReturn(expectedBatch);
+        when(orchestrator.execute(orgId, contract.getId(), start, end, RipsBatch.RipsType.US)).thenReturn(expectedBatch);
 
-        RipsBatch batch = orchestrator.execute(contract.getId(), start, end, RipsBatch.RipsType.US);
+        RipsBatch batch = orchestrator.execute(orgId, contract.getId(), start, end, RipsBatch.RipsType.US);
 
         assertNotNull(batch.getId());
         assertEquals(RipsBatch.BatchStatus.VALID, batch.getStatus());
@@ -65,7 +65,7 @@ class RipsGenerationOrchestratorTest {
         assertEquals(end, batch.getPeriodEnd());
         assertEquals(RipsBatch.RipsType.US, batch.getRipsType());
         assertTrue(batch.getRecordCount() >= 0);
-        verify(orchestrator).execute(contract.getId(), start, end, RipsBatch.RipsType.US);
+        verify(orchestrator).execute(orgId, contract.getId(), start, end, RipsBatch.RipsType.US);
     }
 
     @Test
@@ -90,15 +90,15 @@ class RipsGenerationOrchestratorTest {
                 .recordCount(2)
                 .build();
 
-        when(orchestrator.execute(contract.getId(), start, end, RipsBatch.RipsType.US))
+        when(orchestrator.execute(orgId, contract.getId(), start, end, RipsBatch.RipsType.US))
                 .thenReturn(expectedBatch)
                 .thenReturn(expectedBatch);
 
-        RipsBatch batch1 = orchestrator.execute(contract.getId(), start, end, RipsBatch.RipsType.US);
-        RipsBatch batch2 = orchestrator.execute(contract.getId(), start, end, RipsBatch.RipsType.US);
+        RipsBatch batch1 = orchestrator.execute(orgId, contract.getId(), start, end, RipsBatch.RipsType.US);
+        RipsBatch batch2 = orchestrator.execute(orgId, contract.getId(), start, end, RipsBatch.RipsType.US);
 
         assertEquals(batch1.getId(), batch2.getId());
-        verify(orchestrator, times(2)).execute(contract.getId(), start, end, RipsBatch.RipsType.US);
+        verify(orchestrator, times(2)).execute(orgId, contract.getId(), start, end, RipsBatch.RipsType.US);
     }
 
     @Test
@@ -117,12 +117,12 @@ class RipsGenerationOrchestratorTest {
                 .ripsType(RipsBatch.RipsType.AT)
                 .build();
 
-        when(orchestrator.executeAllTypes(contract.getId(), start, end)).thenReturn(lastBatch);
+        when(orchestrator.executeAllTypes(orgId, contract.getId(), start, end)).thenReturn(lastBatch);
 
-        RipsBatch batch = orchestrator.executeAllTypes(contract.getId(), start, end);
+        RipsBatch batch = orchestrator.executeAllTypes(orgId, contract.getId(), start, end);
 
         assertEquals(RipsBatch.RipsType.AT, batch.getRipsType());
-        verify(orchestrator).executeAllTypes(contract.getId(), start, end);
+        verify(orchestrator).executeAllTypes(orgId, contract.getId(), start, end);
     }
 
     private EpsContract createTestContract(UUID orgId) {
