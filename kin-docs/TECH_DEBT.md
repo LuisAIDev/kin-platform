@@ -278,6 +278,29 @@ Product Owner, pero no se pudo verificar visualmente el correo del formulario.
 - **SchedulingIntegrationTest**: `expected 201 but was 409` (conflicto de reserva;
   aislamiento/flake).
 
+## Deuda técnica de tests (2026-09-23) - Sprint 2
+
+### Prioridad ALTA
+- **Grupo A**: Aislamiento de datos en tests (`JpaDashboard`, `JpaPhysician`,
+  `JpaTelemedicine`, `JpaTriage`, `JpaDifferential`, `Scheduling`).
+  - Causa: insertan hijos sin padre / catálogos truncados por `cleanDatabaseBeforeClass`.
+  - Solución: definir política de seeding (fixtures por clase).
+  - Impacto: 6 failures + ~11 errors.
+
+### Prioridad MEDIA
+- **Grupo D**: `OutboxRelayIntegrationTest` (3) - concurrencia/reintentos.
+- **Grupo E**: `DocumentStorageQuotaPortImplTest` (5) - `UnnecessaryStubbing` + pricing seed.
+
+### Prioridad BAJA
+- **Grupo F**: IA/red (`llm down`, `429 Too Many Requests`, `stream closed`) - mockear IA externa (WireMock). No bloquea: llamadas externas reales.
+
+### Resuelto (Sprint 2 pre-work, 2026-09-23)
+- Hikari `maximum-pool-size: 5` en test → elimina `too many clients already`.
+- `OutboxRelayDisabledIntegrationTest`: datasource `jdbc:tc` + `@Transactional`.
+
+### Criterio de éxito Sprint 2
+- Todos los tests verdes · suite 100% hermética · CI/CD limpio.
+
 ---
 
 *Last Updated: 2026-09-23*  
