@@ -2,6 +2,8 @@ package com.kinplatform.billing.authorization;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -42,9 +44,11 @@ public class Authorization {
     @Column(name = "status", nullable = false, length = 20)
     private AuthorizationStatus status;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "cups_codes", nullable = false, columnDefinition = "jsonb")
     private String cupsCodes;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "diagnosis_cie10", columnDefinition = "jsonb")
     private String diagnosisCie10;
 

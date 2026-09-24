@@ -2,6 +2,8 @@ package com.kinplatform.institutional;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -35,6 +37,7 @@ public class Branch {
     @Column(name = "city", length = 100)
     private String city;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "services_enabled", columnDefinition = "jsonb")
     private String servicesEnabled;
 

@@ -2,6 +2,8 @@ package com.kinplatform.billing.rips.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -32,6 +34,7 @@ public class RipsRecord {
     @Column(name = "source_entity_id", nullable = false)
     private UUID sourceEntityId;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "rips_line_data", nullable = false, columnDefinition = "jsonb")
     private String ripsLineData;
 

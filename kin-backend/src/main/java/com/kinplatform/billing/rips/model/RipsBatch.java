@@ -2,6 +2,8 @@ package com.kinplatform.billing.rips.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -53,6 +55,7 @@ public class RipsBatch {
     @Column(name = "error_count", nullable = false)
     private Integer errorCount;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "validation_errors", columnDefinition = "jsonb")
     private String validationErrors;
 
@@ -65,6 +68,7 @@ public class RipsBatch {
     @Column(name = "sent_at")
     private OffsetDateTime sentAt;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "dian_response", columnDefinition = "jsonb")
     private String dianResponse;
 
