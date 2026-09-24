@@ -9,7 +9,7 @@ escala y operación multi-sede.
 | Fase | Entregable | Estado |
 |---|---|---|
 | 2.1 | Roles IPS_* + multi-sede + equipos médicos (V62–V65) | **✅ COMPLETADA** |
-| 2.2 | Catálogos CUPS/INVIMA (descarga, carga masiva, autocomplete) | **Siguiente** |
+| 2.2 | Catálogos CUPS/INVIMA (descarga, carga masiva, autocomplete) | **Estructura lista; carga de datos pendiente** |
 | 2.3 | RIPS reales: generación/validación XSD end-to-end | Pendiente |
 | 2.4 | FEV-RIPS DIAN real (firma X.509 + envío) | Pendiente |
 | 2.5 | MIPRES real (autorizaciones) | Pendiente |
