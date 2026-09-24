@@ -37,6 +37,14 @@ public class User {
     @Column(name = "role", nullable = false)
     private UserRole role;
 
+    /**
+     * Organizacion (IPS/clinica) a la que pertenece el usuario. {@code null}
+     * para usuarios individuales; el tenant se resuelve por request con un
+     * fallback a la organizacion demo (ver JwtAuthenticationFilter).
+     */
+    @Column(name = "organization_id")
+    private UUID organizationId;
+
     @Column(name = "platform", nullable = false, length = 20)
     @Builder.Default
     private String platform = "EMPRESAS";

@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     public static final String AUTHENTICATED_USER_ATTRIBUTE = JwtAuthenticationFilter.class.getName() + ".authenticatedUser";
 
+    /** Organizacion demo para usuarios sin organizacion asignada (legacy/independientes). */
+    private static final UUID DEMO_ORGANIZATION_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+
     private final JwtService jwtService;
     private final UserRepository userRepository;
 
@@ -40,49 +44,58 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
-        String token = extractBearerToken(request);
-        if (token == null) {
-            token = extractCookieToken(request);
-        }
+        try {
+            String token = extractBearerToken(request);
+            if (token == null) {
+                token = extractCookieToken(request);
+            }
 
-        if (token == null) {
-            log.debug("No Bearer token or session cookie found for URI={}", request.getRequestURI());
+            if (token == null) {
+                log.debug("No Bearer token or session cookie found for URI={}", request.getRequestURI());
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            if (!jwtService.isTokenValid(token)) {
+                log.warn("Invalid or expired token for URI={}", request.getRequestURI());
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            var email = jwtService.extractEmail(token);
+
+            User user = userRepository.findByEmail(email).orElse(null);
+            if (user == null) {
+                log.warn("Token válido pero usuario inexistente en BD para email={}, URI={}", email, request.getRequestURI());
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // Multi-tenant: resolver la organizacion del usuario (fallback demo).
+            TenantContext.set(user.getOrganizationId() != null
+                    ? user.getOrganizationId()
+                    : DEMO_ORGANIZATION_ID);
+
+            List<GrantedAuthority> authorities = new ArrayList<>();
+            if (user.getRole() != UserRole.PHYSICIAN && user.getRole() != UserRole.PATIENT) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+            }
+            if (PhysicianAccess.isPhysician(user)) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_PHYSICIAN"));
+            }
+            if (PatientAccess.isPatient(user)) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_PATIENT"));
+            }
+
+            request.setAttribute(AUTHENTICATED_USER_ATTRIBUTE, user);
+
+            var authentication = new UsernamePasswordAuthenticationToken(email, null, authorities);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
             filterChain.doFilter(request, response);
-            return;
+        } finally {
+            TenantContext.clear();
         }
-
-        if (!jwtService.isTokenValid(token)) {
-            log.warn("Invalid or expired token for URI={}", request.getRequestURI());
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        var email = jwtService.extractEmail(token);
-
-        User user = userRepository.findByEmail(email).orElse(null);
-        if (user == null) {
-            log.warn("Token válido pero usuario inexistente en BD para email={}, URI={}", email, request.getRequestURI());
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        if (user.getRole() != UserRole.PHYSICIAN && user.getRole() != UserRole.PATIENT) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
-        }
-        if (PhysicianAccess.isPhysician(user)) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_PHYSICIAN"));
-        }
-        if (PatientAccess.isPatient(user)) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_PATIENT"));
-        }
-
-        request.setAttribute(AUTHENTICATED_USER_ATTRIBUTE, user);
-
-        var authentication = new UsernamePasswordAuthenticationToken(email, null, authorities);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        filterChain.doFilter(request, response);
     }
 
     private String extractBearerToken(HttpServletRequest request) {
