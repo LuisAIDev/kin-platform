@@ -5,6 +5,10 @@ import com.kinplatform.billing.rips.generator.RipsGenerationContext;
 import com.kinplatform.billing.rips.model.RipsBatch;
 import com.kinplatform.billing.rips.model.RipsRecord;
 import com.kinplatform.billing.rips.model.RipsRecordRepository;
+import com.kinplatform.billing.rips.model.SisproModalidadPagoRepository;
+import com.kinplatform.billing.rips.model.SisproCoberturaPlanRepository;
+import com.kinplatform.billing.rips.model.SisproConceptoRecaudoRepository;
+import com.kinplatform.billing.rips.model.SisproTipoIdRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +30,18 @@ class RipsValidatorTest {
     @Mock
     private RipsRecordRepository recordRepository;
 
+    @Mock
+    private SisproModalidadPagoRepository modalidadPagoRepository;
+
+    @Mock
+    private SisproCoberturaPlanRepository coberturaPlanRepository;
+
+    @Mock
+    private SisproConceptoRecaudoRepository conceptoRecaudoRepository;
+
+    @Mock
+    private SisproTipoIdRepository tipoIdRepository;
+
     private RipsValidator validator;
 
     private final UUID batchId = UUID.randomUUID();
@@ -33,8 +49,8 @@ class RipsValidatorTest {
     private static final String VALID_AF_JSON = """
         {
             "codPrestador": "12345",
-            "modalidadPago": "1",
-            "coberturaPlanBeneficios": "PBS",
+            "modalidadPago": "01",
+            "coberturaPlanBeneficios": "01",
             "fechaInicioPeriodo": "2026-01-01",
             "fechaFinPeriodo": "2026-01-31",
             "nitEps": "890900123",
@@ -50,8 +66,8 @@ class RipsValidatorTest {
     private static final String VALID_AC_JSON = """
         {
             "codPrestador": "12345",
-            "modalidadPago": "1",
-            "coberturaPlanBeneficios": "PBS",
+            "modalidadPago": "01",
+            "coberturaPlanBeneficios": "01",
             "fechaInicioPeriodo": "2026-01-01",
             "fechaFinPeriodo": "2026-01-31",
             "numFactura": "FEV0000000001",
@@ -64,75 +80,11 @@ class RipsValidatorTest {
         }
         """;
 
-    private static final String INVALID_MISSING_COD_PRESTADOR = """
-        {
-            "modalidadPago": "1",
-            "coberturaPlanBeneficios": "PBS",
-            "fechaInicioPeriodo": "2026-01-01",
-            "fechaFinPeriodo": "2026-01-31"
-        }
-        """;
-
-    private static final String INVALID_NEGATIVE_MONETARY = """
-        {
-            "codPrestador": "12345",
-            "modalidadPago": "1",
-            "coberturaPlanBeneficios": "PBS",
-            "fechaInicioPeriodo": "2026-01-01",
-            "fechaFinPeriodo": "2026-01-31",
-            "valorConsulta": "-50000.00"
-        }
-        """;
-
-    private static final String INVALID_DATE_FORMAT = """
-        {
-            "codPrestador": "12345",
-            "modalidadPago": "1",
-            "coberturaPlanBeneficios": "PBS",
-            "fechaInicioPeriodo": "01/01/2026",
-            "fechaFinPeriodo": "2026-01-31"
-        }
-        """;
-
-    private static final String INVALID_CONTRATO_POLIZA_BOTH = """
-        {
-            "codPrestador": "12345",
-            "modalidadPago": "1",
-            "coberturaPlanBeneficios": "PBS",
-            "fechaInicioPeriodo": "2026-01-01",
-            "fechaFinPeriodo": "2026-01-31",
-            "numeroContrato": "CT-001",
-            "numeroPoliza": "POL-001"
-        }
-        """;
-
-    private static final String INVALID_TIPO_OPERACION = """
-        {
-            "codPrestador": "12345",
-            "modalidadPago": "1",
-            "coberturaPlanBeneficios": "PBS",
-            "fechaInicioPeriodo": "2026-01-01",
-            "fechaFinPeriodo": "2026-01-31",
-            "tipoOperacion": "INVALIDO"
-        }
-        """;
-
-    private static final String INVALID_MONETARY_FORMAT = """
-        {
-            "codPrestador": "12345",
-            "modalidadPago": "1",
-            "coberturaPlanBeneficios": "PBS",
-            "fechaInicioPeriodo": "2026-01-01",
-            "fechaFinPeriodo": "2026-01-31",
-            "valorConsulta": "$50,000.00"
-        }
-        """;
-
     private static final String VALID_US_JSON = """
         {
             "codPrestador": "12345",
-            "modalidadPago": "1",
-            "coberturaPlanBeneficios": "PBS",
+            "modalidadPago": "01",
+            "coberturaPlanBeneficios": "01",
             "fechaInicioPeriodo": "2026-01-01",
             "fechaFinPeriodo": "2026-01-31",
             "tipoDocumento": "CC",
@@ -146,11 +98,75 @@ class RipsValidatorTest {
         }
         """;
 
+    private static final String INVALID_MISSING_COD_PRESTADOR = """
+        {
+            "modalidadPago": "01",
+            "coberturaPlanBeneficios": "01",
+            "fechaInicioPeriodo": "2026-01-01",
+            "fechaFinPeriodo": "2026-01-31"
+        }
+        """;
+
+    private static final String INVALID_NEGATIVE_MONETARY = """
+        {
+            "codPrestador": "12345",
+            "modalidadPago": "01",
+            "coberturaPlanBeneficios": "01",
+            "fechaInicioPeriodo": "2026-01-01",
+            "fechaFinPeriodo": "2026-01-31",
+            "valorConsulta": "-50000.00"
+        }
+        """;
+
+    private static final String INVALID_DATE_FORMAT = """
+        {
+            "codPrestador": "12345",
+            "modalidadPago": "01",
+            "coberturaPlanBeneficios": "01",
+            "fechaInicioPeriodo": "01/01/2026",
+            "fechaFinPeriodo": "2026-01-31"
+        }
+        """;
+
+    private static final String INVALID_CONTRATO_POLIZA_BOTH = """
+        {
+            "codPrestador": "12345",
+            "modalidadPago": "01",
+            "coberturaPlanBeneficios": "01",
+            "fechaInicioPeriodo": "2026-01-01",
+            "fechaFinPeriodo": "2026-01-31",
+            "numeroContrato": "CT-001",
+            "numeroPoliza": "POL-001"
+        }
+        """;
+
+    private static final String INVALID_TIPO_OPERACION = """
+        {
+            "codPrestador": "12345",
+            "modalidadPago": "01",
+            "coberturaPlanBeneficios": "01",
+            "fechaInicioPeriodo": "2026-01-01",
+            "fechaFinPeriodo": "2026-01-31",
+            "tipoOperacion": "INVALIDO"
+        }
+        """;
+
+    private static final String INVALID_MONETARY_FORMAT = """
+        {
+            "codPrestador": "12345",
+            "modalidadPago": "01",
+            "coberturaPlanBeneficios": "01",
+            "fechaInicioPeriodo": "2026-01-01",
+            "fechaFinPeriodo": "2026-01-31",
+            "valorConsulta": "$50,000.00"
+        }
+        """;
+
     private static final String INVALID_US_MISSING_FIELDS = """
         {
             "codPrestador": "12345",
-            "modalidadPago": "1",
-            "coberturaPlanBeneficios": "PBS",
+            "modalidadPago": "01",
+            "coberturaPlanBeneficios": "01",
             "fechaInicioPeriodo": "2026-01-01",
             "fechaFinPeriodo": "2026-01-31",
             "numDocumento": "123456789",
@@ -160,9 +176,57 @@ class RipsValidatorTest {
         }
         """;
 
+    private static final String INVALID_MODALIDAD_PAGO = """
+        {
+            "codPrestador": "12345",
+            "modalidadPago": "99",
+            "coberturaPlanBeneficios": "01",
+            "fechaInicioPeriodo": "2026-01-01",
+            "fechaFinPeriodo": "2026-01-31"
+        }
+        """;
+
+    private static final String INVALID_COBERTURA_PLAN = """
+        {
+            "codPrestador": "12345",
+            "modalidadPago": "01",
+            "coberturaPlanBeneficios": "99",
+            "fechaInicioPeriodo": "2026-01-01",
+            "fechaFinPeriodo": "2026-01-31"
+        }
+        """;
+
+    private static final String INVALID_TIPO_DOCUMENTO = """
+        {
+            "codPrestador": "12345",
+            "modalidadPago": "01",
+            "coberturaPlanBeneficios": "01",
+            "fechaInicioPeriodo": "2026-01-01",
+            "fechaFinPeriodo": "2026-01-31",
+            "tipoDocumento": "XX",
+            "numDocumento": "123456789",
+            "primerNombre": "Juan",
+            "primerApellido": "Perez",
+            "fechaNacimiento": "1990-01-15",
+            "sexo": "M"
+        }
+        """;
+
     @BeforeEach
     void setUp() {
-        validator = new RipsValidator(recordRepository, new ObjectMapper());
+        when(modalidadPagoRepository.existsByCodigoAndActivoTrue("01")).thenReturn(true);
+        when(modalidadPagoRepository.existsByCodigoAndActivoTrue("02")).thenReturn(true);
+        when(modalidadPagoRepository.existsByCodigoAndActivoTrue("99")).thenReturn(false);
+
+        when(coberturaPlanRepository.existsByCodigoAndActivoTrue("01")).thenReturn(true);
+        when(coberturaPlanRepository.existsByCodigoAndActivoTrue("POS")).thenReturn(false);
+        when(coberturaPlanRepository.existsByCodigoAndActivoTrue("99")).thenReturn(false);
+
+        when(tipoIdRepository.existsByCodigoAndActivoTrue("CC")).thenReturn(true);
+        when(tipoIdRepository.existsByCodigoAndActivoTrue("TI")).thenReturn(true);
+        when(tipoIdRepository.existsByCodigoAndActivoTrue("XX")).thenReturn(false);
+
+        validator = new RipsValidator(recordRepository, new ObjectMapper(), modalidadPagoRepository, coberturaPlanRepository, conceptoRecaudoRepository, tipoIdRepository);
     }
 
     private RipsBatch batch(RipsBatch.RipsType type) {
@@ -305,7 +369,7 @@ class RipsValidatorTest {
     @Test
     void validate_crossRecordInconsistentModalidad_fails() {
         String af1 = VALID_AF_JSON;
-        String af2 = VALID_AF_JSON.replace("\"modalidadPago\": \"1\"", "\"modalidadPago\": \"2\"");
+        String af2 = VALID_AF_JSON.replace("\"modalidadPago\": \"01\"", "\"modalidadPago\": \"02\"");
 
         when(recordRepository.findByBatchIdOrderBySequenceNumber(batchId))
                 .thenReturn(List.of(record(1, af1), record(2, af2)));
@@ -319,7 +383,7 @@ class RipsValidatorTest {
     @Test
     void validate_crossRecordInconsistentCobertura_fails() {
         String af1 = VALID_AF_JSON;
-        String af2 = VALID_AF_JSON.replace("\"coberturaPlanBeneficios\": \"PBS\"", "\"coberturaPlanBeneficios\": \"POS\"");
+        String af2 = VALID_AF_JSON.replace("\"coberturaPlanBeneficios\": \"01\"", "\"coberturaPlanBeneficios\": \"POS\"");
 
         when(recordRepository.findByBatchIdOrderBySequenceNumber(batchId))
                 .thenReturn(List.of(record(1, af1), record(2, af2)));
@@ -328,5 +392,58 @@ class RipsValidatorTest {
 
         assertFalse(result.isValid());
         assertTrue(result.getErrors().stream().anyMatch(e -> e.contains("COBERTURA_PLAN_BENEFICIOS inconsistente")));
+    }
+
+    @Test
+    void validate_invalidModalidadPago_returnsError() {
+        when(recordRepository.findByBatchIdOrderBySequenceNumber(batchId))
+                .thenReturn(List.of(record(1, INVALID_MODALIDAD_PAGO)));
+
+        ValidationResult result = validator.validate(batch(RipsBatch.RipsType.AC), mock(RipsGenerationContext.class));
+
+        assertFalse(result.isValid());
+        assertTrue(result.getErrors().get(0).contains("no existe en tabla de referencia SISPRO"));
+    }
+
+    @Test
+    void validate_invalidCoberturaPlan_returnsError() {
+        when(recordRepository.findByBatchIdOrderBySequenceNumber(batchId))
+                .thenReturn(List.of(record(1, INVALID_COBERTURA_PLAN)));
+
+        ValidationResult result = validator.validate(batch(RipsBatch.RipsType.AC), mock(RipsGenerationContext.class));
+
+        assertFalse(result.isValid());
+        assertTrue(result.getErrors().get(0).contains("no existe en tabla de referencia SISPRO"));
+    }
+
+    @Test
+    void validate_invalidTipoDocumento_returnsError() {
+        when(recordRepository.findByBatchIdOrderBySequenceNumber(batchId))
+                .thenReturn(List.of(record(1, INVALID_TIPO_DOCUMENTO)));
+
+        ValidationResult result = validator.validate(batch(RipsBatch.RipsType.US), mock(RipsGenerationContext.class));
+
+        assertFalse(result.isValid());
+        assertTrue(result.getErrors().get(0).contains("no existe en tabla de referencia SISPRO"));
+    }
+
+    @Test
+    void validate_validModalidadPago_passes() {
+        when(recordRepository.findByBatchIdOrderBySequenceNumber(batchId))
+                .thenReturn(List.of(record(1, VALID_AC_JSON)));
+
+        ValidationResult result = validator.validate(batch(RipsBatch.RipsType.AC), mock(RipsGenerationContext.class));
+
+        assertTrue(result.isValid(), () -> "errores: " + result.getErrors());
+    }
+
+    @Test
+    void validate_validCobertura_passes() {
+        when(recordRepository.findByBatchIdOrderBySequenceNumber(batchId))
+                .thenReturn(List.of(record(1, VALID_AC_JSON)));
+
+        ValidationResult result = validator.validate(batch(RipsBatch.RipsType.AC), mock(RipsGenerationContext.class));
+
+        assertTrue(result.isValid(), () -> "errores: " + result.getErrors());
     }
 }
