@@ -301,6 +301,21 @@ Product Owner, pero no se pudo verificar visualmente el correo del formulario.
 ### Criterio de éxito Sprint 2
 - Todos los tests verdes · suite 100% hermética · CI/CD limpio.
 
+## Deuda técnica (2026-09-23) - Fase 2.1
+
+### Resuelto
+- ✅ Roles IPS_* (V62-V64): IPS_ADMIN, IPS_MEDICO, IPS_ENFERMERA, IPS_FACTURADOR, IPS_AUDITOR.
+- ✅ Multi-sede (`institutional_branches`, V63).
+- ✅ Equipos médicos (`organization_members`, V64).
+- ✅ Billing para IPS_* (`SecurityConfig` + `ContractController`).
+
+### Pendiente (Fase 2.2)
+- **TD-IPS-1**: Invitación de miembros por email (hoy es por `userId`).
+- **TD-IPS-2**: Asignación automática de rol IPS al aceptar la invitación.
+- **TD-IPS-3**: Pipeline de catálogos CUPS/INVIMA.
+- **TD-IPS-4**: `/billing/rips` sin controller REST (generación RIPS no expuesta).
+- **TD-IPS-5**: No existe `/institutional/admin/**` ni `/institutional/facturacion/**` con endpoints aún (reglas listas, rutas por implementar).
+
 ---
 
 *Last Updated: 2026-09-23*  
