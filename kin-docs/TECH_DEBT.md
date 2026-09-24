@@ -369,6 +369,14 @@ Product Owner, pero no se pudo verificar visualmente el correo del formulario.
 - **Nota**: el catálogo completo debe cargarse ANTES del go-live con IPS real; el
   subconjunto actual (V69-V70) es suficiente para demo + desarrollo.
 
+## Deuda técnica (2026-09-24) - XSD MinSalud
+- **TD-CAT-4**: XSD oficiales MinSalud v2024 pendientes de descarga.
+  - Responsable: Product Owner · Estimado: 1-3 días.
+  - Bloquea: validación real de RIPS en producción.
+  - Mitigación: XSD placeholder en `src/test/resources/schemas/minsalud/2024/`.
+  - Al recibirlos: colocar en `src/main/resources/schemas/minsalud/2024/` (nombres
+    `rips_ac.xsd`, etc.) y ajustar `RipsJsonToXmlMapper` a la estructura oficial.
+
 ---
 
 *Last Updated: 2026-09-24*  
