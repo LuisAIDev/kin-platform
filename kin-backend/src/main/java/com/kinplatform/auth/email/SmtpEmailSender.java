@@ -229,6 +229,32 @@ public class SmtpEmailSender implements EmailSender {
                         + "Si no puedes asistir, cancela o reprograma con anticipación.");
     }
 
+    @Override
+    public void sendInstitutionalInquiryNotification(String to, String summary) {
+        sendEmail(
+                "institutional-inquiry",
+                to,
+                "KIN Medical",
+                null,
+                "Nueva solicitud de acceso Beta (IPS)",
+                summary);
+    }
+
+    @Override
+    public void sendInstitutionalInquiryAutoReply(String to, String contactName) {
+        sendEmail(
+                "institutional-inquiry-autoreply",
+                to,
+                contactName,
+                "https://kin-platform.com/clinicas/beta",
+                "Hemos recibido tu solicitud — KIN Medical Beta",
+                "Hola " + contactName + ",\n\n"
+                        + "Hemos recibido tu solicitud de acceso al programa Beta de KIN Medical "
+                        + "para clínicas y hospitales.\n\n"
+                        + "Te contactaremos en un plazo de 48 horas para agendar una demo.\n\n"
+                        + "Gracias por tu interés.");
+    }
+
     private void sendEmail(String type, String to, String fullName, String link, String subject, String text) {
         attemptsCounter.increment();
         Timer.Sample sample = Timer.start();

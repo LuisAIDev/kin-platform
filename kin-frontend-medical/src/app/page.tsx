@@ -250,13 +250,12 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center">
             <div>
-              <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
-                Próximamente
+              <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                Beta Cerrada
               </span>
-              <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Para clínicas y hospitales: gestión integral de equipos médicos.</h2>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Para clínicas y hospitales: Programa Beta</h2>
               <p className="mt-4 text-lg text-neutral-600">
-                KIN Medical se prepara para el entorno hospitalario: multi-médico, multi-sede,
-                dashboards institucionales, gestión de equipos y trazabilidad clínica completa.
+                Estamos seleccionando IPS para el programa beta. Solicita acceso y te contactaremos en 48h.
               </p>
               <ul className="mt-6 space-y-3">
                 {CLINIC_FEATURES.map((f) => (
@@ -270,7 +269,8 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <a href="#contacto" className="btn-primary mt-8 px-6 py-3">Quiero información</a>
+              <p className="mt-3 text-sm font-medium text-emerald-700">Disponible en fase beta</p>
+              <Link href="/clinicas/beta" className="btn-primary mt-8 px-6 py-3">Solicitar Acceso Beta</Link>
             </div>
             <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
               <div className="grid grid-cols-2 gap-4">

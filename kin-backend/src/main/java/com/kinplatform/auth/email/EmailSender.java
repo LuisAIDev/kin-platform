@@ -56,4 +56,22 @@ public interface EmailSender {
      * @param scheduledAtText fecha/hora de la cita en texto legible
      */
     void sendAppointmentReminderEmail(String to, String patientName, String physicianName, String scheduledAtText);
+
+    /**
+     * Notificación interna cuando una IPS/clínica solicita acceso al programa
+     * Beta (formulario público de la landing).
+     *
+     * @param to      destinatario interno (contacto@kin-platform.com)
+     * @param summary resumen de la solicitud (datos del lead)
+     */
+    void sendInstitutionalInquiryNotification(String to, String summary);
+
+    /**
+     * Respuesta automática al solicitante de acceso Beta para confirmar la
+     * recepción de su solicitud.
+     *
+     * @param to          email del solicitante
+     * @param contactName nombre del contacto
+     */
+    void sendInstitutionalInquiryAutoReply(String to, String contactName);
 }

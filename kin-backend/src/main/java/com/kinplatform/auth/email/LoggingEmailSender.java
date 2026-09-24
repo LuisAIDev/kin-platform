@@ -181,6 +181,36 @@ public class LoggingEmailSender implements EmailSender {
         }
     }
 
+    @Override
+    public void sendInstitutionalInquiryNotification(String to, String summary) {
+        attemptsCounter.increment();
+        Timer.Sample sample = Timer.start();
+        try {
+            log.warn("[institutional-inquiry][dev/no-smtp] notificacion interna destinatario={}", maskEmail(to));
+            successCounter.increment();
+        } catch (Exception e) {
+            failureCounter.increment();
+            throw new IllegalStateException("No se pudo procesar la notificacion de solicitud institucional (logging)", e);
+        } finally {
+            sample.stop(latencyTimer);
+        }
+    }
+
+    @Override
+    public void sendInstitutionalInquiryAutoReply(String to, String contactName) {
+        attemptsCounter.increment();
+        Timer.Sample sample = Timer.start();
+        try {
+            log.warn("[institutional-inquiry-autoreply][dev/no-smtp] destinatario={}", maskEmail(to));
+            successCounter.increment();
+        } catch (Exception e) {
+            failureCounter.increment();
+            throw new IllegalStateException("No se pudo procesar la respuesta automatica institucional (logging)", e);
+        } finally {
+            sample.stop(latencyTimer);
+        }
+    }
+
     private static String maskEmail(String email) {
         if (email == null || !email.contains("@")) {
             return "invalid";

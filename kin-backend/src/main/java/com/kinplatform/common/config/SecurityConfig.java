@@ -156,6 +156,11 @@ public class SecurityConfig {
                         .hasAnyRole("PHYSICIAN", "ADMIN")
                         .requestMatchers("/billing/**")
                         .hasAnyRole("PHYSICIAN", "ADMIN")
+                        // Solicitud de acceso Beta (landing IPS): publica.
+                        .requestMatchers(HttpMethod.POST, "/institutional/inquiries")
+                        .permitAll()
+                        .requestMatchers("/institutional/**")
+                        .hasRole("ADMIN")
                         .requestMatchers("/error")
                         .permitAll()
                         .requestMatchers("/test/**")
