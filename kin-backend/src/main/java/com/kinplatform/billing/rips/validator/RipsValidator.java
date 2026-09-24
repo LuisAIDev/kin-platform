@@ -6,6 +6,10 @@ import com.kinplatform.billing.rips.generator.RipsGenerationContext;
 import com.kinplatform.billing.rips.model.RipsBatch;
 import com.kinplatform.billing.rips.model.RipsRecord;
 import com.kinplatform.billing.rips.model.RipsRecordRepository;
+import com.kinplatform.billing.rips.model.SisproModalidadPagoRepository;
+import com.kinplatform.billing.rips.model.SisproCoberturaPlanRepository;
+import com.kinplatform.billing.rips.model.SisproConceptoRecaudoRepository;
+import com.kinplatform.billing.rips.model.SisproTipoIdRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -30,6 +34,10 @@ public class RipsValidator {
 
     private final RipsRecordRepository recordRepository;
     private final ObjectMapper objectMapper;
+    private final SisproModalidadPagoRepository modalidadPagoRepository;
+    private final SisproCoberturaPlanRepository coberturaPlanRepository;
+    private final SisproConceptoRecaudoRepository conceptoRecaudoRepository;
+    private final SisproTipoIdRepository tipoIdRepository;
 
     private static final Set<String> VALID_TIPO_OPERACION = Set.of(
         "SS-CUFE", "SS-CUDE", "SS-POS", "SS-SNum", "SS-Recaudo", "SS-Reporte", "SS-SinAporte"
@@ -77,6 +85,7 @@ public class RipsValidator {
         validateDateFields(data, row, errors);
         validateExclusivityContratoPoliza(data, row, errors);
         validateTipoOperacion(data, row, errors);
+        validateReferenceData(data, row, errors);
 
         switch (type) {
             case AF -> validateAFSpecific(data, row, errors);
@@ -97,14 +106,14 @@ public class RipsValidator {
         if (isBlank(modalidadPago)) {
             errors.add(prefix + "MODALIDAD_PAGO es obligatorio");
         } else if (!isValidModalidadPago(modalidadPago)) {
-            errors.add(prefix + "MODALIDAD_PAGO inválido: " + modalidadPago);
+            errors.add(prefix + "MODALIDAD_PAGO no existe en tabla de referencia SISPRO: " + modalidadPago);
         }
 
         String coberturaPlan = getString(data, "coberturaPlanBeneficios");
         if (isBlank(coberturaPlan)) {
             errors.add(prefix + "COBERTURA_PLAN_BENEFICIOS es obligatorio");
         } else if (!isValidCoberturaPlan(coberturaPlan)) {
-            errors.add(prefix + "COBERTURA_PLAN_BENEFICIOS inválido: " + coberturaPlan);
+            errors.add(prefix + "COBERTURA_PLAN_BENEFICIOS no existe en tabla de referencia SISPRO: " + coberturaPlan);
         }
 
         String fechaInicio = getString(data, "fechaInicioPeriodo");
@@ -185,6 +194,15 @@ public class RipsValidator {
         }
     }
 
+    private void validateReferenceData(Map<String, Object> data, int row, List<String> errors) {
+        String prefix = "Fila " + row + ": ";
+
+        String tipoDoc = getString(data, "tipoDocumento");
+        if (!isBlank(tipoDoc) && !isValidTipoIdentificacion(tipoDoc)) {
+            errors.add(prefix + "TIPO_DOCUMENTO no existe en tabla de referencia SISPRO: " + tipoDoc);
+        }
+    }
+
     private void validateAFSpecific(Map<String, Object> data, int row, List<String> errors) {
         String prefix = "Fila " + row + ": ";
 
@@ -233,7 +251,7 @@ public class RipsValidator {
         if (isBlank(tipoDoc)) {
             errors.add(prefix + "TIPO_DOCUMENTO es obligatorio en US");
         } else if (!isValidTipoIdentificacion(tipoDoc)) {
-            errors.add(prefix + "TIPO_DOCUMENTO inválido (debe ser código SISPRO): " + tipoDoc);
+            errors.add(prefix + "TIPO_DOCUMENTO no existe en tabla de referencia SISPRO: " + tipoDoc);
         }
 
         String numDoc = getString(data, "numDocumento");
@@ -325,14 +343,14 @@ public class RipsValidator {
     }
 
     private boolean isValidModalidadPago(String value) {
-        return true;
+        return modalidadPagoRepository.existsByCodigoAndActivoTrue(value);
     }
 
     private boolean isValidCoberturaPlan(String value) {
-        return true;
+        return coberturaPlanRepository.existsByCodigoAndActivoTrue(value);
     }
 
     private boolean isValidTipoIdentificacion(String value) {
-        return true;
+        return tipoIdRepository.existsByCodigoAndActivoTrue(value);
     }
 }
