@@ -36,11 +36,10 @@ public class OrganizationMemberController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<OrganizationMember> accept(@PathVariable UUID id, HttpServletRequest request) {
         User current = (User) request.getAttribute(JwtAuthenticationFilter.AUTHENTICATED_USER_ATTRIBUTE);
-        OrganizationMember member = service.get(id);
-        if (current == null || !member.getUserId().equals(current.getId())) {
-            throw new AccessDeniedException("No puedes aceptar una invitacion ajena");
+        if (current == null) {
+            throw new AccessDeniedException("No autenticado");
         }
-        return ResponseEntity.ok(service.accept(id));
+        return ResponseEntity.ok(service.accept(id, current));
     }
 
     @PutMapping("/{id}/branch/{branchId}")

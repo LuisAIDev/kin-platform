@@ -6,6 +6,7 @@ import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,16 +34,20 @@ public class OrganizationMemberService {
     public OrganizationMember invite(OrganizationMemberRequest request) {
         UUID organizationId = TenantContext.get();
         String email = request.email().trim().toLowerCase();
-        User invitee = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + email));
+        User invitee = userRepository.findByEmail(email).orElse(null);
 
-        if (repository.findByOrganizationIdAndUserId(organizationId, invitee.getId()).isPresent()) {
+        if (invitee != null
+                && repository.findByOrganizationIdAndUserId(organizationId, invitee.getId()).isPresent()) {
             throw new IllegalArgumentException("El usuario ya pertenece a la organizacion");
+        }
+        if (repository.existsByOrganizationIdAndInvitedEmail(organizationId, email)) {
+            throw new IllegalArgumentException("Ya existe una invitacion para ese email");
         }
         UUID branchId = validateBranch(request.branchId(), organizationId);
         OrganizationMember member = OrganizationMember.builder()
                 .organizationId(organizationId)
-                .userId(invitee.getId())
+                .userId(invitee != null ? invitee.getId() : null)
+                .invitedEmail(email)
                 .branchId(branchId)
                 .role(parseRole(request.role()))
                 .status(OrganizationMember.MemberStatus.INVITED)
@@ -52,8 +57,15 @@ public class OrganizationMemberService {
     }
 
     @Transactional
-    public OrganizationMember accept(UUID id) {
+    public OrganizationMember accept(UUID id, User currentUser) {
         OrganizationMember member = get(id);
+        boolean isOwner = (member.getUserId() != null && member.getUserId().equals(currentUser.getId()))
+                || (member.getInvitedEmail() != null
+                        && member.getInvitedEmail().equalsIgnoreCase(currentUser.getEmail()));
+        if (!isOwner) {
+            throw new AccessDeniedException("No puedes aceptar una invitacion ajena");
+        }
+        member.setUserId(currentUser.getId());
         member.setStatus(OrganizationMember.MemberStatus.ACTIVE);
         member.setJoinedAt(OffsetDateTime.now());
         return repository.save(member);

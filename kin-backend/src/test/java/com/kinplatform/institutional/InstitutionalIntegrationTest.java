@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -104,10 +105,7 @@ class InstitutionalIntegrationTest {
     void acceptInvitation_asInvitedUser_returns200() throws Exception {
         UUID id = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        OrganizationMember member = OrganizationMember.builder()
-                .id(id).userId(userId).status(OrganizationMember.MemberStatus.INVITED).build();
-        when(memberService.get(id)).thenReturn(member);
-        when(memberService.accept(id)).thenReturn(OrganizationMember.builder()
+        when(memberService.accept(eq(id), any())).thenReturn(OrganizationMember.builder()
                 .id(id).userId(userId).status(OrganizationMember.MemberStatus.ACTIVE).build());
 
         User current = User.builder().id(userId).email("medico@clinica.com").role(UserRole.IPS_MEDICO).build();

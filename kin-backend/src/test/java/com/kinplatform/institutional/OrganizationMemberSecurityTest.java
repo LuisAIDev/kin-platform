@@ -16,12 +16,14 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -97,9 +99,7 @@ class OrganizationMemberSecurityTest {
     void accept_asInvitedUser_returns200() throws Exception {
         UUID id = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        OrganizationMember member = OrganizationMember.builder().id(id).userId(userId).build();
-        when(memberService.get(id)).thenReturn(member);
-        when(memberService.accept(id)).thenReturn(OrganizationMember.builder()
+        when(memberService.accept(eq(id), any())).thenReturn(OrganizationMember.builder()
                 .id(id).userId(userId).status(OrganizationMember.MemberStatus.ACTIVE).build());
         User current = User.builder().id(userId).email("m@c.com").role(UserRole.IPS_MEDICO).build();
 
@@ -112,8 +112,8 @@ class OrganizationMemberSecurityTest {
     @WithMockUser(roles = "IPS_MEDICO")
     void accept_asOtherUser_returns403() throws Exception {
         UUID id = UUID.randomUUID();
-        OrganizationMember member = OrganizationMember.builder().id(id).userId(UUID.randomUUID()).build();
-        when(memberService.get(id)).thenReturn(member);
+        when(memberService.accept(eq(id), any()))
+                .thenThrow(new AccessDeniedException("No puedes aceptar una invitacion ajena"));
         User current = User.builder().id(UUID.randomUUID()).email("other@c.com").role(UserRole.IPS_MEDICO).build();
 
         mockMvc.perform(post("/institutional/members/{id}/accept", id)

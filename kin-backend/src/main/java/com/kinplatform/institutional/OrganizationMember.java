@@ -28,8 +28,12 @@ public class OrganizationMember {
     @Column(name = "organization_id", nullable = false)
     private UUID organizationId;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id")
     private UUID userId;
+
+    /** Email del invitado cuando aun no tiene cuenta (user_id null hasta aceptar). */
+    @Column(name = "invited_email", length = 255)
+    private String invitedEmail;
 
     @Column(name = "branch_id")
     private UUID branchId;
