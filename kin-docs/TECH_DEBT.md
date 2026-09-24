@@ -355,6 +355,20 @@ Product Owner, pero no se pudo verificar visualmente el correo del formulario.
 - **TD-IPS-16**: Aceptación por token/link único (hoy requiere login del invitado).
 - **TD-IPS-17**: `invited_email` no se limpia al vincular `user_id` (columna histórica).
 
+## Deuda técnica (2026-09-24) - Catálogos CUPS/INVIMA
+### Resuelto
+- ✅ Estructura CUPS/INVIMA (V67-V68).
+- ✅ Full-text search (pg_trgm + tsvector) + trigger propio.
+- ✅ Autocomplete API + frontend (debounced).
+- ✅ Seed subconjunto real (V69: 30 CUPS, V70: 10 INVIMA) — validación técnica.
+
+### Pendiente (antes de cliente IPS real)
+- **TD-CAT-1**: Cargar CUPS completo (~15,000). Fuente MinSalud. 2-4 h. CSV/Excel.
+- **TD-CAT-2**: Cargar INVIMA completo (~30,000). Fuente INVIMA. 4-8 h. CSV/Excel.
+- **TD-CAT-3**: Actualización semestral automatizada de catálogos.
+- **Nota**: el catálogo completo debe cargarse ANTES del go-live con IPS real; el
+  subconjunto actual (V69-V70) es suficiente para demo + desarrollo.
+
 ---
 
 *Last Updated: 2026-09-24*  
