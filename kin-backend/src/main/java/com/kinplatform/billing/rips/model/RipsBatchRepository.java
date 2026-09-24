@@ -15,6 +15,8 @@ public interface RipsBatchRepository extends JpaRepository<RipsBatch, UUID> {
     Optional<RipsBatch> findByOrganizationIdAndContractIdAndPeriodStartAndPeriodEndAndRipsType(
             UUID organizationId, UUID contractId, LocalDate periodStart, LocalDate periodEnd, RipsBatch.RipsType ripsType);
 
+    Page<RipsBatch> findByOrganizationIdAndContractId(UUID organizationId, UUID contractId, Pageable pageable);
+
     List<RipsBatch> findByOrganizationId(UUID organizationId);
 
     List<RipsBatch> findByOrganizationIdAndPeriodStartBetween(UUID organizationId, LocalDate start, LocalDate end);
@@ -29,4 +31,6 @@ public interface RipsBatchRepository extends JpaRepository<RipsBatch, UUID> {
         AND b.status IN ('VALID', 'SENT_TO_DIAN', 'ACCEPTED')
         """)
     List<RipsBatch> findValidBatchesForPeriod(@Param("orgId") UUID orgId, @Param("periodStart") LocalDate start, @Param("periodEnd") LocalDate end);
+
+    Optional<RipsBatch> findByIdAndOrganizationId(UUID id, UUID organizationId);
 }

@@ -30,8 +30,7 @@ public class RipsGenerationOrchestrator {
     private final BusinessRuleValidator businessValidator;
     private final RipsContextBuilder contextBuilder;
 
-    public RipsBatch execute(UUID contractId, LocalDate periodStart, LocalDate periodEnd, RipsBatch.RipsType ripsType) {
-        UUID organizationId = TenantContext.get();
+    public RipsBatch execute(UUID organizationId, UUID contractId, LocalDate periodStart, LocalDate periodEnd, RipsBatch.RipsType ripsType) {
 
         var existing = batchRepository.findByOrganizationIdAndContractIdAndPeriodStartAndPeriodEndAndRipsType(
                 organizationId, contractId, periodStart, periodEnd, ripsType);
@@ -66,6 +65,9 @@ public class RipsGenerationOrchestrator {
                 if (!gen.supports(ripsType)) continue;
 
                 List<RipsRecord> records = gen.generate(context);
+                UUID batchId = batch.getId();
+                records.forEach(r -> r.setRipsType(ripsType));
+                records.forEach(r -> r.setBatchId(batchId));
                 recordRepository.saveAll(records);
                 batch.incrementRecordCount(records.size());
                 log.debug("Generador {} produjo {} registros", gen.getClass().getSimpleName(), records.size());
@@ -99,12 +101,12 @@ public class RipsGenerationOrchestrator {
         }
     }
 
-    public RipsBatch executeAllTypes(UUID contractId, LocalDate periodStart, LocalDate periodEnd) {
+    public RipsBatch executeAllTypes(UUID organizationId, UUID contractId, LocalDate periodStart, LocalDate periodEnd) {
         for (RipsBatch.RipsType type : RipsBatch.RipsType.values()) {
-            execute(contractId, periodStart, periodEnd, type);
+            execute(organizationId, contractId, periodStart, periodEnd, type);
         }
         return batchRepository.findByOrganizationIdAndContractIdAndPeriodStartAndPeriodEndAndRipsType(
-                TenantContext.get(), contractId, periodStart, periodEnd, RipsBatch.RipsType.AT)
+                organizationId, contractId, periodStart, periodEnd, RipsBatch.RipsType.AT)
                 .orElseThrow();
     }
 

@@ -14,7 +14,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "rips_records", indexes = {
     @Index(name = "idx_rips_records_batch_seq", columnList = "batch_id, sequence_number"),
-    @Index(name = "idx_rips_records_source", columnList = "source_entity_type, source_entity_id")
+    @Index(name = "idx_rips_records_source", columnList = "source_entity_type, source_entity_id"),
+    @Index(name = "idx_rips_records_type", columnList = "rips_type")
 })
 public class RipsRecord {
 
@@ -24,6 +25,10 @@ public class RipsRecord {
 
     @Column(name = "batch_id", nullable = false)
     private UUID batchId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rips_type", nullable = false, length = 10)
+    private RipsBatch.RipsType ripsType;
 
     @Column(name = "sequence_number", nullable = false)
     private Integer sequenceNumber;
