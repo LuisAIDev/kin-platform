@@ -253,6 +253,31 @@ Product Owner, pero no se pudo verificar visualmente el correo del formulario.
 **Estado**: existe `GET /institutional/inquiries` (ADMIN) pero sin UI.  
 **Fix**: panel admin para listar/clasificar leads (`PENDING/CONTACTED/QUALIFIED/REJECTED`).
 
+## Deuda técnica resuelta (2026-09-23) - Hermetización de tests
+- Suite de tests ahora **hermética**: no depende del `.env` del desarrollador.
+- `springdotenv.enabled=false` para tests (Surefire `systemPropertyVariables`).
+- `jwt.secret` de test añadido en `application-test.yml` (Base64 >= 32 bytes).
+- `AgingCalculator` sin `@Profile("!test")` (permitía crear CarteraService/Controller).
+- `ContentCipher` con clave de test segura (`kin-test-telemedicine-crypto-secret-0123456789`).
+- Verificado: `PhysicianPatientRelationshipIntegrationTest` 8/8 sin `.env`.
+
+## Deuda técnica pendiente (2026-09-23) - salud de tests de integración
+- **Aislamiento de datos / FK**: `JpaDashboard/Physician/Telemedicine/Triage/Differential`,
+  `SchedulingIntegrationTest` insertan hijos sin padre o dependen de catálogos
+  truncados por `cleanDatabaseBeforeClass`. Requiere estrategia de seeding.
+- **Conexiones PostgreSQL**: `FATAL: sorry, too many clients already` (muchos
+  contextos/Hikari pools). Ajustar `spring.datasource.hikari.maximum-pool-size`
+  en test o compartir contexto.
+- **DataSource sin URL** (2 clases): `OutboxRelayDisabledIntegrationTest`,
+  otros `@SpringBootTest` sin Testcontainers ni datasource.
+- **OutboxRelayIntegrationTest**: 3 fallos (concurrencia/reintentos) por analizar.
+- **DocumentStorageQuotaPortImplTest**: `UnnecessaryStubbing` + `No active pricing
+  plan found for vertical SALUD_PERSONAL` (seed/dispatch).
+- **IA/red**: `llm down`, `429 Too Many Requests`, `stream closed` → requieren
+  mock de dependencias externas.
+- **SchedulingIntegrationTest**: `expected 201 but was 409` (conflicto de reserva;
+  aislamiento/flake).
+
 ---
 
 *Last Updated: 2026-09-23*  
