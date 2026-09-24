@@ -159,8 +159,13 @@ public class SecurityConfig {
                         // Solicitud de acceso Beta (landing IPS): publica.
                         .requestMatchers(HttpMethod.POST, "/institutional/inquiries")
                         .permitAll()
+                        // Rol institucional (IPS). Sub-rutas admin/facturacion mas estrictas.
+                        .requestMatchers("/institutional/admin/**")
+                        .hasAnyRole("IPS_ADMIN", "ADMIN")
+                        .requestMatchers("/institutional/facturacion/**")
+                        .hasAnyRole("IPS_FACTURADOR", "IPS_ADMIN", "ADMIN")
                         .requestMatchers("/institutional/**")
-                        .hasRole("ADMIN")
+                        .hasAnyRole("IPS_ADMIN", "IPS_MEDICO", "IPS_ENFERMERA", "IPS_FACTURADOR", "IPS_AUDITOR", "ADMIN")
                         .requestMatchers("/error")
                         .permitAll()
                         .requestMatchers("/test/**")

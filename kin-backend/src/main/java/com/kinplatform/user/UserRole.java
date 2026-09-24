@@ -6,5 +6,10 @@ public enum UserRole {
     FACILITADOR,
     PATIENT,
     PHYSICIAN,
-    ADMIN
+    ADMIN,
+    IPS_ADMIN,
+    IPS_MEDICO,
+    IPS_ENFERMERA,
+    IPS_FACTURADOR,
+    IPS_AUDITOR
 }
