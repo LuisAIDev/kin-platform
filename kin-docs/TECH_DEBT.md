@@ -346,8 +346,17 @@ Product Owner, pero no se pudo verificar visualmente el correo del formulario.
 - **TD-IPS-16**: Aceptación por token/link único (hoy requiere login del invitado).
 - **TD-IPS-17**: `MemberStatus.PENDING` no usado; el flujo usa `INVITED`/`ACTIVE`.
 
+## Deuda técnica resuelta (2026-09-24) - Build + invitaciones
+- ✅ Build Docker: `git-commit-id` con `failOnNoGitDirectory=false` (Dockerfile no copia `.git`). Verificado con `docker build`.
+- ✅ Invitar por email sin cuenta: V66 (`user_id` nullable + `invited_email` + unique por email); `accept` vincula userId.
+
+## Deuda técnica pendiente (Fase 2.2)
+- **TD-IPS-15**: Email real de invitación (SMTP) al invitar miembro.
+- **TD-IPS-16**: Aceptación por token/link único (hoy requiere login del invitado).
+- **TD-IPS-17**: `invited_email` no se limpia al vincular `user_id` (columna histórica).
+
 ---
 
-*Last Updated: 2026-09-23*  
+*Last Updated: 2026-09-24*  
 *Owner: Backend Team*  
 *Next Review: Sprint Planning*
