@@ -490,7 +490,7 @@ app:
     # Límites por prefijo (máximo y ventana). Si no se configura, se usan los
     # valores por defecto del código: /auth/login 10/min, /auth/resend-verification
     # 5/min, /auth/ 10/min, /health/triage/ 30/min, /health/differential/ 30/min,
-    # /health/telemedicine/ 60/min.
+    # /health/telemedicine/ 60/min, /institutional/inquiries 5/min.
     # limits:
     #   /auth/login:
     #     max: 10

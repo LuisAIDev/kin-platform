@@ -41,6 +41,8 @@ public class RateLimitProperties {
         m.put("/health/triage/", new Limit(30, Duration.ofMinutes(1)));
         m.put("/health/differential/", new Limit(30, Duration.ofMinutes(1)));
         m.put("/health/telemedicine/", new Limit(60, Duration.ofMinutes(1)));
+        // Formulario publico de solicitud Beta (IPS/clinicas): anti-spam.
+        m.put("/institutional/inquiries", new Limit(5, Duration.ofMinutes(1)));
         return m;
     }
 

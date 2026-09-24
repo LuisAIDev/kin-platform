@@ -233,6 +233,26 @@ columna materializada + trigger.
 - **Fix**: `TariffImportService` ahora depende de `EpsContractRepository` (valida `findByIdAndOrganizationId(contractId, TenantContext.get())`), rompiendo el ciclo. No se usó `spring.main.allow-circular-references=true`.
 - **Nota**: la delegación `ContractService.importTariffs` se mantiene (ya no hay ciclo); no se requirió mover la orquestación al controller.
 
+## Deuda técnica — Formulario Beta IPS (2026-09-23)
+
+### TD-BETA-1: Email de prueba no verificable
+**Prioridad**: Baja  
+**Estado**: las pruebas usaron `test@example.com`; la auto-respuesta llegó al
+Product Owner, pero no se pudo verificar visualmente el correo del formulario.  
+**Fix**: usar un email real en pruebas manuales.
+
+### TD-BETA-2: Rate limiting del endpoint público
+**Prioridad**: Media (resuelto)  
+**Estado**: añadido límite `5/min por IP` para `/institutional/inquiries` y test
+(`RateLimitingFilterTest.institutionalInquiries_*`). Documentado en
+`kin-docs/TESTING_IPS.md`.  
+**Fix**: considerar prueba de carga >100 req en prod para confirmar 429.
+
+### TD-BETA-3: Dashboard de leads (opcional)
+**Prioridad**: Baja  
+**Estado**: existe `GET /institutional/inquiries` (ADMIN) pero sin UI.  
+**Fix**: panel admin para listar/clasificar leads (`PENDING/CONTACTED/QUALIFIED/REJECTED`).
+
 ---
 
 *Last Updated: 2026-09-23*  

@@ -187,4 +187,33 @@ class RateLimitingFilterTest {
 
         verify(response).setStatus(429);
     }
+
+    @Test
+    void institutionalInquiries_dentroDelLimite_deberiaPasar() throws Exception {
+        when(request.getRequestURI()).thenReturn("/api/v1/institutional/inquiries");
+        when(request.getContextPath()).thenReturn("/api/v1");
+        when(request.getRemoteAddr()).thenReturn("10.0.0.9");
+
+        for (int i = 0; i < 5; i++) {
+            filter.doFilter(request, response, filterChain);
+        }
+
+        verify(filterChain, times(5)).doFilter(request, response);
+        verify(response, never()).setStatus(429);
+    }
+
+    @Test
+    void institutionalInquiries_excedido_deberiaDevolver429() throws Exception {
+        // Endpoint publico /institutional/inquiries: limite 5/min por IP.
+        when(request.getRequestURI()).thenReturn("/api/v1/institutional/inquiries");
+        when(request.getContextPath()).thenReturn("/api/v1");
+        when(request.getRemoteAddr()).thenReturn("10.0.0.10");
+        when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
+
+        for (int i = 0; i < 6; i++) {
+            filter.doFilter(request, response, filterChain);
+        }
+
+        verify(response).setStatus(429);
+    }
 }
