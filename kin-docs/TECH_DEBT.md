@@ -334,6 +334,18 @@ Product Owner, pero no se pudo verificar visualmente el correo del formulario.
 - **TD-IPS-13**: auditar más patrones `String`→`jsonb` en nuevos dominios.
 - **TD-IPS-14**: considerar `@Convert` custom para jsonb.
 
+## Deuda técnica resuelta (2026-09-23) - Seguridad Institucional
+- ✅ `@PreAuthorize` granular en controllers institucionales (escrituras IPS_ADMIN/ADMIN).
+- ✅ Invite por **email** (no userId) — `OrganizationMemberRequest`.
+- ✅ `accept()` self-service con validación de propietario (solo el invitado).
+- ✅ Endpoint `/institutional/kpis` (sedes, miembros por rol, billing).
+- ✅ Observabilidad `/actuator/info` (git-commit-id-maven-plugin).
+
+## Deuda técnica pendiente (Fase 2.2)
+- **TD-IPS-15**: Email real de invitación (SMTP) al invitar miembro.
+- **TD-IPS-16**: Aceptación por token/link único (hoy requiere login del invitado).
+- **TD-IPS-17**: `MemberStatus.PENDING` no usado; el flujo usa `INVITED`/`ACTIVE`.
+
 ---
 
 *Last Updated: 2026-09-23*  
