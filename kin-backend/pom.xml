@@ -490,6 +490,8 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <failOnNoGitDirectory>false</failOnNoGitDirectory>
+                    <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
                     <generateGitPropertiesFile>true</generateGitPropertiesFile>
                     <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
                 </configuration>
