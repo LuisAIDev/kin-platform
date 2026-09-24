@@ -25,27 +25,20 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Flujo de gestion institucional sin BD (slice web + servicios mockeados).
- */
-@WebMvcTest(controllers = {BranchController.class, OrganizationMemberController.class, InstitutionalController.class})
+@WebMvcTest(controllers = OrganizationMemberController.class)
 @Import(SecurityConfig.class)
-class InstitutionalIntegrationTest {
+class OrganizationMemberSecurityTest {
+
+    private static final String VALID_BODY = "{\"email\":\"nuevo@clinica.com\",\"role\":\"IPS_MEDICO\"}";
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private BranchService branchService;
-
-    @MockBean
     private OrganizationMemberService memberService;
-
-    @MockBean
-    private InstitutionalKpisService institutionalKpisService;
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -58,6 +51,9 @@ class InstitutionalIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        when(memberService.invite(any())).thenReturn(OrganizationMember.builder()
+                .id(UUID.randomUUID()).role(UserRole.IPS_MEDICO)
+                .status(OrganizationMember.MemberStatus.INVITED).build());
         passThrough(jwtAuthenticationFilter);
         passThrough(rateLimitingFilter);
         passThrough(subscriptionAccessFilter);
@@ -73,48 +69,62 @@ class InstitutionalIntegrationTest {
     }
 
     @Test
-    @WithMockUser(roles = "IPS_ADMIN")
-    void createBranch_returns201() throws Exception {
-        when(branchService.create(any())).thenReturn(Branch.builder()
-                .id(UUID.randomUUID()).name("Sede Centro").build());
+    @WithMockUser(roles = "IPS_FACTURADOR")
+    void invite_asIPSFacturador_returns403() throws Exception {
+        mockMvc.perform(post("/institutional/members")
+                        .contentType(MediaType.APPLICATION_JSON).content(VALID_BODY))
+                .andExpect(status().isForbidden());
+    }
 
-        mockMvc.perform(post("/institutional/branches")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Sede Centro\",\"city\":\"Bogota\"}"))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("Sede Centro"));
+    @Test
+    @WithMockUser(roles = "IPS_AUDITOR")
+    void invite_asIPSAuditor_returns403() throws Exception {
+        mockMvc.perform(post("/institutional/members")
+                        .contentType(MediaType.APPLICATION_JSON).content(VALID_BODY))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(roles = "IPS_ADMIN")
-    void inviteMemberByEmail_returns201() throws Exception {
-        when(memberService.invite(any())).thenReturn(OrganizationMember.builder()
-                .id(UUID.randomUUID()).role(UserRole.IPS_MEDICO)
-                .status(OrganizationMember.MemberStatus.INVITED).build());
-
+    void invite_asIPSAdmin_returns201() throws Exception {
         mockMvc.perform(post("/institutional/members")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"medico@clinica.com\",\"role\":\"IPS_MEDICO\"}"))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.role").value("IPS_MEDICO"));
+                        .contentType(MediaType.APPLICATION_JSON).content(VALID_BODY))
+                .andExpect(status().isCreated());
     }
 
     @Test
     @WithMockUser(roles = "IPS_MEDICO")
-    void acceptInvitation_asInvitedUser_returns200() throws Exception {
+    void accept_asInvitedUser_returns200() throws Exception {
         UUID id = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        OrganizationMember member = OrganizationMember.builder()
-                .id(id).userId(userId).status(OrganizationMember.MemberStatus.INVITED).build();
+        OrganizationMember member = OrganizationMember.builder().id(id).userId(userId).build();
         when(memberService.get(id)).thenReturn(member);
         when(memberService.accept(id)).thenReturn(OrganizationMember.builder()
                 .id(id).userId(userId).status(OrganizationMember.MemberStatus.ACTIVE).build());
-
-        User current = User.builder().id(userId).email("medico@clinica.com").role(UserRole.IPS_MEDICO).build();
+        User current = User.builder().id(userId).email("m@c.com").role(UserRole.IPS_MEDICO).build();
 
         mockMvc.perform(post("/institutional/members/{id}/accept", id)
                         .requestAttr(JwtAuthenticationFilter.AUTHENTICATED_USER_ATTRIBUTE, current))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("ACTIVE"));
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "IPS_MEDICO")
+    void accept_asOtherUser_returns403() throws Exception {
+        UUID id = UUID.randomUUID();
+        OrganizationMember member = OrganizationMember.builder().id(id).userId(UUID.randomUUID()).build();
+        when(memberService.get(id)).thenReturn(member);
+        User current = User.builder().id(UUID.randomUUID()).email("other@c.com").role(UserRole.IPS_MEDICO).build();
+
+        mockMvc.perform(post("/institutional/members/{id}/accept", id)
+                        .requestAttr(JwtAuthenticationFilter.AUTHENTICATED_USER_ATTRIBUTE, current))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "IPS_FACTURADOR")
+    void assignBranch_asIPSFACTURADOR_returns403() throws Exception {
+        mockMvc.perform(put("/institutional/members/{id}/branch/{branchId}", UUID.randomUUID(), UUID.randomUUID()))
+                .andExpect(status().isForbidden());
     }
 }

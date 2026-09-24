@@ -398,6 +398,9 @@ kin:
 # Fase 13: probes readiness/liveness para orquestadores)
 # -----------------------------------------------------------
 management:
+  info:
+    git:
+      mode: full
   endpoints:
     web:
       exposure:

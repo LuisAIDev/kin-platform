@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 const ROLES = ["IPS_ADMIN", "IPS_MEDICO", "IPS_ENFERMERA", "IPS_FACTURADOR", "IPS_AUDITOR"];
 
 export function MemberInviteForm({ onInvited }: { onInvited?: () => void }) {
-  const [form, setForm] = useState({ userId: "", role: "IPS_MEDICO", branchId: "" });
+  const [form, setForm] = useState({ email: "", role: "IPS_MEDICO", branchId: "" });
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +29,7 @@ export function MemberInviteForm({ onInvited }: { onInvited?: () => void }) {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: form.userId,
+          email: form.email,
           role: form.role,
           branchId: form.branchId || null,
         }),
@@ -38,7 +38,7 @@ export function MemberInviteForm({ onInvited }: { onInvited?: () => void }) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error || "No se pudo invitar al miembro");
       }
-      setForm({ userId: "", role: "IPS_MEDICO", branchId: "" });
+      setForm({ email: "", role: "IPS_MEDICO", branchId: "" });
       onInvited?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -51,8 +51,8 @@ export function MemberInviteForm({ onInvited }: { onInvited?: () => void }) {
     <form onSubmit={submit} className="space-y-3 rounded-xl border border-neutral-200 bg-white p-4">
       <h3 className="font-semibold text-neutral-900">Invitar miembro</h3>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <input className={input} placeholder="ID de usuario (UUID) *" required value={form.userId}
-        onChange={(e) => setForm({ ...form, userId: e.target.value })} />
+      <input className={input} type="email" placeholder="medico@clinica.com *" required value={form.email}
+        onChange={(e) => setForm({ ...form, email: e.target.value })} />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <select className={input} value={form.role}
           onChange={(e) => setForm({ ...form, role: e.target.value })}>

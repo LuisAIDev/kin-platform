@@ -1,6 +1,8 @@
 package com.kinplatform.institutional;
 
 import com.kinplatform.common.security.TenantContext;
+import com.kinplatform.user.User;
+import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ public class OrganizationMemberService {
 
     private final OrganizationMemberRepository repository;
     private final BranchRepository branchRepository;
+    private final UserRepository userRepository;
 
     public List<OrganizationMember> findAll() {
         return repository.findByOrganizationIdOrderByCreatedAtDesc(TenantContext.get());
@@ -27,15 +30,19 @@ public class OrganizationMemberService {
     }
 
     @Transactional
-    public OrganizationMember invite(InviteRequest request) {
+    public OrganizationMember invite(OrganizationMemberRequest request) {
         UUID organizationId = TenantContext.get();
-        if (repository.findByOrganizationIdAndUserId(organizationId, request.userId()).isPresent()) {
+        String email = request.email().trim().toLowerCase();
+        User invitee = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + email));
+
+        if (repository.findByOrganizationIdAndUserId(organizationId, invitee.getId()).isPresent()) {
             throw new IllegalArgumentException("El usuario ya pertenece a la organizacion");
         }
         UUID branchId = validateBranch(request.branchId(), organizationId);
         OrganizationMember member = OrganizationMember.builder()
                 .organizationId(organizationId)
-                .userId(request.userId())
+                .userId(invitee.getId())
                 .branchId(branchId)
                 .role(parseRole(request.role()))
                 .status(OrganizationMember.MemberStatus.INVITED)
@@ -86,8 +93,5 @@ public class OrganizationMemberService {
         } catch (Exception e) {
             throw new IllegalArgumentException("Rol institucional invalido: " + role);
         }
-    }
-
-    public record InviteRequest(UUID userId, String role, UUID branchId) {
     }
 }
