@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PLACEHOLDER de test (NO es el XSD oficial de MinSalud).
+  Se usa para validar el flujo tecnico mientras el PO entrega los XSD
+  oficiales v2024 (TD-CAT-4). No usar en produccion.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="rips">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="ac">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="codPrestador" type="xs:string"/>
+                            <xs:element name="numFactura" type="xs:string"/>
+                            <xs:element name="codConsulta" type="xs:string"/>
+                            <xs:element name="tipoDocumento" type="xs:string"/>
+                            <xs:element name="numDocumento" type="xs:string"/>
+                            <xs:element name="fechaConsulta" type="xs:string"/>
+                            <xs:element name="codDiagnosticoPrincipal" type="xs:string"/>
+                            <xs:element name="valorConsulta" type="xs:decimal"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>
