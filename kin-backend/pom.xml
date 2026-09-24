@@ -466,6 +466,17 @@
                     </dependency>
                 </dependencies>
             </plugin>
+            <!-- Tests herméticos: no cargar el .env del desarrollador (springboot3-dotenv).
+                 Los valores de test viven en application-test.yml. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <springdotenv.enabled>false</springdotenv.enabled>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

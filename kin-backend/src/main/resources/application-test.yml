@@ -11,6 +11,10 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+jwt:
+  # Tests: secreto Base64 >= 32 bytes (JwtService.validateSecret). No usar en prod.
+  secret: a2luLXBsYXRmb3JtLXNlY3VyZS1qd3Qtc2VjcmV0LWZvci1wcm9kdWN0aW9uLWNlcnRpZmljYXRpb24tMjAyNi0wMTIzNDU2Nzg5YWJjZGVm
+
 app:
   rate-limit:
     enabled: false
@@ -22,7 +26,8 @@ kin:
   health:
     telemedicine:
       # Tests: clave de cifrado de telemedicina para tests de integración.
-      crypto-secret: kin-telemedicine-dev-key
+      # Debe ser != clave de desarrollo y >= 32 chars (ContentCipher.validate()).
+      crypto-secret: kin-test-telemedicine-crypto-secret-0123456789
   ai:
     # Tests: sin precios de DeepSeek configurados; el control de costo queda
     # desactivado (el fail-fast no aplica) y los tests ejercitan el gate a
