@@ -136,4 +136,38 @@ class SecurityConfigBillingTest {
         mockMvc.perform(delete("/billing/contracts/{id}", UUID.randomUUID()))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @WithMockUser(roles = "IPS_ADMIN")
+    void contractsGET_asIPSAdmin_returns200() throws Exception {
+        mockMvc.perform(get("/billing/contracts"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "IPS_FACTURADOR")
+    void contractsGET_asIPSFacturador_returns200() throws Exception {
+        mockMvc.perform(get("/billing/contracts"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "IPS_FACTURADOR")
+    void contractsPOST_asIPSFacturador_returns403() throws Exception {
+        mockMvc.perform(post("/billing/contracts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "IPS_FACTURADOR")
+    void fevRipsGET_asIPSFacturador_returns200() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(fevRipsService.getStatus(id)).thenReturn(FevRipsInvoice.builder()
+                .id(id).status(FevRipsInvoice.InvoiceStatus.ACCEPTED).build());
+
+        mockMvc.perform(get("/billing/fev-rips/{id}/status", id))
+                .andExpect(status().isOk());
+    }
 }
