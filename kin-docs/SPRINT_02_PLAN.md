@@ -13,7 +13,9 @@ escala y operación multi-sede.
 | 2.3 | RIPS reales: generación/validación XSD end-to-end | **✅ 2.3a COMPLETADA** (validación Anexo Técnico 1); 2.3b DIAN pendiente |
 | 2.4 | FEV-RIPS DIAN real (firma X.509 + envío) | Pendiente |
 | 2.5 | MIPRES real (autorizaciones) | **✅ COMPLETADA** (2026-09-25) |
-| 2.5a | HCE Core Res 839/1995: migración V75 (14 tablas) | **✅ COMPLETADA** (2026-09-25) |
+| 2.5a | HCE Core Res 839/1995: migración V75 + Núcleo HCE (14 tablas + servicios + API + wizard) | **✅ COMPLETADA** (2026-09-25) |
+| 2.5b | HCE Avanzado: Notas de enfermería, integración HCE→RIPS (Outbox), obstétrico/quirúrgico completo | Pendiente (aprox. 16d) |
+| 2.5c | HCE Histórico: migración histórica de datos | Pendiente (aprox. 8d) |
 | 2.6 | Glosas: parser por EPS específico + apelación automatizada | Pendiente |
 | 2.7 | Cartera: pagos conciliados + reportes | Pendiente |
 | 2.8 | Auditoría institucional (IPS_AUDITOR) + cumplimiento | Pendiente |
@@ -25,6 +27,9 @@ escala y operación multi-sede.
 
 ## Timeline estimado
 - 2.1: 1 semana · 2.2: 1 semana · 2.3–2.5: 3–4 semanas · 2.6–2.7: 2 semanas · 2.8: 1 semana.
+- **Fase 2.5a (Núcleo HCE): 26 días hábiles** (Bloque 1-5: Entidades → Servicios Core → Servicios Complementarios → DTOs/Validación → Controllers → Frontend Wizard)
+- **Fase 2.5b (HCE Avanzado): ~16 días hábiles** (Notas de enfermería, HCE→RIPS Outbox, obstétrico/quirúrgico completos)
+- **Fase 2.5c (HCE Histórico): ~8 días hábiles** (migración histórica de datos)
 
 ## Fase 2.3a — Validación RIPS según Resolución 2275 Anexo Técnico 1 — **✅ COMPLETADA (2026-09-24)**
 - Duración: ~1 semana · Sin dependencias externas.
@@ -83,3 +88,60 @@ Timeline estimado: 4-6 semanas.
   - **Fix**: `bf203fa` — `WebClientConfig` (bean `WebClient`) + `ApplicationContextTest` (`@SpringBootTest @ActiveProfiles("test")` con Testcontainers, verifica `contextLoads()` y la existencia del bean `WebClient`).
   - **Lección aprendida**: los tests con mocks NO detectan beans faltantes. `ApplicationContextTest` es **OBLIGATORIO** en cada PR que agregue `@Component`/`@Bean` (ver TD-CI-1/2 en `TECH_DEBT.md`).
   - **Evidencia de cierre**: Render LIVE `bf203fa` (build_time 2026-09-25T17:42:15Z), `/actuator/health` = 200 UP; MIPRES `POST /billing/mipres/prescriptions` = 403 sin token (ruta activa).
+
+## Fase 2.5a — HCE Core (26 días) — **EN EJECUCIÓN (2026-09-25)**
+
+### Bloque 1 — Entidades JPA + Repositories (6 días)
+- Día 1: `Encounter`, `PatientIdentification` + Repositories
+- Día 2: `Anamnesis`, `PatientHistory` + Repositories
+- Día 3: `PhysicalExam`, `Diagnoses` + Repositories
+- Día 4: `TreatmentPlan`, `MedicalOrder`, `InformedConsent` + Repositories
+- Día 5: `Referral`, `DischargeSummary`, `ClinicalAttachment` + Repositories
+- Día 6: `ObstetricHistory`, `SurgicalHistory` + Repositories + Tests
+
+### Bloque 2a — Servicios Core (5 días)
+- `EncounterService`, `PatientIdentificationService`, `AnamnesisService`, `PatientHistoryService`, `PhysicalExamService`, `DiagnosesService`
+
+### Bloque 2b — Servicios Complementarios (5 días)
+- `TreatmentPlanService`, `MedicalOrderService`, `InformedConsentService`, `ReferralService`, `DischargeSummaryService`, `ClinicalAttachmentService`, `ObstetricHistoryService`, `SurgicalHistoryService`
+
+### Bloque 3 — DTOs + Bean Validation Res 839 (3 días)
+- Request/Response DTOs por componente
+- Bean Validation: CIE-10, CUPS, campos obligatorios, coherencia fechas
+
+### Bloque 4 — Controllers REST (4 días)
+- ~8 endpoints: Encounters, Identification, Anamnesis, PhysicalExam, Diagnoses, TreatmentPlan, Orders, Consents, Referrals, Discharge, Attachments
+
+### Bloque 5 — Frontend Wizard (5 días)
+- 7 pasos: Identificación → Motivo → Enfermedad actual → Antecedentes → Examen físico → Diagnóstico/Plan → Cierre
+- Cypress E2E completo
+
+### Criterios de cierre Fase 2.5a
+- `ApplicationContextTest` PASS + Flyway V1..V75 en Testcontainers PG18
+- Tests unitarios ≥ 80% cobertura HCE
+- Tests integración Testcontainers PG18 por servicio
+- `ApplicationContextTest` PASS en cada push
+- Render LIVE tras cada commit de bloque
+
+---
+
+## Fase 2.5b — HCE Avanzado (16 días) — **Pendiente**
+
+- **Notas de enfermería**: tabla `nursing_notes` + `NursingNotesService` + wizard step 8
+- **Integración HCE → RIPS**: Outbox pattern (`EncounterClosedEvent` → `RipsGenerationOrchestrator` via outbox, no query directa)
+- **Obstétrico completo**: `ObstetricHistoryService` completo + wizard steps
+- **Quirúrgico completo**: `SurgicalHistoryService` completo + wizard steps
+- **Integración MIPRES**: disparar `MipresHttpClient` desde `EncounterService` al cerrar encuentro con autorización pendiente
+
+---
+
+## Fase 2.5c — HCE Histórico (8 días) — **Pendiente**
+
+- Migración histórica de datos: ETL desde sistemas legados a tablas HCE
+- Validación de integridad: conteos, checksums, conciliación por paciente/encuentro
+- Scripts idempotentes + rollback plan
+- Tests de regresión masiva (10k+ registros)
+
+---
+
+## Fase 2.1 — CERRADA (2026-09-23)
