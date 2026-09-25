@@ -12,7 +12,7 @@ escala y operación multi-sede.
 | 2.2 | Catálogos CUPS/INVIMA (descarga, carga masiva, autocomplete) | **Estructura lista; carga de datos pendiente** |
 | 2.3 | RIPS reales: generación/validación XSD end-to-end | **✅ 2.3a COMPLETADA** (validación Anexo Técnico 1); 2.3b DIAN pendiente |
 | 2.4 | FEV-RIPS DIAN real (firma X.509 + envío) | Pendiente |
-| 2.5 | MIPRES real (autorizaciones) | Pendiente |
+| 2.5 | MIPRES real (autorizaciones) | **✅ COMPLETADA** (2026-09-25) |
 | 2.6 | Glosas: parser por EPS específico + apelación automatizada | Pendiente |
 | 2.7 | Cartera: pagos conciliados + reportes | Pendiente |
 | 2.8 | Auditoría institucional (IPS_AUDITOR) + cumplimiento | Pendiente |
@@ -34,6 +34,21 @@ escala y operación multi-sede.
   - 19 tests PASS (RipsValidatorTest) + 36 tests totales RIPS
   - Migración V71 con seed oficial Anexo Técnico 1
 - Pendiente: XSD oficiales MinSalud (TD-CAT-4) + ajustar `RipsJsonToXmlMapper` a estructura oficial.
+
+## Fase 2.5 — MIPRES (Autorizaciones MinSalud Resolución 740/2024) — **✅ COMPLETADA (2026-09-25)**
+- Duración: ~1 semana · Sin dependencias externas para stubs.
+- Entregado:
+  - Tablas MIPRES (V74): `mipres_prescriptions`, `mipres_supplies`, `mipres_tokens`
+  - `MipresHttpClient` (WebClient, perfil `prod`), `MipresTokenService` (cache 24h)
+  - `MipresService` + `MipresController` (endpoints CRUD + reportes)
+  - `MipresAuthorizationService` (NIT por organización)
+  - Auditoría: `MIPRES_PRESCRIPTION_CREATE`, `MIPRES_SUPPLY_REPORT`, `MIPRES_SUPPLY_ANULLED`
+  - 14 tests unitarios PASS (MipresServiceTest 6 + MipresControllerTest 8)
+  - 41 tests RIPS sin regresiones
+  - Deploy Render LIVE (commit ce696c7) · Health UP
+- Pendiente para producción:
+  - Configurar `MIPRES_NIT` + `MIPRES_PIN_BASE64` en perfil `prod` (proveídos por PO)
+  - Tests de integración contra sandbox MIPRES (bloqueado por credenciales reales)
 
 ## Fase 2.3b — Firma DIAN (requiere trámites externos)
 Acciones del PO (en paralelo):

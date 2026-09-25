@@ -385,6 +385,27 @@ Product Owner, pero no se pudo verificar visualmente el correo del formulario.
   - 14 tests de validación
   - **Nota**: TD-CAT-4 (XSD oficiales) sigue pendiente por separado
 
+## Deuda técnica pendiente (2026-09-25) - MIPRES (Fase 2.5)
+- **TD-MIPRES-1**: Configurar credenciales reales `MIPRES_NIT` + `MIPRES_PIN_BASE64` en perfil `prod` (requiere PO).
+- **TD-MIPRES-2**: Tests de integración contra sandbox MIPRES (bloqueado por credenciales reales).
+- **TD-MIPRES-3**: Implementar endpoint de anulación real en MinSalud (hoy TODO en `MipresService.anularSupply`).
+
+## Deuda técnica resuelta (2026-09-25) - MIPRES (Fase 2.5)
+- ✅ Tablas MIPRES (V74): `mipres_prescriptions`, `mipres_supplies`, `mipres_tokens`
+- ✅ `MipresHttpClient` (WebClient, perfil `prod`), `MipresTokenService` (cache 24h, renueva a las 23h)
+- ✅ `MipresService` + `MipresController` (endpoints: create/get/list prescriptions, report/get/list/anular supplies, consolidated report)
+- ✅ `MipresAuthorizationService` (NIT por organización)
+- ✅ Auditoría completa: `MIPRES_PRESCRIPTION_CREATE`, `MIPRES_SUPPLY_REPORT`, `MIPRES_SUPPLY_ANULLED`
+- ✅ 14 tests unitarios PASS (MipresServiceTest 6 + MipresControllerTest 8)
+- ✅ 41 tests RIPS sin regresiones
+- ✅ Deploy Render LIVE (commit ce696c7) · Health UP
+- ✅ **RipsValidator**: Validación de reglas de negocio según Anexo Técnico 1 Resolución 2275
+  - 11 campos sector salud (5 obligatorios + 6 condicionales)
+  - 6 reglas críticas: exclusividad contrato/póliza, formato monetario, fechas, facturas multiusuario, valores acumulados, tipo operación
+  - Integración en RipsGenerationOrchestrator pipeline
+  - 14 tests de validación
+  - **Nota**: TD-CAT-4 (XSD oficiales) sigue pendiente por separado
+
 ---
 
 *Last Updated: 2026-09-24*  
