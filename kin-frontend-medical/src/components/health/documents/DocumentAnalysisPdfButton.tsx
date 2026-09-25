@@ -37,7 +37,10 @@ function sanitizeName(name: string): string {
 }
 
 /**
- * Sanitiza el texto ANTES de pasarlo a jspdf: elimina markdown y TODO Unicode no-ASCII.
+ * Sanitiza el texto ANTES de pasarlo a jspdf: elimina markdown y caracteres problemáticos.
+ * NOTA: jspdf con fuente helvetica NO soporta Unicode. Usamos fuente estándar para PDFs,
+ * por lo que convertimos caracteres especiales a sus equivalentes ASCII legibles.
+ * Mantenemos tildes y ñ convirtiéndolas a su equivalente base legible.
  */
 function sanitizeForPdf(text: string): string {
   if (!text) return "";
@@ -60,17 +63,22 @@ function sanitizeForPdf(text: string): string {
     .replace(/[…]/g, "...")
     .replace(/[""]/g, '"')
     .replace(/['']/g, "'")
-    // Tildes -> sin tilde (conservar la letra base)
-    .replace(/[áàäâã]/gi, (c) => c === c.toUpperCase() ? "A" : "a")
-    .replace(/[éèëê]/gi, (c) => c === c.toUpperCase() ? "E" : "e")
-    .replace(/[íìïî]/gi, (c) => c === c.toUpperCase() ? "I" : "i")
-    .replace(/[óòöôõ]/gi, (c) => c === c.toUpperCase() ? "O" : "o")
-    .replace(/[úùüû]/gi, (c) => c === c.toUpperCase() ? "U" : "u")
+    // Tildes y caracteres especiales -> equivalente legible (NO eliminar)
+    .replace(/[áàäâã]/gi, "a")
+    .replace(/[ÁÀÄÂÃ]/gi, "A")
+    .replace(/[éèëê]/gi, "e")
+    .replace(/[ÉÈËÊ]/gi, "E")
+    .replace(/[íìïî]/gi, "i")
+    .replace(/[ÍÌÏÎ]/gi, "I")
+    .replace(/[óòöôõ]/gi, "o")
+    .replace(/[ÓÒÖÔÕ]/gi, "O")
+    .replace(/[úùüû]/gi, "u")
+    .replace(/[ÚÙÜÛ]/gi, "U")
     .replace(/[ñ]/g, "n")
     .replace(/[Ñ]/g, "N")
     .replace(/[ç]/g, "c")
     .replace(/[Ç]/g, "C")
-    // Eliminar cualquier otro carácter fuera de ASCII imprimible
+    // Eliminar cualquier otro carácter fuera de ASCII imprimible (símbolos, emojis, etc.)
     .replace(/[^\x20-\x7E\n]/g, "")
     .trim();
 }
@@ -89,6 +97,7 @@ function sanitizeLinesAfterJspdf(lines: string[]): string[] {
       .replace(/&[a-z]{1,4}\b/gi, "") // &xxx
       // Caracteres corruptos comunes que deja jspdf
       .replace(/["'`´`]/g, "'")
+      // Mantenemos letras básicas y tildes convertidas a base
       .replace(/[^\x20-\x7E\n]/g, "") // Solo ASCII imprimible
       .trim()
   );

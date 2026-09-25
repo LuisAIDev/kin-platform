@@ -313,7 +313,7 @@ Product Owner, pero no se pudo verificar visualmente el correo del formulario.
 - **TD-IPS-1**: Invitación de miembros por email (hoy es por `userId`).
 - **TD-IPS-2**: Asignación automática de rol IPS al aceptar la invitación.
 - **TD-IPS-3**: Pipeline de catálogos CUPS/INVIMA.
-- **TD-IPS-4**: `/billing/rips` sin controller REST (generación RIPS no expuesta).
+- ~~**TD-IPS-4**: `/billing/rips` sin controller REST (generación RIPS no expuesta).~~ ✅ RESUELTO (2026-09-24)
 - **TD-IPS-5**: No existe `/institutional/admin/**` ni `/institutional/facturacion/**` con endpoints aún (reglas listas, rutas por implementar).
 
 ## Deuda técnica resuelta (2026-09-23) - Multi-tenant + jsonb
@@ -329,7 +329,7 @@ Product Owner, pero no se pudo verificar visualmente el correo del formulario.
 - **TD-IPS-7**: FK `users.organization_id → organizations.id`.
 - **TD-IPS-8**: `organizationId` en el claim del JWT (opcional).
 - **TD-IPS-9**: endpoints `/institutional/admin/**` y `/institutional/facturacion/**`.
-- **TD-IPS-10/12**: `/billing/rips` sin controller REST.
+- ~~**TD-IPS-10/12**: `/billing/rips` sin controller REST.~~ ✅ RESUELTO (2026-09-24)
 - **TD-IPS-11**: `computeVerticalAccess` para roles IPS_* (hoy 0 verticales).
 - **TD-IPS-13**: auditar más patrones `String`→`jsonb` en nuevos dominios.
 - **TD-IPS-14**: considerar `@Convert` custom para jsonb.
@@ -377,8 +377,29 @@ Product Owner, pero no se pudo verificar visualmente el correo del formulario.
   - Al recibirlos: colocar en `src/main/resources/schemas/minsalud/2024/` (nombres
     `rips_ac.xsd`, etc.) y ajustar `RipsJsonToXmlMapper` a la estructura oficial.
 
+## Deuda técnica resuelta (2026-09-24) - Validador RIPS Anexo Técnico 1
+- ✅ **RipsValidator**: Validación de reglas de negocio según Anexo Técnico 1 Resolución 2275
+  - 11 campos sector salud (5 obligatorios + 6 condicionales)
+  - 6 reglas críticas: exclusividad contrato/póliza, formato monetario, fechas, facturas multiusuario, valores acumulados, tipo operación
+  - Integración en RipsGenerationOrchestrator pipeline
+  - 14 tests de validación
+  - **Nota**: TD-CAT-4 (XSD oficiales) sigue pendiente por separado
+
 ---
 
 *Last Updated: 2026-09-24*  
 *Owner: Backend Team*  
 *Next Review: Sprint Planning*
+
+---
+
+## Próximos pasos (Anexo Técnico 1 - Resolución 2275)
+
+### TAREA 2: Tablas de Referencia SISPRO
+- Descargar 4 tablas: modalidadPago, coberturaPlan, conceptoRecaudo, TipoIdPISIS
+- Cargar como catálogos en BD
+- Endpoints de consulta
+
+### TAREA 5: Documentación
+- ADR-051: Validación RIPS según Resolución 2275
+- Actualizar SPRINT_02_PLAN.md
