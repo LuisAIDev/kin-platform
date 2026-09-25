@@ -28,6 +28,7 @@ import org.hibernate.type.SqlTypes;
 public class SurgicalHistory {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 

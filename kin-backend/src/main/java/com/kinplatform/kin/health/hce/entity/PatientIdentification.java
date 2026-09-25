@@ -24,6 +24,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 public class PatientIdentification {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
