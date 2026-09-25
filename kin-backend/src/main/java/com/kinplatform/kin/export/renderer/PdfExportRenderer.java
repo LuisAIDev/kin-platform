@@ -13,6 +13,7 @@ import com.lowagie.text.FontFactory;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.ColumnText;
 import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfPCell;
@@ -178,7 +179,13 @@ public final class PdfExportRenderer implements ExportRenderer {
     }
 
     private Font font(int size, int style, Color color) {
-        Font f = FontFactory.getFont(FontFactory.HELVETICA, size, style);
+        Font f;
+        try {
+            f = FontFactory.getFont(FontFactory.HELVETICA, BaseFont.IDENTITY_H, BaseFont.EMBEDDED, size, style);
+        } catch (Exception e) {
+            // Fallback if font embedding fails
+            f = FontFactory.getFont(FontFactory.HELVETICA, size, style);
+        }
         if (color != null) {
             f.setColor(color);
         }
@@ -195,13 +202,16 @@ public final class PdfExportRenderer implements ExportRenderer {
         @Override
         public void onEndPage(PdfWriter writer, Document document) {
             PdfContentByte canvas = writer.getDirectContent();
-            Phrase phrase = new Phrase(
-                    text, FontFactory.getFont(FontFactory.HELVETICA, 8, Font.NORMAL, new Color(150, 150, 150)));
+            Font footerFont;
+            try {
+                footerFont = FontFactory.getFont(FontFactory.HELVETICA, BaseFont.IDENTITY_H, BaseFont.EMBEDDED, 8, Font.NORMAL, new Color(150, 150, 150));
+            } catch (Exception e) {
+                footerFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Font.NORMAL, new Color(150, 150, 150));
+            }
+            Phrase phrase = new Phrase(text, footerFont);
             ColumnText.showTextAligned(
                     canvas, Element.ALIGN_CENTER, phrase, (document.left() + document.right()) / 2f, 28, 0);
-            Phrase page = new Phrase(
-                    String.valueOf(writer.getPageNumber()),
-                    FontFactory.getFont(FontFactory.HELVETICA, 8, Font.NORMAL, new Color(150, 150, 150)));
+            Phrase page = new Phrase(String.valueOf(writer.getPageNumber()), footerFont);
             ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, page, document.right(), 28, 0);
         }
     }

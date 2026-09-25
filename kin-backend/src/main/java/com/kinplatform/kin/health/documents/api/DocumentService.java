@@ -1,5 +1,8 @@
 package com.kinplatform.kin.health.documents.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
@@ -17,6 +20,14 @@ import com.kinplatform.kin.health.documents.infrastructure.DocumentStorage;
 import com.kinplatform.kin.health.documents.port.ClinicalDocumentRepository;
 import com.kinplatform.kin.health.documents.port.DocumentStorageQuotaPort;
 import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
+import com.opencsv.exceptions.CsvException;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -114,13 +125,6 @@ public class DocumentService {
         return document;
     }
 
-    /**
-     * Subida de un documento clínico por el propio paciente (Centro de
-     * Documentos Clínicos). El paciente SIEMPRE queda como dueño del documento
-     * ({@code patientId = userId}) y sin médico asociado: solo él podrá
-     * consultarlo y analizarlo. No exige relación (el usuario actúa sobre su
-     * propia información).
-     */
     @Transactional
     public ClinicalDocument uploadOwnDocument(
             UUID patientId,
@@ -139,6 +143,81 @@ public class DocumentService {
                 patientId, Map.of("fileName", document.fileName()));
         log.info("DocumentService: documento propio {} subido por paciente {}", document.id(), patientId);
         return document;
+    }
+
+    /**
+     * Importa datos estructurados (CSV/JSON) como documento clínico del paciente.
+     * El archivo se parsea y se almacena como JSON en el campo extracted_text del documento.
+     */
+    @Transactional
+    public ClinicalDocument importOwnDocument(
+            UUID patientId,
+            String fileName,
+            String mimeType,
+            byte[] content,
+            String type,
+            String description) {
+        requireEnabled();
+        if (!documentStorageQuotaPort.canUpload(patientId, content.length)) {
+            throw new QuotaExceededException("Has superado el límite de almacenamiento de tu plan.");
+        }
+
+        String importedDataJson;
+        try {
+            if ("csv".equalsIgnoreCase(mimeType) || fileName.toLowerCase().endsWith(".csv")) {
+                importedDataJson = parseCsvToJson(content);
+            } else if ("json".equalsIgnoreCase(mimeType) || fileName.toLowerCase().endsWith(".json")) {
+                importedDataJson = parseJsonToJson(content);
+            } else {
+                throw new IllegalArgumentException("Tipo de archivo no soportado. Use CSV o JSON.");
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException("Error parseando archivo: " + e.getMessage(), e);
+        }
+
+        String fullDescription = (description == null ? "" : description + "\n\n") +
+                "Tipo de importación: " + type +
+                "\nDatos importados: " + importedDataJson;
+
+        ClinicalDocument document = storeAndPersist(
+                patientId, patientId, null, fileName, "application/json", content, fullDescription);
+        auditService.logAccess(patientId, AuditAction.UPLOAD_DOCUMENT, AuditResourceType.DOCUMENTO, document.id(),
+                patientId, Map.of("fileName", document.fileName(), "importType", type));
+        log.info("DocumentService: documento importado {} por paciente {}", document.id(), patientId);
+        return document;
+    }
+
+    private String parseCsvToJson(byte[] content) throws IOException, CsvException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8));
+             CSVReader csvReader = new CSVReaderBuilder(reader).withSkipLines(0).build()) {
+
+            List<String[]> rows = csvReader.readAll();
+            if (rows.isEmpty()) {
+                return "[]";
+            }
+
+            String[] headers = rows.get(0);
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode result = mapper.createObjectNode();
+            result.put("type", "csv");
+            result.put("rowCount", rows.size() - 1);
+            result.put("headers", mapper.valueToTree(headers));
+
+            List<String[]> dataRows = rows.subList(1, Math.min(rows.size(), 101)); // max 100 data rows + header
+            result.put("sampleData", mapper.valueToTree(dataRows));
+
+            return mapper.writeValueAsString(result);
+        }
+    }
+
+    private String parseJsonToJson(byte[] content) throws IOException {
+        String jsonStr = new String(content, StandardCharsets.UTF_8);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = mapper.readTree(jsonStr);
+        ObjectNode result = mapper.createObjectNode();
+        result.put("type", "json");
+        result.set("data", node);
+        return mapper.writeValueAsString(result);
     }
 
     private ClinicalDocument storeAndPersist(

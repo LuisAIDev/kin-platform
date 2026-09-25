@@ -52,17 +52,17 @@ public class TriageExportAssembler {
     private ExportSection buildDisclaimerSection() {
         String disclaimerTitle = "Triaje procesado por KIN Medical.";
         String disclaimerBody =
-                "Las decisiones clinicas las toma un motor de reglas fijas que aplica guias "
-                        + "medicas verificables. Trabajamos con datos reales de fuentes publicas y "
-                        + "confiables: la Organizacion Mundial de la Salud (OMS), clasificaciones "
+                "Las decisiones clínicas las toma un motor de reglas fijas que aplica guías "
+                        + "médicas verificables. Trabajamos con datos reales de fuentes públicas y "
+                        + "confiables: la Organización Mundial de la Salud (OMS), clasificaciones "
                         + "internacionales de enfermedades (CIE-10), rangos de referencia de "
-                        + "laboratorios y protocolos clinicos.\n\n"
-                        + "Que significa esto? Que cada vez que analizamos tus sintomas, aplicamos "
-                        + "las mismas reglas medicas validadas, sin improvisaciones ni variaciones. "
+                        + "laboratorios y protocolos clínicos.\n\n"
+                        + "Qué significa esto? Que cada vez que analizamos tus síntomas, aplicamos "
+                        + "las mismas reglas médicas validadas, sin improvisaciones ni variaciones. "
                         + "La inteligencia artificial solo se encarga de redactar el resultado en "
                         + "palabras sencillas para ti.\n\n"
-                        + "Este triaje es de apoyo informativo y no sustituye la evaluacion ni el "
-                        + "diagnostico de un profesional de la salud. Siempre consulta a tu medico.";
+                        + "Este triaje es de apoyo informativo y no sustituye la evaluación ni el "
+                        + "diagnóstico de un profesional de la salud. Siempre consulta a tu médico.";
 
         ExportBlock titleBlock = ExportBlock.paragraph(disclaimerTitle);
         ExportBlock bodyBlock = ExportBlock.paragraph(disclaimerBody);

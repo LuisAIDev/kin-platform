@@ -135,10 +135,16 @@ public class TriageEngine implements DomainEngine<TriageInput, TriageResult> {
         if (total <= 0.0) {
             return List.of();
         }
-        return scored.stream()
-                .map(r -> toResult(catalog, r, total))
-                .sorted(Comparator.comparingDouble(TriageConditionResult::probability)
-                        .reversed())
+        List<TriageConditionResult> results = new ArrayList<>();
+        double sumSoFar = 0.0;
+        for (int i = 0; i < scored.size(); i++) {
+            boolean isLast = (i == scored.size() - 1);
+            TriageConditionResult result = toResult(catalog, scored.get(i), total, isLast, sumSoFar);
+            sumSoFar += result.probability();
+            results.add(result);
+        }
+        return results.stream()
+                .sorted(Comparator.comparingDouble(TriageConditionResult::probability).reversed())
                 .limit(maxConditions)
                 .toList();
     }
@@ -170,10 +176,14 @@ public class TriageEngine implements DomainEngine<TriageInput, TriageResult> {
         return new RawScore(condition.id(), score, matched);
     }
 
-    private TriageConditionResult toResult(TriageCatalog catalog, RawScore raw, double total) {
+    private TriageConditionResult toResult(TriageCatalog catalog, RawScore raw, double total, boolean isLast, double sumSoFar) {
         Condition condition = catalog.conditionById(raw.conditionId())
                 .orElseThrow(() -> new IllegalStateException("Condición no encontrada: " + raw.conditionId()));
-        double probability = Math.round(raw.rawScore() / total * 10_000.0) / 10_000.0;
+        double probability = raw.rawScore() / total;
+        // Ensure probabilities sum to exactly 1.0 by adjusting the last item
+        if (isLast) {
+            probability = Math.max(0.0, 1.0 - sumSoFar);
+        }
         return new TriageConditionResult(
                 condition.id(),
                 condition.name(),

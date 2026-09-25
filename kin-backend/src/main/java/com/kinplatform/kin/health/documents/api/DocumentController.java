@@ -7,7 +7,11 @@ import com.kinplatform.kin.health.documents.domain.DocumentStatus;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.constraints.NotNull;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -140,6 +144,29 @@ public class DocumentController {
             documentService.deleteDocument(documentId, userId);
         }
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Importa datos estructurados (CSV/JSON) como documento clínico del paciente.
+     * El archivo se parsea y se almacena como JSON en el documento.
+     */
+    @PostMapping(value = "/my/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<DocumentResponse> importOwn(
+            Authentication authentication,
+            @RequestPart("file") @NotNull MultipartFile file,
+            @RequestParam("type") String type,
+            @RequestParam(required = false) String description) {
+        User user = requirePatient(authentication);
+        ClinicalDocument document;
+        try {
+            document = documentService.importOwnDocument(
+                    user.getId(), file.getOriginalFilename(), file.getContentType(),
+                    file.getBytes(), type, description);
+        } catch (Exception e) {
+            throw new IllegalStateException("No se pudo importar el documento: " + e.getMessage(), e);
+        }
+        log.info("=== DOCUMENT SELF-IMPORT === patient={}, type={}", user.getId(), type);
+        return ResponseEntity.status(201).body(DocumentResponse.from(document));
     }
 
     private User requirePhysician(Authentication authentication) {
