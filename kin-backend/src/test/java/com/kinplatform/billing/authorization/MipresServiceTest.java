@@ -5,8 +5,11 @@ import com.kinplatform.billing.rips.model.RipsBatchRepository;
 import com.kinplatform.billing.contract.EpsContract;
 import com.kinplatform.billing.contract.EpsContractRepository;
 import com.kinplatform.common.security.TenantContext;
+import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
+import com.kinplatform.user.UserRole;
 import com.kinplatform.kin.health.audit.api.AuditService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -51,15 +55,27 @@ class MipresServiceTest {
     private UUID orgId;
     private UUID contractId;
     private UUID patientId;
+    private UUID userId;
+    private String userEmail = "test@kin.com";
+    private UsernamePasswordAuthenticationToken auth;
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         orgId = UUID.randomUUID();
         contractId = UUID.randomUUID();
         patientId = UUID.randomUUID();
+        userId = UUID.randomUUID();
         TenantContext.set(orgId);
 
         when(authService.getOrganizationNit(orgId)).thenReturn("123456789");
+
+        var user = User.builder()
+                .id(userId)
+                .email(userEmail)
+                .role(UserRole.IPS_ADMIN)
+                .build();
+        when(userRepository.findByEmail(userEmail)).thenReturn(Optional.of(user));
+        auth = new UsernamePasswordAuthenticationToken(userEmail, null);
     }
 
     @Test
@@ -72,7 +88,7 @@ class MipresServiceTest {
         when(prescriptionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         var prescription = mipresService.createPrescription(
-                mock(org.springframework.security.core.Authentication.class),
+                auth,
                 new MipresService.CreatePrescriptionRequest(authNumber, contractId, patientId));
 
         assertNotNull(prescription);
@@ -89,7 +105,7 @@ class MipresServiceTest {
 
         assertThrows(IllegalArgumentException.class, () ->
                 mipresService.createPrescription(
-                        mock(org.springframework.security.core.Authentication.class),
+                        auth,
                         new MipresService.CreatePrescriptionRequest(authNumber, contractId, patientId))
         );
     }
@@ -99,7 +115,7 @@ class MipresServiceTest {
         String authNumber = "AUTH-2024-001";
         MipresPrescription prescription = MipresPrescription.builder()
                 .id(UUID.randomUUID())
-                .organizationId(UUID.randomUUID())
+                .organizationId(orgId)
                 .contractId(contractId)
                 .patientId(patientId)
                 .prescriptionNumber(authNumber)
@@ -114,7 +130,7 @@ class MipresServiceTest {
         when(supplyRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         var supply = mipresService.reportSupply(
-                mock(org.springframework.security.core.Authentication.class),
+                auth,
                 new MipresService.ReportSupplyRequest(authNumber, "890201", 5,
                         java.math.BigDecimal.valueOf(50000),
                         java.math.BigDecimal.valueOf(10000),
@@ -129,13 +145,26 @@ class MipresServiceTest {
 
     @Test
     void reportSupply_invalidAuth_throwsException() {
+        String authNumber = "AUTH-999";
+        MipresPrescription prescription = MipresPrescription.builder()
+                .id(UUID.randomUUID())
+                .organizationId(orgId)
+                .contractId(contractId)
+                .patientId(patientId)
+                .prescriptionNumber(authNumber)
+                .status(MipresPrescription.PrescriptionStatus.AUTHORIZED)
+                .cupsCode("890201")
+                .build();
+
+        when(prescriptionRepository.findByPrescriptionNumber(authNumber))
+                .thenReturn(Optional.of(prescription));
         when(mipresClient.reportarUso(anyString(), any(), anyString(), anyInt(), any()))
                 .thenReturn(new MipresClient.ConsumptionResult(false, "Error MIPRES"));
 
         assertThrows(IllegalStateException.class, () ->
                 mipresService.reportSupply(
-                        mock(org.springframework.security.core.Authentication.class),
-                        new MipresService.ReportSupplyRequest("AUTH-999", "890201", 1,
+                        auth,
+                        new MipresService.ReportSupplyRequest(authNumber, "890201", 1,
                                 java.math.BigDecimal.valueOf(1000),
                                 java.math.BigDecimal.valueOf(1000),
                                 null, null))
@@ -147,7 +176,7 @@ class MipresServiceTest {
         UUID supplyId = UUID.randomUUID();
         MipresSupply supply = MipresSupply.builder()
                 .id(supplyId)
-                .organizationId(UUID.randomUUID())
+                .organizationId(orgId)
                 .status(MipresSupply.SupplyStatus.REPORTED)
                 .build();
 
@@ -155,7 +184,7 @@ class MipresServiceTest {
         when(supplyRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         var result = mipresService.anularSupply(
-                mock(org.springframework.security.core.Authentication.class),
+                auth,
                 supplyId, "Motivo de prueba");
 
         assertEquals(MipresSupply.SupplyStatus.ANULLED, result.getStatus());
@@ -167,13 +196,14 @@ class MipresServiceTest {
         UUID supplyId = UUID.randomUUID();
         MipresSupply supply = MipresSupply.builder()
                 .id(supplyId)
+                .organizationId(orgId)
                 .status(MipresSupply.SupplyStatus.ANULLED)
                 .build();
 
         when(supplyRepository.findById(supplyId)).thenReturn(Optional.of(supply));
 
         assertThrows(IllegalStateException.class, () ->
-                mipresService.anularSupply(mock(org.springframework.security.core.Authentication.class), supplyId, "Motivo")
+                mipresService.anularSupply(auth, supplyId, "Motivo")
         );
     }
 }
