@@ -42,19 +42,19 @@ public class MipresHttpClient implements MipresClient {
                 return Optional.empty();
             }
 
-            if (contractId != null && response.getContractId() != null
-                    && !contractId.equals(response.getContractId())) {
+            if (contractId != null && response.contractId() != null
+                    && !contractId.equals(response.contractId())) {
                 log.warn("Autorización {} no pertenece al contrato {}", authorizationNumber, contractId);
                 return Optional.empty();
             }
 
-            AuthorizationData data = AuthorizationData.builder()
-                    .authorizationNumber(response.getPrescriptionNumber())
-                    .cupsCode(response.getCupsCode())
-                    .qtyApproved(response.getQtyApproved())
-                    .unitPriceCop(response.getUnitPriceCop())
-                    .diagnosisCie10(response.getDiagnosisCie10())
-                    .build();
+            AuthorizationData data = new AuthorizationData(
+                    response.prescriptionNumber(),
+                    response.cupsCode(),
+                    response.qtyApproved(),
+                    response.unitPriceCop(),
+                    response.diagnosisCie10()
+            );
 
             return Optional.of(data);
 
@@ -78,12 +78,7 @@ public class MipresHttpClient implements MipresClient {
 
         String url = String.format("%sapi/Suministro/%s/%s", getBaseUrl(), nit, token);
 
-        MipresSupplyRequest request = MipresSupplyRequest.builder()
-                .authorizationNumber(authorizationNumber)
-                .cupsCode(cupsCode)
-                .quantity(quantity)
-                .value(value)
-                .build();
+        MipresSupplyRequest request = new MipresSupplyRequest(authorizationNumber, cupsCode, quantity, value);
 
         log.info("Reportando uso MIPRES: auth={}, cups={}, qty={}", authorizationNumber, cupsCode, quantity);
 
@@ -96,12 +91,12 @@ public class MipresHttpClient implements MipresClient {
                     .block();
 
             if (response == null || !response.isSuccess()) {
-                String error = response != null ? response.getErrorMessage() : "Respuesta nula";
+                String error = response != null ? response.errorMessage() : "Respuesta nula";
                 log.warn("Error reportando uso MIPRES: {}", error);
                 return new ConsumptionResult(false, error);
             }
 
-            log.info("Uso MIPRES reportado exitosamente: supplyId={}", response.getSupplyId());
+            log.info("Uso MIPRES reportado exitosamente: supplyId={}", response.supplyId());
             return new ConsumptionResult(true, null);
 
         } catch (WebClientResponseException e) {
@@ -133,7 +128,7 @@ public class MipresHttpClient implements MipresClient {
             }
 
             return response.stream()
-                    .map(MipresPrescriptionListResponse::getPrescriptionNumber)
+                    .map(MipresPrescriptionListResponse::prescriptionNumber)
                     .toList();
 
         } catch (Exception e) {

@@ -18,10 +18,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @Service
 public class StripeService implements PaymentGateway {
 
+    private final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(StripeService.class);
     private final PricingPlanRepository planRepository;
     private final UserRepository userRepository;
     private final UserSubscriptionRepository subscriptionRepository;

@@ -13,7 +13,6 @@ import java.util.UUID;
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Entity
 @Table(name = "mipres_supplies", indexes = {
     @Index(name = "idx_mipres_supplies_org", columnList = "organization_id"),

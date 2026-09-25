@@ -1,5 +1,6 @@
 package com.kinplatform.billing.authorization;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.common.security.TenantContext;
 import com.kinplatform.kin.health.audit.api.AuditService;
@@ -32,11 +33,9 @@ public class MipresService {
     private final MipresSupplyRepository supplyRepository;
     private final UserRepository userRepository;
     private final AuditService auditService;
-    private final com.kinplatform.billing.authorization.MipresAuthorizationService authService;
+    private final MipresAuthorizationService authService;
+    private final ObjectMapper objectMapper;
 
-    /**
-     * Crea una nueva prescripción MIPRES.
-     */
     @Transactional
     @PreAuthorize("hasAnyRole('IPS_ADMIN', 'IPS_FACTURADOR', 'PHYSICIAN', 'ADMIN')")
     public MipresPrescription createPrescription(Authentication auth, CreatePrescriptionRequest request) {
@@ -121,14 +120,14 @@ public class MipresService {
                 .batchNumber(request.batchNumber())
                 .expirationDate(request.expirationDate())
                 .status(MipresSupply.SupplyStatus.REPORTED)
-                .rawRequest(Map.of(
+                .rawRequest(toJson(Map.of(
                         "authorizationNumber", request.authorizationNumber(),
                         "cupsCode", request.cupsCode(),
                         "quantity", request.quantity(),
-                        "value", request.value().toString()))
-                .rawResponse(Map.of(
+                        "value", request.value().toString())))
+                .rawResponse(toJson(Map.of(
                         "success", true,
-                        "supplyId", supplyId))
+                        "supplyId", supplyId)))
                 .build();
 
         supply = supplyRepository.save(supply);
@@ -249,5 +248,14 @@ public class MipresService {
         prescriptionRepository.findById(prescriptionId).ifPresent(p -> {
             prescriptionRepository.save(p.withStatus(status));
         });
+    }
+
+    private String toJson(Map<String, Object> map) {
+        try {
+            return objectMapper.writeValueAsString(map);
+        } catch (Exception e) {
+            log.warn("Error serializando a JSON: {}", e.getMessage());
+            return "{}";
+        }
     }
 }
