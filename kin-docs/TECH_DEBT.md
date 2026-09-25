@@ -424,3 +424,33 @@ Product Owner, pero no se pudo verificar visualmente el correo del formulario.
 ### TAREA 5: Documentación
 - ADR-051: Validación RIPS según Resolución 2275
 - Actualizar SPRINT_02_PLAN.md
+
+---
+
+## Deuda técnica (2026-09-25) - 26 tests de integración preexistentes (NO bloquean prod)
+
+**Detección**: suite completa `./mvnw.cmd test` con Docker/Testcontainers activo →
+`Tests run: 3690, Failures: 6, Errors: 20, Skipped: 40`. Los 26 fallos son de
+aislamiento de datos / infraestructura de test, **no** del binario de producción
+(0 coincidencias de `WebClient|NoSuchBeanDefinition|required a bean`).
+Confirmado independiente del fix `bf203fa` (WebClient bean).
+
+### TD-INTEGRATION-A: Aislamiento de datos / FK (18 tests) — sprint próximo
+- **Síntoma**: `DataIntegrityViolation ... violates foreign key constraint` al insertar hijos sin padre, y conteos de catálogo no deterministas.
+- **Clases**: `JpaTelemedicineRepositoryIntegrationTest` (4: `fk_appointments_patient`, `fk_messages_sender`), `JpaPhysicianRepositoryIntegrationTest` (3: `fk_ca_physician`, `fk_ppa_physician`), `JpaDashboardRepositoryIntegrationTest` (1: `fk_reminders_user`), `JpaTriageRepositoryIntegrationTest` (8), `JpaDifferentialRepositoryIntegrationTest` (1), `SchedulingIntegrationTest` (1: 201→409).
+- **Causa**: `cleanDatabaseBeforeClass` trunca tablas y los tests insertan hijos sin sembrar el padre; los catálogos (triage/differential) no se re-siembran.
+- **Fix**: política de seeding por clase (fixtures), o `@Sql` de setup, o `@Transactional` con rollback.
+
+### TD-INTEGRATION-D: Outbox relay (4 tests) — sprint próximo
+- **Clase**: `OutboxRelayIntegrationTest`.
+- **Síntoma**: `publishAndProcess`, `failedEvent_retriesAndThenDeadLetter`, `concurrency_twoRelaysDoNotProcessSameRecord`, `metrics_areUpdatedCorrectly` (NPE en `Search.counter()`).
+- **Causa**: concurrencia/reintentos + métricas no registradas en contexto de test.
+- **Fix**: aislar el relay en el test (scheduler dedicado) y pre-registrar counters.
+
+### TD-INTEGRATION-E: DocumentStorageQuota (5 tests) — sprint próximo
+- **Clase**: `DocumentStorageQuotaPortImplTest`.
+- **Síntoma**: `UnnecessaryStubbing` (4) + `No active pricing plan found for vertical SALUD_PERSONAL`.
+- **Causa**: stub de `setUp` no usado + plan `SALUD_PERSONAL` no sembrado.
+- **Fix**: evitar el stub global y sembrar el plan PERSONAL en el setup.
+
+**Criterio de cierre**: los 3 grupos verdes y suite completa `BUILD SUCCESS`.
