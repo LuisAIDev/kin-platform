@@ -10,6 +10,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Data
 @Builder
@@ -55,6 +57,7 @@ public class TreatmentPlan {
     @Column(name = "prognosis", length = 20)
     private Prognosis prognosis;
 
+    @JdbcTypeCode(SqlTypes.INTERVAL_SECOND)
     @Column(name = "estimated_duration")
     private Duration estimatedDuration;
 

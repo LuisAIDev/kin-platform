@@ -11,6 +11,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Data
 @Builder
@@ -47,7 +49,8 @@ public class DischargeSummary {
     @Column(name = "discharge_date", nullable = false)
     private Instant dischargeDate;
 
-    @Column(name = "length_of_stay")
+    @JdbcTypeCode(SqlTypes.INTERVAL_SECOND)
+    @Column(name = "length_of_stay", insertable = false, updatable = false)
     private Duration lengthOfStay;
 
     @Column(name = "admission_diagnosis_cie10", length = 10)
@@ -75,9 +78,11 @@ public class DischargeSummary {
     @Column(name = "discharge_disposition", length = 50)
     private String dischargeDisposition;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "discharge_medications", columnDefinition = "jsonb")
     private String dischargeMedications;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "followup_appointments", columnDefinition = "jsonb")
     private String followupAppointments;
 

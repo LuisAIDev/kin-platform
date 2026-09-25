@@ -71,7 +71,7 @@ public class PhysicalExam {
     @Column(name = "height_cm", precision = 5, scale = 2)
     private BigDecimal heightCm;
 
-    @Column(name = "bmi", precision = 4, scale = 2)
+    @Column(name = "bmi", precision = 4, scale = 2, insertable = false, updatable = false)
     private BigDecimal bmi;
 
     @Column(name = "glasgow_score")
