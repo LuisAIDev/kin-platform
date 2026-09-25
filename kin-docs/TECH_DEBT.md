@@ -454,3 +454,18 @@ Confirmado independiente del fix `bf203fa` (WebClient bean).
 - **Fix**: evitar el stub global y sembrar el plan PERSONAL en el setup.
 
 **Criterio de cierre**: los 3 grupos verdes y suite completa `BUILD SUCCESS`.
+
+---
+
+## Deuda técnica CI/CD (2026-09-25) - Blindaje contra beans faltantes
+
+### TD-CI-1: Agregar `ApplicationContextTest` al pipeline de CI/CD de GitHub Actions
+- **Prioridad**: Alta.
+- **Contexto**: el fallo de arranque `c2a645a` (bean `WebClient` faltante) pasó el CI porque solo corrían tests unitarios con mocks. `ApplicationContextTest` (`@SpringBootTest @ActiveProfiles("test")` + Testcontainers) detecta beans faltantes y aplica Flyway V1..V75 completo.
+- **Fix**: en `.github/workflows/*`, asegurar Docker/Testcontainers y ejecutar al menos `./mvnw.cmd test -Dtest=ApplicationContextTest`. Requisito: `DOCKER_HOST` configurado en el runner.
+- **Owner**: DevOps/Backend. **Estimado**: 0.5 día.
+
+### TD-CI-2: Bloquear merge si `ApplicationContextTest` falla
+- **Prioridad**: Alta.
+- **Fix**: configurar branch protection / required status check en GitHub de modo que un PR no pueda mergearse si `ApplicationContextTest` no pasa. Complementa TD-CI-1.
+- **Owner**: DevOps. **Estimado**: 0.25 día.

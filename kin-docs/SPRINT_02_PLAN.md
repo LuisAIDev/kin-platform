@@ -13,6 +13,7 @@ escala y operación multi-sede.
 | 2.3 | RIPS reales: generación/validación XSD end-to-end | **✅ 2.3a COMPLETADA** (validación Anexo Técnico 1); 2.3b DIAN pendiente |
 | 2.4 | FEV-RIPS DIAN real (firma X.509 + envío) | Pendiente |
 | 2.5 | MIPRES real (autorizaciones) | **✅ COMPLETADA** (2026-09-25) |
+| 2.5a | HCE Core Res 839/1995: migración V75 (14 tablas) | **✅ COMPLETADA** (2026-09-25) |
 | 2.6 | Glosas: parser por EPS específico + apelación automatizada | Pendiente |
 | 2.7 | Cartera: pagos conciliados + reportes | Pendiente |
 | 2.8 | Auditoría institucional (IPS_AUDITOR) + cumplimiento | Pendiente |
@@ -67,3 +68,18 @@ Timeline estimado: 4-6 semanas.
 - jsonb mapping corregido: 6 campos con `@JdbcTypeCode(SqlTypes.JSON)` (commit `367e863`).
 - Smoke test producción: 8/8 (IPS_ADMIN crea sede 201; IPS_FACTURADOR billing 200; POST billing 403).
 - Usuarios de prueba: `ips-admin-test@kin.internal`, `ips-facturador-test@kin.internal` (org demo `…0001`).
+
+## Fase 2.5a — HCE Core (Resolución 839/1995): migración V75 — **✅ COMPLETADA (2026-09-25)**
+- Entregado:
+  - `V75__complete_hce_res_839_1995.sql` (544 líneas, opción C: sin rename de tablas legacy):
+    14 tablas nuevas + 1 función (`update_updated_at_column`) + 14 triggers + 1 vista (`hce_complete_view`).
+    - Tablas: `encounters`, `patient_identification`, `anamnesis`, `patient_history`, `physical_exam`,
+      `diagnoses`, `treatment_plans`, `medical_orders`, `informed_consents`, `referrals`,
+      `discharge_summaries`, `clinical_attachments`, `obstetric_history`, `surgical_history`.
+    - `patient_profiles` y `patient_evolutions` se mantienen intactas (0 renames, 0 vistas de compatibilidad).
+  - Verificado en Docker local (PostgreSQL 16) y en **Neon prod**: `flyway_schema_history version=75, success=t` (installed_on 2026-09-25 05:57:46), 14 tablas presentes.
+- **Incidente de despliegue `c2a645a` (postmortem):**
+  - **Causa raíz**: `MipresHttpClient` / `MipresTokenService` (`@Profile("prod")`) requieren un bean `WebClient` que nadie definía. `ce696c7` (MIPRES) introdujo los consumidores sin el `@Bean`. Los tests unitarios usaban mocks → no lo detectaron. `fabc088` (LIVE previo) no incluía MIPRES, por eso funcionaba.
+  - **Fix**: `bf203fa` — `WebClientConfig` (bean `WebClient`) + `ApplicationContextTest` (`@SpringBootTest @ActiveProfiles("test")` con Testcontainers, verifica `contextLoads()` y la existencia del bean `WebClient`).
+  - **Lección aprendida**: los tests con mocks NO detectan beans faltantes. `ApplicationContextTest` es **OBLIGATORIO** en cada PR que agregue `@Component`/`@Bean` (ver TD-CI-1/2 en `TECH_DEBT.md`).
+  - **Evidencia de cierre**: Render LIVE `bf203fa` (build_time 2026-09-25T17:42:15Z), `/actuator/health` = 200 UP; MIPRES `POST /billing/mipres/prescriptions` = 403 sin token (ruta activa).
