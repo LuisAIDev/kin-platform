@@ -15,5 +15,9 @@ public enum AuditResourceType {
     AUTOMATION_RULE,
     AUTOMATION_RULE_EXECUTION,
     /** Usuario afectado (p. ej. decisión ADMIN sobre una solicitud profesional). */
-    USER
+    USER,
+    /** Prescripción MIPRES. */
+    MIPRES_PRESCRIPTION,
+    /** Suministro MIPRES. */
+    MIPRES_SUPPLY
 }

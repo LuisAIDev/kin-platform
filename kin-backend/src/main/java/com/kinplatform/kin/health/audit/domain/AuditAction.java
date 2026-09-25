@@ -34,5 +34,11 @@ public enum AuditAction {
     /** Solicitud profesional aprobada por un ADMIN (capacidad PHYSICIAN). */
     PHYSICIAN_APPLICATION_APPROVED,
     /** Solicitud profesional rechazada por un ADMIN (capacidad PHYSICIAN). */
-    PHYSICIAN_APPLICATION_REJECTED
+    PHYSICIAN_APPLICATION_REJECTED,
+    /** Creación de prescripción MIPRES. */
+    MIPRES_PRESCRIPTION_CREATE,
+    /** Reporte de suministro MIPRES. */
+    MIPRES_SUPPLY_REPORT,
+    /** Anulación de suministro MIPRES. */
+    MIPRES_SUPPLY_ANULLED
 }
