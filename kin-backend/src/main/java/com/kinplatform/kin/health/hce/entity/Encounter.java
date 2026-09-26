@@ -16,13 +16,13 @@ import org.hibernate.annotations.UpdateTimestamp;
 @AllArgsConstructor
 @Entity
 @Table(name = "encounters",
-       indexes = {
-           @Index(name = "idx_encounters_patient_id", columnList = "patient_id"),
-           @Index(name = "idx_encounters_physician_id", columnList = "physician_id"),
-           @Index(name = "idx_encounters_organization_id", columnList = "organization_id"),
-           @Index(name = "idx_encounters_status", columnList = "status"),
-           @Index(name = "idx_encounters_started_at", columnList = "started_at")
-       })
+        indexes = {
+            @Index(name = "idx_encounters_patient_id", columnList = "patient_id"),
+            @Index(name = "idx_encounters_physician_id", columnList = "physician_id"),
+            @Index(name = "idx_encounters_organization_id", columnList = "organization_id"),
+            @Index(name = "idx_encounters_status", columnList = "status"),
+            @Index(name = "idx_encounters_started_at", columnList = "started_at")
+        })
 public class Encounter {
 
     @Id
@@ -64,6 +64,10 @@ public class Encounter {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
 
     public enum EncounterType {
         OUTPATIENT, INPATIENT, EMERGENCY, TELEMEDICINE, HOME_CARE, DAY_SURGERY

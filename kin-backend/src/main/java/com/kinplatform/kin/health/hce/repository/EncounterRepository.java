@@ -22,6 +22,9 @@ public interface EncounterRepository extends JpaRepository<Encounter, UUID> {
     @Query("SELECT e FROM Encounter e WHERE e.patientId = :patientId ORDER BY e.startedAt DESC")
     Page<Encounter> findByPatientIdOrderByStartedAtDesc(@Param("patientId") UUID patientId, Pageable pageable);
 
+    @Query("SELECT e FROM Encounter e WHERE e.organizationId = :organizationId ORDER BY e.startedAt DESC")
+    Page<Encounter> findByOrganizationIdOrderByStartedAtDesc(@Param("organizationId") UUID organizationId, Pageable pageable);
+
     @Query("SELECT e FROM Encounter e WHERE e.organizationId = :organizationId AND e.status = :status ORDER BY e.startedAt DESC")
     Page<Encounter> findByOrganizationIdAndStatusOrderByStartedAtDesc(
             @Param("organizationId") UUID organizationId,
