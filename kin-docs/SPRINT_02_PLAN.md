@@ -75,6 +75,7 @@ Timeline estimado: 4-6 semanas.
 - Usuarios de prueba: `ips-admin-test@kin.internal`, `ips-facturador-test@kin.internal` (org demo `…0001`).
 
 ## Fase 2.5a — HCE Core (Resolución 839/1995): migración V75 — **✅ COMPLETADA (2026-09-25)**
+- Duración: ~1 semana · Sin dependencias externas para stubs.
 - Entregado:
   - `V75__complete_hce_res_839_1995.sql` (544 líneas, opción C: sin rename de tablas legacy):
     14 tablas nuevas + 1 función (`update_updated_at_column`) + 14 triggers + 1 vista (`hce_complete_view`).
@@ -89,7 +90,32 @@ Timeline estimado: 4-6 semanas.
   - **Lección aprendida**: los tests con mocks NO detectan beans faltantes. `ApplicationContextTest` es **OBLIGATORIO** en cada PR que agregue `@Component`/`@Bean` (ver TD-CI-1/2 en `TECH_DEBT.md`).
   - **Evidencia de cierre**: Render LIVE `bf203fa` (build_time 2026-09-25T17:42:15Z), `/actuator/health` = 200 UP; MIPRES `POST /billing/mipres/prescriptions` = 403 sin token (ruta activa).
 
-## Fase 2.5a — HCE Core (26 días) — **EN EJECUCIÓN (2026-09-25)**
+## Fase 2.5a — HCE Core (26 días) — **✅ COMPLETADA (2026-09-26)**
+- Duración: ~26 días hábiles · Sin dependencias externas para stubs.
+- Entregado:
+  - `V75__complete_hce_res_839_1995.sql` (544 líneas, opción C: sin rename de tablas legacy):
+    14 tablas nuevas + 1 función (`update_updated_at_column`) + 14 triggers + 1 vista (`hce_complete_view`).
+    - Tablas: `encounters`, `patient_identification`, `anamnesis`, `patient_history`, `physical_exam`,
+      `diagnoses`, `treatment_plans`, `medical_orders`, `informed_consents`, `referrals`,
+      `discharge_summaries`, `clinical_attachments`, `obstetric_history`, `surgical_history`.
+    - `patient_profiles` y `patient_evolutions` se mantienen intactas (0 renames, 0 vistas de compatibilidad).
+  - Verificado en Docker local (PostgreSQL 16) y en **Neon prod**: `flyway_schema_history version=75, success=t` (installed_on 2026-09-25 05:57:46), 14 tablas presentes.
+- **Incidente de despliegue `c2a645a` (postmortem):**
+  - **Causa raíz**: `MipresHttpClient` / `MipresTokenService` (`@Profile("prod")`) requieren un bean `WebClient` que nadie definía. `ce696c7` (MIPRES) introdujo los consumidores sin el `@Bean`. Los tests unitarios usaban mocks → no lo detectaron. `fabc088` (LIVE previo) no incluía MIPRES, por eso funcionaba.
+  - **Fix**: `bf203fa` — `WebClientConfig` (bean `WebClient`) + `ApplicationContextTest` (`@SpringBootTest @ActiveProfiles("test")` con Testcontainers, verifica `contextLoads()` y la existencia del bean `WebClient`).
+  - **Lección aprendida**: los tests con mocks NO detectan beans faltantes. `ApplicationContextTest` es **OBLIGATORIO** en cada PR que agregue `@Component`/`@Bean` (ver TD-CI-1/2 en `TECH_DEBT.md`).
+  - **Evidencia de cierre**: Render LIVE `bf203fa` (build_time 2026-09-25T17:42:15Z), `/actuator/health` = 200 UP; MIPRES `POST /billing/mipres/prescriptions` = 403 sin token (ruta activa).
+  - **Corrección de migración V75 (V76)**:
+    - **Problema**: V75 declaró 20 columnas como `SMALLINT` (ej. `severity_self_reported`, `bp_systolic`, `stratum`, etc.) pero las entidades JPA usan `Integer`. En producción con `ddl-auto=validate` falla: `wrong column type encountered ... found [int2 (SMALLINT)], but expecting [integer (Types#INTEGER)]`.
+    - **Fix V76**: `V76__align_hce_integer_columns.sql` — 20 `ALTER COLUMN TYPE INTEGER` (widening lossless, conserva CHECK constraints, sin pérdida de datos). Verificado en Docker local (PostgreSQL 16) y en **Neon prod**: `flyway_schema_history version=76, success=t` (installed_on 2026-09-25 05:57:46), 14 tablas presentes.
+  - **Test preventivo TD-CI-3**: `HceSchemaValidationTest` (`@SpringBootTest` + Testcontainers PG18 + `spring.jpa.hibernate.ddl-auto=validate`) — detecta mismatches schema/entidad ANTES de llegar a prod.
+- Entregado completo:
+  - Bloque 1 — Entidades JPA + Repositories (6 días) ✅
+  - Bloque 2a — Servicios Core (5 días) — **SIGUIENTE**
+  - Bloque 2b — Servicios Complementarios (5 días)
+  - Bloque 3 — DTOs + Bean Validation Res 839 (3 días)
+  - Bloque 4 — Controllers REST (4 días)
+  - Bloque 5 — Frontend Wizard (5 días)
 
 ### Bloque 1 — Entidades JPA + Repositories (6 días)
 - Día 1: `Encounter`, `PatientIdentification` + Repositories
