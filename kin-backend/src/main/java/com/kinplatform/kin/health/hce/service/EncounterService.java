@@ -7,7 +7,10 @@ import com.kinplatform.kin.health.hce.dto.UpdateEncounterRequest;
 import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus;
 import com.kinplatform.kin.health.hce.entity.Encounter.EncounterType;
+import com.kinplatform.kin.health.hce.entity.Diagnoses;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
+import com.kinplatform.kin.health.hce.repository.DiagnosesRepository;
+import com.kinplatform.kin.health.hce.repository.TreatmentPlanRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -32,6 +35,8 @@ public class EncounterService {
 
     private final EncounterRepository encounterRepository;
     private final UserRepository userRepository;
+    private final DiagnosesRepository diagnosesRepository;
+    private final TreatmentPlanRepository treatmentPlanRepository;
 
     @Transactional
     public EncounterResponse createEncounter(CreateEncounterRequest request) {
@@ -90,22 +95,25 @@ public class EncounterService {
         checkAccess(encounter);
 
         // Validar que tenga diagnóstico PRINCIPAL
-        boolean hasPrincipalDiagnosis = false; // TODO: validar con DiagnosesService
+        boolean hasPrincipalDiagnosis = diagnosesRepository.existsByEncounterIdAndDiagnosisTypeAndStatus(
+                encounter.getId(),
+                com.kinplatform.kin.health.hce.entity.Diagnoses.DiagnosisType.PRINCIPAL,
+                com.kinplatform.kin.health.hce.entity.Diagnoses.Status.ACTIVE
+        );
         if (!hasPrincipalDiagnosis) {
             throw new IllegalStateException("Cannot close encounter: missing principal diagnosis");
         }
 
         // Validar que tenga plan de manejo
-        // TODO: validar con TreatmentPlanService
-        // boolean hasTreatmentPlan = treatmentPlanService.existsByEncounterId(id);
-        // if (!hasTreatmentPlan) {
-        //     throw new IllegalStateException("Cannot close encounter: missing treatment plan");
-        // }
+        boolean hasTreatmentPlan = treatmentPlanRepository.findByEncounterId(encounter.getId()).isPresent();
+        if (!hasTreatmentPlan) {
+            throw new IllegalStateException("Cannot close encounter: missing treatment plan");
+        }
 
         encounter.setStatus(com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.COMPLETED);
         encounter.setClosedAt(java.time.Instant.now());
         Encounter closed = encounterRepository.saveAndFlush(encounter);
-        return toResponse(encounter);
+        return toResponse(closed);
     }
 
     @Transactional(readOnly = true)
@@ -124,13 +132,13 @@ public class EncounterService {
                 .toList();
     }
 
-private void checkAccess(Encounter encounter) {
+    private void checkAccess(Encounter encounter) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        
+
         // Allow IPS_ADMIN or assigned physician
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_IPS_ADMIN") || a.getAuthority().equals("ROLE_ADMIN"));
-        
+
         UUID currentUserId = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication()).getId();
         boolean isPhysician = encounter.getPhysicianId().equals(currentUserId);
 
