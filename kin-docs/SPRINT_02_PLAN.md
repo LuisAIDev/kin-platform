@@ -13,7 +13,7 @@ escala y operación multi-sede.
 | 2.3 | RIPS reales: generación/validación XSD end-to-end | **✅ 2.3a COMPLETADA** (validación Anexo Técnico 1); 2.3b DIAN pendiente |
 | 2.4 | FEV-RIPS DIAN real (firma X.509 + envío) | Pendiente |
 | 2.5 | MIPRES real (autorizaciones) | **✅ COMPLETADA** (2026-09-25) |
-| 2.5a | HCE Core Res 839/1995: migración V75 + Núcleo HCE (14 tablas + servicios + API + wizard) | **✅ COMPLETADA** (2026-09-26) |
+| 2.5a | HCE Core Res 839/1995: migración V75 + Núcleo HCE (14 tablas + 14 servicios + API + wizard) | **✅ COMPLETADA** (2026-09-26) |
 | 2.5b | HCE Avanzado: Notas de enfermería, integración HCE→RIPS (Outbox), obstétrico/quirúrgico completo | Pendiente (aprox. 16d) |
 | 2.5c | HCE Histórico: migración histórica de datos | Pendiente (aprox. 8d) |
 | 2.6 | Glosas: parser por EPS específico + apelación automatizada | Pendiente |
@@ -112,10 +112,10 @@ Timeline estimado: 4-6 semanas.
 - Entregado completo:
   - Bloque 1 — Entidades JPA + Repositories (6 días) ✅
   - Bloque 2a — Servicios Core (8 días) ✅ (extendido de 5 a 8 días)
-  - Bloque 2b — Servicios Complementarios (5 días)
-  - Bloque 3 — DTOs + Bean Validation Res 839 (3 días)
-  - Bloque 4 — Controllers REST (4 días)
-  - Bloque 5 — Frontend Wizard (5 días)
+  - Bloque 2b — Servicios Complementarios (5 días) ✅ (ObstetricHistory, SurgicalHistory)
+  - Bloque 3 — DTOs + Bean Validation Res 839 (3 días) — **SIGUIENTE**
+  - Bloque 4 — Controllers REST (4 días) — **PENDIENTE**
+  - Bloque 5 — Frontend Wizard (5 días) — **PENDIENTE**
 
 ### Bloque 1 — Entidades JPA + Repositories (6 días)
 - Día 1: `Encounter`, `PatientIdentification` + Repositories
@@ -135,8 +135,8 @@ Timeline estimado: 4-6 semanas.
 - Día 7: `DischargeSummaryService` + Tests
 - Día 8: `ClinicalAttachmentService` + Tests
 
-### Bloque 2b — Servicios Complementarios (5 días)
-- `ObstetricHistoryService`, `SurgicalHistoryService` + Tests
+### Bloque 2b — Servicios Complementarios (5 días) — **✅ COMPLETADA (2026-09-26)**
+- `ObstetricHistoryService`, `SurgicalHistoryService` + Tests (17 tests)
 
 ### Bloque 3 — DTOs + Bean Validation Res 839 (3 días)
 - Request/Response DTOs por componente
