@@ -31,11 +31,11 @@
 
 ---
 
-### TD-INTEGRATION-REPO-HCE: EncounterServiceIntegrationTest usa H2 en lugar de Testcontainers
+### TD-INTEGRATION-REPO-HCE: EncounterServiceIntegrationTest esqueleto @Disabled con Testcontainers pendiente por Docker en runner
 - **Prioridad**: Media.
 - **Problema**: `EncounterServiceIntegrationTest` no puede ejecutarse con Testcontainers (PostgreSQL 18) porque el entorno de desarrollo/CI actual no tiene Docker daemon disponible. El intento de usar H2 con `@DataJpaTest` falla porque las entidades HCE (14 tablas) usan tipos PostgreSQL-específicos (`TEXT[]`, `interval second(18,9)`, `uuid` con funciones nativas, CHECK constraints con arrays) que H2 no soporta nativamente.
-- **Workaround actual**: Tests unitarios con mocks (`EncounterServiceTest` 8/8 PASS, `PatientIdentificationServiceTest` 4/4 PASS) cubren la lógica de negocio. Validación de schema con `HceSchemaValidationTest` (requiere Testcontainers PG18).
-- **Fix objetivo**: Cuando el runner de CI/CD tenga Docker/Testcontainers disponible, migrar `EncounterServiceIntegrationTest` a `@SpringBootTest` + Testcontainers PostgreSQL 18 real (igual que `ApplicationContextTest` y `HceSchemaValidationTest`).
+- **Estado actual**: Esqueleto creado en `EncounterServiceIntegrationTest.java` con `@Disabled("Docker required - TD-INTEGRATION-REPO-HCE")` y 3 tests vacíos (flujoCompleto, constraintFK, closeEncounter). Tests unitarios con mocks (`EncounterServiceTest` 8/8 PASS, `PatientIdentificationServiceTest` 4/4 PASS) cubren la lógica de negocio. Validación de schema con `HceSchemaValidationTest` (requiere Testcontainers PG18).
+- **Fix objetivo**: Cuando el runner de CI/CD tenga Docker/Testcontainers disponible, implementar los 3 tests en el esqueleto y quitar `@Disabled`. Migrar a `@SpringBootTest` + Testcontainers PostgreSQL 18 real (igual que `ApplicationContextTest` y `HceSchemaValidationTest`).
 - **Owner**: Backend/DevOps. **Estimado**: 0.5 día (configurar Docker en CI + test).
 - **Referencia**: Bloque 1 HCE completado, Día 7.
 
