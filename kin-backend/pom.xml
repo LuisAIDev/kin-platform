@@ -311,6 +311,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- H2 para tests de integración @DataJpaTest sin Docker -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Awaitility para tests de integración asíncronos (OutboxRelay) -->
         <dependency>
             <groupId>org.awaitility</groupId>
