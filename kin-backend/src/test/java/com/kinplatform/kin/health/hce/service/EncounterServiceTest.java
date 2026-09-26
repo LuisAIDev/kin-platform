@@ -18,6 +18,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.Instant;
 import java.util.List;
@@ -44,8 +46,8 @@ class EncounterServiceTest {
     private UUID patientId;
     private UUID physicianId;
     private UUID organizationId;
-    private User patient;
-    private User physician;
+    private com.kinplatform.user.User patient;
+    private com.kinplatform.user.User physician;
 
     @BeforeEach
     void setUp() {
@@ -53,7 +55,7 @@ class EncounterServiceTest {
         physicianId = UUID.randomUUID();
         organizationId = UUID.randomUUID();
 
-        patient = User.builder()
+        patient = com.kinplatform.user.User.builder()
                 .id(patientId)
                 .email("patient@test.com")
                 .fullName("Test Patient")
@@ -61,7 +63,7 @@ class EncounterServiceTest {
                 .organizationId(organizationId)
                 .build();
 
-        physician = User.builder()
+        physician = com.kinplatform.user.User.builder()
                 .id(physicianId)
                 .email("physician@test.com")
                 .fullName("Dr. Test")
@@ -71,7 +73,7 @@ class EncounterServiceTest {
 
     @Test
     void createEncounter_happyPath() {
-        User patient = User.builder()
+        var patient = com.kinplatform.user.User.builder()
                 .id(patientId)
                 .email("patient@test.com")
                 .fullName("Test Patient")
@@ -83,8 +85,8 @@ class EncounterServiceTest {
         when(encounterRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Mock the static AuthenticatedUsers.require() to return the physician
-        try (MockedStatic<AuthenticatedUsers> mockedStatic = mockStatic(AuthenticatedUsers.class)) {
-            mockedStatic.when(() -> AuthenticatedUsers.require(any(), any()))
+        try (MockedStatic<com.kinplatform.common.security.AuthenticatedUsers> mockedStatic = mockStatic(com.kinplatform.common.security.AuthenticatedUsers.class)) {
+            mockedStatic.when(() -> com.kinplatform.common.security.AuthenticatedUsers.require(any(), any()))
                     .thenReturn(physician);
 
             CreateEncounterRequest request = CreateEncounterRequest.builder()
@@ -104,7 +106,7 @@ class EncounterServiceTest {
 
     @Test
     void createEncounter_throwsWhenOrganizationIdNull() {
-        User patientNoOrg = User.builder()
+        var patientNoOrg = com.kinplatform.user.User.builder()
                 .id(patientId)
                 .organizationId(null)
                 .build();
@@ -121,7 +123,25 @@ class EncounterServiceTest {
     }
 
     @Test
-    void closeEncounter_throwsWhenMissingPrincipalDiagnosis() {
-        // TODO: mock DiagnosesService when available
+    void createEncounter_throwsWhenPatientNotFound() {
+        when(userRepository.findById(any())).thenReturn(java.util.Optional.empty());
+
+        CreateEncounterRequest request = CreateEncounterRequest.builder()
+                .patientId(UUID.randomUUID())
+                .encounterType("OUTPATIENT")
+                .build();
+
+        assertThatThrownBy(() -> encounterService.createEncounter(request))
+                .isInstanceOf(jakarta.persistence.EntityNotFoundException.class)
+                .hasMessageContaining("Patient not found");
+    }
+
+    @Test
+    void closeEncounter_throwsWhenEncounterNotFound() {
+        when(encounterRepository.findById(any())).thenReturn(java.util.Optional.empty());
+
+        assertThatThrownBy(() -> encounterService.closeEncounter(UUID.randomUUID()))
+                .isInstanceOf(jakarta.persistence.EntityNotFoundException.class)
+                .hasMessageContaining("Encounter not found");
     }
 }
