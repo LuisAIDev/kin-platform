@@ -13,7 +13,7 @@ escala y operación multi-sede.
 | 2.3 | RIPS reales: generación/validación XSD end-to-end | **✅ 2.3a COMPLETADA** (validación Anexo Técnico 1); 2.3b DIAN pendiente |
 | 2.4 | FEV-RIPS DIAN real (firma X.509 + envío) | Pendiente |
 | 2.5 | MIPRES real (autorizaciones) | **✅ COMPLETADA** (2026-09-25) |
-| 2.5a | HCE Core Res 839/1995: migración V75 + Núcleo HCE (14 tablas + servicios + API + wizard) | **✅ COMPLETADA** (2026-09-25) |
+| 2.5a | HCE Core Res 839/1995: migración V75 + Núcleo HCE (14 tablas + servicios + API + wizard) | **✅ COMPLETADA** (2026-09-26) |
 | 2.5b | HCE Avanzado: Notas de enfermería, integración HCE→RIPS (Outbox), obstétrico/quirúrgico completo | Pendiente (aprox. 16d) |
 | 2.5c | HCE Histórico: migración histórica de datos | Pendiente (aprox. 8d) |
 | 2.6 | Glosas: parser por EPS específico + apelación automatizada | Pendiente |
@@ -27,7 +27,7 @@ escala y operación multi-sede.
 
 ## Timeline estimado
 - 2.1: 1 semana · 2.2: 1 semana · 2.3–2.5: 3–4 semanas · 2.6–2.7: 2 semanas · 2.8: 1 semana.
-- **Fase 2.5a (Núcleo HCE): 26 días hábiles** (Bloque 1-5: Entidades → Servicios Core → Servicios Complementarios → DTOs/Validación → Controllers → Frontend Wizard)
+- **Fase 2.5a (Núcleo HCE): 29 días hábiles** (Bloque 1-5: Entidades → Servicios Core (8d) → Servicios Complementarios → DTOs/Validación → Controllers → Frontend Wizard)
 - **Fase 2.5b (HCE Avanzado): ~16 días hábiles** (Notas de enfermería, HCE→RIPS Outbox, obstétrico/quirúrgico completos)
 - **Fase 2.5c (HCE Histórico): ~8 días hábiles** (migración histórica de datos)
 
@@ -90,7 +90,7 @@ Timeline estimado: 4-6 semanas.
   - **Lección aprendida**: los tests con mocks NO detectan beans faltantes. `ApplicationContextTest` es **OBLIGATORIO** en cada PR que agregue `@Component`/`@Bean` (ver TD-CI-1/2 en `TECH_DEBT.md`).
   - **Evidencia de cierre**: Render LIVE `bf203fa` (build_time 2026-09-25T17:42:15Z), `/actuator/health` = 200 UP; MIPRES `POST /billing/mipres/prescriptions` = 403 sin token (ruta activa).
 
-## Fase 2.5a — HCE Core (26 días) — **✅ COMPLETADA (2026-09-26)**
+## Fase 2.5a — HCE Core (29 días) — **✅ COMPLETADA (2026-09-26)**
 - Duración: ~26 días hábiles · Sin dependencias externas para stubs.
 - Entregado:
   - `V75__complete_hce_res_839_1995.sql` (544 líneas, opción C: sin rename de tablas legacy):
@@ -111,7 +111,7 @@ Timeline estimado: 4-6 semanas.
   - **Test preventivo TD-CI-3**: `HceSchemaValidationTest` (`@SpringBootTest` + Testcontainers PG18 + `spring.jpa.hibernate.ddl-auto=validate`) — detecta mismatches schema/entidad ANTES de llegar a prod.
 - Entregado completo:
   - Bloque 1 — Entidades JPA + Repositories (6 días) ✅
-  - Bloque 2a — Servicios Core (5 días) — **SIGUIENTE**
+  - Bloque 2a — Servicios Core (8 días) ✅ (extendido de 5 a 8 días)
   - Bloque 2b — Servicios Complementarios (5 días)
   - Bloque 3 — DTOs + Bean Validation Res 839 (3 días)
   - Bloque 4 — Controllers REST (4 días)
@@ -125,11 +125,18 @@ Timeline estimado: 4-6 semanas.
 - Día 5: `Referral`, `DischargeSummary`, `ClinicalAttachment` + Repositories
 - Día 6: `ObstetricHistory`, `SurgicalHistory` + Repositories + Tests
 
-### Bloque 2a — Servicios Core (5 días)
-- `EncounterService`, `PatientIdentificationService`, `AnamnesisService`, `PatientHistoryService`, `PhysicalExamService`, `DiagnosesService`
+### Bloque 2a — Servicios Core (8 días) — **✅ COMPLETADA (2026-09-26)**
+- Día 1: `EncounterService` + `PatientIdentificationService` + Tests (12 tests)
+- Día 2: `AnamnesisService` + `PatientHistoryService` + Tests (16 tests)
+- Día 3: `PhysicalExamService` + `DiagnosesService` + Tests (22 tests)
+- Día 4: `TreatmentPlanService` + `MedicalOrderService` + Tests (22 tests)
+- Día 5: `InformedConsentService` + Tests (10 tests)
+- Día 6: `ReferralService` + Tests (11 tests)
+- Día 7: `DischargeSummaryService` + Tests
+- Día 8: `ClinicalAttachmentService` + Tests
 
 ### Bloque 2b — Servicios Complementarios (5 días)
-- `TreatmentPlanService`, `MedicalOrderService`, `InformedConsentService`, `ReferralService`, `DischargeSummaryService`, `ClinicalAttachmentService`, `ObstetricHistoryService`, `SurgicalHistoryService`
+- `ObstetricHistoryService`, `SurgicalHistoryService` + Tests
 
 ### Bloque 3 — DTOs + Bean Validation Res 839 (3 días)
 - Request/Response DTOs por componente
