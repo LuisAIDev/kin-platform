@@ -249,7 +249,7 @@
         <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
-            <version>24.0.0</version>
+            <version>33.2.0</version>
         </dependency>
 
         <!-- Google Cloud Vision — OCR para imágenes de documentos clínicos -->
