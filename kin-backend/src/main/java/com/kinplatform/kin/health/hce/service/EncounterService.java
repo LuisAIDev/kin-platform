@@ -4,13 +4,13 @@ import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.hce.dto.CreateEncounterRequest;
 import com.kinplatform.kin.health.hce.dto.UpdateEncounterRequest;
 import com.kinplatform.kin.health.hce.dto.EncounterResponse;
-import com.kinplatform.kin.health.hce.entity.Diagnosis;
 import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus;
 import com.kinplatform.kin.health.hce.entity.Encounter.EncounterType;
+import com.kinplatform.kin.health.hce.entity.Diagnoses;
 import com.kinplatform.kin.health.hce.mapper.EncounterMapper;
-import com.kinplatform.kin.health.hce.repository.DiagnosisRepository;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
+import com.kinplatform.kin.health.hce.repository.DiagnosesRepository;
 import com.kinplatform.kin.health.hce.repository.TreatmentPlanRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -35,7 +35,7 @@ public class EncounterService {
 
     private final EncounterRepository encounterRepository;
     private final UserRepository userRepository;
-    private final DiagnosisRepository diagnosisRepository;
+    private final DiagnosesRepository diagnosesRepository;
     private final TreatmentPlanRepository treatmentPlanRepository;
     private final EncounterMapper encounterMapper;
 
@@ -73,7 +73,7 @@ public class EncounterService {
     }
 
     @Transactional
-    public EncounterResponse updateEncounter(UUID id, UpdateEncounterRequest request) {
+    public EncounterResponse updateEncounter(UUID id, com.kinplatform.kin.health.hce.dto.UpdateEncounterRequest request) {
         Encounter encounter = encounterRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Encounter not found"));
         checkAccess(encounter);
@@ -82,7 +82,7 @@ public class EncounterService {
             encounter.setChiefComplaint(request.getChiefComplaint());
         }
         if (request.getEncounterType() != null) {
-            encounter.setEncounterType(EncounterType.valueOf(request.getEncounterType()));
+            encounter.setEncounterType(com.kinplatform.kin.health.hce.entity.Encounter.EncounterType.valueOf(request.getEncounterType()));
         }
 
         Encounter updated = encounterRepository.saveAndFlush(encounter);
@@ -96,9 +96,11 @@ public class EncounterService {
         checkAccess(encounter);
 
         // Validar que tenga diagnóstico PRINCIPAL
-        boolean hasPrincipalDiagnosis = diagnosisRepository.countByEncounterIdAndType(
+        boolean hasPrincipalDiagnosis = diagnosesRepository.existsByEncounterIdAndDiagnosisTypeAndStatus(
                 encounter.getId(),
-                Diagnosis.DiagnosisType.PRINCIPAL) > 0;
+                com.kinplatform.kin.health.hce.entity.Diagnoses.DiagnosisType.PRINCIPAL,
+                com.kinplatform.kin.health.hce.entity.Diagnoses.Status.ACTIVE
+        );
         if (!hasPrincipalDiagnosis) {
             throw new IllegalStateException("Cannot close encounter: missing principal diagnosis");
         }
@@ -109,7 +111,7 @@ public class EncounterService {
             throw new IllegalStateException("Cannot close encounter: missing treatment plan");
         }
 
-        encounter.setStatus(EncounterStatus.COMPLETED);
+        encounter.setStatus(com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.COMPLETED);
         encounter.setClosedAt(java.time.Instant.now());
         Encounter closed = encounterRepository.saveAndFlush(encounter);
         return encounterMapper.toResponse(closed);
