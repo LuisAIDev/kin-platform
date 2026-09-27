@@ -13,6 +13,7 @@ import com.kinplatform.kin.health.hce.entity.Encounter.EncounterType;
 import com.kinplatform.kin.health.hce.entity.Diagnoses;
 import com.kinplatform.kin.health.hce.entity.TreatmentPlan;
 import com.kinplatform.kin.health.hce.entity.TreatmentPlan.Conduct;
+import com.kinplatform.kin.health.hce.mapper.EncounterMapper;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
 import com.kinplatform.kin.health.hce.repository.DiagnosesRepository;
 import com.kinplatform.kin.health.hce.repository.TreatmentPlanRepository;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -55,6 +57,9 @@ class EncounterServiceTest {
 
     @Mock
     private com.kinplatform.kin.health.hce.repository.TreatmentPlanRepository treatmentPlanRepository;
+
+    @Spy
+    private EncounterMapper encounterMapper = new EncounterMapper();
 
     @InjectMocks
     private EncounterService encounterService;

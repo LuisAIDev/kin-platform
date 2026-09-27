@@ -5,6 +5,7 @@ import com.kinplatform.kin.health.hce.dto.PatientIdentificationResponse;
 import com.kinplatform.kin.health.hce.entity.PatientIdentification;
 import com.kinplatform.kin.health.hce.entity.PatientIdentification.DocumentType;
 import com.kinplatform.kin.health.hce.entity.PatientIdentification.Regimen;
+import com.kinplatform.kin.health.hce.mapper.PatientIdentificationMapper;
 import com.kinplatform.kin.health.hce.repository.PatientIdentificationRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
@@ -34,6 +36,9 @@ class PatientIdentificationServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Spy
+    private PatientIdentificationMapper mapper = new PatientIdentificationMapper();
 
     @InjectMocks
     private PatientIdentificationService service;

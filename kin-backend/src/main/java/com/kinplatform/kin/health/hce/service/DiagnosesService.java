@@ -102,16 +102,20 @@ public class DiagnosesService {
         return toResponse(saved);
     }
 
+    @Transactional
+    public DiagnosesResponse setPrincipal(UUID diagnosisId) {
+        Diagnoses diagnosis = diagnosesRepository.findById(diagnosisId)
+                .orElseThrow(() -> new EntityNotFoundException("Diagnosis not found"));
+        return setPrincipal(diagnosis.getEncounterId(), diagnosisId);
+    }
+
     @Transactional(readOnly = true)
     public DiagnosesResponse getByEncounter(UUID encounterId) {
-        Encounter encounter = encounterRepository.findById(encounterId)
-                .orElseThrow(() -> new EntityNotFoundException("Encounter not found"));
-
-        checkAccess(encounter);
-
-        List<Diagnoses> diagnoses = diagnosesRepository.findByEncounterIdOrderByCreatedAtDesc(encounterId);
-        return DiagnosesResponse.builder()
-                .build(); // Return list wrapper or just first? Let's return first for now
+        List<DiagnosesResponse> diagnoses = getAllByEncounter(encounterId);
+        if (diagnoses.isEmpty()) {
+            throw new EntityNotFoundException("No diagnoses found for encounter");
+        }
+        return diagnoses.get(0);
     }
 
     @Transactional(readOnly = true)
