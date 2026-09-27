@@ -1,5 +1,6 @@
 package com.kinplatform.kin.health.hce.dto.request;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -13,4 +14,9 @@ public record CreateEncounterRequest(
         @NotBlank @Size(max = 500) String chiefComplaint,
         @NotNull @Pattern(regexp = "OUTPATIENT|INPATIENT|EMERGENCY|TELEMEDICINE|HOME_CARE|DAY_SURGERY") String encounterType
 ) {
+    @AssertTrue(message = "patientId y physicianId no pueden ser el mismo")
+    private boolean isPatientNotPhysician() {
+        return patientId == null || physicianId == null
+                || !patientId.equals(physicianId);
+    }
 }

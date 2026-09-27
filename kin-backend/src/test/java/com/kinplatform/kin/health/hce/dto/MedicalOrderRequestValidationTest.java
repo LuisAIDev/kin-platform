@@ -137,4 +137,123 @@ class MedicalOrderRequestValidationTest {
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("cupsCode");
     }
+
+    @Test
+    void procedureWithoutCupsCode_fails() {
+        MedicalOrderRequest request = new MedicalOrderRequest(
+                "PROCEDURE",
+                "ROUTINE",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage()).contains("cupsCode es obligatorio");
+    }
+
+    @Test
+    void labExamWithoutCupsCode_fails() {
+        MedicalOrderRequest request = new MedicalOrderRequest(
+                "LAB_EXAM",
+                "ROUTINE",
+                "",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage()).contains("cupsCode es obligatorio");
+    }
+
+    @Test
+    void imagingWithoutCupsCode_fails() {
+        MedicalOrderRequest request = new MedicalOrderRequest(
+                "IMAGING",
+                "ROUTINE",
+                "   ",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage()).contains("cupsCode es obligatorio");
+    }
+
+    @Test
+    void medicationWithoutCupsCode_passes() {
+        MedicalOrderRequest request = new MedicalOrderRequest(
+                "MEDICATION",
+                "ROUTINE",
+                null,
+                "Ibuprofeno",
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void drugNameTooLong_fails() {
+        MedicalOrderRequest request = new MedicalOrderRequest(
+                "MEDICATION",
+                "ROUTINE",
+                null,
+                "a".repeat(201),
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("drugName");
+    }
+
+    @Test
+    void doseTooLong_fails() {
+        MedicalOrderRequest request = new MedicalOrderRequest(
+                "MEDICATION",
+                "ROUTINE",
+                null,
+                "Ibuprofeno",
+                "a".repeat(201),
+                null,
+                null,
+                null,
+                null
+        );
+
+        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("dose");
+    }
 }

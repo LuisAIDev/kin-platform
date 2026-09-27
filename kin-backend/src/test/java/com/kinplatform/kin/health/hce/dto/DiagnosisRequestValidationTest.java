@@ -104,4 +104,21 @@ class DiagnosisRequestValidationTest {
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("certainty");
     }
+
+    @Test
+    void supportedByTooLong_fails() {
+        DiagnosisRequest request = new DiagnosisRequest(
+                "J18.9",
+                "PRINCIPAL",
+                "CONFIRMED",
+                "a".repeat(501),
+                null,
+                null
+        );
+
+        Set<ConstraintViolation<DiagnosisRequest>> violations = validator.validate(request);
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("supportedBy");
+    }
 }

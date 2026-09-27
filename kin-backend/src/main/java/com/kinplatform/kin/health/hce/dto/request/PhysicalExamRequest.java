@@ -1,5 +1,6 @@
 package com.kinplatform.kin.health.hce.dto.request;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
@@ -17,4 +18,9 @@ public record PhysicalExamRequest(
         @Min(3) @Max(15) Integer glasgowScore,
         @Min(0) @Max(10) Integer painScale
 ) {
+    @AssertTrue(message = "bpSystolic debe ser mayor que bpDiastolic")
+    private boolean isBpValid() {
+        return bpSystolic == null || bpDiastolic == null
+                || bpSystolic > bpDiastolic;
+    }
 }

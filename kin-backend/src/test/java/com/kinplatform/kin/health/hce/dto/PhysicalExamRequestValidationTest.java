@@ -57,8 +57,8 @@ class PhysicalExamRequestValidationTest {
 
         Set<ConstraintViolation<PhysicalExamRequest>> violations = validator.validate(request);
 
-        assertThat(violations).hasSize(1);
-        assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("bpSystolic");
+        assertThat(violations).hasSize(2);
+        assertThat(violations).extracting("propertyPath").extracting(Object::toString).contains("bpSystolic", "bpValid");
     }
 
     @Test
@@ -101,6 +101,48 @@ class PhysicalExamRequestValidationTest {
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("bpDiastolic");
+    }
+
+    @Test
+    void bpSystolicNotGreaterThanDiastolic_fails() {
+        PhysicalExamRequest request = new PhysicalExamRequest(
+                80,
+                120,
+                72,
+                16,
+                36.5,
+                98,
+                70.0,
+                175.0,
+                15,
+                3
+        );
+
+        Set<ConstraintViolation<PhysicalExamRequest>> violations = validator.validate(request);
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage()).contains("bpSystolic debe ser mayor que bpDiastolic");
+    }
+
+    @Test
+    void bpSystolicEqualDiastolic_fails() {
+        PhysicalExamRequest request = new PhysicalExamRequest(
+                80,
+                80,
+                72,
+                16,
+                36.5,
+                98,
+                70.0,
+                175.0,
+                15,
+                3
+        );
+
+        Set<ConstraintViolation<PhysicalExamRequest>> violations = validator.validate(request);
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage()).contains("bpSystolic debe ser mayor que bpDiastolic");
     }
 
     @Test

@@ -100,4 +100,21 @@ class CreateEncounterRequestValidationTest {
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("chiefComplaint");
     }
+
+    @Test
+    void samePatientAndPhysician_fails() {
+        UUID sameId = UUID.randomUUID();
+        CreateEncounterRequest request = new CreateEncounterRequest(
+                sameId,
+                sameId,
+                UUID.randomUUID(),
+                "Dolor abdominal",
+                "EMERGENCY"
+        );
+
+        Set<ConstraintViolation<CreateEncounterRequest>> violations = validator.validate(request);
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage()).contains("patientId y physicianId no pueden ser el mismo");
+    }
 }
