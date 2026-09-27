@@ -1,6 +1,7 @@
 package com.kinplatform.kin.health.hce.dto;
 
 import com.kinplatform.kin.health.hce.entity.InformedConsent.ConsentType;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
@@ -18,7 +19,7 @@ public class CreateInformedConsentRequest {
     @NotNull(message = "Patient ID is required")
     private UUID patientId;
 
-    @NotNull(message = "Procedure name is required")
+    @NotBlank(message = "Procedure name is required")
     @Size(max = 200, message = "Procedure name cannot exceed 200 characters")
     private String procedureName;
 
@@ -28,7 +29,7 @@ public class CreateInformedConsentRequest {
     @NotNull(message = "Consent type is required")
     private ConsentType consentType;
 
-    @NotNull(message = "Document version is required")
+    @NotBlank(message = "Document version is required")
     @Size(max = 50, message = "Document version cannot exceed 50 characters")
     private String documentVersion;
 

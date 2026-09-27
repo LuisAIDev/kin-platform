@@ -2,6 +2,7 @@ package com.kinplatform.kin.health.hce.dto;
 
 import com.kinplatform.kin.health.hce.entity.Referral.Priority;
 import com.kinplatform.kin.health.hce.entity.Referral.ReferralType;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
@@ -23,7 +24,7 @@ public class CreateReferralRequest {
     @Size(max = 100, message = "Referring service cannot exceed 100 characters")
     private String referringService;
 
-    @NotNull(message = "Referred to service is required")
+    @NotBlank(message = "Referred to service is required")
     @Size(max = 100, message = "Referred to service cannot exceed 100 characters")
     private String referredToService;
 
@@ -38,7 +39,7 @@ public class CreateReferralRequest {
     @NotNull(message = "Priority is required")
     private Priority priority;
 
-    @NotNull(message = "Reason is required")
+    @NotBlank(message = "Reason is required")
     @Size(max = 2000, message = "Reason cannot exceed 2000 characters")
     private String reason;
 

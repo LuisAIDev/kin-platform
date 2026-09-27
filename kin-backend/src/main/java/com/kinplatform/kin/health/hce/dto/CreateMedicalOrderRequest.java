@@ -3,6 +3,7 @@ package com.kinplatform.kin.health.hce.dto;
 import com.kinplatform.kin.health.hce.entity.MedicalOrder.OrderType;
 import com.kinplatform.kin.health.hce.entity.MedicalOrder.Priority;
 import com.kinplatform.kin.health.hce.entity.MedicalOrder.Route;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
@@ -53,4 +54,15 @@ public class CreateMedicalOrderRequest {
 
     @Size(max = 2000, message = "Instructions cannot exceed 2000 characters")
     private String instructions;
+
+    @AssertTrue(message = "cupsCode es obligatorio para PROCEDURE, LAB_EXAM e IMAGING")
+    public boolean isCupsCodeValid() {
+        if (orderType == null) {
+            return true;
+        }
+        if (orderType == OrderType.PROCEDURE || orderType == OrderType.LAB_EXAM || orderType == OrderType.IMAGING) {
+            return cupsCode != null && !cupsCode.trim().isEmpty();
+        }
+        return true;
+    }
 }

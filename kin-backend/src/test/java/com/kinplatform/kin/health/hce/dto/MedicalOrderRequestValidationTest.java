@@ -1,6 +1,8 @@
 package com.kinplatform.kin.health.hce.dto;
 
-import com.kinplatform.kin.health.hce.dto.request.MedicalOrderRequest;
+import com.kinplatform.kin.health.hce.entity.MedicalOrder.OrderType;
+import com.kinplatform.kin.health.hce.entity.MedicalOrder.Priority;
+import com.kinplatform.kin.health.hce.entity.MedicalOrder.Route;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -8,6 +10,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,77 +25,47 @@ class MedicalOrderRequestValidationTest {
 
     @Test
     void happyPath_medication_passes() {
-        MedicalOrderRequest request = new MedicalOrderRequest(
-                "MEDICATION",
-                "ROUTINE",
-                null,
-                "Ibuprofeno",
-                "400",
-                "mg",
-                "ORAL",
-                "Cada 8 horas",
-                5
-        );
+        CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                .treatmentPlanId(UUID.randomUUID())
+                .orderType(OrderType.MEDICATION)
+                .priority(Priority.ROUTINE)
+                .drugName("Ibuprofeno")
+                .dose("400")
+                .doseUnit("mg")
+                .route(Route.ORAL)
+                .frequency("Cada 8 horas")
+                .durationDays(5)
+                .build();
 
-        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateMedicalOrderRequest>> violations = validator.validate(request);
 
         assertThat(violations).isEmpty();
     }
 
     @Test
     void happyPath_procedure_withCupsCode_passes() {
-        MedicalOrderRequest request = new MedicalOrderRequest(
-                "PROCEDURE",
-                "URGENT",
-                "890201",
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                .treatmentPlanId(UUID.randomUUID())
+                .orderType(OrderType.PROCEDURE)
+                .priority(Priority.URGENT)
+                .cupsCode("890201")
+                .build();
 
-        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateMedicalOrderRequest>> violations = validator.validate(request);
 
         assertThat(violations).isEmpty();
     }
 
     @Test
     void nullOrderType_fails() {
-        MedicalOrderRequest request = new MedicalOrderRequest(
-                null,
-                "ROUTINE",
-                null,
-                "Ibuprofeno",
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                .treatmentPlanId(UUID.randomUUID())
+                .orderType(null)
+                .priority(Priority.ROUTINE)
+                .drugName("Ibuprofeno")
+                .build();
 
-        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
-
-        assertThat(violations).hasSize(1);
-        assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("orderType");
-    }
-
-    @Test
-    void invalidOrderType_fails() {
-        MedicalOrderRequest request = new MedicalOrderRequest(
-                "INVALID_TYPE",
-                "ROUTINE",
-                null,
-                "Ibuprofeno",
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-
-        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateMedicalOrderRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("orderType");
@@ -100,39 +73,43 @@ class MedicalOrderRequestValidationTest {
 
     @Test
     void nullPriority_fails() {
-        MedicalOrderRequest request = new MedicalOrderRequest(
-                "MEDICATION",
-                null,
-                null,
-                "Ibuprofeno",
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                .treatmentPlanId(UUID.randomUUID())
+                .orderType(OrderType.MEDICATION)
+                .priority(null)
+                .drugName("Ibuprofeno")
+                .build();
 
-        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateMedicalOrderRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("priority");
     }
 
     @Test
-    void cupsCodeTooLong_fails() {
-        MedicalOrderRequest request = new MedicalOrderRequest(
-                "PROCEDURE",
-                "ROUTINE",
-                "123456789012345678901",
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+    void nullTreatmentPlanId_fails() {
+        CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                .treatmentPlanId(null)
+                .orderType(OrderType.MEDICATION)
+                .priority(Priority.ROUTINE)
+                .build();
 
-        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateMedicalOrderRequest>> violations = validator.validate(request);
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("treatmentPlanId");
+    }
+
+    @Test
+    void cupsCodeTooLong_fails() {
+        CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                .treatmentPlanId(UUID.randomUUID())
+                .orderType(OrderType.PROCEDURE)
+                .priority(Priority.ROUTINE)
+                .cupsCode("1".repeat(21))
+                .build();
+
+        Set<ConstraintViolation<CreateMedicalOrderRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("cupsCode");
@@ -140,19 +117,14 @@ class MedicalOrderRequestValidationTest {
 
     @Test
     void procedureWithoutCupsCode_fails() {
-        MedicalOrderRequest request = new MedicalOrderRequest(
-                "PROCEDURE",
-                "ROUTINE",
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                .treatmentPlanId(UUID.randomUUID())
+                .orderType(OrderType.PROCEDURE)
+                .priority(Priority.ROUTINE)
+                .cupsCode(null)
+                .build();
 
-        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateMedicalOrderRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getMessage()).contains("cupsCode es obligatorio");
@@ -160,19 +132,14 @@ class MedicalOrderRequestValidationTest {
 
     @Test
     void labExamWithoutCupsCode_fails() {
-        MedicalOrderRequest request = new MedicalOrderRequest(
-                "LAB_EXAM",
-                "ROUTINE",
-                "",
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                .treatmentPlanId(UUID.randomUUID())
+                .orderType(OrderType.LAB_EXAM)
+                .priority(Priority.ROUTINE)
+                .cupsCode("")
+                .build();
 
-        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateMedicalOrderRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getMessage()).contains("cupsCode es obligatorio");
@@ -180,19 +147,14 @@ class MedicalOrderRequestValidationTest {
 
     @Test
     void imagingWithoutCupsCode_fails() {
-        MedicalOrderRequest request = new MedicalOrderRequest(
-                "IMAGING",
-                "ROUTINE",
-                "   ",
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                .treatmentPlanId(UUID.randomUUID())
+                .orderType(OrderType.IMAGING)
+                .priority(Priority.ROUTINE)
+                .cupsCode("   ")
+                .build();
 
-        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateMedicalOrderRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getMessage()).contains("cupsCode es obligatorio");
@@ -200,38 +162,29 @@ class MedicalOrderRequestValidationTest {
 
     @Test
     void medicationWithoutCupsCode_passes() {
-        MedicalOrderRequest request = new MedicalOrderRequest(
-                "MEDICATION",
-                "ROUTINE",
-                null,
-                "Ibuprofeno",
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                .treatmentPlanId(UUID.randomUUID())
+                .orderType(OrderType.MEDICATION)
+                .priority(Priority.ROUTINE)
+                .drugName("Ibuprofeno")
+                .cupsCode(null)
+                .build();
 
-        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateMedicalOrderRequest>> violations = validator.validate(request);
 
         assertThat(violations).isEmpty();
     }
 
     @Test
     void drugNameTooLong_fails() {
-        MedicalOrderRequest request = new MedicalOrderRequest(
-                "MEDICATION",
-                "ROUTINE",
-                null,
-                "a".repeat(201),
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                .treatmentPlanId(UUID.randomUUID())
+                .orderType(OrderType.MEDICATION)
+                .priority(Priority.ROUTINE)
+                .drugName("a".repeat(201))
+                .build();
 
-        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateMedicalOrderRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("drugName");
@@ -239,19 +192,15 @@ class MedicalOrderRequestValidationTest {
 
     @Test
     void doseTooLong_fails() {
-        MedicalOrderRequest request = new MedicalOrderRequest(
-                "MEDICATION",
-                "ROUTINE",
-                null,
-                "Ibuprofeno",
-                "a".repeat(201),
-                null,
-                null,
-                null,
-                null
-        );
+        CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                .treatmentPlanId(UUID.randomUUID())
+                .orderType(OrderType.MEDICATION)
+                .priority(Priority.ROUTINE)
+                .drugName("Ibuprofeno")
+                .dose("a".repeat(101))
+                .build();
 
-        Set<ConstraintViolation<MedicalOrderRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateMedicalOrderRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("dose");

@@ -1,6 +1,7 @@
 package com.kinplatform.kin.health.hce.dto;
 
-import com.kinplatform.kin.health.hce.dto.request.ReferralRequest;
+import com.kinplatform.kin.health.hce.entity.Referral.Priority;
+import com.kinplatform.kin.health.hce.entity.Referral.ReferralType;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,46 +24,33 @@ class ReferralRequestValidationTest {
 
     @Test
     void happyPath_allValid_passes() {
-        ReferralRequest request = new ReferralRequest(
-                "INTERCONSULTATION",
-                "ROUTINE",
-                "Paciente requiere evaluación por especialista en neurología",
-                "Neurología",
-                "Hospital Universitario"
-        );
+        CreateReferralRequest request = CreateReferralRequest.builder()
+                .patientId(UUID.randomUUID())
+                .referringService("Medicina General")
+                .referredToService("Neurología")
+                .referredToInstitution("Hospital Universitario")
+                .referralType(ReferralType.INTERCONSULTATION)
+                .priority(Priority.ROUTINE)
+                .reason("Paciente requiere evaluación por especialista en neurología")
+                .build();
 
-        Set<ConstraintViolation<ReferralRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateReferralRequest>> violations = validator.validate(request);
 
         assertThat(violations).isEmpty();
     }
 
     @Test
     void nullReferralType_fails() {
-        ReferralRequest request = new ReferralRequest(
-                null,
-                "ROUTINE",
-                "Motivo de referencia",
-                "Neurología",
-                null
-        );
+        CreateReferralRequest request = CreateReferralRequest.builder()
+                .patientId(UUID.randomUUID())
+                .referringService("Medicina General")
+                .referredToService("Neurología")
+                .referralType(null)
+                .priority(Priority.ROUTINE)
+                .reason("Motivo de referencia")
+                .build();
 
-        Set<ConstraintViolation<ReferralRequest>> violations = validator.validate(request);
-
-        assertThat(violations).hasSize(1);
-        assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("referralType");
-    }
-
-    @Test
-    void invalidReferralType_fails() {
-        ReferralRequest request = new ReferralRequest(
-                "INVALID_TYPE",
-                "ROUTINE",
-                "Motivo de referencia",
-                "Neurología",
-                null
-        );
-
-        Set<ConstraintViolation<ReferralRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateReferralRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("referralType");
@@ -69,15 +58,16 @@ class ReferralRequestValidationTest {
 
     @Test
     void nullPriority_fails() {
-        ReferralRequest request = new ReferralRequest(
-                "INTERCONSULTATION",
-                null,
-                "Motivo de referencia",
-                "Neurología",
-                null
-        );
+        CreateReferralRequest request = CreateReferralRequest.builder()
+                .patientId(UUID.randomUUID())
+                .referringService("Medicina General")
+                .referredToService("Neurología")
+                .referralType(ReferralType.INTERCONSULTATION)
+                .priority(null)
+                .reason("Motivo de referencia")
+                .build();
 
-        Set<ConstraintViolation<ReferralRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateReferralRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("priority");
@@ -85,15 +75,16 @@ class ReferralRequestValidationTest {
 
     @Test
     void blankReason_fails() {
-        ReferralRequest request = new ReferralRequest(
-                "INTERCONSULTATION",
-                "ROUTINE",
-                "",
-                "Neurología",
-                null
-        );
+        CreateReferralRequest request = CreateReferralRequest.builder()
+                .patientId(UUID.randomUUID())
+                .referringService("Medicina General")
+                .referredToService("Neurología")
+                .referralType(ReferralType.INTERCONSULTATION)
+                .priority(Priority.ROUTINE)
+                .reason("")
+                .build();
 
-        Set<ConstraintViolation<ReferralRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateReferralRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("reason");
@@ -101,16 +92,16 @@ class ReferralRequestValidationTest {
 
     @Test
     void reasonTooLong_fails() {
-        String longReason = "a".repeat(2001);
-        ReferralRequest request = new ReferralRequest(
-                "INTERCONSULTATION",
-                "ROUTINE",
-                longReason,
-                "Neurología",
-                null
-        );
+        CreateReferralRequest request = CreateReferralRequest.builder()
+                .patientId(UUID.randomUUID())
+                .referringService("Medicina General")
+                .referredToService("Neurología")
+                .referralType(ReferralType.INTERCONSULTATION)
+                .priority(Priority.ROUTINE)
+                .reason("a".repeat(2001))
+                .build();
 
-        Set<ConstraintViolation<ReferralRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateReferralRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("reason");
@@ -118,15 +109,16 @@ class ReferralRequestValidationTest {
 
     @Test
     void blankReferredToService_fails() {
-        ReferralRequest request = new ReferralRequest(
-                "INTERCONSULTATION",
-                "ROUTINE",
-                "Motivo de referencia",
-                "",
-                null
-        );
+        CreateReferralRequest request = CreateReferralRequest.builder()
+                .patientId(UUID.randomUUID())
+                .referringService("Medicina General")
+                .referredToService("")
+                .referralType(ReferralType.INTERCONSULTATION)
+                .priority(Priority.ROUTINE)
+                .reason("Motivo de referencia")
+                .build();
 
-        Set<ConstraintViolation<ReferralRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateReferralRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("referredToService");
@@ -134,18 +126,35 @@ class ReferralRequestValidationTest {
 
     @Test
     void referredToServiceTooLong_fails() {
-        String longService = "a".repeat(101);
-        ReferralRequest request = new ReferralRequest(
-                "INTERCONSULTATION",
-                "ROUTINE",
-                "Motivo de referencia",
-                longService,
-                null
-        );
+        CreateReferralRequest request = CreateReferralRequest.builder()
+                .patientId(UUID.randomUUID())
+                .referringService("Medicina General")
+                .referredToService("a".repeat(101))
+                .referralType(ReferralType.INTERCONSULTATION)
+                .priority(Priority.ROUTINE)
+                .reason("Motivo de referencia")
+                .build();
 
-        Set<ConstraintViolation<ReferralRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<CreateReferralRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("referredToService");
+    }
+
+    @Test
+    void nullPatientId_fails() {
+        CreateReferralRequest request = CreateReferralRequest.builder()
+                .patientId(null)
+                .referringService("Medicina General")
+                .referredToService("Neurología")
+                .referralType(ReferralType.INTERCONSULTATION)
+                .priority(Priority.ROUTINE)
+                .reason("Motivo de referencia")
+                .build();
+
+        Set<ConstraintViolation<CreateReferralRequest>> violations = validator.validate(request);
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("patientId");
     }
 }
