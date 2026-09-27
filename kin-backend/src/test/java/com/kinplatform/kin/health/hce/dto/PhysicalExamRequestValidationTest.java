@@ -58,7 +58,7 @@ class PhysicalExamRequestValidationTest {
         Set<ConstraintViolation<PhysicalExamRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(2);
-        assertThat(violations).extracting("propertyPath").extracting(Object::toString).contains("bpSystolic", "bpValid");
+        assertThat(violations).extracting("propertyPath").extracting(Object::toString).contains("bpSystolic", "bpSystolicGreaterThanDiastolic");
     }
 
     @Test

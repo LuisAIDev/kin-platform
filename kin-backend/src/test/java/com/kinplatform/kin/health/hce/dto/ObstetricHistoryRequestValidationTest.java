@@ -66,7 +66,7 @@ class ObstetricHistoryRequestValidationTest {
         Set<ConstraintViolation<ObstetricHistoryRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(1);
-        assertThat(violations.iterator().next().getMessage()).contains("gravida debe ser >=");
+        assertThat(violations.iterator().next().getMessage()).contains("gravida debe ser mayor o igual a la suma");
     }
 
     @Test
@@ -83,7 +83,7 @@ class ObstetricHistoryRequestValidationTest {
         Set<ConstraintViolation<ObstetricHistoryRequest>> violations = validator.validate(request);
 
         assertThat(violations).hasSize(2);
-        assertThat(violations).extracting("propertyPath").extracting(Object::toString).contains("gravida", "gravidaConsistent");
+        assertThat(violations).extracting("propertyPath").extracting(Object::toString).contains("gravida", "gravidaValid");
     }
 
     @Test
