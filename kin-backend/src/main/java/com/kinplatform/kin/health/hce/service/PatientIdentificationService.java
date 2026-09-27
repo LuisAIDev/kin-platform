@@ -6,6 +6,7 @@ import com.kinplatform.kin.health.hce.dto.PatientIdentificationResponse;
 import com.kinplatform.kin.health.hce.entity.PatientIdentification;
 import com.kinplatform.kin.health.hce.entity.PatientIdentification.DocumentType;
 import com.kinplatform.kin.health.hce.entity.PatientIdentification.Regimen;
+import com.kinplatform.kin.health.hce.mapper.PatientIdentificationMapper;
 import com.kinplatform.kin.health.hce.repository.PatientIdentificationRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -26,6 +27,7 @@ public class PatientIdentificationService {
 
     private final PatientIdentificationRepository repository;
     private final UserRepository userRepository;
+    private final PatientIdentificationMapper mapper;
 
     @Transactional
     public PatientIdentificationResponse upsertIdentification(UUID userId, CreatePatientIdentificationRequest request) {
@@ -81,13 +83,13 @@ public class PatientIdentificationService {
                 .build();
 
         com.kinplatform.kin.health.hce.entity.PatientIdentification saved = repository.saveAndFlush(entity);
-        return toResponse(saved);
+        return mapper.toResponse(saved);
     }
 
     @Transactional(readOnly = true)
     public PatientIdentificationResponse getByUserId(UUID userId) {
         return repository.findByUserId(userId)
-                .map(this::toResponse)
+                .map(mapper::toResponse)
                 .orElseThrow(() -> new EntityNotFoundException("Patient identification not found for user: " + userId));
     }
 
@@ -96,57 +98,22 @@ public class PatientIdentificationService {
         return repository.findByDocumentTypeAndDocumentNumber(
                         com.kinplatform.kin.health.hce.entity.PatientIdentification.DocumentType.valueOf(documentType),
                         documentNumber)
-                .map(this::toResponse);
+                .map(mapper::toResponse);
     }
 
     @Transactional(readOnly = true)
-    public List<com.kinplatform.kin.health.hce.dto.PatientIdentificationResponse> findByEpsCode(String epsCode) {
+    public List<PatientIdentificationResponse> findByEpsCode(String epsCode) {
         return repository.findByEpsCode(epsCode)
                 .stream()
-                .map(this::toResponse)
+                .map(mapper::toResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<com.kinplatform.kin.health.hce.dto.PatientIdentificationResponse> findByRegimen(String regimen) {
+    public List<PatientIdentificationResponse> findByRegimen(String regimen) {
         return repository.findByRegimen(regimen)
                 .stream()
-                .map(this::toResponse)
+                .map(mapper::toResponse)
                 .toList();
-    }
-
-    private PatientIdentificationResponse toResponse(com.kinplatform.kin.health.hce.entity.PatientIdentification entity) {
-        return PatientIdentificationResponse.builder()
-                .id(entity.getId())
-                .userId(entity.getUserId())
-                .documentType(entity.getDocumentType().name())
-                .documentNumber(entity.getDocumentNumber())
-                .documentExpeditionDate(entity.getDocumentExpeditionDate() != null ? entity.getDocumentExpeditionDate().toString() : null)
-                .documentExpeditionPlace(entity.getDocumentExpeditionPlace())
-                .rhFactor(entity.getRhFactor() != null ? entity.getRhFactor().name() : null)
-                .epsCode(entity.getEpsCode())
-                .epsName(entity.getEpsName())
-                .regimen(entity.getRegimen() != null ? entity.getRegimen().name() : null)
-                .guardianName(entity.getGuardianName())
-                .guardianDocumentType(entity.getGuardianDocumentType() != null ? entity.getGuardianDocumentType().name() : null)
-                .guardianDocumentNumber(entity.getGuardianDocumentNumber())
-                .guardianPhone(entity.getGuardianPhone())
-                .guardianRelationship(entity.getGuardianRelationship())
-                .emergencyContactName(entity.getEmergencyContactName())
-                .emergencyContactPhone(entity.getEmergencyContactPhone())
-                .emergencyContactRelationship(entity.getEmergencyContactRelationship())
-                .address(entity.getAddress())
-                .cityCode(entity.getCityCode())
-                .departmentCode(entity.getDepartmentCode())
-                .zone(entity.getZone() != null ? entity.getZone().name() : null)
-                .stratum(entity.getStratum())
-                .emailInstitutional(entity.getEmailInstitutional())
-                .phoneSecondary(entity.getPhoneSecondary())
-                .ethnicity(entity.getEthnicity())
-                .displacementVictim(entity.getDisplacementVictim())
-                .disabilityCertificate(entity.getDisabilityCertificate())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
     }
 }

@@ -2,12 +2,13 @@ package com.kinplatform.kin.health.hce.service;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.hce.dto.CreateEncounterRequest;
-import com.kinplatform.kin.health.hce.dto.EncounterResponse;
 import com.kinplatform.kin.health.hce.dto.UpdateEncounterRequest;
+import com.kinplatform.kin.health.hce.dto.EncounterResponse;
 import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus;
 import com.kinplatform.kin.health.hce.entity.Encounter.EncounterType;
 import com.kinplatform.kin.health.hce.entity.Diagnoses;
+import com.kinplatform.kin.health.hce.mapper.EncounterMapper;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
 import com.kinplatform.kin.health.hce.repository.DiagnosesRepository;
 import com.kinplatform.kin.health.hce.repository.TreatmentPlanRepository;
@@ -24,7 +25,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,6 +37,7 @@ public class EncounterService {
     private final UserRepository userRepository;
     private final DiagnosesRepository diagnosesRepository;
     private final TreatmentPlanRepository treatmentPlanRepository;
+    private final EncounterMapper encounterMapper;
 
     @Transactional
     public EncounterResponse createEncounter(CreateEncounterRequest request) {
@@ -60,7 +61,7 @@ public class EncounterService {
                 .build();
 
         Encounter saved = encounterRepository.saveAndFlush(encounter);
-        return toResponse(saved);
+        return encounterMapper.toResponse(saved);
     }
 
     @Transactional(readOnly = true)
@@ -68,7 +69,7 @@ public class EncounterService {
         Encounter encounter = encounterRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Encounter not found"));
         checkAccess(encounter);
-        return toResponse(encounter);
+        return encounterMapper.toResponse(encounter);
     }
 
     @Transactional
@@ -85,7 +86,7 @@ public class EncounterService {
         }
 
         Encounter updated = encounterRepository.saveAndFlush(encounter);
-        return toResponse(encounter);
+        return encounterMapper.toResponse(encounter);
     }
 
     @Transactional
@@ -113,22 +114,22 @@ public class EncounterService {
         encounter.setStatus(com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.COMPLETED);
         encounter.setClosedAt(java.time.Instant.now());
         Encounter closed = encounterRepository.saveAndFlush(encounter);
-        return toResponse(closed);
+        return encounterMapper.toResponse(closed);
     }
 
     @Transactional(readOnly = true)
-    public List<com.kinplatform.kin.health.hce.dto.EncounterResponse> findByPatientId(UUID patientId) {
+    public List<EncounterResponse> findByPatientId(UUID patientId) {
         return encounterRepository.findByPatientIdOrderByStartedAtDesc(patientId, Pageable.unpaged())
                 .stream()
-                .map(this::toResponse)
+                .map(encounterMapper::toResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<com.kinplatform.kin.health.hce.dto.EncounterResponse> findByOrganizationId(UUID organizationId) {
+    public List<EncounterResponse> findByOrganizationId(UUID organizationId) {
         return encounterRepository.findByOrganizationIdOrderByStartedAtDesc(organizationId, Pageable.unpaged())
                 .stream()
-                .map(this::toResponse)
+                .map(encounterMapper::toResponse)
                 .toList();
     }
 
@@ -145,22 +146,5 @@ public class EncounterService {
         if (!isAdmin && !isPhysician) {
             throw new AccessDeniedException("Only the assigned physician or an admin can access this encounter");
         }
-    }
-
-    private EncounterResponse toResponse(Encounter e) {
-        return EncounterResponse.builder()
-                .id(e.getId())
-                .patientId(e.getPatientId())
-                .physicianId(e.getPhysicianId())
-                .organizationId(e.getOrganizationId())
-                .appointmentId(e.getAppointmentId())
-                .encounterType(e.getEncounterType().name())
-                .status(e.getStatus().name())
-                .chiefComplaint(e.getChiefComplaint())
-                .startedAt(e.getStartedAt())
-                .closedAt(e.getClosedAt())
-                .createdAt(e.getCreatedAt())
-                .updatedAt(e.getUpdatedAt())
-                .build();
     }
 }
