@@ -56,7 +56,16 @@
 
 ---
 
-*Last Updated: 2026-09-25*  
+### TD-MAPPERS-1: Mappers Entity → Response DTO pendientes
+- **Prioridad**: Alta.
+- **Problema**: Los 15 Response DTOs (EncounterResponse, PatientIdentificationResponse, AnamnesisResponse, PatientHistoryResponse, PhysicalExamResponse, DiagnosisResponse, TreatmentPlanResponse, MedicalOrderResponse, InformedConsentResponse, ReferralResponse, DischargeSummaryResponse, ClinicalAttachmentResponse, ObstetricHistoryResponse, SurgicalHistoryResponse, HceSummaryResponse) son records sin mappers ni tests.
+- **Contexto**: Creados en Bloque 3 (Día 17). Se usarán en los Controllers REST (Bloque 4).
+- **Fix**: Implementar mapper por entidad (clase @Component con métodos estáticos o MapStruct si se añade la dependencia) que convierta Entity → Response DTO. Agregar test de mapeo por mapper (≥1 test por mapper verificando todos los campos).
+- **Owner**: Backend. **Estimado**: 0.5 día (15 mappers + tests).
+- **Referencia**: Bloque 4 Controllers (Día 18-22).
+
+---
+*Last Updated: 2026-09-26*  
 *Owner: Backend Team*  
 *Next Review: Sprint Planning*
 
