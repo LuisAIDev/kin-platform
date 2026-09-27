@@ -3,7 +3,9 @@ package com.kinplatform.kin.health.hce.service;
 import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.hce.dto.CreateInformedConsentRequest;
 import com.kinplatform.kin.health.hce.dto.InformedConsentResponse;
+import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.entity.InformedConsent;
+import com.kinplatform.kin.health.hce.repository.EncounterRepository;
 import com.kinplatform.kin.health.hce.repository.InformedConsentRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -36,6 +38,9 @@ class InformedConsentServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private EncounterRepository encounterRepository;
 
     @InjectMocks
     private InformedConsentService informedConsentService;
@@ -363,5 +368,78 @@ class InformedConsentServiceTest {
         } finally {
             clearSecurityContext();
         }
+    }
+
+    private Encounter buildEncounter(UUID encounterId) {
+        return Encounter.builder()
+                .id(encounterId)
+                .patientId(patientId)
+                .physicianId(physicianId)
+                .organizationId(UUID.randomUUID())
+                .encounterType(Encounter.EncounterType.OUTPATIENT)
+                .build();
+    }
+
+    @Test
+    void createConsentForEncounter_happyPath_derivesPatient() {
+        UUID encounterId = UUID.randomUUID();
+
+        when(encounterRepository.findById(encounterId)).thenReturn(Optional.of(buildEncounter(encounterId)));
+        when(userRepository.findById(patientId)).thenReturn(Optional.of(patient));
+        when(informedConsentRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        try (MockedStatic<AuthenticatedUsers> mockedStatic = mockStatic(AuthenticatedUsers.class)) {
+            mockedStatic.when(() -> AuthenticatedUsers.require(any(), any()))
+                    .thenReturn(physician);
+
+            setupSecurityContext(physician);
+
+            CreateInformedConsentRequest request = CreateInformedConsentRequest.builder()
+                    .procedureName("Appendectomy")
+                    .consentType(InformedConsent.ConsentType.SURGICAL)
+                    .documentVersion("1.0")
+                    .build();
+
+            InformedConsentResponse response = informedConsentService.createConsentForEncounter(encounterId, request);
+
+            assertThat(response).isNotNull();
+            assertThat(response.getPatientId()).isEqualTo(patientId);
+            assertThat(request.getPatientId()).isEqualTo(patientId);
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
+    void createConsentForEncounter_throwsWhenEncounterNotFound() {
+        UUID encounterId = UUID.randomUUID();
+        when(encounterRepository.findById(encounterId)).thenReturn(Optional.empty());
+
+        CreateInformedConsentRequest request = CreateInformedConsentRequest.builder()
+                .procedureName("Appendectomy")
+                .consentType(InformedConsent.ConsentType.SURGICAL)
+                .documentVersion("1.0")
+                .build();
+
+        assertThatThrownBy(() -> informedConsentService.createConsentForEncounter(encounterId, request))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("Encounter not found");
+    }
+
+    @Test
+    void createConsentForEncounter_throwsWhenPatientNotFound() {
+        UUID encounterId = UUID.randomUUID();
+        when(encounterRepository.findById(encounterId)).thenReturn(Optional.of(buildEncounter(encounterId)));
+        when(userRepository.findById(patientId)).thenReturn(Optional.empty());
+
+        CreateInformedConsentRequest request = CreateInformedConsentRequest.builder()
+                .procedureName("Appendectomy")
+                .consentType(InformedConsent.ConsentType.SURGICAL)
+                .documentVersion("1.0")
+                .build();
+
+        assertThatThrownBy(() -> informedConsentService.createConsentForEncounter(encounterId, request))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("Patient not found");
     }
 }

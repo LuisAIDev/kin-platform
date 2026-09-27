@@ -3,7 +3,9 @@ package com.kinplatform.kin.health.hce.service;
 import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.hce.dto.CreateInformedConsentRequest;
 import com.kinplatform.kin.health.hce.dto.InformedConsentResponse;
+import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.entity.InformedConsent;
+import com.kinplatform.kin.health.hce.repository.EncounterRepository;
 import com.kinplatform.kin.health.hce.repository.InformedConsentRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -24,6 +26,7 @@ public class InformedConsentService {
 
     private final InformedConsentRepository informedConsentRepository;
     private final UserRepository userRepository;
+    private final EncounterRepository encounterRepository;
 
     @Transactional
     public InformedConsentResponse createConsent(CreateInformedConsentRequest request) {
@@ -56,6 +59,15 @@ public class InformedConsentService {
 
         InformedConsent saved = informedConsentRepository.saveAndFlush(consent);
         return toResponse(saved);
+    }
+
+    @Transactional
+    public InformedConsentResponse createConsentForEncounter(UUID encounterId, CreateInformedConsentRequest request) {
+        Encounter encounter = encounterRepository.findById(encounterId)
+                .orElseThrow(() -> new EntityNotFoundException("Encounter not found"));
+
+        request.setPatientId(encounter.getPatientId());
+        return createConsent(request);
     }
 
     @Transactional

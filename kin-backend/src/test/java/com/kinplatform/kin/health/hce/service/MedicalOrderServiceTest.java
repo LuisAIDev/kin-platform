@@ -3,8 +3,10 @@ package com.kinplatform.kin.health.hce.service;
 import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.hce.dto.CreateMedicalOrderRequest;
 import com.kinplatform.kin.health.hce.dto.MedicalOrderResponse;
+import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.entity.MedicalOrder;
 import com.kinplatform.kin.health.hce.entity.TreatmentPlan;
+import com.kinplatform.kin.health.hce.repository.EncounterRepository;
 import com.kinplatform.kin.health.hce.repository.MedicalOrderRepository;
 import com.kinplatform.kin.health.hce.repository.TreatmentPlanRepository;
 import com.kinplatform.user.User;
@@ -42,6 +44,9 @@ class MedicalOrderServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private EncounterRepository encounterRepository;
 
     @InjectMocks
     private MedicalOrderService medicalOrderService;
@@ -511,5 +516,75 @@ class MedicalOrderServiceTest {
         } finally {
             clearSecurityContext();
         }
+    }
+
+    private Encounter buildEncounter() {
+        return Encounter.builder()
+                .id(encounterId)
+                .patientId(patientId)
+                .physicianId(physicianId)
+                .organizationId(UUID.randomUUID())
+                .encounterType(Encounter.EncounterType.OUTPATIENT)
+                .build();
+    }
+
+    @Test
+    void addOrderForEncounter_happyPath_derivesTreatmentPlan() {
+        when(encounterRepository.findById(encounterId)).thenReturn(Optional.of(buildEncounter()));
+        when(treatmentPlanRepository.findByEncounterId(encounterId)).thenReturn(Optional.of(treatmentPlan));
+        when(treatmentPlanRepository.findById(treatmentPlanId)).thenReturn(Optional.of(treatmentPlan));
+        when(medicalOrderRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        try (MockedStatic<AuthenticatedUsers> mockedStatic = mockStatic(AuthenticatedUsers.class)) {
+            mockedStatic.when(() -> AuthenticatedUsers.require(any(), any()))
+                    .thenReturn(physician);
+
+            setupSecurityContext(physician);
+
+            CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                    .orderType(MedicalOrder.OrderType.LAB_EXAM)
+                    .priority(MedicalOrder.Priority.ROUTINE)
+                    .cupsCode("890301")
+                    .build();
+
+            MedicalOrderResponse response = medicalOrderService.addOrderForEncounter(encounterId, request);
+
+            assertThat(response).isNotNull();
+            assertThat(response.getTreatmentPlanId()).isEqualTo(treatmentPlanId);
+            assertThat(response.getEncounterId()).isEqualTo(encounterId);
+            assertThat(response.getPatientId()).isEqualTo(patientId);
+            assertThat(request.getTreatmentPlanId()).isEqualTo(treatmentPlanId);
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
+    void addOrderForEncounter_throwsWhenEncounterNotFound() {
+        when(encounterRepository.findById(encounterId)).thenReturn(Optional.empty());
+
+        CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                .orderType(MedicalOrder.OrderType.LAB_EXAM)
+                .priority(MedicalOrder.Priority.ROUTINE)
+                .build();
+
+        assertThatThrownBy(() -> medicalOrderService.addOrderForEncounter(encounterId, request))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("Encounter not found");
+    }
+
+    @Test
+    void addOrderForEncounter_throwsWhenNoTreatmentPlan() {
+        when(encounterRepository.findById(encounterId)).thenReturn(Optional.of(buildEncounter()));
+        when(treatmentPlanRepository.findByEncounterId(encounterId)).thenReturn(Optional.empty());
+
+        CreateMedicalOrderRequest request = CreateMedicalOrderRequest.builder()
+                .orderType(MedicalOrder.OrderType.LAB_EXAM)
+                .priority(MedicalOrder.Priority.ROUTINE)
+                .build();
+
+        assertThatThrownBy(() -> medicalOrderService.addOrderForEncounter(encounterId, request))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("No treatment plan found for encounter");
     }
 }

@@ -4,7 +4,9 @@ import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.hce.dto.CounterReferralRequest;
 import com.kinplatform.kin.health.hce.dto.CreateReferralRequest;
 import com.kinplatform.kin.health.hce.dto.ReferralResponse;
+import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.entity.Referral;
+import com.kinplatform.kin.health.hce.repository.EncounterRepository;
 import com.kinplatform.kin.health.hce.repository.ReferralRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -38,6 +40,9 @@ class ReferralServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private EncounterRepository encounterRepository;
 
     @InjectMocks
     private ReferralService referralService;
@@ -455,5 +460,85 @@ class ReferralServiceTest {
 
         assertThat(responses).hasSize(2);
         assertThat(responses).allMatch(r -> r.getStatus() == Referral.Status.PENDING);
+    }
+
+    private Encounter buildEncounter(UUID encounterId) {
+        return Encounter.builder()
+                .id(encounterId)
+                .patientId(patientId)
+                .physicianId(physicianId)
+                .organizationId(UUID.randomUUID())
+                .encounterType(Encounter.EncounterType.OUTPATIENT)
+                .build();
+    }
+
+    @Test
+    void createReferralForEncounter_happyPath_derivesPatient() {
+        UUID encounterId = UUID.randomUUID();
+
+        when(encounterRepository.findById(encounterId)).thenReturn(Optional.of(buildEncounter(encounterId)));
+        when(userRepository.findById(patientId)).thenReturn(Optional.of(patient));
+        when(referralRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        try (MockedStatic<AuthenticatedUsers> mockedStatic = mockStatic(AuthenticatedUsers.class)) {
+            mockedStatic.when(() -> AuthenticatedUsers.require(any(), any()))
+                    .thenReturn(physician);
+
+            setupSecurityContext(physician);
+
+            CreateReferralRequest request = CreateReferralRequest.builder()
+                    .referringService("Emergency")
+                    .referredToService("Cardiology")
+                    .referralType(Referral.ReferralType.INTERCONSULTATION)
+                    .priority(Referral.Priority.URGENT)
+                    .reason("Chest pain evaluation")
+                    .build();
+
+            ReferralResponse response = referralService.createReferralForEncounter(encounterId, request);
+
+            assertThat(response).isNotNull();
+            assertThat(response.getPatientId()).isEqualTo(patientId);
+            assertThat(response.getReferringPhysicianId()).isEqualTo(physicianId);
+            assertThat(request.getPatientId()).isEqualTo(patientId);
+        } finally {
+            clearSecurityContext();
+        }
+    }
+
+    @Test
+    void createReferralForEncounter_throwsWhenEncounterNotFound() {
+        UUID encounterId = UUID.randomUUID();
+        when(encounterRepository.findById(encounterId)).thenReturn(Optional.empty());
+
+        CreateReferralRequest request = CreateReferralRequest.builder()
+                .referringService("Emergency")
+                .referredToService("Cardiology")
+                .referralType(Referral.ReferralType.INTERCONSULTATION)
+                .priority(Referral.Priority.URGENT)
+                .reason("Chest pain")
+                .build();
+
+        assertThatThrownBy(() -> referralService.createReferralForEncounter(encounterId, request))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("Encounter not found");
+    }
+
+    @Test
+    void createReferralForEncounter_throwsWhenPatientNotFound() {
+        UUID encounterId = UUID.randomUUID();
+        when(encounterRepository.findById(encounterId)).thenReturn(Optional.of(buildEncounter(encounterId)));
+        when(userRepository.findById(patientId)).thenReturn(Optional.empty());
+
+        CreateReferralRequest request = CreateReferralRequest.builder()
+                .referringService("Emergency")
+                .referredToService("Cardiology")
+                .referralType(Referral.ReferralType.INTERCONSULTATION)
+                .priority(Referral.Priority.URGENT)
+                .reason("Chest pain")
+                .build();
+
+        assertThatThrownBy(() -> referralService.createReferralForEncounter(encounterId, request))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("Patient not found");
     }
 }

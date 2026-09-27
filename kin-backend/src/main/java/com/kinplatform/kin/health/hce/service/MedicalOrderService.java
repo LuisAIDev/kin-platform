@@ -3,8 +3,10 @@ package com.kinplatform.kin.health.hce.service;
 import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.hce.dto.CreateMedicalOrderRequest;
 import com.kinplatform.kin.health.hce.dto.MedicalOrderResponse;
+import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.entity.MedicalOrder;
 import com.kinplatform.kin.health.hce.entity.TreatmentPlan;
+import com.kinplatform.kin.health.hce.repository.EncounterRepository;
 import com.kinplatform.kin.health.hce.repository.MedicalOrderRepository;
 import com.kinplatform.kin.health.hce.repository.TreatmentPlanRepository;
 import com.kinplatform.user.User;
@@ -27,6 +29,7 @@ public class MedicalOrderService {
     private final MedicalOrderRepository medicalOrderRepository;
     private final TreatmentPlanRepository treatmentPlanRepository;
     private final UserRepository userRepository;
+    private final EncounterRepository encounterRepository;
 
     @Transactional
     public MedicalOrderResponse addOrder(CreateMedicalOrderRequest request) {
@@ -60,6 +63,18 @@ public class MedicalOrderService {
 
         MedicalOrder saved = medicalOrderRepository.saveAndFlush(order);
         return toResponse(saved);
+    }
+
+    @Transactional
+    public MedicalOrderResponse addOrderForEncounter(UUID encounterId, CreateMedicalOrderRequest request) {
+        Encounter encounter = encounterRepository.findById(encounterId)
+                .orElseThrow(() -> new EntityNotFoundException("Encounter not found"));
+
+        TreatmentPlan treatmentPlan = treatmentPlanRepository.findByEncounterId(encounter.getId())
+                .orElseThrow(() -> new EntityNotFoundException("No treatment plan found for encounter"));
+
+        request.setTreatmentPlanId(treatmentPlan.getId());
+        return addOrder(request);
     }
 
     @Transactional

@@ -4,7 +4,9 @@ import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.hce.dto.CounterReferralRequest;
 import com.kinplatform.kin.health.hce.dto.CreateReferralRequest;
 import com.kinplatform.kin.health.hce.dto.ReferralResponse;
+import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.entity.Referral;
+import com.kinplatform.kin.health.hce.repository.EncounterRepository;
 import com.kinplatform.kin.health.hce.repository.ReferralRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -25,6 +27,7 @@ public class ReferralService {
 
     private final ReferralRepository referralRepository;
     private final UserRepository userRepository;
+    private final EncounterRepository encounterRepository;
 
     @Transactional
     public ReferralResponse createReferral(CreateReferralRequest request) {
@@ -52,6 +55,15 @@ public class ReferralService {
 
         Referral saved = referralRepository.saveAndFlush(referral);
         return toResponse(saved);
+    }
+
+    @Transactional
+    public ReferralResponse createReferralForEncounter(UUID encounterId, CreateReferralRequest request) {
+        Encounter encounter = encounterRepository.findById(encounterId)
+                .orElseThrow(() -> new EntityNotFoundException("Encounter not found"));
+
+        request.setPatientId(encounter.getPatientId());
+        return createReferral(request);
     }
 
     @Transactional
