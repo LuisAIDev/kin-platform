@@ -24,3 +24,16 @@ Fixear la causa raíz, no desactivar configuraciones para "hacer pasar" tests. H
 ## 8. ANTI-LOOP
 Si un approach falla 3 veces consecutivas: **DETENTE**.
 Reporta el error exacto. Propón 2 alternativas. Espera aprobación del PO antes de intentar la 4ta vez.
+
+## 9. PROTOCOLO
+El agente **NO** aprueba. Solo el PO aprueba. El agente nunca marca un día/bloque como cerrado por sí mismo.
+
+## 10. INVESTIGAR ANTES DE CREAR
+Antes de crear cualquier archivo nuevo, el agente **DEBE** ejecutar:
+```
+Get-ChildItem -Recurse -Filter "*NombreSimilar*.java"
+```
+para verificar que no exista ya un archivo con nombre similar (singular/plural incluidos).
+Si existe un candidato similar: **DETENTE**, reporta la posible duplicación y espera OK del PO.
+Prohibido crear clases paralelas cuando ya existe una canónica. Cuando se detecte duplicación, el PO decide cuál es la canónica; el agente **NUNCA** elimina archivos sin OK explícito del PO.
+EncounterServiceTest / EncounterServiceIntegrationTest (Día 7) son intocables salvo indicación directa del PO.
