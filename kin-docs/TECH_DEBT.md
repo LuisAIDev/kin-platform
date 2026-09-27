@@ -65,7 +65,54 @@
 - **Referencia**: Bloque 4 Controllers (Día 18-22).
 
 ---
-*Last Updated: 2026-09-26*  
+
+## Deuda técnica pre-existente del suite de tests (catalogada 2026-09-27)
+
+> **Evidencia de pre-existencia**: baseline `ef28df7` = `Tests run: 4120, Failures: 6, Errors: 24, Skipped: 108`.
+> Actual `8d0fafe` = `Tests run: 4118, Failures: 6, Errors: 20, Skipped: 108`.
+> Los 4 errores de diferencia son `EncounterServiceTest` (2) + `PatientIdentificationServiceTest` (2), regresiones de Día 18 (`b1c7b90`) ya corregidas. Los **26 rojos restantes (6 Failures + 20 Errors) son idénticos en baseline y actual**: NO fueron introducidos por el trabajo de Día 20.
+
+### TD-INTEGRATION-A (CRÍTICO): 8 tests JPA integration fallan por FK
+- **Prioridad**: Media.
+- **Tests**:
+  - `JpaDashboardRepositoryIntegrationTest` (1 error) — `fk_reminders_user`
+  - `JpaPhysicianRepositoryIntegrationTest` (3 errors) — `fk_ca_physician`, `fk_ppa_physician`
+  - `JpaTelemedicineRepositoryIntegrationTest` (4 errors) — `fk_appointments_patient`, `fk_messages_sender`
+- **Causa**: las fixtures insertan filas hijas (reminders, clinical_alerts, physician_patient_assignments, appointments, messages) sin sembrar primero el `users` padre.
+- **Fix**: `@BeforeEach` para sembrar `users` (patient/physician) antes de insertar hijos.
+- **Owner**: Backend. **Estimado**: 0.5 día.
+
+### TD-INTEGRATION-D: 4 tests Outbox fallan
+- **Prioridad**: Media.
+- **Tests**: `OutboxRelayIntegrationTest` (3 failures + 1 error).
+- **Causa**: `PENDING != PUBLISHED` (relay asíncrono/timing), `domainEventBus.publish` no invocado, y NPE al buscar métrica micrometer (`Search.counter()` null).
+- **Fix**: sincronizar el relay (await); registrar/verificar el `Counter` correcto.
+- **Owner**: Backend. **Estimado**: 0.5 día.
+
+### TD-INTEGRATION-E: 5 tests DocumentStorageQuota fallan
+- **Prioridad**: Media.
+- **Tests**: `DocumentStorageQuotaPortImplTest` (5 errors).
+- **Causa**: `UnnecessaryStubbingException` en `setUp` + `No active pricing plan found for vertical SALUD_PERSONAL` (plan no seedeado).
+- **Fix**: limpiar stubs no usados (o `lenient`); seedear el plan SALUD_PERSONAL en el contexto de test.
+- **Owner**: Backend. **Estimado**: 0.5 día.
+
+### TD-INTEGRATION-TRIAGE: 8 tests triage/differential fallan
+- **Prioridad**: Media.
+- **Tests**: `JpaTriageRepositoryIntegrationTest` (1 failure + 6 errors), `JpaDifferentialRepositoryIntegrationTest` (1 failure).
+- **Causa**: catálogo/relaciones no cargados (`NoSuchElement`, `ArrayIndexOutOfBounds`), FK `fk_scr_symptom`, y aserciones de catálogo (100 condiciones / 200 relaciones) que no se cumplen.
+- **Fix**: seedear catálogo triage/differential antes de los tests.
+- **Owner**: Backend. **Estimado**: 1 día.
+
+### TD-INTEGRATION-SCHEDULING: 1 test falla
+- **Prioridad**: Baja.
+- **Tests**: `SchedulingIntegrationTest` (1 failure).
+- **Causa**: el flujo completo espera 201 pero recibe 409 (conflicto de slot/traslape entre tests).
+- **Fix**: revisar aislamiento de datos de disponibilidad entre tests.
+- **Owner**: Backend. **Estimado**: 0.25 día.
+
+---
+
+*Last Updated: 2026-09-27*  
 *Owner: Backend Team*  
 *Next Review: Sprint Planning*
 
