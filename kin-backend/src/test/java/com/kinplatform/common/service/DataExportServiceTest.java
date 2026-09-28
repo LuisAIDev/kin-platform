@@ -5,8 +5,24 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.kinplatform.common.entity.DataExportRequest;
 import com.kinplatform.common.repository.DataExportRequestRepository;
+import com.kinplatform.kin.health.audit.adapter.AuditLogJpaRepository;
 import com.kinplatform.kin.health.common.entity.UserConsent;
 import com.kinplatform.kin.health.common.repository.UserConsentRepository;
+import com.kinplatform.kin.health.documents.adapter.ClinicalDocumentJpaRepository;
+import com.kinplatform.kin.health.hce.entity.Encounter;
+import com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus;
+import com.kinplatform.kin.health.hce.repository.EncounterRepository;
+import com.kinplatform.kin.health.hce.entity.Diagnoses;
+import com.kinplatform.kin.health.hce.repository.DiagnosesRepository;
+import com.kinplatform.kin.health.hce.entity.TreatmentPlan;
+import com.kinplatform.kin.health.hce.repository.TreatmentPlanRepository;
+import com.kinplatform.kin.health.hce.entity.MedicalOrder;
+import com.kinplatform.kin.health.hce.repository.MedicalOrderRepository;
+import com.kinplatform.kin.health.hce.entity.PhysicalExam;
+import com.kinplatform.kin.health.hce.repository.PhysicalExamRepository;
+import com.kinplatform.kin.health.documents.adapter.ClinicalDocumentJpaRepository;
+import com.kinplatform.kin.health.telemedicine.adapter.MessageJpaRepository;
+import com.kinplatform.kin.health.audit.adapter.AuditLogJpaRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
@@ -45,6 +61,30 @@ class DataExportServiceTest {
     @Mock
     private UserConsentRepository consentRepository;
 
+    @Mock
+    private EncounterRepository encounterRepository;
+
+    @Mock
+    private DiagnosesRepository diagnosesRepository;
+
+    @Mock
+    private TreatmentPlanRepository treatmentPlanRepository;
+
+    @Mock
+    private MedicalOrderRepository medicalOrderRepository;
+
+    @Mock
+    private PhysicalExamRepository physicalExamRepository;
+
+    @Mock
+    private ClinicalDocumentJpaRepository documentRepository;
+
+    @Mock
+    private MessageJpaRepository messageRepository;
+
+    @Mock
+    private AuditLogJpaRepository auditRepository;
+
     private ObjectMapper objectMapper;
     private DataExportService service;
 
@@ -64,7 +104,12 @@ class DataExportServiceTest {
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             .enable(SerializationFeature.INDENT_OUTPUT);
 
-        service = new DataExportService(exportRepository, userRepository, consentRepository);
+        service = new DataExportService(
+            exportRepository, userRepository, consentRepository,
+            encounterRepository, diagnosesRepository, treatmentPlanRepository,
+            medicalOrderRepository, physicalExamRepository, documentRepository,
+            messageRepository, auditRepository
+        );
         ReflectionTestUtils.setField(service, "objectMapper", objectMapper);
         ReflectionTestUtils.setField(service, "EXPORT_DIR", tempDir.toString() + "/");
 
@@ -82,6 +127,10 @@ class DataExportServiceTest {
             .sex("M")
             .phone("+573001234567")
             .build();
+
+        // Default mocks for user lookup (used by async processExport)
+        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+        when(consentRepository.findByUserId(userId)).thenReturn(List.of());
 
         pendingRequest = DataExportRequest.builder()
             .id(requestId)
@@ -121,6 +170,15 @@ class DataExportServiceTest {
         when(exportRepository.findById(requestId)).thenReturn(Optional.of(pendingRequest));
         when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
         when(consentRepository.findByUserId(userId)).thenReturn(List.of());
+        when(encounterRepository.findByPatientIdOrderByStartedAtDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
+        when(diagnosesRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(treatmentPlanRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(medicalOrderRepository.findByPatientIdOrderByOrderedAtDesc(userId)).thenReturn(List.of());
+        when(physicalExamRepository.findByPatientIdOrderByRecordedAtDesc(userId)).thenReturn(List.of());
+        when(documentRepository.findVisibleByPatientId(userId)).thenReturn(List.of());
+        when(messageRepository.findBySenderIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(messageRepository.findByReceiverIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(auditRepository.findByUserIdOrderByTimestampDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
 
         DataExportRequest request = service.requestExport(userId);
 
@@ -332,6 +390,15 @@ class DataExportServiceTest {
         when(exportRepository.findById(requestId)).thenReturn(Optional.of(pendingRequest));
         when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
         when(consentRepository.findByUserId(userId)).thenReturn(List.of());
+        when(encounterRepository.findByPatientIdOrderByStartedAtDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
+        when(diagnosesRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(treatmentPlanRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(medicalOrderRepository.findByPatientIdOrderByOrderedAtDesc(userId)).thenReturn(List.of());
+        when(physicalExamRepository.findByPatientIdOrderByRecordedAtDesc(userId)).thenReturn(List.of());
+        when(documentRepository.findVisibleByPatientId(userId)).thenReturn(List.of());
+        when(messageRepository.findBySenderIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(messageRepository.findByReceiverIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(auditRepository.findByUserIdOrderByTimestampDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
 
         service.processExport(requestId);
 
@@ -342,6 +409,13 @@ class DataExportServiceTest {
             assertThat(zipFile.getEntry("README.txt")).isNotNull();
             assertThat(zipFile.getEntry("profile.json")).isNotNull();
             assertThat(zipFile.getEntry("consents.json")).isNotNull();
+            assertThat(zipFile.getEntry("encounters.json")).isNotNull();
+            assertThat(zipFile.getEntry("diagnoses.json")).isNotNull();
+            assertThat(zipFile.getEntry("treatment_plans.json")).isNotNull();
+            assertThat(zipFile.getEntry("medical_orders.json")).isNotNull();
+            assertThat(zipFile.getEntry("physical_exams.json")).isNotNull();
+            assertThat(zipFile.getEntry("messages.json")).isNotNull();
+            assertThat(zipFile.getEntry("audit_log.json")).isNotNull();
             assertThat(zipFile.getEntry("metadata.json")).isNotNull();
         }
     }
@@ -351,6 +425,15 @@ class DataExportServiceTest {
         when(exportRepository.findById(requestId)).thenReturn(Optional.of(pendingRequest));
         when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
         when(consentRepository.findByUserId(userId)).thenReturn(List.of());
+        when(encounterRepository.findByPatientIdOrderByStartedAtDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
+        when(diagnosesRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(treatmentPlanRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(medicalOrderRepository.findByPatientIdOrderByOrderedAtDesc(userId)).thenReturn(List.of());
+        when(physicalExamRepository.findByPatientIdOrderByRecordedAtDesc(userId)).thenReturn(List.of());
+        when(documentRepository.findVisibleByPatientId(userId)).thenReturn(List.of());
+        when(messageRepository.findBySenderIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(messageRepository.findByReceiverIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(auditRepository.findByUserIdOrderByTimestampDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
 
         service.processExport(requestId);
 
@@ -378,6 +461,15 @@ class DataExportServiceTest {
         when(exportRepository.findById(requestId)).thenReturn(Optional.of(pendingRequest));
         when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
         when(consentRepository.findByUserId(userId)).thenReturn(List.of(consent));
+        when(encounterRepository.findByPatientIdOrderByStartedAtDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
+        when(diagnosesRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(treatmentPlanRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(medicalOrderRepository.findByPatientIdOrderByOrderedAtDesc(userId)).thenReturn(List.of());
+        when(physicalExamRepository.findByPatientIdOrderByRecordedAtDesc(userId)).thenReturn(List.of());
+        when(documentRepository.findVisibleByPatientId(userId)).thenReturn(List.of());
+        when(messageRepository.findBySenderIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(messageRepository.findByReceiverIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(auditRepository.findByUserIdOrderByTimestampDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
 
         service.processExport(requestId);
 
@@ -395,6 +487,15 @@ class DataExportServiceTest {
         when(exportRepository.findById(requestId)).thenReturn(Optional.of(pendingRequest));
         when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
         when(consentRepository.findByUserId(userId)).thenReturn(List.of());
+        when(encounterRepository.findByPatientIdOrderByStartedAtDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
+        when(diagnosesRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(treatmentPlanRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(medicalOrderRepository.findByPatientIdOrderByOrderedAtDesc(userId)).thenReturn(List.of());
+        when(physicalExamRepository.findByPatientIdOrderByRecordedAtDesc(userId)).thenReturn(List.of());
+        when(documentRepository.findVisibleByPatientId(userId)).thenReturn(List.of());
+        when(messageRepository.findBySenderIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(messageRepository.findByReceiverIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(auditRepository.findByUserIdOrderByTimestampDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
 
         service.processExport(requestId);
 
@@ -413,6 +514,15 @@ class DataExportServiceTest {
         when(exportRepository.findById(requestId)).thenReturn(Optional.of(pendingRequest));
         when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
         when(consentRepository.findByUserId(userId)).thenReturn(List.of());
+        when(encounterRepository.findByPatientIdOrderByStartedAtDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
+        when(diagnosesRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(treatmentPlanRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(medicalOrderRepository.findByPatientIdOrderByOrderedAtDesc(userId)).thenReturn(List.of());
+        when(physicalExamRepository.findByPatientIdOrderByRecordedAtDesc(userId)).thenReturn(List.of());
+        when(documentRepository.findVisibleByPatientId(userId)).thenReturn(List.of());
+        when(messageRepository.findBySenderIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(messageRepository.findByReceiverIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(auditRepository.findByUserIdOrderByTimestampDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
 
         service.processExport(requestId);
 
@@ -430,6 +540,81 @@ class DataExportServiceTest {
 
         assertThatThrownBy(() -> service.processExport(otherUserId))
             .isInstanceOf(NoSuchElementException.class);
+    }
+
+    @Test
+    void generateZip_containsAll12ExpectedFiles() throws IOException {
+        when(exportRepository.findById(requestId)).thenReturn(Optional.of(pendingRequest));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+        when(consentRepository.findByUserId(userId)).thenReturn(List.of());
+        when(encounterRepository.findByPatientIdOrderByStartedAtDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
+        when(diagnosesRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(treatmentPlanRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(medicalOrderRepository.findByPatientIdOrderByOrderedAtDesc(userId)).thenReturn(List.of());
+        when(physicalExamRepository.findByPatientIdOrderByRecordedAtDesc(userId)).thenReturn(List.of());
+        when(documentRepository.findVisibleByPatientId(userId)).thenReturn(List.of());
+        when(messageRepository.findBySenderIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(messageRepository.findByReceiverIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(auditRepository.findByUserIdOrderByTimestampDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
+
+        service.processExport(requestId);
+
+        Path zipPath = tempDir.resolve(userId.toString()).resolve(requestId + ".zip");
+        try (java.util.zip.ZipFile zipFile = new java.util.zip.ZipFile(zipPath.toFile())) {
+            // Verify all 12 expected entries
+            assertThat(zipFile.getEntry("README.txt")).isNotNull();
+            assertThat(zipFile.getEntry("profile.json")).isNotNull();
+            assertThat(zipFile.getEntry("consents.json")).isNotNull();
+            assertThat(zipFile.getEntry("encounters.json")).isNotNull();
+            assertThat(zipFile.getEntry("diagnoses.json")).isNotNull();
+            assertThat(zipFile.getEntry("treatment_plans.json")).isNotNull();
+            assertThat(zipFile.getEntry("medical_orders.json")).isNotNull();
+            assertThat(zipFile.getEntry("physical_exams.json")).isNotNull();
+            assertThat(zipFile.getEntry("messages.json")).isNotNull();
+            assertThat(zipFile.getEntry("audit_log.json")).isNotNull();
+            assertThat(zipFile.getEntry("metadata.json")).isNotNull();
+            // documents/ is a directory, not a file entry
+        }
+    }
+
+    @Test
+    void generateZip_encountersJsonHasCorrectStructure() throws IOException {
+        Encounter encounter = Encounter.builder()
+            .id(UUID.randomUUID())
+            .patientId(userId)
+            .physicianId(UUID.randomUUID())
+            .organizationId(UUID.randomUUID())
+            .encounterType(Encounter.EncounterType.OUTPATIENT)
+            .status(Encounter.EncounterStatus.COMPLETED)
+            .chiefComplaint("Test complaint")
+            .startedAt(Instant.now().minusSeconds(3600))
+            .closedAt(Instant.now())
+            .createdAt(Instant.now().minusSeconds(7200))
+            .updatedAt(Instant.now())
+            .build();
+        when(exportRepository.findById(requestId)).thenReturn(Optional.of(pendingRequest));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+        when(consentRepository.findByUserId(userId)).thenReturn(List.of());
+        when(encounterRepository.findByPatientIdOrderByStartedAtDesc(any(), any())).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(encounter)));
+        when(diagnosesRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(treatmentPlanRepository.findByPatientIdOrderByCreatedAtDesc(userId)).thenReturn(List.of());
+        when(medicalOrderRepository.findByPatientIdOrderByOrderedAtDesc(userId)).thenReturn(List.of());
+        when(physicalExamRepository.findByPatientIdOrderByRecordedAtDesc(userId)).thenReturn(List.of());
+        when(documentRepository.findVisibleByPatientId(userId)).thenReturn(List.of());
+        when(messageRepository.findBySenderIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(messageRepository.findByReceiverIdOrderByCreatedAtAsc(userId)).thenReturn(List.of());
+        when(auditRepository.findByUserIdOrderByTimestampDesc(any(), any())).thenReturn(org.springframework.data.domain.Page.empty());
+
+        service.processExport(requestId);
+
+        Path zipPath = tempDir.resolve(userId.toString()).resolve(requestId + ".zip");
+        try (java.util.zip.ZipFile zipFile = new java.util.zip.ZipFile(zipPath.toFile())) {
+            String encountersJson = readZipEntry(zipFile, "encounters.json");
+            assertThat(encountersJson).contains("encounters");
+            assertThat(encountersJson).contains("Test complaint");
+            assertThat(encountersJson).contains("OUTPATIENT");
+            assertThat(encountersJson).contains("COMPLETED");
+        }
     }
 
     private String readZipEntry(java.util.zip.ZipFile zipFile, String entryName) throws IOException {

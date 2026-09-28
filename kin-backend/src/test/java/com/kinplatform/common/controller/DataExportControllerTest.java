@@ -9,7 +9,6 @@ import com.kinplatform.common.service.DataExportService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,44 +56,18 @@ class DataExportControllerTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // Use a request attribute to prevent recursive filter invocation
-        String filterExecutedAttr = "FILTER_ALREADY_EXECUTED";
+        passThrough(jwtAuthenticationFilter);
+        passThrough(rateLimitingFilter);
+        passThrough(subscriptionAccessFilter);
+    }
 
+    private void passThrough(jakarta.servlet.Filter filter) throws Exception {
         doAnswer(invocation -> {
-            HttpServletRequest request = invocation.getArgument(0, HttpServletRequest.class);
-            if (request.getAttribute(filterExecutedAttr + "_jwt") != null) {
-                return null; // Already executed for this request
-            }
-            request.setAttribute(filterExecutedAttr + "_jwt", true);
             FilterChain chain = invocation.getArgument(2, FilterChain.class);
             chain.doFilter(invocation.getArgument(0, ServletRequest.class),
                     invocation.getArgument(1, ServletResponse.class));
             return null;
-        }).when(jwtAuthenticationFilter).doFilter(any(), any(), any());
-
-        doAnswer(invocation -> {
-            HttpServletRequest request = invocation.getArgument(0, HttpServletRequest.class);
-            if (request.getAttribute(filterExecutedAttr + "_rate") != null) {
-                return null;
-            }
-            request.setAttribute(filterExecutedAttr + "_rate", true);
-            FilterChain chain = invocation.getArgument(2, FilterChain.class);
-            chain.doFilter(invocation.getArgument(0, ServletRequest.class),
-                    invocation.getArgument(1, ServletResponse.class));
-            return null;
-        }).when(rateLimitingFilter).doFilter(any(), any(), any());
-
-        doAnswer(invocation -> {
-            HttpServletRequest request = invocation.getArgument(0, HttpServletRequest.class);
-            if (request.getAttribute(filterExecutedAttr + "_sub") != null) {
-                return null;
-            }
-            request.setAttribute(filterExecutedAttr + "_sub", true);
-            FilterChain chain = invocation.getArgument(2, FilterChain.class);
-            chain.doFilter(invocation.getArgument(0, ServletRequest.class),
-                    invocation.getArgument(1, ServletResponse.class));
-            return null;
-        }).when(subscriptionAccessFilter).doFilter(any(), any(), any());
+        }).when(filter).doFilter(any(), any(), any());
     }
 
     @Test
@@ -116,9 +89,10 @@ class DataExportControllerTest {
     }
 
     @Test
-    void requestExport_noAuth_returns401() throws Exception {
+    void requestExport_noAuth_returns403() throws Exception {
+        // CSRF filter blocks unauthenticated POST with 403 (Access Denied)
         mockMvc.perform(post("/api/v1/health/data-export"))
-            .andExpect(status().isUnauthorized());
+            .andExpect(status().isForbidden());
     }
 
     @Test
