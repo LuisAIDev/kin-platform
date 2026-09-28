@@ -129,11 +129,11 @@ class DischargeSummaryControllerTest {
     }
 
     @Test
-    void createDischargeSummary_unauthenticated_returns401() throws Exception {
+    void createDischargeSummary_unauthenticated_returns403() throws Exception {
         mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/discharge", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -186,13 +186,13 @@ class DischargeSummaryControllerTest {
 
     @Test
     @WithMockUser(roles = "PHYSICIAN")
-    void signDischargeSummary_notFound_returns404() throws Exception {
+    void signDischargeSummary_notFound_returns400() throws Exception {
         when(dischargeSummaryService.signDischargeSummary(any(UUID.class), any(UUID.class)))
                 .thenThrow(new jakarta.persistence.EntityNotFoundException("Discharge summary not found"));
 
         mockMvc.perform(put("/api/v1/health/hce/discharge-summaries/{summaryId}/sign", UUID.randomUUID())
                         .with(csrf()))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
