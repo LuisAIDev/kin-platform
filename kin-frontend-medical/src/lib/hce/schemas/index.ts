@@ -6,3 +6,4 @@ export * from './illnessStep.schema';
 export * from './historyStep.schema';
 export * from './physicalExamStep.schema';
 export * from './diagnosisPlanStep.schema';
+export * from './closingStep.schema';
