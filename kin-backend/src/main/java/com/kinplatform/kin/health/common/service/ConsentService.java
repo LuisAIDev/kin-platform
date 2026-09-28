@@ -14,6 +14,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +39,11 @@ public class ConsentService {
 
         UserConsent.ConsentType consentType = UserConsent.ConsentType.valueOf(request.getConsentType().toUpperCase());
 
+        // Check if a newer version exists and is active - if so, mark old version as obsolete
+        if (request.getAccepted() && request.getVersion() != null) {
+            markOlderVersionsAsObsolete(request.getUserId(), consentType, request.getVersion());
+        }
+
         Optional<UserConsent> existing = userConsentRepository.findByUserIdAndConsentTypeAndVersion(
                 request.getUserId(), consentType, request.getVersion());
 
@@ -47,6 +55,9 @@ public class ConsentService {
             consent.setRevokedAt(!request.getAccepted() ? Instant.now() : null);
             consent.setIpAddress(request.getIpAddress());
             consent.setUserAgent(request.getUserAgent());
+            if (request.getDocumentHash() != null) {
+                consent.setDocumentHash(request.getDocumentHash());
+            }
         } else {
             consent = UserConsent.builder()
                     .userId(request.getUserId())
@@ -56,11 +67,33 @@ public class ConsentService {
                     .acceptedAt(request.getAccepted() ? Instant.now() : null)
                     .ipAddress(request.getIpAddress())
                     .userAgent(request.getUserAgent())
+                    .documentHash(request.getDocumentHash())
                     .build();
         }
 
         UserConsent saved = userConsentRepository.saveAndFlush(consent);
         return toResponse(saved);
+    }
+
+    /**
+     * Marks older versions of a consent type as obsolete (accepted=false, revoked) 
+     * when a newer version is accepted.
+     */
+    private void markOlderVersionsAsObsolete(UUID userId, UserConsent.ConsentType consentType, String newVersion) {
+        List<UserConsent> olderVersions = userConsentRepository.findByUserIdAndConsentType(userId, consentType)
+                .stream()
+                .filter(c -> c.getVersion().compareTo(newVersion) < 0 && c.getAccepted())
+                .toList();
+
+        for (UserConsent oldConsent : olderVersions) {
+            oldConsent.setAccepted(false);
+            oldConsent.setRevokedAt(Instant.now());
+            oldConsent.setAcceptedAt(null);
+            oldConsent.setRevocationReason("Superseded by version " + newVersion);
+        }
+        if (!olderVersions.isEmpty()) {
+            userConsentRepository.saveAllAndFlush(olderVersions);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -79,6 +112,25 @@ public class ConsentService {
                 .map(this::toResponse);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<UserConsentResponse> getActiveConsent(UUID userId, String consentType, String version) {
+        checkSelfOrAdmin(userId);
+        UserConsent.ConsentType type = UserConsent.ConsentType.valueOf(consentType.toUpperCase());
+        return userConsentRepository.findByUserIdAndConsentTypeAndVersion(userId, type, version)
+                .map(this::toResponse);
+    }
+
+    /**
+     * Check if user has active consent for a specific type and version.
+     */
+    @Transactional(readOnly = true)
+    public boolean hasActiveConsent(UUID userId, String consentType, String version) {
+        UserConsent.ConsentType type = UserConsent.ConsentType.valueOf(consentType.toUpperCase());
+        return userConsentRepository.findByUserIdAndConsentTypeAndVersion(userId, type, version)
+                .map(c -> c.getAccepted() && c.getRevokedAt() == null)
+                .orElse(false);
+    }
+
     @Transactional
     public UserConsentResponse revokeConsent(RevokeConsentRequest request) {
         User user = userRepository.findById(request.getUserId())
@@ -95,6 +147,9 @@ public class ConsentService {
         consent.setAccepted(false);
         consent.setRevokedAt(Instant.now());
         consent.setAcceptedAt(null);
+        if (request.getRevocationReason() != null) {
+            consent.setRevocationReason(request.getRevocationReason());
+        }
 
         UserConsent saved = userConsentRepository.saveAndFlush(consent);
         return toResponse(saved);
@@ -128,9 +183,31 @@ public class ConsentService {
                 .accepted(consent.getAccepted())
                 .acceptedAt(consent.getAcceptedAt())
                 .revokedAt(consent.getRevokedAt())
+                .revocationReason(consent.getRevocationReason())
                 .ipAddress(consent.getIpAddress())
                 .userAgent(consent.getUserAgent())
+                .documentHash(consent.getDocumentHash())
                 .createdAt(consent.getCreatedAt())
+                .updatedAt(consent.getUpdatedAt())
                 .build();
+    }
+    
+    /**
+     * Generate SHA-256 hash of document content for integrity verification.
+     */
+    public static String generateDocumentHash(String documentContent) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(documentContent.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 algorithm not available", e);
+        }
     }
 }

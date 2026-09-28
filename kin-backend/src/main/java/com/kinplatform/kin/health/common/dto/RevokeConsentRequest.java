@@ -1,6 +1,7 @@
 package com.kinplatform.kin.health.common.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,4 +22,7 @@ public class RevokeConsentRequest {
 
     @NotNull(message = "Version is required")
     private String version;
+
+    @Size(max = 1000, message = "Revocation reason cannot exceed 1000 characters")
+    private String revocationReason;
 }

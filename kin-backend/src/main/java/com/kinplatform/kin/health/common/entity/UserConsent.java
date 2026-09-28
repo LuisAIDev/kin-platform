@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "user_consents",
@@ -15,7 +16,8 @@ import org.hibernate.annotations.CreationTimestamp;
         indexes = {
                 @Index(name = "idx_user_consents_user_id", columnList = "user_id"),
                 @Index(name = "idx_user_consents_type", columnList = "consent_type"),
-                @Index(name = "idx_user_consents_accepted", columnList = "accepted")
+                @Index(name = "idx_user_consents_accepted", columnList = "accepted"),
+                @Index(name = "idx_user_consents_updated_at", columnList = "updated_at")
         })
 @Data
 @Builder
@@ -48,15 +50,25 @@ public class UserConsent {
     @Column(name = "revoked_at")
     private Instant revokedAt;
 
+    @Column(name = "revocation_reason", length = 1000)
+    private String revocationReason;
+
     @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
     @Column(name = "user_agent", length = 500)
     private String userAgent;
 
+    @Column(name = "document_hash", length = 64)
+    private String documentHash;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
 
     public enum ConsentType {
         TERMS_OF_SERVICE,

@@ -34,4 +34,7 @@ public class CreateUserConsentRequest {
 
     @Size(max = 500, message = "User agent cannot exceed 500 characters")
     private String userAgent;
+
+    @Size(max = 64, message = "Document hash cannot exceed 64 characters")
+    private String documentHash;
 }

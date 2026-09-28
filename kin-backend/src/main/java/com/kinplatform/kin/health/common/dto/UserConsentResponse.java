@@ -20,7 +20,10 @@ public class UserConsentResponse {
     private Boolean accepted;
     private Instant acceptedAt;
     private Instant revokedAt;
+    private String revocationReason;
     private String ipAddress;
     private String userAgent;
+    private String documentHash;
     private Instant createdAt;
+    private Instant updatedAt;
 }
