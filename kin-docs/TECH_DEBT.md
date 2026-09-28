@@ -112,6 +112,30 @@
 
 ---
 
+### TD-E2E-1: Cypress E2E tests pendientes de ejecución en CI/CD
+- **Prioridad**: Media.
+- **Problema**: 5 tests Cypress E2E creados para el Wizard HCE (happy path, sin DX principal, sin plan, autoguardado, ownership) pero no se pueden ejecutar en CI/CD porque:
+  1. Requieren servidor frontend corriendo en `localhost:3001`
+  2. Requieren backend corriendo y base de datos con datos de prueba
+  3. El runner de CI/CD actual no tiene Docker + servidor frontend + backend simultáneamente
+- **Estado actual**: 5 tests escritos en `cypress/e2e/hce-wizard.cy.ts`, configuración en `cypress.config.ts`, comandos personalizados en `cypress/support/commands.ts`.
+- **Tests escritos**:
+  1. Test 1: Wizard completo happy path (7 pasos → cierre exitoso)
+  2. Test 2: Error al cerrar sin diagnóstico principal → botón deshabilitado
+  3. Test 3: Error al cerrar sin plan de manejo → botón deshabilitado
+  3. Test 4: Autoguardado 30s → refrescar → datos persisten
+  4. Test 5: Ownership → médico B no edita encounter de médico A
+- **Fix objetivo**: Configurar GitHub Actions con:
+  1. `services.postgres` + `services.redis` para backend
+  2. `npm run dev` para frontend en background
+  3. `npx cypress run --headless` tras health checks
+  4. Artifacts: screenshots + videos en fallos
+- **Owner**: DevOps/Frontend. **Estimado**: 1 día (configurar CI + validar local).
+- **Referencia**: ADR-055, Bloque 5 Frontend Wizard completado (2026-09-27).
+- **Workaround actual**: Documentar como TD, ejecutar localmente `npx cypress run` con `npm run dev` en terminal separada.
+
+---
+
 ## DTOs duales (Record + Class) — deuda catalogada 2026-09-27
 
 ### TD-DTO-2: Unificar DTOs duales (Record + Class) en 11 recursos HCE
@@ -129,7 +153,7 @@
 
 ---
 
-*Last Updated: 2026-09-27*  
+*Last Updated: 2026-09-28*  
 *Owner: Backend Team*  
 *Next Review: Sprint Planning*
 

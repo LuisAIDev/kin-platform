@@ -90,7 +90,7 @@ Timeline estimado: 4-6 semanas.
   - **Lección aprendida**: los tests con mocks NO detectan beans faltantes. `ApplicationContextTest` es **OBLIGATORIO** en cada PR que agregue `@Component`/`@Bean` (ver TD-CI-1/2 en `TECH_DEBT.md`).
   - **Evidencia de cierre**: Render LIVE `bf203fa` (build_time 2026-09-25T17:42:15Z), `/actuator/health` = 200 UP; MIPRES `POST /billing/mipres/prescriptions` = 403 sin token (ruta activa).
 
-## Fase 2.5a — HCE Core (29 días) — **✅ COMPLETADA (2026-09-26)**
+## Fase 2.5a — HCE Core (29 días) — **✅ COMPLETADA (2026-09-27)**
 - Duración: ~26 días hábiles · Sin dependencias externas para stubs.
 - Entregado:
   - `V75__complete_hce_res_839_1995.sql` (544 líneas, opción C: sin rename de tablas legacy):
@@ -99,12 +99,7 @@ Timeline estimado: 4-6 semanas.
       `diagnoses`, `treatment_plans`, `medical_orders`, `informed_consents`, `referrals`,
       `discharge_summaries`, `clinical_attachments`, `obstetric_history`, `surgical_history`.
     - `patient_profiles` y `patient_evolutions` se mantienen intactas (0 renames, 0 vistas de compatibilidad).
-  - Verificado en Docker local (PostgreSQL 16) y en **Neon prod**: `flyway_schema_history version=75, success=t` (installed_on 2026-09-25 05:57:46), 14 tablas presentes.
-- **Incidente de despliegue `c2a645a` (postmortem):**
-  - **Causa raíz**: `MipresHttpClient` / `MipresTokenService` (`@Profile("prod")`) requieren un bean `WebClient` que nadie definía. `ce696c7` (MIPRES) introdujo los consumidores sin el `@Bean`. Los tests unitarios usaban mocks → no lo detectaron. `fabc088` (LIVE previo) no incluía MIPRES, por eso funcionaba.
-  - **Fix**: `bf203fa` — `WebClientConfig` (bean `WebClient`) + `ApplicationContextTest` (`@SpringBootTest @ActiveProfiles("test")` con Testcontainers, verifica `contextLoads()` y la existencia del bean `WebClient`).
-  - **Lección aprendida**: los tests con mocks NO detectan beans faltantes. `ApplicationContextTest` es **OBLIGATORIO** en cada PR que agregue `@Component`/`@Bean` (ver TD-CI-1/2 en `TECH_DEBT.md`).
-  - **Evidencia de cierre**: Render LIVE `bf203fa` (build_time 2026-09-25T17:42:15Z), `/actuator/health` = 200 UP; MIPRES `POST /billing/mipres/prescriptions` = 403 sin token (ruta activa).
+  - Verificado en Docker local (PostgreSQL 16) y en **Neon prod**: `flyway_schema_history version=76, success=t` (installed_on 2026-09-25 05:57:46), 14 tablas presentes.
   - **Corrección de migración V75 (V76)**:
     - **Problema**: V75 declaró 20 columnas como `SMALLINT` (ej. `severity_self_reported`, `bp_systolic`, `stratum`, etc.) pero las entidades JPA usan `Integer`. En producción con `ddl-auto=validate` falla: `wrong column type encountered ... found [int2 (SMALLINT)], but expecting [integer (Types#INTEGER)]`.
     - **Fix V76**: `V76__align_hce_integer_columns.sql` — 20 `ALTER COLUMN TYPE INTEGER` (widening lossless, conserva CHECK constraints, sin pérdida de datos). Verificado en Docker local (PostgreSQL 16) y en **Neon prod**: `flyway_schema_history version=76, success=t` (installed_on 2026-09-25 05:57:46), 14 tablas presentes.
@@ -113,9 +108,9 @@ Timeline estimado: 4-6 semanas.
   - Bloque 1 — Entidades JPA + Repositories (6 días) ✅
   - Bloque 2a — Servicios Core (8 días) ✅ (extendido de 5 a 8 días)
   - Bloque 2b — Servicios Complementarios (5 días) ✅ (ObstetricHistory, SurgicalHistory)
-  - Bloque 3 — DTOs + Bean Validation Res 839 (3 días) — **SIGUIENTE**
-  - Bloque 4 — Controllers REST (4 días) — **PENDIENTE**
-  - Bloque 5 — Frontend Wizard (5 días) — **PENDIENTE**
+  - Bloque 3 — DTOs + Bean Validation Res 839 (3 días) ✅
+  - Bloque 4 — Controllers REST (4 días) ✅ (12 controllers)
+  - Bloque 5 — Frontend Wizard (5 días) ✅ (7 pasos + Cypress E2E)
 
 ### Bloque 1 — Entidades JPA + Repositories (6 días)
 - Día 1: `Encounter`, `PatientIdentification` + Repositories
@@ -138,16 +133,17 @@ Timeline estimado: 4-6 semanas.
 ### Bloque 2b — Servicios Complementarios (5 días) — **✅ COMPLETADA (2026-09-26)**
 - `ObstetricHistoryService`, `SurgicalHistoryService` + Tests (17 tests)
 
-### Bloque 3 — DTOs + Bean Validation Res 839 (3 días)
+### Bloque 3 — DTOs + Bean Validation Res 839 (3 días) — **✅ COMPLETADA**
 - Request/Response DTOs por componente
 - Bean Validation: CIE-10, CUPS, campos obligatorios, coherencia fechas
 
-### Bloque 4 — Controllers REST (4 días)
-- ~8 endpoints: Encounters, Identification, Anamnesis, PhysicalExam, Diagnoses, TreatmentPlan, Orders, Consents, Referrals, Discharge, Attachments
+### Bloque 4 — Controllers REST (4 días) — **✅ COMPLETADA**
+- 12 controllers: Encounters, Identification, Anamnesis, PhysicalExam, Diagnoses, TreatmentPlan, Orders, Consents, Referrals, Discharge, Attachments, Obstetric/Surgical History
 
-### Bloque 5 — Frontend Wizard (5 días)
+### Bloque 5 — Frontend Wizard (5 días) — **✅ COMPLETADA**
 - 7 pasos: Identificación → Motivo → Enfermedad actual → Antecedentes → Examen físico → Diagnóstico/Plan → Cierre
-- Cypress E2E completo
+- Cypress E2E configurado (5 tests)
+- 144 tests unitarios + 5 E2E = 149 tests
 
 ### Criterios de cierre Fase 2.5a
 - `ApplicationContextTest` PASS + Flyway V1..V75 en Testcontainers PG18
