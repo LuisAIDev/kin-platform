@@ -112,6 +112,23 @@
 
 ---
 
+## DTOs duales (Record + Class) — deuda catalogada 2026-09-27
+
+### TD-DTO-2: Unificar DTOs duales (Record + Class) en 11 recursos HCE
+- **Prioridad**: Media.
+- **Recursos**: Anamnesis, PhysicalExam, Diagnosis, TreatmentPlan, DischargeSummary, ClinicalAttachment, ObstetricHistory, SurgicalHistory, PatientHistory, PatientIdentification, Encounter.
+- **Patrón**: `dto/request/XRequest` (Record con `@Pattern`/`@AssertTrue`) vs `dto/CreateXRequest` (Class con `@NotNull`/`@Size`). El Record es subconjunto del Class y solo lo usa su `*RequestValidationTest`; el Class es la ruta productiva del service.
+- **Fix**: aplicar Opción B (enriquecer el Class con la validación faltante, borrar el Record y repuntar el `*RequestValidationTest`). Ya aplicado en los 3 recursos del Día 21 (MedicalOrder, InformedConsent, Referral).
+- **Alcance**: ~30 archivos.
+- **Responsable**: PO (próximo sprint).
+
+### TD-DTO-1: Colisión de nombres en Encounter (pre-existente)
+- **Prioridad**: Media.
+- **Detalle**: `dto/CreateEncounterRequest` (class) y `dto/request/CreateEncounterRequest` (record) comparten nombre simple; ídem `UpdateEncounterRequest`. Compilan (paquetes distintos) pero son confusos.
+- **Fix**: incluir en TD-DTO-2 (un solo DTO por recurso).
+
+---
+
 *Last Updated: 2026-09-27*  
 *Owner: Backend Team*  
 *Next Review: Sprint Planning*
