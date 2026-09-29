@@ -14,6 +14,7 @@ import com.kinplatform.kin.health.physician.access.RelationshipNotActiveExceptio
 import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
 import com.kinplatform.kin.health.physician.domain.ClinicalAlert;
+import com.kinplatform.kin.health.physician.domain.RelationshipStatus;
 import com.kinplatform.kin.health.triage.InMemoryTriageConsultationRepository;
 import com.kinplatform.kin.health.triage.domain.Severity;
 import com.kinplatform.kin.health.triage.domain.TriageConditionResult;
@@ -135,6 +136,60 @@ class PhysicianServiceTest {
         assertEquals(1, page.getTotalElements());
         assertEquals("Paciente Test", page.getContent().get(0).patientName());
         assertEquals(1, page.getContent().get(0).totalTriages());
+    }
+
+    @Test
+    void listPatients_conStatusNull_deberiaDevolverActiveYPending() {
+        var repos = new InMemoryPhysicianRepositories();
+        repos.patientRepository().assign(InMemoryPhysicianRepositories.assignment(PHYSICIAN, PATIENT));
+        UUID pendingPatient = pendingPatient(repos);
+        var service = service(true, repos);
+
+        var page = service.listPatients(PHYSICIAN, (RelationshipStatus) null, PageRequest.of(0, 10));
+
+        assertEquals(2, page.getTotalElements());
+    }
+
+    @Test
+    void listPatients_overloadSinStatus_deberiaDevolverActiveYPending() {
+        // Reproduce el bug del dropdown vacío: el controller usa este overload
+        // cuando status=ALL; antes forzaba ACTIVE y excluía a los PENDING.
+        var repos = new InMemoryPhysicianRepositories();
+        repos.patientRepository().assign(InMemoryPhysicianRepositories.assignment(PHYSICIAN, PATIENT));
+        pendingPatient(repos);
+        var service = service(true, repos);
+
+        var page = service.listPatients(PHYSICIAN, PageRequest.of(0, 10));
+
+        assertEquals(2, page.getTotalElements());
+    }
+
+    @Test
+    void listPatients_conStatusActive_deberiaDevolverSoloActive() {
+        var repos = new InMemoryPhysicianRepositories();
+        repos.patientRepository().assign(InMemoryPhysicianRepositories.assignment(PHYSICIAN, PATIENT));
+        pendingPatient(repos);
+        var service = service(true, repos);
+
+        var page = service.listPatients(PHYSICIAN, RelationshipStatus.ACTIVE, PageRequest.of(0, 10));
+
+        assertEquals(1, page.getTotalElements());
+        assertEquals("Paciente Test", page.getContent().get(0).patientName());
+    }
+
+    /** Registra una relación PENDING con nombre resolviible y devuelve el id. */
+    private UUID pendingPatient(InMemoryPhysicianRepositories repos) {
+        UUID pendingPatient = UUID.randomUUID();
+        when(userRepository.findById(pendingPatient))
+                .thenReturn(Optional.of(User.builder()
+                        .id(pendingPatient)
+                        .email("pendiente@kin.com")
+                        .fullName("Paciente Pendiente")
+                        .role(UserRole.PATIENT)
+                        .build()));
+        repos.patientRepository().assign(
+                InMemoryPhysicianRepositories.pendingAssignment(PHYSICIAN, pendingPatient));
+        return pendingPatient;
     }
 
     @Test

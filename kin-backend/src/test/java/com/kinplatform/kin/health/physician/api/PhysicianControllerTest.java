@@ -129,6 +129,39 @@ class PhysicianControllerTest {
     }
 
     @Test
+    void patients_conStatusAll_deberiaIncluirActiveYPending() throws Exception {
+        UUID pendingPatient = UUID.randomUUID();
+        // status=ALL -> resolveStatus devuelve null -> overload sin status.
+        when(physicianService.listPatients(eq(PHYSICIAN), any()))
+                .thenReturn(new PageImpl<>(
+                        List.of(
+                                PatientSummary.active(PATIENT, "Activo", List.of(), List.of(), List.of(), 0, null, 0),
+                                PatientSummary.pending(pendingPatient, "Pendiente")),
+                        PageRequest.of(0, 10),
+                        2));
+
+        mockMvc.perform(get("/health/physician/patients").param("status", "ALL"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    void patients_conStatusActive_deberiaDevolverSoloActive() throws Exception {
+        when(physicianService.listPatients(eq(PHYSICIAN), eq(RelationshipStatus.ACTIVE), any()))
+                .thenReturn(new PageImpl<>(
+                        List.of(PatientSummary.active(
+                                PATIENT, "Activo", List.of(), List.of(), List.of(), 0, null, 0)),
+                        PageRequest.of(0, 10),
+                        1));
+
+        mockMvc.perform(get("/health/physician/patients").param("status", "ACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].relationshipStatus").value("ACTIVE"));
+    }
+
+    @Test
     void invite_deberiaInvocarInvitacion() throws Exception {
         UUID invited = UUID.randomUUID();
         PhysicianPatientAssignment invitation =

@@ -83,7 +83,10 @@ public class PhysicianService {
 
     @Transactional(readOnly = true)
     public Page<PatientSummary> listPatients(UUID physicianId, Pageable pageable) {
-        return listPatients(physicianId, RelationshipStatus.ACTIVE, pageable);
+        // Delegar al overload de 3 args con status null: el contrato de ese método
+        // define que null = ACTIVE + PENDING (ver javadoc). Antes forzaba ACTIVE, lo
+        // que dejaba fuera a los pacientes en estado PENDING (bug de dropdown vacío).
+        return listPatients(physicianId, (RelationshipStatus) null, pageable);
     }
 
     /**

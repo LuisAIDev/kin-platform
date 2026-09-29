@@ -74,6 +74,15 @@ export default function EncounterCreateForm({
       aria-label="Nueva consulta"
       className="flex flex-col gap-5 rounded-xl border border-neutral-200 bg-white p-6"
     >
+      {patients.length === 0 && (
+        <div
+          role="status"
+          className="text-sm text-neutral-600 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3"
+        >
+          No tienes pacientes asignados aún. Invita a un paciente primero.
+        </div>
+      )}
+
       <div className="flex flex-col gap-1.5">
         <label htmlFor="encounter-patient-search" className="text-sm font-medium">
           Buscar paciente
@@ -99,14 +108,20 @@ export default function EncounterCreateForm({
           onChange={(e) => setPatientId(e.target.value)}
           className="rounded-lg border border-neutral-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
-          <option value="">Selecciona un paciente</option>
+          {patients.length === 0 ? (
+            <option value="" disabled>
+              No hay pacientes disponibles
+            </option>
+          ) : (
+            <option value="">Selecciona un paciente</option>
+          )}
           {filteredPatients.map((p) => (
             <option key={p.patientId} value={p.patientId}>
               {p.patientName}
             </option>
           ))}
         </select>
-        {filteredPatients.length === 0 && (
+        {patients.length > 0 && filteredPatients.length === 0 && (
           <p className="text-xs text-neutral-500">No hay pacientes que coincidan con la búsqueda.</p>
         )}
       </div>
