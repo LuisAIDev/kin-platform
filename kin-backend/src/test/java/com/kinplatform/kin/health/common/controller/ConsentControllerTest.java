@@ -97,7 +97,7 @@ class ConsentControllerTest {
         when(consentService.createOrUpdateConsent(any(CreateUserConsentRequest.class)))
                 .thenReturn(sampleResponse());
 
-        mockMvc.perform(post("/api/v1/health/consents")
+        mockMvc.perform(post("/health/consents")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -111,7 +111,7 @@ class ConsentControllerTest {
     void createConsent_validationError_returns400() throws Exception {
         CreateUserConsentRequest invalid = CreateUserConsentRequest.builder().build();
 
-        mockMvc.perform(post("/api/v1/health/consents")
+        mockMvc.perform(post("/health/consents")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalid)))
@@ -121,7 +121,7 @@ class ConsentControllerTest {
     @Test
     void createConsent_unauthenticated_returns403() throws Exception {
         SecurityContextHolder.clearContext();
-        mockMvc.perform(post("/api/v1/health/consents")
+        mockMvc.perform(post("/health/consents")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
                 .andExpect(status().isForbidden());
@@ -148,7 +148,7 @@ class ConsentControllerTest {
         when(consentService.getUserConsents(userId))
                 .thenReturn(List.of(c1, c2));
 
-        mockMvc.perform(get("/api/v1/health/consents/me"))
+        mockMvc.perform(get("/health/consents/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].consentType").value("HEALTH_DATA"))
                 .andExpect(jsonPath("$[1].consentType").value("MARKETING"));
@@ -168,7 +168,7 @@ class ConsentControllerTest {
         when(consentService.getActiveConsent(userId, "HEALTH_DATA"))
                 .thenReturn(Optional.of(active));
 
-        mockMvc.perform(get("/api/v1/health/consents/me/HEALTH_DATA"))
+        mockMvc.perform(get("/health/consents/me/HEALTH_DATA"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.consentType").value("HEALTH_DATA"))
@@ -180,7 +180,7 @@ class ConsentControllerTest {
         when(consentService.getActiveConsent(userId, "MARKETING"))
                 .thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/v1/health/consents/me/MARKETING"))
+        mockMvc.perform(get("/health/consents/me/MARKETING"))
                 .andExpect(status().isNotFound());
     }
 
@@ -204,7 +204,7 @@ class ConsentControllerTest {
         when(consentService.revokeConsent(any(RevokeConsentRequest.class)))
                 .thenReturn(revoked);
 
-        mockMvc.perform(post("/api/v1/health/consents/{id}/revoke", consentId)
+        mockMvc.perform(post("/health/consents/{id}/revoke", consentId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -218,7 +218,7 @@ class ConsentControllerTest {
         when(consentService.hasActiveConsent(userId, "HEALTH_DATA"))
                 .thenReturn(true);
 
-        mockMvc.perform(get("/api/v1/health/consents/check/HEALTH_DATA"))
+        mockMvc.perform(get("/health/consents/check/HEALTH_DATA"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").value(true));
     }

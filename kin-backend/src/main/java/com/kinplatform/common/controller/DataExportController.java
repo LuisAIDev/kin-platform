@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/health/data-export")
+@RequestMapping("/health/data-export")
 @RequiredArgsConstructor
 public class DataExportController {
 

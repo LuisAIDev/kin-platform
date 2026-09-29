@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/health/consents")
+@RequestMapping("/health/consents")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('PATIENT', 'PHYSICIAN', 'IPS_ADMIN', 'ADMIN')")
 @Tag(name = "User Consents", description = "Gestión de consentimientos bajo Ley 1581")

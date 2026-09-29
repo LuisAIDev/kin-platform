@@ -87,7 +87,7 @@ class DataDeletionControllerTest {
         when(service.requestDeletion(eq(userId), eq("Eliminar datos"), eq("FULL"), isNull()))
             .thenReturn(request);
 
-        mockMvc.perform(post("/api/v1/health/data-deletion")
+        mockMvc.perform(post("/health/data-deletion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new DeletionRequestDto("Eliminar datos", "FULL", null))))
             .andExpect(status().isCreated())
@@ -98,7 +98,7 @@ class DataDeletionControllerTest {
     @Test
     void requestDeletion_noAuth_returns403() throws Exception {
         // CSRF filter blocks unauthenticated POST with 403 (Access Denied)
-        mockMvc.perform(post("/api/v1/health/data-deletion")
+        mockMvc.perform(post("/health/data-deletion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new DeletionRequestDto("razón", "FULL", null))))
             .andExpect(status().isForbidden());
@@ -107,7 +107,7 @@ class DataDeletionControllerTest {
     @Test
     @WithMockUser(username = "33333333-3333-3333-3333-333333333333", roles = "ADMIN")
     void requestDeletion_adminRole_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/health/data-deletion")
+        mockMvc.perform(post("/health/data-deletion")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new DeletionRequestDto("razón", "FULL", null))))
             .andExpect(status().isForbidden());
@@ -125,7 +125,7 @@ class DataDeletionControllerTest {
             .build();
         when(service.getRequestsByUser(userId)).thenReturn(List.of(req));
 
-        mockMvc.perform(get("/api/v1/health/data-deletion/me"))
+        mockMvc.perform(get("/health/data-deletion/me"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(1))
             .andExpect(jsonPath("$[0].id").value(requestId.toString()));
@@ -134,14 +134,14 @@ class DataDeletionControllerTest {
     @Test
     void getAllRequests_noAuth_returns403() throws Exception {
         // CSRF filter blocks unauthenticated GET with 403 (Access Denied)
-        mockMvc.perform(get("/api/v1/health/data-deletion"))
+        mockMvc.perform(get("/health/data-deletion"))
             .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = "11111111-1111-1111-1111-111111111111", roles = "PATIENT")
     void getAllRequests_patientRole_returns403() throws Exception {
-        mockMvc.perform(get("/api/v1/health/data-deletion"))
+        mockMvc.perform(get("/health/data-deletion"))
             .andExpect(status().isForbidden());
     }
 
@@ -157,7 +157,7 @@ class DataDeletionControllerTest {
             .build();
         when(service.getRequestsByStatus("PENDING")).thenReturn(List.of(req));
 
-        mockMvc.perform(get("/api/v1/health/data-deletion"))
+        mockMvc.perform(get("/health/data-deletion"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(1));
     }
@@ -174,7 +174,7 @@ class DataDeletionControllerTest {
             .build();
         when(service.approveDeletion(requestId, adminId)).thenReturn(approved);
 
-        mockMvc.perform(put("/api/v1/health/data-deletion/{id}/approve", requestId))
+        mockMvc.perform(put("/health/data-deletion/{id}/approve", requestId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(requestId.toString()))
             .andExpect(jsonPath("$.status").value("APPROVED"));
@@ -183,7 +183,7 @@ class DataDeletionControllerTest {
     @Test
     @WithMockUser(username = "11111111-1111-1111-1111-111111111111", roles = "PATIENT")
     void approveDeletion_patient_returns403() throws Exception {
-        mockMvc.perform(put("/api/v1/health/data-deletion/{id}/approve", requestId))
+        mockMvc.perform(put("/health/data-deletion/{id}/approve", requestId))
             .andExpect(status().isForbidden());
     }
 
@@ -199,7 +199,7 @@ class DataDeletionControllerTest {
             .build();
         when(service.rejectDeletion(requestId, adminId, "Datos inválidos")).thenReturn(rejected);
 
-        mockMvc.perform(put("/api/v1/health/data-deletion/{id}/reject", requestId)
+        mockMvc.perform(put("/health/data-deletion/{id}/reject", requestId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new RejectRequestDto("Datos inválidos"))))
             .andExpect(status().isOk())
@@ -213,7 +213,7 @@ class DataDeletionControllerTest {
         when(service.executeDeletion(requestId, false))
             .thenThrow(new IllegalArgumentException("Confirmación requerida: confirm=true"));
 
-        mockMvc.perform(post("/api/v1/health/data-deletion/{id}/execute", requestId)
+        mockMvc.perform(post("/health/data-deletion/{id}/execute", requestId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new ExecuteRequestDto(false))))
             .andExpect(status().isBadRequest());
@@ -231,7 +231,7 @@ class DataDeletionControllerTest {
             .build();
         when(service.executeDeletion(requestId, true)).thenReturn(executed);
 
-        mockMvc.perform(post("/api/v1/health/data-deletion/{id}/execute", requestId)
+        mockMvc.perform(post("/health/data-deletion/{id}/execute", requestId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new ExecuteRequestDto(true))))
             .andExpect(status().isOk())

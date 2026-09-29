@@ -81,7 +81,7 @@ class DataExportControllerTest {
             .build();
         when(service.requestExport(userId)).thenReturn(request);
 
-        mockMvc.perform(post("/api/v1/health/data-export"))
+        mockMvc.perform(post("/health/data-export"))
             .andExpect(status().isAccepted())
             .andExpect(jsonPath("$.id").value(requestId.toString()))
             .andExpect(jsonPath("$.userId").value(userId.toString()))
@@ -91,14 +91,14 @@ class DataExportControllerTest {
     @Test
     void requestExport_noAuth_returns403() throws Exception {
         // CSRF filter blocks unauthenticated POST with 403 (Access Denied)
-        mockMvc.perform(post("/api/v1/health/data-export"))
+        mockMvc.perform(post("/health/data-export"))
             .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = "11111111-1111-1111-1111-111111111111", roles = "ANONYMOUS")
     void requestExport_wrongRole_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/health/data-export"))
+        mockMvc.perform(post("/health/data-export"))
             .andExpect(status().isForbidden());
     }
 
@@ -119,7 +119,7 @@ class DataExportControllerTest {
             .build();
         when(service.getExportsByUser(userId)).thenReturn(List.of(req1, req2));
 
-        mockMvc.perform(get("/api/v1/health/data-export"))
+        mockMvc.perform(get("/health/data-export"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(2))
             .andExpect(jsonPath("$[0].id").value(requestId.toString()));
@@ -137,7 +137,7 @@ class DataExportControllerTest {
             .build();
         when(service.getExportStatus(requestId, userId)).thenReturn(request);
 
-        mockMvc.perform(get("/api/v1/health/data-export/{id}/status", requestId))
+        mockMvc.perform(get("/health/data-export/{id}/status", requestId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(requestId.toString()))
             .andExpect(jsonPath("$.status").value("COMPLETED"));
@@ -149,7 +149,7 @@ class DataExportControllerTest {
         when(service.getExportStatus(requestId, userId))
             .thenThrow(new SecurityException("No autorizado"));
 
-        mockMvc.perform(get("/api/v1/health/data-export/{id}/status", requestId))
+        mockMvc.perform(get("/health/data-export/{id}/status", requestId))
             .andExpect(status().isForbidden());
     }
 
@@ -159,7 +159,7 @@ class DataExportControllerTest {
         byte[] zipBytes = "test zip content".getBytes();
         when(service.downloadExport(requestId, userId)).thenReturn(zipBytes);
 
-        mockMvc.perform(get("/api/v1/health/data-export/{id}/download", requestId))
+        mockMvc.perform(get("/health/data-export/{id}/download", requestId))
             .andExpect(status().isOk())
             .andExpect(header().string("Content-Disposition", "attachment; filename=\"data-export-" + requestId + ".zip\""))
             .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
@@ -172,7 +172,7 @@ class DataExportControllerTest {
         when(service.downloadExport(requestId, userId))
             .thenThrow(new SecurityException("No autorizado"));
 
-        mockMvc.perform(get("/api/v1/health/data-export/{id}/download", requestId))
+        mockMvc.perform(get("/health/data-export/{id}/download", requestId))
             .andExpect(status().isForbidden());
     }
 
@@ -182,7 +182,7 @@ class DataExportControllerTest {
         when(service.downloadExport(requestId, userId))
             .thenThrow(new IllegalArgumentException("Export no encontrado"));
 
-        mockMvc.perform(get("/api/v1/health/data-export/{id}/download", requestId))
+        mockMvc.perform(get("/health/data-export/{id}/download", requestId))
             .andExpect(status().isNotFound());
     }
 
@@ -192,7 +192,7 @@ class DataExportControllerTest {
         when(service.downloadExport(requestId, userId))
             .thenThrow(new IllegalStateException("Export no completado"));
 
-        mockMvc.perform(get("/api/v1/health/data-export/{id}/download", requestId))
+        mockMvc.perform(get("/health/data-export/{id}/download", requestId))
             .andExpect(status().isBadRequest());
     }
 
@@ -202,7 +202,7 @@ class DataExportControllerTest {
         when(service.downloadExport(requestId, userId))
             .thenThrow(new IllegalStateException("Export expirado"));
 
-        mockMvc.perform(get("/api/v1/health/data-export/{id}/download", requestId))
+        mockMvc.perform(get("/health/data-export/{id}/download", requestId))
             .andExpect(status().isBadRequest());
     }
 }

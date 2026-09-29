@@ -86,7 +86,7 @@ class DataRectificationControllerTest {
         when(service.requestRectification(eq(userId), eq("users.phone"), eq("+573001111111"), eq("+573002222222"), eq("Cambio de número")))
             .thenReturn(request);
 
-        mockMvc.perform(post("/api/v1/health/data-rectification")
+        mockMvc.perform(post("/health/data-rectification")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new RectificationRequestDto("users.phone", "+573001111111", "+573002222222", "Cambio de número"))))
             .andExpect(status().isCreated())
@@ -98,7 +98,7 @@ class DataRectificationControllerTest {
     @Test
     void requestRectification_noAuth_returns403() throws Exception {
         // CSRF filter blocks unauthenticated POST with 403 (Access Denied)
-        mockMvc.perform(post("/api/v1/health/data-rectification")
+        mockMvc.perform(post("/health/data-rectification")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new RectificationRequestDto("users.phone", "old", "new", "reason"))))
             .andExpect(status().isForbidden());
@@ -107,7 +107,7 @@ class DataRectificationControllerTest {
     @Test
     @WithMockUser(username = "33333333-3333-3333-3333-333333333333", roles = "ADMIN")
     void requestRectification_adminRole_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/health/data-rectification")
+        mockMvc.perform(post("/health/data-rectification")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new RectificationRequestDto("users.phone", "old", "new", "reason"))))
             .andExpect(status().isForbidden());
@@ -127,7 +127,7 @@ class DataRectificationControllerTest {
             .build();
         when(service.getRequestsByUser(userId)).thenReturn(List.of(req1));
 
-        mockMvc.perform(get("/api/v1/health/data-rectification/me"))
+        mockMvc.perform(get("/health/data-rectification/me"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(1))
             .andExpect(jsonPath("$[0].id").value(requestId.toString()));
@@ -136,14 +136,14 @@ class DataRectificationControllerTest {
     @Test
     void getAllRequests_noAuth_returns403() throws Exception {
         // CSRF filter blocks unauthenticated GET with 403 (Access Denied)
-        mockMvc.perform(get("/api/v1/health/data-rectification"))
+        mockMvc.perform(get("/health/data-rectification"))
             .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = "11111111-1111-1111-1111-111111111111", roles = "PATIENT")
     void getAllRequests_patientRole_returns403() throws Exception {
-        mockMvc.perform(get("/api/v1/health/data-rectification"))
+        mockMvc.perform(get("/health/data-rectification"))
             .andExpect(status().isForbidden());
     }
 
@@ -161,7 +161,7 @@ class DataRectificationControllerTest {
             .build();
         when(service.getRequestsByStatus("PENDING")).thenReturn(List.of(req1));
 
-        mockMvc.perform(get("/api/v1/health/data-rectification"))
+        mockMvc.perform(get("/health/data-rectification"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(1));
     }
@@ -180,7 +180,7 @@ class DataRectificationControllerTest {
             .build();
         when(service.approveRectification(requestId, adminId, "Aprobado")).thenReturn(approved);
 
-        mockMvc.perform(put("/api/v1/health/data-rectification/{id}/approve", requestId)
+        mockMvc.perform(put("/health/data-rectification/{id}/approve", requestId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new ApproveRequestDto("Aprobado"))))
             .andExpect(status().isOk())
@@ -191,7 +191,7 @@ class DataRectificationControllerTest {
     @Test
     @WithMockUser(username = "11111111-1111-1111-1111-111111111111", roles = "PATIENT")
     void approveRectification_patient_returns403() throws Exception {
-        mockMvc.perform(put("/api/v1/health/data-rectification/{id}/approve", requestId)
+        mockMvc.perform(put("/health/data-rectification/{id}/approve", requestId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new ApproveRequestDto("Aprobado"))))
             .andExpect(status().isForbidden());
@@ -211,7 +211,7 @@ class DataRectificationControllerTest {
             .build();
         when(service.rejectRectification(requestId, adminId, "Datos inválidos")).thenReturn(rejected);
 
-        mockMvc.perform(put("/api/v1/health/data-rectification/{id}/reject", requestId)
+        mockMvc.perform(put("/health/data-rectification/{id}/reject", requestId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new RejectRequestDto("Datos inválidos"))))
             .andExpect(status().isOk())

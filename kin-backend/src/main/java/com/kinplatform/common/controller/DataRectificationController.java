@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/health/data-rectification")
+@RequestMapping("/health/data-rectification")
 @RequiredArgsConstructor
 public class DataRectificationController {
 
