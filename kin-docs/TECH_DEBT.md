@@ -52,6 +52,13 @@
 - **Fix objetivo**: refactorizar efectos/immutabilidad y volver las reglas a `error`.
 - **Responsable**: Frontend.
 
+### TD-CI-9: Falta matcher `/medical/physician/**` en SecurityConfig
+- **Prioridad**: Media.
+- **Estado**: El endpoint `/medical/physician/**` (alias del portal médico) funciona porque cae en `.anyRequest().authenticated()`, sin gate de rol explícito. El legacy `/health/physician/**` sí exige `PHYSICIAN`/`ADMIN`.
+- **Impacto**: cualquier usuario autenticado puede invocar el endpoint; el aislamiento por `physicianId` limita los datos, pero no hay defensa de rol explícita.
+- **Fix**: añadir matcher `/medical/physician/**` con `hasAnyRole("PHYSICIAN","ADMIN")` (cuidando `/medical/physician/application/**`, accesible a cualquier autenticado) + `@PreAuthorize` a nivel de clase.
+- **Responsable**: PO (sprint posterior).
+
 ### TD-CI-7: Falta validación de build en CI/CD (build rojo con tests verdes)
 - **Prioridad**: Alta.
 - **Contexto**: `npm run build` fallaba con 59 errores TS (ver TD-FE-BUILD-1) mientras `vitest` daba 408 PASS; ningún gate ejecutaba `next build` ni `tsc --noEmit`. Además `npm run lint` está roto: ESLint 9 exige `eslint.config.*` y el `.eslintrc.json` legacy (`next/core-web-vitals`) provoca `Converting circular structure to JSON`.
