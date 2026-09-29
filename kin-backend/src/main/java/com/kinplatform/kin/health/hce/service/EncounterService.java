@@ -1,6 +1,7 @@
 package com.kinplatform.kin.health.hce.service;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
+import com.kinplatform.common.security.TenantContext;
 import com.kinplatform.kin.health.hce.dto.CreateEncounterRequest;
 import com.kinplatform.kin.health.hce.dto.UpdateEncounterRequest;
 import com.kinplatform.kin.health.hce.dto.EncounterResponse;
@@ -44,16 +45,24 @@ public class EncounterService {
         User patient = userRepository.findById(request.getPatientId())
                 .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
 
-        if (patient.getOrganizationId() == null) {
-            throw new IllegalStateException("Patient must have an organization_id to create an encounter");
+        UUID physicianId = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication()).getId();
+
+        // Validación crítica: el médico no puede abrir una consulta sobre sí mismo.
+        if (patient.getId().equals(physicianId)) {
+            throw new IllegalStateException("El paciente no puede ser el mismo que el médico");
         }
 
-        UUID physicianId = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication()).getId();
+        // La organización del encuentro es la del paciente (IPS) cuando existe; para
+        // pacientes personales sin IPS (organization_id null) se usa la organización
+        // del médico autenticado (TenantContext, con fallback a la organización demo).
+        UUID organizationId = patient.getOrganizationId() != null
+                ? patient.getOrganizationId()
+                : TenantContext.getOrDefault();
 
         Encounter encounter = Encounter.builder()
                 .patientId(request.getPatientId())
                 .physicianId(physicianId)
-                .organizationId(patient.getOrganizationId())
+                .organizationId(organizationId)
                 .encounterType(EncounterType.valueOf(request.getEncounterType()))
                 .status(EncounterStatus.IN_PROGRESS)
                 .chiefComplaint(request.getChiefComplaint())

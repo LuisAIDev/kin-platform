@@ -1,6 +1,7 @@
 package com.kinplatform.kin.health.hce.service;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
+import com.kinplatform.common.security.TenantContext;
 import com.kinplatform.kin.health.hce.dto.CreateEncounterRequest;
 import com.kinplatform.kin.health.hce.dto.EncounterResponse;
 import com.kinplatform.kin.health.hce.dto.UpdateEncounterRequest;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Spy;
@@ -143,21 +145,119 @@ class EncounterServiceTest {
     }
 
     @Test
-    void createEncounter_throwsWhenOrganizationIdNull() {
+    void createEncounter_patientWithoutOrg_usesPhysicianContextOrg() {
+        UUID physicianOrg = UUID.randomUUID();
         var patientNoOrg = com.kinplatform.user.User.builder()
                 .id(patientId)
+                .email("patient@test.com")
+                .fullName("Test Patient")
+                .role(com.kinplatform.user.UserRole.PATIENT)
                 .organizationId(null)
                 .build();
         when(userRepository.findById(any())).thenReturn(java.util.Optional.of(patientNoOrg));
+        when(encounterRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        CreateEncounterRequest request = CreateEncounterRequest.builder()
-                .patientId(patientId)
-                .encounterType("OUTPATIENT")
+        try (MockedStatic<AuthenticatedUsers> mockedStatic = mockStatic(AuthenticatedUsers.class)) {
+            mockedStatic.when(() -> AuthenticatedUsers.require(any(), any())).thenReturn(physician);
+            setupSecurityContext(physician);
+            TenantContext.set(physicianOrg);
+            try {
+                CreateEncounterRequest request = CreateEncounterRequest.builder()
+                        .patientId(patientId)
+                        .encounterType("OUTPATIENT")
+                        .chiefComplaint("Dolor abdominal")
+                        .build();
+
+                EncounterResponse response = encounterService.createEncounter(request);
+
+                assertThat(response).isNotNull();
+                ArgumentCaptor<Encounter> captor = ArgumentCaptor.forClass(Encounter.class);
+                verify(encounterRepository).saveAndFlush(captor.capture());
+                assertThat(captor.getValue().getOrganizationId()).isEqualTo(physicianOrg);
+            } finally {
+                TenantContext.clear();
+                clearSecurityContext();
+            }
+        }
+    }
+
+    @Test
+    void createEncounter_patientWithOrg_usesPatientOrg() {
+        when(userRepository.findById(any())).thenReturn(java.util.Optional.of(patient));
+        when(encounterRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        try (MockedStatic<AuthenticatedUsers> mockedStatic = mockStatic(AuthenticatedUsers.class)) {
+            mockedStatic.when(() -> AuthenticatedUsers.require(any(), any())).thenReturn(physician);
+            setupSecurityContext(physician);
+            try {
+                CreateEncounterRequest request = CreateEncounterRequest.builder()
+                        .patientId(patientId)
+                        .encounterType("OUTPATIENT")
+                        .chiefComplaint("Dolor abdominal")
+                        .build();
+
+                encounterService.createEncounter(request);
+
+                ArgumentCaptor<Encounter> captor = ArgumentCaptor.forClass(Encounter.class);
+                verify(encounterRepository).saveAndFlush(captor.capture());
+                assertThat(captor.getValue().getOrganizationId()).isEqualTo(organizationId);
+            } finally {
+                clearSecurityContext();
+            }
+        }
+    }
+
+    @Test
+    void createEncounter_patientIsPhysician_throwsException() {
+        var self = com.kinplatform.user.User.builder()
+                .id(physicianId)
+                .email("physician@test.com")
+                .fullName("Dr. Test")
+                .role(com.kinplatform.user.UserRole.PHYSICIAN)
                 .build();
+        when(userRepository.findById(any())).thenReturn(java.util.Optional.of(self));
 
-        assertThatThrownBy(() -> encounterService.createEncounter(request))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("organization_id");
+        try (MockedStatic<AuthenticatedUsers> mockedStatic = mockStatic(AuthenticatedUsers.class)) {
+            mockedStatic.when(() -> AuthenticatedUsers.require(any(), any())).thenReturn(physician);
+            setupSecurityContext(physician);
+            try {
+                CreateEncounterRequest request = CreateEncounterRequest.builder()
+                        .patientId(physicianId)
+                        .encounterType("OUTPATIENT")
+                        .chiefComplaint("Dolor abdominal")
+                        .build();
+
+                assertThatThrownBy(() -> encounterService.createEncounter(request))
+                        .isInstanceOf(IllegalStateException.class)
+                        .hasMessageContaining("mismo que el médico");
+            } finally {
+                clearSecurityContext();
+            }
+        }
+    }
+
+    @Test
+    void createEncounter_physicianNotResolved_throwsException() {
+        when(userRepository.findById(any())).thenReturn(java.util.Optional.of(patient));
+
+        try (MockedStatic<AuthenticatedUsers> mockedStatic = mockStatic(AuthenticatedUsers.class)) {
+            mockedStatic.when(() -> AuthenticatedUsers.require(any(), any()))
+                    .thenThrow(new IllegalArgumentException("Authenticated user not found"));
+            setupSecurityContext(physician);
+            try {
+                CreateEncounterRequest request = CreateEncounterRequest.builder()
+                        .patientId(patientId)
+                        .encounterType("OUTPATIENT")
+                        .chiefComplaint("Dolor abdominal")
+                        .build();
+
+                assertThatThrownBy(() -> encounterService.createEncounter(request))
+                        .isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("Authenticated user not found");
+            } finally {
+                clearSecurityContext();
+            }
+        }
     }
 
     @Test
