@@ -13,6 +13,14 @@
 - **Fix objetivo**: Opción B (sprint dedicado: quitar `/api/v1` de los 16 controllers + actualizar tests + tests E2E reales con context-path + cableado frontend).
 - **Responsable**: PO + Agente. **Estimado**: 3-5 días.
 
+### TD-CI-6: API devuelve 403 en lugar de 401 para requests no autenticados
+- **Prioridad**: Media.
+- **Causa**: Sin `AuthenticationEntryPoint` configurado (ni `formLogin`/`httpBasic`), Spring Security usa `Http403ForbiddenEntryPoint`: toda request anónima a una ruta no-`permitAll` devuelve 403, exista o no el mapping. Verificado en `SecurityConfig` y en runtime (Fases 2 y 6).
+- **Impacto**: El frontend no puede distinguir "necesito login" (401) de "no tengo permisos" (403). Además impide diagnosticar mappings vía HTTP con curl anónimo.
+- **Fix**: Configurar un `AuthenticationEntryPoint` (`JwtAuthenticationEntryPoint`) que devuelva 401 en `SecurityConfig`.
+- **Referencia**: https://docs.spring.io/spring-security/reference/servlet/authentication/architecture.html
+- **Responsable**: PO (sprint dedicado).
+
 ### TD-CI-1: Agregar `ApplicationContextTest` al pipeline de CI/CD de GitHub Actions
 - **Prioridad**: Alta.
 - **Contexto**: el fallo de arranque `c2a645a` (bean `WebClient` faltante) pasó el CI porque solo corrían tests unitarios con mocks. `ApplicationContextTest` (`@SpringBootTest @ActiveProfiles("test")` + Testcontainers) detecta beans faltantes y aplica Flyway V1..V75 completo.
