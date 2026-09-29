@@ -88,7 +88,7 @@ class TreatmentPlanControllerTest {
 
         when(treatmentPlanService.createPlan(any())).thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/treatment-plan", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/treatment-plan", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -107,7 +107,7 @@ class TreatmentPlanControllerTest {
                 null
         );
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/treatment-plan", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/treatment-plan", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -122,7 +122,7 @@ class TreatmentPlanControllerTest {
                 "GOOD"
         );
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/treatment-plan", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/treatment-plan", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -138,7 +138,7 @@ class TreatmentPlanControllerTest {
                 "GOOD"
         );
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/treatment-plan", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/treatment-plan", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -174,7 +174,7 @@ class TreatmentPlanControllerTest {
 
         when(treatmentPlanService.getByEncounter(encounterId)).thenReturn(List.of(p1, p2));
 
-        mockMvc.perform(get("/api/v1/health/hce/encounters/{encounterId}/treatment-plan", encounterId))
+        mockMvc.perform(get("/health/hce/encounters/{encounterId}/treatment-plan", encounterId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(planId.toString()))
                 .andExpect(jsonPath("$[0].conduct").value("OUTPATIENT_TREATMENT"))
@@ -204,7 +204,7 @@ class TreatmentPlanControllerTest {
 
         when(treatmentPlanService.updatePlan(eq(planId), any())).thenReturn(response);
 
-        mockMvc.perform(put("/api/v1/health/hce/treatment-plans/{planId}", planId)
+        mockMvc.perform(put("/health/hce/treatment-plans/{planId}", planId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -226,7 +226,7 @@ class TreatmentPlanControllerTest {
                 .thenThrow(new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND, "Treatment plan not found"));
 
-        mockMvc.perform(put("/api/v1/health/hce/treatment-plans/{planId}", planId)
+        mockMvc.perform(put("/health/hce/treatment-plans/{planId}", planId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -253,7 +253,7 @@ class TreatmentPlanControllerTest {
 
         when(treatmentPlanService.createPlan(any())).thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/treatment-plan", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/treatment-plan", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

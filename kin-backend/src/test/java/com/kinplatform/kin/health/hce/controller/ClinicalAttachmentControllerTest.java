@@ -109,7 +109,7 @@ class ClinicalAttachmentControllerTest {
         when(clinicalAttachmentService.uploadAttachment(any(CreateClinicalAttachmentRequest.class)))
                 .thenReturn(sampleResponse());
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/attachments", UUID.randomUUID())
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/attachments", UUID.randomUUID())
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -123,7 +123,7 @@ class ClinicalAttachmentControllerTest {
     void uploadAttachment_validationError_returns400() throws Exception {
         CreateClinicalAttachmentRequest invalid = CreateClinicalAttachmentRequest.builder().build();
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/attachments", UUID.randomUUID())
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/attachments", UUID.randomUUID())
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalid)))
@@ -132,7 +132,7 @@ class ClinicalAttachmentControllerTest {
 
     @Test
     void uploadAttachment_unauthenticated_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/attachments", UUID.randomUUID())
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/attachments", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
                 .andExpect(status().isForbidden());
@@ -141,7 +141,7 @@ class ClinicalAttachmentControllerTest {
     @Test
     @WithMockUser(roles = "PATIENT")
     void uploadAttachment_wrongRole_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/attachments", UUID.randomUUID())
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/attachments", UUID.randomUUID())
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -170,7 +170,7 @@ class ClinicalAttachmentControllerTest {
                         .updatedAt(Instant.now())
                         .build()));
 
-        mockMvc.perform(get("/api/v1/health/hce/encounters/{encounterId}/attachments", UUID.randomUUID()))
+        mockMvc.perform(get("/health/hce/encounters/{encounterId}/attachments", UUID.randomUUID()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].attachmentType").value("LAB_RESULT"))
                 .andExpect(jsonPath("$[1].attachmentType").value("IMAGING"));
@@ -182,7 +182,7 @@ class ClinicalAttachmentControllerTest {
         when(clinicalAttachmentService.getByEncounter(any(UUID.class)))
                 .thenReturn(List.of());
 
-        mockMvc.perform(get("/api/v1/health/hce/encounters/{encounterId}/attachments", UUID.randomUUID()))
+        mockMvc.perform(get("/health/hce/encounters/{encounterId}/attachments", UUID.randomUUID()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
@@ -209,7 +209,7 @@ class ClinicalAttachmentControllerTest {
         when(clinicalAttachmentService.getByPatientAndType(patientId, ClinicalAttachment.AttachmentType.LAB_RESULT))
                 .thenReturn(List.of(sampleResponse()));
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/{patientId}/attachments", patientId)
+        mockMvc.perform(get("/health/hce/patients/{patientId}/attachments", patientId)
                         .param("type", "LAB_RESULT"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].attachmentType").value("LAB_RESULT"));
@@ -236,7 +236,7 @@ class ClinicalAttachmentControllerTest {
         when(clinicalAttachmentService.getByPatient(patientId))
                 .thenReturn(List.of(a1, a2));
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/{patientId}/attachments", patientId))
+        mockMvc.perform(get("/health/hce/patients/{patientId}/attachments", patientId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].attachmentType").value("LAB_RESULT"))
                 .andExpect(jsonPath("$[1].attachmentType").value("IMAGING"));

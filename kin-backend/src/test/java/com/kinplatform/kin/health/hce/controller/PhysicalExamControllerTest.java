@@ -80,7 +80,7 @@ class PhysicalExamControllerTest {
         when(physicalExamService.recordExam(any(CreatePhysicalExamRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(put("/api/v1/health/hce/encounters/{encounterId}/physical-exam", encounterId)
+        mockMvc.perform(put("/health/hce/encounters/{encounterId}/physical-exam", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -98,7 +98,7 @@ class PhysicalExamControllerTest {
                 .bpSystolic(999)
                 .build();
 
-        mockMvc.perform(put("/api/v1/health/hce/encounters/{encounterId}/physical-exam", encounterId)
+        mockMvc.perform(put("/health/hce/encounters/{encounterId}/physical-exam", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -114,7 +114,7 @@ class PhysicalExamControllerTest {
                 .heartRate(72)
                 .build();
 
-        mockMvc.perform(put("/api/v1/health/hce/encounters/{encounterId}/physical-exam", encounterId)
+        mockMvc.perform(put("/health/hce/encounters/{encounterId}/physical-exam", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -129,7 +129,7 @@ class PhysicalExamControllerTest {
                 .bpSystolic(120)
                 .build();
 
-        mockMvc.perform(put("/api/v1/health/hce/encounters/{encounterId}/physical-exam", encounterId)
+        mockMvc.perform(put("/health/hce/encounters/{encounterId}/physical-exam", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -153,7 +153,7 @@ class PhysicalExamControllerTest {
 
         when(physicalExamService.getByEncounter(encounterId)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/health/hce/encounters/{encounterId}/physical-exam", encounterId))
+        mockMvc.perform(get("/health/hce/encounters/{encounterId}/physical-exam", encounterId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(response.getId().toString()))
                 .andExpect(jsonPath("$.encounterId").value(encounterId.toString()));
@@ -166,7 +166,7 @@ class PhysicalExamControllerTest {
                 .thenThrow(new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND, "Physical exam not found"));
 
-        mockMvc.perform(get("/api/v1/health/hce/encounters/{encounterId}/physical-exam", encounterId))
+        mockMvc.perform(get("/health/hce/encounters/{encounterId}/physical-exam", encounterId))
                 .andExpect(status().isNotFound());
     }
 
@@ -186,7 +186,7 @@ class PhysicalExamControllerTest {
 
         when(physicalExamService.getLatestByPatient(patientId)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/{patientId}/physical-exam/latest", patientId))
+        mockMvc.perform(get("/health/hce/patients/{patientId}/physical-exam/latest", patientId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(response.getId().toString()))
                 .andExpect(jsonPath("$.patientId").value(patientId.toString()));
@@ -206,7 +206,7 @@ class PhysicalExamControllerTest {
 
         when(physicalExamService.getLatestByPatient(patientId)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/{patientId}/physical-exam/latest", patientId))
+        mockMvc.perform(get("/health/hce/patients/{patientId}/physical-exam/latest", patientId))
                 .andExpect(status().isOk());
     }
 }

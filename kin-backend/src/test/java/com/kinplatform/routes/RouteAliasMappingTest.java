@@ -15,6 +15,18 @@ import com.kinplatform.kin.health.dashboard.api.DashboardController;
 import com.kinplatform.kin.health.differential.api.DifferentialController;
 import com.kinplatform.kin.health.documents.api.DocumentController;
 import com.kinplatform.kin.health.followup.api.FollowUpController;
+import com.kinplatform.kin.health.hce.controller.AnamnesisController;
+import com.kinplatform.kin.health.hce.controller.ClinicalAttachmentController;
+import com.kinplatform.kin.health.hce.controller.DiagnosesController;
+import com.kinplatform.kin.health.hce.controller.DischargeSummaryController;
+import com.kinplatform.kin.health.hce.controller.EncounterController;
+import com.kinplatform.kin.health.hce.controller.InformedConsentController;
+import com.kinplatform.kin.health.hce.controller.MedicalOrderController;
+import com.kinplatform.kin.health.hce.controller.ObstetricHistoryController;
+import com.kinplatform.kin.health.hce.controller.PatientIdentificationController;
+import com.kinplatform.kin.health.hce.controller.PhysicalExamController;
+import com.kinplatform.kin.health.hce.controller.ReferralController;
+import com.kinplatform.kin.health.hce.controller.TreatmentPlanController;
 import com.kinplatform.kin.health.physician.api.PatientConsentController;
 import com.kinplatform.kin.health.physician.api.PatientRelationshipController;
 import com.kinplatform.kin.health.physician.api.PhysicianController;
@@ -66,7 +78,21 @@ class RouteAliasMappingTest {
             new Alias(SchedulingController.class, "/health/scheduling", "/medical/scheduling"),
             new Alias(TelemedicineController.class, "/health/telemedicine", "/medical/telemedicine"),
             new Alias(TriageController.class, "/health/triage", "/medical/triage"),
-            new Alias(TriageExportController.class, "/health/triage", "/medical/triage"));
+            new Alias(TriageExportController.class, "/health/triage", "/medical/triage"),
+            // HCE (TD-API-1): legacy /health/hce + alias /medical/hce consumido por el
+            // portal médico (medicalApi antepone /medical).
+            new Alias(EncounterController.class, "/health/hce/encounters", "/medical/hce/encounters"),
+            new Alias(AnamnesisController.class, "/health/hce/encounters", "/medical/hce/encounters"),
+            new Alias(PatientIdentificationController.class, "/health/hce/patients", "/medical/hce/patients"),
+            new Alias(DiagnosesController.class, "/health/hce", "/medical/hce"),
+            new Alias(PhysicalExamController.class, "/health/hce", "/medical/hce"),
+            new Alias(TreatmentPlanController.class, "/health/hce", "/medical/hce"),
+            new Alias(MedicalOrderController.class, "/health/hce", "/medical/hce"),
+            new Alias(DischargeSummaryController.class, "/health/hce", "/medical/hce"),
+            new Alias(ClinicalAttachmentController.class, "/health/hce", "/medical/hce"),
+            new Alias(ReferralController.class, "/health/hce", "/medical/hce"),
+            new Alias(ObstetricHistoryController.class, "/health/hce", "/medical/hce"),
+            new Alias(InformedConsentController.class, "/health/hce", "/medical/hce"));
 
     @Test
     void todosLosControladoresDeclaranRutaLegacyYAlias() {

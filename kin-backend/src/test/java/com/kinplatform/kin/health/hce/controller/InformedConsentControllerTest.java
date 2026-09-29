@@ -92,7 +92,7 @@ class InformedConsentControllerTest {
         when(informedConsentService.createConsentForEncounter(eq(encounterId), any(CreateInformedConsentRequest.class)))
                 .thenReturn(sampleResponse());
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/consents", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/consents", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -107,7 +107,7 @@ class InformedConsentControllerTest {
     void createConsent_validationError_returns400() throws Exception {
         CreateInformedConsentRequest invalid = CreateInformedConsentRequest.builder().build();
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/consents", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/consents", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalid)))
@@ -116,7 +116,7 @@ class InformedConsentControllerTest {
 
     @Test
     void createConsent_unauthenticated_returns401() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/consents", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/consents", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -126,7 +126,7 @@ class InformedConsentControllerTest {
     @Test
     @WithMockUser(roles = "PATIENT")
     void createConsent_wrongRole_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/consents", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/consents", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -139,7 +139,7 @@ class InformedConsentControllerTest {
         RevokeConsentRequest request = RevokeConsentRequest.builder().reason("Patient changed mind").build();
         when(informedConsentService.revokeConsent(consentId, "Patient changed mind")).thenReturn(sampleResponse());
 
-        mockMvc.perform(put("/api/v1/health/hce/consents/{consentId}/revoke", consentId)
+        mockMvc.perform(put("/health/hce/consents/{consentId}/revoke", consentId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -152,7 +152,7 @@ class InformedConsentControllerTest {
     void revokeConsent_blankReason_returns400() throws Exception {
         RevokeConsentRequest request = RevokeConsentRequest.builder().reason("").build();
 
-        mockMvc.perform(put("/api/v1/health/hce/consents/{consentId}/revoke", consentId)
+        mockMvc.perform(put("/health/hce/consents/{consentId}/revoke", consentId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -164,7 +164,7 @@ class InformedConsentControllerTest {
     void getByPatient_happyPath_returns200() throws Exception {
         when(informedConsentService.getByPatient(patientId)).thenReturn(List.of(sampleResponse()));
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/{patientId}/consents", patientId))
+        mockMvc.perform(get("/health/hce/patients/{patientId}/consents", patientId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].consentType").value("SURGICAL"));
     }

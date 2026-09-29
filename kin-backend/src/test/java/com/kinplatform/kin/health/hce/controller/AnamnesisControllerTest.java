@@ -84,7 +84,7 @@ class AnamnesisControllerTest {
         when(anamnesisService.createAnamnesis(any(CreateAnamnesisRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(put("/api/v1/health/hce/encounters/{encounterId}/anamnesis", encounterId)
+        mockMvc.perform(put("/health/hce/encounters/{encounterId}/anamnesis", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -101,7 +101,7 @@ class AnamnesisControllerTest {
                 .encounterId(null)
                 .build();
 
-        mockMvc.perform(put("/api/v1/health/hce/encounters/{encounterId}/anamnesis", encounterId)
+        mockMvc.perform(put("/health/hce/encounters/{encounterId}/anamnesis", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -116,7 +116,7 @@ class AnamnesisControllerTest {
                 .evolutionDescription("Dolor abdominal agudo")
                 .build();
 
-        mockMvc.perform(put("/api/v1/health/hce/encounters/{encounterId}/anamnesis", encounterId)
+        mockMvc.perform(put("/health/hce/encounters/{encounterId}/anamnesis", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -132,7 +132,7 @@ class AnamnesisControllerTest {
                 .evolutionDescription("Dolor abdominal agudo")
                 .build();
 
-        mockMvc.perform(put("/api/v1/health/hce/encounters/{encounterId}/anamnesis", encounterId)
+        mockMvc.perform(put("/health/hce/encounters/{encounterId}/anamnesis", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -156,7 +156,7 @@ class AnamnesisControllerTest {
 
         when(anamnesisService.getByEncounterId(encounterId)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/health/hce/encounters/{encounterId}/anamnesis", encounterId))
+        mockMvc.perform(get("/health/hce/encounters/{encounterId}/anamnesis", encounterId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(anamnesisId.toString()))
                 .andExpect(jsonPath("$.encounterId").value(encounterId.toString()));
@@ -169,7 +169,7 @@ class AnamnesisControllerTest {
                 .thenThrow(new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND, "Anamnesis not found for encounter"));
 
-        mockMvc.perform(get("/api/v1/health/hce/encounters/{encounterId}/anamnesis", encounterId))
+        mockMvc.perform(get("/health/hce/encounters/{encounterId}/anamnesis", encounterId))
                 .andExpect(status().isNotFound());
     }
 
@@ -194,7 +194,7 @@ class AnamnesisControllerTest {
         when(anamnesisService.createAnamnesis(any(CreateAnamnesisRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(put("/api/v1/health/hce/encounters/{encounterId}/anamnesis", encounterId)
+        mockMvc.perform(put("/health/hce/encounters/{encounterId}/anamnesis", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

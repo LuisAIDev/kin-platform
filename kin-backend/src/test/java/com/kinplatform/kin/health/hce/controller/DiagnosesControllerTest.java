@@ -103,7 +103,7 @@ class DiagnosesControllerTest {
         when(diagnosesService.addDiagnosis(any(CreateDiagnosisRequest.class)))
                 .thenReturn(sampleResponse());
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/diagnoses", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/diagnoses", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -119,7 +119,7 @@ class DiagnosesControllerTest {
     void createDiagnosis_validationError_returns400() throws Exception {
         CreateDiagnosisRequest invalid = CreateDiagnosisRequest.builder().build();
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/diagnoses", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/diagnoses", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalid)))
@@ -128,7 +128,7 @@ class DiagnosesControllerTest {
 
     @Test
     void createDiagnosis_unauthenticated_returns401() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/diagnoses", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/diagnoses", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -138,7 +138,7 @@ class DiagnosesControllerTest {
     @Test
     @WithMockUser(roles = "PATIENT")
     void createDiagnosis_wrongRole_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/diagnoses", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/diagnoses", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -151,7 +151,7 @@ class DiagnosesControllerTest {
         when(diagnosesService.addDiagnosis(any(CreateDiagnosisRequest.class)))
                 .thenReturn(sampleResponse());
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/diagnoses", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/diagnoses", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -176,7 +176,7 @@ class DiagnosesControllerTest {
         when(diagnosesService.getAllByEncounter(encounterId))
                 .thenReturn(List.of(sampleResponse(), comorbilidad));
 
-        mockMvc.perform(get("/api/v1/health/hce/encounters/{encounterId}/diagnoses", encounterId))
+        mockMvc.perform(get("/health/hce/encounters/{encounterId}/diagnoses", encounterId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].diagnosisType").value("PRINCIPAL"))
                 .andExpect(jsonPath("$[1].diagnosisType").value("COMORBILIDAD"));
@@ -187,7 +187,7 @@ class DiagnosesControllerTest {
     void setPrincipal_happyPath_returns200() throws Exception {
         when(diagnosesService.setPrincipal(diagnosisId)).thenReturn(sampleResponse());
 
-        mockMvc.perform(put("/api/v1/health/hce/diagnoses/{diagnosisId}/principal", diagnosisId)
+        mockMvc.perform(put("/health/hce/diagnoses/{diagnosisId}/principal", diagnosisId)
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(diagnosisId.toString()))
@@ -199,7 +199,7 @@ class DiagnosesControllerTest {
     void getPrincipal_happyPath_returns200() throws Exception {
         when(diagnosesService.getPrincipal(encounterId)).thenReturn(Optional.of(sampleResponse()));
 
-        mockMvc.perform(get("/api/v1/health/hce/encounters/{encounterId}/diagnoses/principal", encounterId))
+        mockMvc.perform(get("/health/hce/encounters/{encounterId}/diagnoses/principal", encounterId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(diagnosisId.toString()))
                 .andExpect(jsonPath("$.diagnosisType").value("PRINCIPAL"));
@@ -210,7 +210,7 @@ class DiagnosesControllerTest {
     void getPrincipal_notFound_returns404() throws Exception {
         when(diagnosesService.getPrincipal(encounterId)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/v1/health/hce/encounters/{encounterId}/diagnoses/principal", encounterId))
+        mockMvc.perform(get("/health/hce/encounters/{encounterId}/diagnoses/principal", encounterId))
                 .andExpect(status().isNotFound());
     }
 }

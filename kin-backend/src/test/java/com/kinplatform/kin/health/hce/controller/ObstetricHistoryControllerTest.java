@@ -116,7 +116,7 @@ class ObstetricHistoryControllerTest {
         when(obstetricHistoryService.upsertHistory(any(CreateObstetricHistoryRequest.class)))
                 .thenReturn(sampleResponse());
 
-        mockMvc.perform(post("/api/v1/health/hce/patients/{patientId}/obstetric-history", patientId)
+        mockMvc.perform(post("/health/hce/patients/{patientId}/obstetric-history", patientId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -131,7 +131,7 @@ class ObstetricHistoryControllerTest {
     void upsertHistory_validationError_returns400() throws Exception {
         CreateObstetricHistoryRequest invalid = CreateObstetricHistoryRequest.builder().build();
 
-        mockMvc.perform(post("/api/v1/health/hce/patients/{patientId}/obstetric-history", patientId)
+        mockMvc.perform(post("/health/hce/patients/{patientId}/obstetric-history", patientId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalid)))
@@ -140,7 +140,7 @@ class ObstetricHistoryControllerTest {
 
     @Test
     void upsertHistory_unauthenticated_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/patients/{patientId}/obstetric-history", patientId)
+        mockMvc.perform(post("/health/hce/patients/{patientId}/obstetric-history", patientId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
                 .andExpect(status().isForbidden());
@@ -149,7 +149,7 @@ class ObstetricHistoryControllerTest {
     @Test
     @WithMockUser(roles = "PATIENT")
     void upsertHistory_wrongRole_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/patients/{patientId}/obstetric-history", patientId)
+        mockMvc.perform(post("/health/hce/patients/{patientId}/obstetric-history", patientId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -162,7 +162,7 @@ class ObstetricHistoryControllerTest {
         when(obstetricHistoryService.upsertHistory(any(CreateObstetricHistoryRequest.class)))
                 .thenReturn(sampleResponse());
 
-        mockMvc.perform(put("/api/v1/health/hce/obstetric-history/{id}", historyId)
+        mockMvc.perform(put("/health/hce/obstetric-history/{id}", historyId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -177,7 +177,7 @@ class ObstetricHistoryControllerTest {
         when(obstetricHistoryService.getByPatientId(patientId))
                 .thenReturn(Optional.of(sampleResponse()));
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/{patientId}/obstetric-history", patientId))
+        mockMvc.perform(get("/health/hce/patients/{patientId}/obstetric-history", patientId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.gravida").value(3))
@@ -190,7 +190,7 @@ class ObstetricHistoryControllerTest {
         when(obstetricHistoryService.getByPatientId(patientId))
                 .thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/{patientId}/obstetric-history", patientId))
+        mockMvc.perform(get("/health/hce/patients/{patientId}/obstetric-history", patientId))
                 .andExpect(status().isNotFound());
     }
 }

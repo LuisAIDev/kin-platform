@@ -101,7 +101,7 @@ class MedicalOrderControllerTest {
         when(medicalOrderService.addOrderForEncounter(eq(encounterId), any(CreateMedicalOrderRequest.class)))
                 .thenReturn(sampleResponse());
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/orders", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/orders", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -116,7 +116,7 @@ class MedicalOrderControllerTest {
     void createOrder_validationError_returns400() throws Exception {
         CreateMedicalOrderRequest invalid = CreateMedicalOrderRequest.builder().build();
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/orders", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/orders", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalid)))
@@ -125,7 +125,7 @@ class MedicalOrderControllerTest {
 
     @Test
     void createOrder_unauthenticated_returns401() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/orders", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/orders", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -135,7 +135,7 @@ class MedicalOrderControllerTest {
     @Test
     @WithMockUser(roles = "PATIENT")
     void createOrder_wrongRole_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/orders", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/orders", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -149,7 +149,7 @@ class MedicalOrderControllerTest {
         when(userRepository.findByEmail("physician@test.com")).thenReturn(Optional.of(physician));
         when(medicalOrderService.executeOrder(orderId, physicianId)).thenReturn(sampleResponse());
 
-        mockMvc.perform(put("/api/v1/health/hce/orders/{orderId}/execute", orderId)
+        mockMvc.perform(put("/health/hce/orders/{orderId}/execute", orderId)
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(orderId.toString()));
@@ -161,7 +161,7 @@ class MedicalOrderControllerTest {
         CancelOrderRequest request = CancelOrderRequest.builder().reason("Patient refused").build();
         when(medicalOrderService.cancelOrder(orderId, "Patient refused")).thenReturn(sampleResponse());
 
-        mockMvc.perform(put("/api/v1/health/hce/orders/{orderId}/cancel", orderId)
+        mockMvc.perform(put("/health/hce/orders/{orderId}/cancel", orderId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -174,7 +174,7 @@ class MedicalOrderControllerTest {
     void cancelOrder_blankReason_returns400() throws Exception {
         CancelOrderRequest request = CancelOrderRequest.builder().reason("").build();
 
-        mockMvc.perform(put("/api/v1/health/hce/orders/{orderId}/cancel", orderId)
+        mockMvc.perform(put("/health/hce/orders/{orderId}/cancel", orderId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -186,7 +186,7 @@ class MedicalOrderControllerTest {
     void getByEncounter_happyPath_returns200() throws Exception {
         when(medicalOrderService.getByEncounter(encounterId)).thenReturn(List.of(sampleResponse()));
 
-        mockMvc.perform(get("/api/v1/health/hce/encounters/{encounterId}/orders", encounterId))
+        mockMvc.perform(get("/health/hce/encounters/{encounterId}/orders", encounterId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].orderType").value("LAB_EXAM"));
     }
@@ -196,7 +196,7 @@ class MedicalOrderControllerTest {
     void getByTreatmentPlan_happyPath_returns200() throws Exception {
         when(medicalOrderService.getByTreatmentPlan(treatmentPlanId)).thenReturn(List.of(sampleResponse()));
 
-        mockMvc.perform(get("/api/v1/health/hce/treatment-plans/{planId}/orders", treatmentPlanId))
+        mockMvc.perform(get("/health/hce/treatment-plans/{planId}/orders", treatmentPlanId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(orderId.toString()));
     }

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/health/hce/encounters")
+@RequestMapping({"/health/hce/encounters", "/medical/hce/encounters"})
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('PHYSICIAN', 'IPS_ADMIN', 'ADMIN')")
 @Tag(name = "Anamnesis", description = "Historia clínica del paciente (HCE Res 839/1995)")

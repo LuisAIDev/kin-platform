@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/health/hce")
+@RequestMapping({"/health/hce", "/medical/hce"})
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('PHYSICIAN', 'IPS_ADMIN', 'ADMIN')")
 @Tag(name = "Obstetric History", description = "Historia obstétrica: antecedentes de gestación, parto y lactancia")

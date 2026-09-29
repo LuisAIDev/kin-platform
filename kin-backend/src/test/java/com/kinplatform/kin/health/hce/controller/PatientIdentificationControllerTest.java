@@ -70,7 +70,7 @@ class PatientIdentificationControllerTest {
         when(service.upsertIdentification(eq(patientId), any(CreatePatientIdentificationRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/health/hce/patients/{patientId}/identification", patientId)
+        mockMvc.perform(post("/health/hce/patients/{patientId}/identification", patientId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -87,7 +87,7 @@ class PatientIdentificationControllerTest {
         request.setUserId(patientId);
         // Missing required fields
 
-        mockMvc.perform(post("/api/v1/health/hce/patients/{patientId}/identification", patientId)
+        mockMvc.perform(post("/health/hce/patients/{patientId}/identification", patientId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -103,7 +103,7 @@ class PatientIdentificationControllerTest {
                 .documentNumber("1234567890")
                 .build();
 
-        mockMvc.perform(post("/api/v1/health/hce/patients/{patientId}/identification", patientId)
+        mockMvc.perform(post("/health/hce/patients/{patientId}/identification", patientId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -130,7 +130,7 @@ class PatientIdentificationControllerTest {
         when(service.upsertIdentification(eq(patientId), any(CreatePatientIdentificationRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/health/hce/patients/{patientId}/identification", patientId)
+        mockMvc.perform(post("/health/hce/patients/{patientId}/identification", patientId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -157,7 +157,7 @@ class PatientIdentificationControllerTest {
         when(service.upsertIdentification(eq(patientId), any(CreatePatientIdentificationRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/health/hce/patients/{patientId}/identification", patientId)
+        mockMvc.perform(post("/health/hce/patients/{patientId}/identification", patientId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -174,7 +174,7 @@ class PatientIdentificationControllerTest {
                 .documentNumber("1234567890")
                 .build();
 
-        mockMvc.perform(post("/api/v1/health/hce/patients/{patientId}/identification", patientId)
+        mockMvc.perform(post("/health/hce/patients/{patientId}/identification", patientId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -194,7 +194,7 @@ class PatientIdentificationControllerTest {
 
         when(service.getByUserId(patientId)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/{patientId}/identification", patientId))
+        mockMvc.perform(get("/health/hce/patients/{patientId}/identification", patientId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(patientId.toString()));
     }
@@ -207,7 +207,7 @@ class PatientIdentificationControllerTest {
                 .thenThrow(new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND, "Not found"));
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/{patientId}/identification", patientId))
+        mockMvc.perform(get("/health/hce/patients/{patientId}/identification", patientId))
                 .andExpect(status().isNotFound());
     }
 
@@ -223,7 +223,7 @@ class PatientIdentificationControllerTest {
 
         when(service.findByDocumentNumber("CC", "1234567890")).thenReturn(Optional.of(response));
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/identification/by-document")
+        mockMvc.perform(get("/health/hce/patients/identification/by-document")
                         .param("documentType", "CC")
                         .param("documentNumber", "1234567890"))
                 .andExpect(status().isOk())
@@ -236,7 +236,7 @@ class PatientIdentificationControllerTest {
     void findByDocument_notFound_returns404() throws Exception {
         when(service.findByDocumentNumber("CC", "9999999999")).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/identification/by-document")
+        mockMvc.perform(get("/health/hce/patients/identification/by-document")
                         .param("documentType", "CC")
                         .param("documentNumber", "9999999999"))
                 .andExpect(status().isNotFound());
@@ -255,7 +255,7 @@ class PatientIdentificationControllerTest {
 
         when(service.findByEpsCode("EPS001")).thenReturn(List.of(response));
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/identification/by-eps")
+        mockMvc.perform(get("/health/hce/patients/identification/by-eps")
                         .param("epsCode", "EPS001"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].epsCode").value("EPS001"));
@@ -274,7 +274,7 @@ class PatientIdentificationControllerTest {
 
         when(service.findByRegimen("CONTRIBUTIVO")).thenReturn(List.of(response));
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/identification/by-regimen")
+        mockMvc.perform(get("/health/hce/patients/identification/by-regimen")
                         .param("regimen", "CONTRIBUTIVO"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].regimen").value("CONTRIBUTIVO"));
@@ -285,7 +285,7 @@ class PatientIdentificationControllerTest {
     void findByEps_emptyList_returns200() throws Exception {
         when(service.findByEpsCode("NONEXISTENT")).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/identification/by-eps")
+        mockMvc.perform(get("/health/hce/patients/identification/by-eps")
                         .param("epsCode", "NONEXISTENT"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())

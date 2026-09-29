@@ -11,7 +11,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -101,13 +100,10 @@ class ContextPathRegressionTest {
     }
 
     /**
-     * Canary de TD-API-1: los 16 controllers restantes (HCE, Consent,
-     * DataRectification/Export/Deletion) aún declaran {@code /api/v1} en su
-     * {@code @RequestMapping} y están rotos en producción. Este test DEBE
-     * fallar hasta completar la Opción B.
+     * Guarda que los controllers HCE declaren el mapping SIN {@code /api/v1}
+     * (lo aporta el context-path). Hasta Fase 2 (TD-API-1) este test fallaba.
      */
     @Test
-    @Disabled("TD-API-1: falla hasta corregir los 16 controllers restantes (HCE/Consent/Data-*)")
     void hceControllers_mustNotDeclareApiV1InMapping() {
         RequestMapping mapping = EncounterController.class.getAnnotation(RequestMapping.class);
         assertThat(mapping).isNotNull();

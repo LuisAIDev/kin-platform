@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/health/hce/patients")
+@RequestMapping({"/health/hce/patients", "/medical/hce/patients"})
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('PHYSICIAN', 'IPS_ADMIN', 'ADMIN', 'PATIENT')")
 @Tag(name = "Patient Identification", description = "Identificación del paciente (HCE Res 839/1995)")

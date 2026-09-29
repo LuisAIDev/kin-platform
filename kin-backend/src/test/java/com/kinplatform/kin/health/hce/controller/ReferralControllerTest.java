@@ -96,7 +96,7 @@ class ReferralControllerTest {
         when(referralService.createReferralForEncounter(eq(encounterId), any(CreateReferralRequest.class)))
                 .thenReturn(sampleResponse());
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/referrals", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/referrals", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -111,7 +111,7 @@ class ReferralControllerTest {
     void createReferral_validationError_returns400() throws Exception {
         CreateReferralRequest invalid = CreateReferralRequest.builder().build();
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/referrals", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/referrals", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalid)))
@@ -120,7 +120,7 @@ class ReferralControllerTest {
 
     @Test
     void createReferral_unauthenticated_returns401() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/referrals", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/referrals", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -130,7 +130,7 @@ class ReferralControllerTest {
     @Test
     @WithMockUser(roles = "PATIENT")
     void createReferral_wrongRole_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/referrals", encounterId)
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/referrals", encounterId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -147,7 +147,7 @@ class ReferralControllerTest {
         when(referralService.counterReferral(eq(referralId), any(CounterReferralRequest.class)))
                 .thenReturn(sampleResponse());
 
-        mockMvc.perform(put("/api/v1/health/hce/referrals/{referralId}/counter-referral", referralId)
+        mockMvc.perform(put("/health/hce/referrals/{referralId}/counter-referral", referralId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -160,7 +160,7 @@ class ReferralControllerTest {
     void getByPatient_happyPath_returns200() throws Exception {
         when(referralService.getByPatient(patientId)).thenReturn(List.of(sampleResponse()));
 
-        mockMvc.perform(get("/api/v1/health/hce/patients/{patientId}/referrals", patientId))
+        mockMvc.perform(get("/health/hce/patients/{patientId}/referrals", patientId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].referredToService").value("Neurología"));
     }
@@ -170,7 +170,7 @@ class ReferralControllerTest {
     void getByStatus_happyPath_returns200() throws Exception {
         when(referralService.getByStatus(Referral.Status.PENDING)).thenReturn(List.of(sampleResponse()));
 
-        mockMvc.perform(get("/api/v1/health/hce/referrals")
+        mockMvc.perform(get("/health/hce/referrals")
                         .param("status", "PENDING"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].status").value("PENDING"));

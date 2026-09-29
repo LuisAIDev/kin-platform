@@ -109,7 +109,7 @@ class DischargeSummaryControllerTest {
         when(dischargeSummaryService.createDischargeSummary(any(CreateDischargeSummaryRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/discharge", UUID.randomUUID())
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/discharge", UUID.randomUUID())
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -121,7 +121,7 @@ class DischargeSummaryControllerTest {
     @Test
     @WithMockUser(roles = "PHYSICIAN")
     void createDischargeSummary_validationError_returns400() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/discharge", UUID.randomUUID())
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/discharge", UUID.randomUUID())
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -130,7 +130,7 @@ class DischargeSummaryControllerTest {
 
     @Test
     void createDischargeSummary_unauthenticated_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/discharge", UUID.randomUUID())
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/discharge", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
                 .andExpect(status().isForbidden());
@@ -139,7 +139,7 @@ class DischargeSummaryControllerTest {
     @Test
     @WithMockUser(roles = "PATIENT")
     void createDischargeSummary_wrongRole_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/health/hce/encounters/{encounterId}/discharge", UUID.randomUUID())
+        mockMvc.perform(post("/health/hce/encounters/{encounterId}/discharge", UUID.randomUUID())
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest())))
@@ -152,7 +152,7 @@ class DischargeSummaryControllerTest {
         when(dischargeSummaryService.getByEncounter(any(UUID.class)))
                 .thenReturn(List.of(sampleResponse()));
 
-        mockMvc.perform(get("/api/v1/health/hce/encounters/{encounterId}/discharge", UUID.randomUUID()))
+        mockMvc.perform(get("/health/hce/encounters/{encounterId}/discharge", UUID.randomUUID()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.dischargeDiagnosisCie10").value("K59.0"));
     }
@@ -163,7 +163,7 @@ class DischargeSummaryControllerTest {
         when(dischargeSummaryService.getByEncounter(any(UUID.class)))
                 .thenReturn(List.of());
 
-        mockMvc.perform(get("/api/v1/health/hce/encounters/{encounterId}/discharge", UUID.randomUUID()))
+        mockMvc.perform(get("/health/hce/encounters/{encounterId}/discharge", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
     }
 
@@ -178,7 +178,7 @@ class DischargeSummaryControllerTest {
         when(dischargeSummaryService.signDischargeSummary(any(UUID.class), any(UUID.class)))
                 .thenReturn(sampleResponse());
 
-        mockMvc.perform(put("/api/v1/health/hce/discharge-summaries/{summaryId}/sign", UUID.randomUUID())
+        mockMvc.perform(put("/health/hce/discharge-summaries/{summaryId}/sign", UUID.randomUUID())
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists());
@@ -190,7 +190,7 @@ class DischargeSummaryControllerTest {
         when(dischargeSummaryService.signDischargeSummary(any(UUID.class), any(UUID.class)))
                 .thenThrow(new jakarta.persistence.EntityNotFoundException("Discharge summary not found"));
 
-        mockMvc.perform(put("/api/v1/health/hce/discharge-summaries/{summaryId}/sign", UUID.randomUUID())
+        mockMvc.perform(put("/health/hce/discharge-summaries/{summaryId}/sign", UUID.randomUUID())
                         .with(csrf()))
                 .andExpect(status().isBadRequest());
     }
@@ -201,7 +201,7 @@ class DischargeSummaryControllerTest {
         when(dischargeSummaryService.signDischargeSummary(any(UUID.class), any(UUID.class)))
                 .thenThrow(new IllegalStateException("Discharge summary already signed"));
 
-        mockMvc.perform(put("/api/v1/health/hce/discharge-summaries/{summaryId}/sign", UUID.randomUUID())
+        mockMvc.perform(put("/health/hce/discharge-summaries/{summaryId}/sign", UUID.randomUUID())
                         .with(csrf()))
                 .andExpect(status().isBadRequest());
     }
@@ -212,7 +212,7 @@ class DischargeSummaryControllerTest {
         when(dischargeSummaryService.getByAdmission(any(UUID.class)))
                 .thenReturn(Optional.of(sampleResponse()));
 
-        mockMvc.perform(get("/api/v1/health/hce/admissions/{admissionId}/discharge", UUID.randomUUID()))
+        mockMvc.perform(get("/health/hce/admissions/{admissionId}/discharge", UUID.randomUUID()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.dischargeDiagnosisCie10").value("K59.0"));
     }
@@ -223,7 +223,7 @@ class DischargeSummaryControllerTest {
         when(dischargeSummaryService.getByAdmission(any(UUID.class)))
                 .thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/v1/health/hce/admissions/{admissionId}/discharge", UUID.randomUUID()))
+        mockMvc.perform(get("/health/hce/admissions/{admissionId}/discharge", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
     }
 }

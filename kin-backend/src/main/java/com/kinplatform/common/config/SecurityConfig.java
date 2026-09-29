@@ -84,6 +84,12 @@ public class SecurityConfig {
                         .hasAnyRole("FREE", "PREMIUM", "FACILITADOR", "PATIENT", "ADMIN")
                         .requestMatchers("/health/dashboard/**")
                         .hasAnyRole("FREE", "PREMIUM", "FACILITADOR", "PATIENT", "ADMIN")
+                        // HCE (TD-API-1): historia clinica electronica. El control de
+                        // roles lo aplica @PreAuthorize a nivel de clase en los
+                        // controllers; aqui solo se exige autenticacion. Se cubren el
+                        // path legacy y el alias del portal medico.
+                        .requestMatchers("/health/hce/**", "/medical/hce/**")
+                        .authenticated()
                         .requestMatchers("/health/patient/consent/**")
                         .authenticated()
                         // Gestión de invitaciones recibidas: accesible a cualquier usuario

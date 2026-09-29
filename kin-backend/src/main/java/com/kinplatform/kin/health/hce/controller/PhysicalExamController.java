@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/health/hce")
+@RequestMapping({"/health/hce", "/medical/hce"})
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('PHYSICIAN', 'IPS_ADMIN', 'ADMIN')")
 @Tag(name = "Physical Exam", description = "Exploración física del paciente")

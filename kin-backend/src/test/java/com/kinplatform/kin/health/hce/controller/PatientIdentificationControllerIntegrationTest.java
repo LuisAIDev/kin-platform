@@ -28,15 +28,15 @@ class PatientIdentificationControllerIntegrationTest {
     private TestRestTemplate restTemplate;
 
     private String baseUrl() {
-        return "http://localhost:" + port + "/api/v1/health/hce/patients";
+        return "http://localhost:" + port + "/health/hce/patients";
     }
 
     @Test
     void fullFlow_upsert_get_findByDocument() {
         // This test requires authentication setup
         // When enabled, it will:
-        // 1. POST /api/v1/health/hce/patients/{patientId}/identification -> 201
-        // 2. GET /api/v1/health/hce/patients/{patientId}/identification -> 200
-        // 3. GET /api/v1/health/hce/patients/identification/by-document?documentType=CC&documentNumber=1234567890 -> 200
+        // 1. POST /health/hce/patients/{patientId}/identification -> 201
+        // 2. GET /health/hce/patients/{patientId}/identification -> 200
+        // 3. GET /health/hce/patients/identification/by-document?documentType=CC&documentNumber=1234567890 -> 200
     }
 }

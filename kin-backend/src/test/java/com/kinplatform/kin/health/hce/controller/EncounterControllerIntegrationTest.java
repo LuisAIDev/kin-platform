@@ -36,16 +36,16 @@ class EncounterControllerIntegrationTest {
     private TestRestTemplate restTemplate;
 
     private String baseUrl() {
-        return "http://localhost:" + port + "/api/v1/health/hce/encounters";
+        return "http://localhost:" + port + "/health/hce/encounters";
     }
 
     @Test
     void fullFlow_create_get_update_close() {
         // This test requires authentication setup
         // When enabled, it will:
-        // 1. POST /api/v1/health/hce/encounters -> 201
-        // 2. GET /api/v1/health/hce/encounters/{id} -> 200
-        // 3. PUT /api/v1/health/hce/encounters/{id} -> 200
-        // 4. POST /api/v1/health/hce/encounters/{id}/close -> 200
+        // 1. POST /health/hce/encounters -> 201
+        // 2. GET /health/hce/encounters/{id} -> 200
+        // 3. PUT /health/hce/encounters/{id} -> 200
+        // 4. POST /health/hce/encounters/{id}/close -> 200
     }
 }
