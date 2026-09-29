@@ -1,3 +1,18 @@
+### TD-API-1 (CRÍTICO): 17 controllers con `/api/v1` en `@RequestMapping`
+- **Prioridad**: CRÍTICA (bloquea ventas a IPS — HCE no funciona en producción).
+- **Controllers afectados** (el `context-path` ya es `/api/v1`, por lo que el prefijo se duplica a `/api/v1/api/v1/...`):
+  1. `PrivacyPolicyController` — **CORREGIDO** (Fase 6, commit de fix).
+  2. `ConsentController` (`/api/v1/health/consents`).
+  3. `DataRectificationController`, 4. `DataExportController`, 5. `DataDeletionController`.
+  6-17. 12 controllers HCE (`EncounterController`, `AnamnesisController`, `DiagnosesController`, `TreatmentPlanController`, `DischargeSummaryController`, `ClinicalAttachmentController`, `ReferralController`, `ObstetricHistoryController`, `PhysicalExamController`, `MedicalOrderController`, `PatientIdentificationController`, `InformedConsentController`).
+- **Problema**: `server.servlet.context-path=/api/v1` duplica el prefijo → 404/403 en prod (el servlet path no incluye el context-path).
+- **Frontend**: NUNCA cableó estos endpoints (0 matches en `kin-frontend`).
+- **Tests unitarios**: falso positivo por `@WebMvcTest` sin context-path (matchean el mapping literal).
+- **Integration tests**: `@Disabled` sin asserts (ver `TD-INTEGRATION-REPO-HCE`).
+- **Evidencia runtime (Fase 6)**: canary en `ContextPathRegressionTest.hceControllers_mustNotDeclareApiV1InMapping` (`@Disabled`) FALLA al habilitarse (assert sobre `EncounterController`).
+- **Fix objetivo**: Opción B (sprint dedicado: quitar `/api/v1` de los 16 controllers + actualizar tests + tests E2E reales con context-path + cableado frontend).
+- **Responsable**: PO + Agente. **Estimado**: 3-5 días.
+
 ### TD-CI-1: Agregar `ApplicationContextTest` al pipeline de CI/CD de GitHub Actions
 - **Prioridad**: Alta.
 - **Contexto**: el fallo de arranque `c2a645a` (bean `WebClient` faltante) pasó el CI porque solo corrían tests unitarios con mocks. `ApplicationContextTest` (`@SpringBootTest @ActiveProfiles("test")` + Testcontainers) detecta beans faltantes y aplica Flyway V1..V75 completo.
