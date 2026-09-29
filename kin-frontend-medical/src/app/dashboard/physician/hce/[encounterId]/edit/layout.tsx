@@ -22,7 +22,7 @@ const STEP_COMPONENTS: Record<WizardStepId, React.ComponentType<{ encounterId: s
   closing: () => <div className="p-6 text-center text-neutral-500">Paso 7 - Cierre (pendiente)</div>,
 };
 
-export function WizardLayout({ params }: { params: Promise<{ encounterId: string }> }) {
+export async function WizardLayout({ params }: { params: Promise<{ encounterId: string }> }) {
   const router = useRouter();
   const { encounterId } = useParams<{ encounterId: string }>();
   const resolvedEncounterId = encounterId || (await params).encounterId;

@@ -7,6 +7,7 @@ import {
   CheckCircle2, XCircle, AlertCircle, Save, Loader2,
   ClipboardCheck, FileText, ArrowLeft, Shield,
   Stethoscope, ClipboardList, BookOpen, Pill, CheckCircle,
+  ChevronUp, ChevronDown,
 } from 'lucide-react';
 import type { FC } from 'react';
 import { useRouter } from 'next/navigation';
@@ -53,7 +54,6 @@ interface ClosingStepProps {
   onSave: () => void;
   isDirty: boolean;
   className?: string;
-  // Props que vienen del wizard context
   patientData?: {
     fullName: string;
     documentNumber: string;
@@ -109,7 +109,7 @@ export const ClosingStep: FC<ClosingStepProps> = ({
 }) => {
   const router = useRouter();
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [saveTimer, setSaveTimer] = useState<NodeJS.Timeout | null>(null);
+  const [saveTimer, setSaveTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [isClosing, setIsClosing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
@@ -136,7 +136,6 @@ export const ClosingStep: FC<ClosingStepProps> = ({
     return () => subscription.unsubscribe();
   }, [form, handleAutoSave]);
 
-  // Actualizar campos basados en datos del wizard
   useEffect(() => {
     form.setValue('hasPrincipalDiagnosis', !!diagnosisData?.principal, { shouldValidate: true });
     form.setValue('hasTreatmentPlan', !!treatmentPlanData?.conduct, { shouldValidate: true });
@@ -203,7 +202,7 @@ export const ClosingStep: FC<ClosingStepProps> = ({
             <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
           )}
           <div className="flex-1">
-            <h3 className={validation.valid ? 'text-emerald-800' : 'text-red-800'} font-semibold">
+            <h3 className={`${validation.valid ? 'text-emerald-800' : 'text-red-800'} font-semibold`}>
               {validation.valid ? 'Todos los requisitos cumplidos' : 'Faltan requisitos para cerrar'}
             </h3>
             {!validation.valid && (
@@ -379,7 +378,7 @@ export const ClosingStep: FC<ClosingStepProps> = ({
                 <div>
                   <p className="font-semibold text-red-800">Esta acción es irreversible</p>
                   <p className="text-sm text-red-700 mt-1">El encuentro se marcará como CERRADO y no podrá editarse.</p>
-                </p>
+                </div>
               </div>
               <div className="space-y-2 text-sm">
                 <p><span className="font-medium">Paciente:</span> {patientData?.fullName}</p>
@@ -396,6 +395,7 @@ export const ClosingStep: FC<ClosingStepProps> = ({
                 <X className="w-4 h-4" />
                 Cancelar
               </button>
+
               <button
                 onClick={onSubmit}
                 disabled={isClosing}
