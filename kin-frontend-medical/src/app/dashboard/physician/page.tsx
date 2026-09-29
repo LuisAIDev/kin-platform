@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import AlertList from "@/components/physician/AlertList";
 import AIProgressIndicator from "@/components/AIProgressIndicator";
 import AIResultModal from "@/components/AIResultModal";
@@ -145,6 +146,20 @@ export default function PhysicianDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/physician/encounters/new"
+              className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 transition"
+            >
+              Nueva consulta
+            </Link>
+            {selectedPatientId && (
+              <Link
+                href={`/dashboard/physician/patients/${selectedPatientId}/encounters`}
+                className="rounded-lg border border-primary-200 px-3 py-1.5 text-xs font-medium text-primary-700 hover:bg-primary-50 transition"
+              >
+                Historial de consultas
+              </Link>
+            )}
             <button
               type="button"
               disabled={!selectedPatientId}

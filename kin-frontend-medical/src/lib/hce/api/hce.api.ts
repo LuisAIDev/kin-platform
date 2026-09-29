@@ -16,6 +16,19 @@ export interface EncounterResponse {
   closedAt: string | null;
 }
 
+/**
+ * Cuerpo de POST /hce/encounters. Refleja el DTO real del backend
+ * (`com.kinplatform.kin.health.hce.dto.CreateEncounterRequest`): el paciente y el
+ * tipo son obligatorios; el resto es opcional. `physicianId`/`organizationId`
+ * NO se envían: el backend los deriva del usuario autenticado.
+ */
+export interface CreateEncounterRequest {
+  patientId: string;
+  encounterType: string;
+  chiefComplaint?: string;
+  appointmentId?: string | null;
+}
+
 export interface PatientIdentificationResponse {
   id: string;
   patientId: string;
@@ -127,6 +140,14 @@ export const hceApi = {
   // Encounter CRUD
   getEncounter: (encounterId: string) =>
     medicalApi.get<EncounterResponse>(`/hce/encounters/${encounterId}`),
+
+  // Listar encounters de un paciente (TD-HCE-1).
+  listEncountersByPatient: (patientId: string) =>
+    medicalApi.get<EncounterResponse[]>(`/hce/encounters?patientId=${patientId}`),
+
+  // Crear un nuevo encounter (TD-HCE-1).
+  createEncounter: (data: CreateEncounterRequest) =>
+    medicalApi.post<EncounterResponse>(`/hce/encounters`, data),
 
   updateEncounter: (encounterId: string, data: EncounterUpdateData) =>
     medicalApi.put<EncounterResponse>(`/hce/encounters/${encounterId}`, data),
