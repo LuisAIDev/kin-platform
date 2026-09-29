@@ -3,6 +3,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { MessageSquare, AlertCircle } from 'lucide-react';
+import { useEffect } from 'react';
 import type { FC } from 'react';
 import { encounterSchema, encounterTypeSchema, type EncounterFormData } from '@/lib/hce/schemas/encounter.schema';
 import { useEncounter, useUpdateEncounter } from '@/lib/hce/hooks/useEncounter';
@@ -63,17 +64,16 @@ export const MotiveStep: FC<MotiveStepProps> = ({
     );
   }
 
-  const initialData: EncounterFormData = encounter ? {
-    patientId: encounter.patientId,
-    encounterType: encounter.encounterType as EncounterFormData['encounterType'],
-    chiefComplaint: encounter.chiefComplaint || '',
-  } : {
-    patientId: '',
-    encounterType: 'OUTPATIENT',
-    chiefComplaint: '',
-  };
-
-  form.reset(initialData);
+  // `form.reset` dentro de un efecto (no en render) para evitar el bucle de
+  // re-renders (React #301). Se re-ejecuta solo cuando cambia `encounter`.
+  useEffect(() => {
+    if (!encounter) return;
+    form.reset({
+      patientId: encounter.patientId,
+      encounterType: encounter.encounterType as EncounterFormData['encounterType'],
+      chiefComplaint: encounter.chiefComplaint || '',
+    });
+  }, [encounter, form]);
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-6 ${className || ''}`} noValidate>

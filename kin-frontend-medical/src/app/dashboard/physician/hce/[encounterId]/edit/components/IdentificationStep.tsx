@@ -3,6 +3,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { User, Calendar, Phone, Mail, MapPin, AlertCircle, Shield } from 'lucide-react';
+import { useEffect } from 'react';
 import type { FC } from 'react';
 import { patientIdentificationSchema, type PatientIdentificationFormData } from '@/lib/hce/schemas/encounter.schema';
 import { usePatientIdentification, useUpdatePatientIdentification } from '@/lib/hce/hooks/usePatientIdentification';
@@ -71,38 +72,35 @@ export const IdentificationStep: FC<IdentificationStepProps> = ({
     );
   }
 
-  const initialData = identification ? {
-    patientId: identification.patientId,
-    documentType: identification.documentType,
-    documentNumber: identification.documentNumber,
-    firstName: identification.firstName,
-    lastName: identification.lastName,
-    birthDate: identification.birthDate?.split('T')[0] || '',
-    sex: identification.sex,
-    bloodType: identification.bloodType || 'UNKNOWN',
-    rhFactor: identification.rhFactor || 'UNKNOWN',
-    eps: identification.eps || '',
-    regime: identification.regime || 'PARTICULAR',
-    phone: identification.phone || '',
-    email: identification.email || '',
-    address: identification.address || '',
-    city: identification.city || '',
-    emergencyContactName: identification.emergencyContactName || '',
-    emergencyContactPhone: identification.emergencyContactPhone || '',
-    emergencyContactRelation: identification.emergencyContactRelation || '',
-    guardianDocumentType: identification.guardianDocumentType || '',
-    guardianDocumentNumber: identification.guardianDocumentNumber || '',
-    guardianName: identification.guardianName || '',
-  } : {
-    patientId,
-    documentType: 'CC',
-    sex: 'M',
-    bloodType: 'UNKNOWN',
-    rhFactor: 'UNKNOWN',
-    regime: 'PARTICULAR',
-  };
-
-  form.reset(initialData as any);
+  // `form.reset` DEBE ir dentro de un efecto: llamarlo durante el render
+  // provocaba un bucle de re-renders (React #301). Se re-ejecuta solo cuando
+  // llega/cambia la data de la query (`identification`).
+  useEffect(() => {
+    if (!identification) return;
+    form.reset({
+      patientId: identification.patientId,
+      documentType: identification.documentType,
+      documentNumber: identification.documentNumber,
+      firstName: identification.firstName,
+      lastName: identification.lastName,
+      birthDate: identification.birthDate?.split('T')[0] || '',
+      sex: identification.sex,
+      bloodType: identification.bloodType || 'UNKNOWN',
+      rhFactor: identification.rhFactor || 'UNKNOWN',
+      eps: identification.eps || '',
+      regime: identification.regime || 'PARTICULAR',
+      phone: identification.phone || '',
+      email: identification.email || '',
+      address: identification.address || '',
+      city: identification.city || '',
+      emergencyContactName: identification.emergencyContactName || '',
+      emergencyContactPhone: identification.emergencyContactPhone || '',
+      emergencyContactRelation: identification.emergencyContactRelation || '',
+      guardianDocumentType: identification.guardianDocumentType || '',
+      guardianDocumentNumber: identification.guardianDocumentNumber || '',
+      guardianName: identification.guardianName || '',
+    } as any);
+  }, [identification, form]);
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-6 ${className || ''}`} noValidate>
