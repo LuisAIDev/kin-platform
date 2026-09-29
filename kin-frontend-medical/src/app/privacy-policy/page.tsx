@@ -205,9 +205,9 @@ export default async function PrivacyPolicyPage() {
           <p className="text-neutral-600 mb-6">
             No se pudo cargar la política de privacidad. Por favor, intente nuevamente más tarde.
           </p>
-          <a href="/" className="inline-flex items-center justify-center rounded-lg bg-medical-600 px-6 py-3 font-semibold text-white hover:bg-medical-700 transition">
+          <Link href="/" className="inline-flex items-center justify-center rounded-lg bg-medical-600 px-6 py-3 font-semibold text-white hover:bg-medical-700 transition">
             Volver al inicio
-          </a>
+          </Link>
         </div>
       </div>
     );

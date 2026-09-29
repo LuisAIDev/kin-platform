@@ -82,6 +82,10 @@ export function WizardLayout() {
     }
   }, [resolvedEncounterId, router]);
 
+  const handleFormChange = useCallback(() => {
+    setHasUnsavedChanges(true);
+  }, []);
+
   const StepComponent = STEP_COMPONENTS[currentStepId];
 
   if (encounterLoading) {
@@ -108,10 +112,6 @@ export function WizardLayout() {
       </div>
     );
   }
-
-  const handleFormChange = useCallback(() => {
-    setHasUnsavedChanges(true);
-  }, []);
 
   return (
     <div className="min-h-screen bg-neutral-50">

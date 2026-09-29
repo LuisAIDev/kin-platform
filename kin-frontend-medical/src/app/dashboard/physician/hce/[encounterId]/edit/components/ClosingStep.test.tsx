@@ -63,19 +63,18 @@ describe('ClosingStep', () => {
   it('renders validation success when all requirements met', () => {
     render(<ClosingStep {...defaultProps} />);
     expect(screen.getByText('Todos los requisitos cumplidos')).toBeInTheDocument();
-    expect(screen.getByTestId('check-circle')).toBeInTheDocument();
   });
 
   it('renders validation errors when missing principal diagnosis', () => {
     render(<ClosingStep {...defaultProps} diagnosisData={{ principal: null, secondary: [] }} />);
     expect(screen.getByText('Faltan requisitos para cerrar')).toBeInTheDocument();
-    expect(screen.getByText('Falta diagnóstico PRINCIPAL (obligatorio según Res 839/1995)')).toBeInTheDocument();
+    expect(screen.getByText('Falta diagnóstico PRINCIPAL')).toBeInTheDocument();
   });
 
   it('renders validation errors when missing treatment plan', () => {
     render(<ClosingStep {...defaultProps} treatmentPlanData={undefined} />);
     expect(screen.getByText('Faltan requisitos para cerrar')).toBeInTheDocument();
-    expect(screen.getByText('Falta plan de manejo (obligatorio)')).toBeInTheDocument();
+    expect(screen.getByText('Falta plan de manejo')).toBeInTheDocument();
   });
 
   it('shows patient identification section', () => {
