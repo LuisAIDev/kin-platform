@@ -30,6 +30,28 @@
 - **Referencia**: https://docs.spring.io/spring-security/reference/servlet/authentication/architecture.html
 - **Responsable**: PO (sprint dedicado).
 
+### TD-FE-TYPES-1: Frontend usa casts `as any` donde schema Zod ≠ DTO backend
+- **Prioridad**: Media.
+- **Causa**: los schemas Zod del wizard HCE no coinciden con los DTOs Java del backend (los `*Step.schema` divergen de los schemas base/contrato).
+- **Archivos afectados**: `PhysicalExamStep.tsx`, `HistoryStep.tsx`, `IllnessStep.tsx`, `IdentificationStep.tsx`, `MotiveStep.tsx`.
+- **Impacto**: pérdida de type-safety; posibles bugs en runtime que el compilador no detecta.
+- **Fix objetivo**: alinear los schemas Zod con los DTOs del backend y eliminar los casts.
+- **Responsable**: PO (sprint posterior).
+
+### TD-FE-TESTS-1: 9 tests frontend en rojo preexistentes (no regresiones)
+- **Prioridad**: Media.
+- **Evidencia (baseline)**: `git checkout a14481d` + `vitest run` → 396 passed / **15 failed**. Tras TD-FE-BUILD-1 y esta sesión → **411 passed / 9 failed**. Los fallos actuales ya estaban en baseline (se corrigieron los 6 de `ClosingStep`).
+- **Archivos**: `documentChat.test.ts` (3), `Navbar.test.tsx` (3), `PhysicianRegisterForm.test.tsx` (1), `DocumentAnalysisPdfButton.test.tsx` (1), `auth.test.ts` (1).
+- **Fix objetivo**: triar cada caso (matchers/activos/aislamiento de entorno).
+- **Responsable**: Frontend.
+
+### TD-FE-LINT-1: `npm run lint` no corría bajo ESLint 9 (hallazgos preexistentes)
+- **Prioridad**: Media.
+- **Contexto**: el script estaba roto (ESLint 9 exige `eslint.config.*`; FlatCompat con `next/core-web-vitals` rompía con "Converting circular structure to JSON"). Se creó `eslint.config.mjs` usando el flat config nativo de `eslint-config-next` v16. Al activarlo afloraron 33 problemas preexistentes.
+- **Decisión (registrada por el agente)**: `react-hooks/set-state-in-effect` (13) y `react-hooks/immutability` (4) son reglas NUEVAS de `eslint-plugin-react-hooks` v7 (no existían antes del upgrade) → se dejaron en `warn`. Se corrigieron los errores reales: `react-hooks/rules-of-hooks` (hook tras early-return en el wizard), `@next/next/no-html-link-for-pages` y exports anónimos. Actual: `npm run lint` → exit 0 (0 errores, 29 warnings).
+- **Fix objetivo**: refactorizar efectos/immutabilidad y volver las reglas a `error`.
+- **Responsable**: Frontend.
+
 ### TD-CI-7: Falta validación de build en CI/CD (build rojo con tests verdes)
 - **Prioridad**: Alta.
 - **Contexto**: `npm run build` fallaba con 59 errores TS (ver TD-FE-BUILD-1) mientras `vitest` daba 408 PASS; ningún gate ejecutaba `next build` ni `tsc --noEmit`. Además `npm run lint` está roto: ESLint 9 exige `eslint.config.*` y el `.eslintrc.json` legacy (`next/core-web-vitals`) provoca `Converting circular structure to JSON`.
