@@ -52,6 +52,13 @@
 - **Fix objetivo**: refactorizar efectos/immutabilidad y volver las reglas a `error`.
 - **Responsable**: Frontend.
 
+### TD-HCE-2: Modelo de organización para pacientes sin IPS
+- **Prioridad**: Media.
+- **Estado**: Los pacientes personales (registro libre) no tienen `organization_id`, pero `encounters.organization_id` es `NOT NULL` (V75) y `EncounterService` exigía la organización del paciente → 400 al crear la consulta.
+- **Solución actual (Opción B)**: derivar la organización del médico autenticado (`TenantContext`, con fallback a la organización demo `00000000-0000-0000-0000-000000000001`) cuando el paciente no tiene IPS.
+- **Solución futura (Opción C)**: crear una "Organización Personal" por defecto al registrar pacientes, para no depender del contexto del médico.
+- **Responsable**: PO (sprint de diseño).
+
 ### TD-CI-9: Falta matcher `/medical/physician/**` en SecurityConfig
 - **Prioridad**: Media.
 - **Estado**: El endpoint `/medical/physician/**` (alias del portal médico) funciona porque cae en `.anyRequest().authenticated()`, sin gate de rol explícito. El legacy `/health/physician/**` sí exige `PHYSICIAN`/`ADMIN`.
