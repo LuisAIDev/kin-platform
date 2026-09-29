@@ -30,6 +30,20 @@
 - **Referencia**: https://docs.spring.io/spring-security/reference/servlet/authentication/architecture.html
 - **Responsable**: PO (sprint dedicado).
 
+### TD-CI-7: Falta validación de build en CI/CD (build rojo con tests verdes)
+- **Prioridad**: Alta.
+- **Contexto**: `npm run build` fallaba con 59 errores TS (ver TD-FE-BUILD-1) mientras `vitest` daba 408 PASS; ningún gate ejecutaba `next build` ni `tsc --noEmit`. Además `npm run lint` está roto: ESLint 9 exige `eslint.config.*` y el `.eslintrc.json` legacy (`next/core-web-vitals`) provoca `Converting circular structure to JSON`.
+- **Impacto**: errores de tipo/compilación llegan a `main` sin detectarse → Vercel no despliega.
+- **Fix**: añadir script `"ci": "tsc --noEmit && next build && vitest run"` (y migrar ESLint a flat config), ejecutándolo en pre-push/CI.
+- **Responsable**: Frontend/DevOps.
+
+### TD-CI-8: GitHub Actions agotó minutos (2026-09-25)
+- **Prioridad**: Media.
+- **Contexto**: 100% de minutos usados. `quality-gate.yml` (SonarQube) y `security.yml` (CodeQL) corren en TODO push a `main` (sin filtro `paths`), incluyendo cambios de `kin-frontend-medical/**` que `frontend-ci.yml` no cubre.
+- **Impacto**: CI/CD de GitHub detenido hasta renovación. El deploy de Vercel NO depende de Actions (integración Git directa), pero el CI sí.
+- **Fix**: renovar GitHub Pro/Team, o añadir `paths` a `quality-gate`/`security`, o migrar CI/CD.
+- **Responsable**: DevOps.
+
 ### TD-CI-1: Agregar `ApplicationContextTest` al pipeline de CI/CD de GitHub Actions
 - **Prioridad**: Alta.
 - **Contexto**: el fallo de arranque `c2a645a` (bean `WebClient` faltante) pasó el CI porque solo corrían tests unitarios con mocks. `ApplicationContextTest` (`@SpringBootTest @ActiveProfiles("test")` + Testcontainers) detecta beans faltantes y aplica Flyway V1..V75 completo.
