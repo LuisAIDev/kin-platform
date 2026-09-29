@@ -13,6 +13,15 @@
 - **Fix objetivo**: Opción B (sprint dedicado: quitar `/api/v1` de los 16 controllers + actualizar tests + tests E2E reales con context-path + cableado frontend).
 - **Responsable**: PO + Agente. **Estimado**: 3-5 días.
 
+### TD-HCE-1 (CRÍTICO): No existe flujo de creación/listado de encounters desde el frontend
+- **Prioridad**: CRÍTICA (el wizard HCE no es operable end-to-end).
+- **Backend (OK)**: `EncounterController` expone `POST /health/hce/encounters` (create), `GET /health/hce/encounters?patientId=` (list por paciente) y `GET ...?organizationId=`. Tras Fase 2 también disponibles en `/medical/hce/encounters`.
+- **Frontend (gap)**: `kin-frontend-medical/src/lib/hce/api/hce.api.ts` NO expone `createEncounter` ni `listEncounters`; solo `get/update/close/{id}` y sub-recursos (anamnesis, physical-exam, diagnoses, treatment-plan, orders, history). Grep de `createEncounter|listEncounters|POST .../encounters` en `kin-frontend-medical/src` → 0 coincidencias fuera de sub-recursos.
+- **Síntoma**: la única página HCE es `app/dashboard/physician/hce/[encounterId]/edit/page.tsx`, que exige un `encounterId` existente en la URL. No hay UI que lo produzca ni lista de encounters.
+- **Impacto**: imposible crear un encounter desde el portal médico → el wizard nunca se puede abrir en producción, aunque el backend ya responda en `/medical/hce`.
+- **Fix**: `EncounterCreateModal` + métodos `createEncounter`/`listEncounters` en `hceApi` + punto de entrada (lista de pacientes/agenda del médico) + E2E.
+- **Responsable**: PO + Agente.
+
 ### TD-CI-6: API devuelve 403 en lugar de 401 para requests no autenticados
 - **Prioridad**: Media.
 - **Causa**: Sin `AuthenticationEntryPoint` configurado (ni `formLogin`/`httpBasic`), Spring Security usa `Http403ForbiddenEntryPoint`: toda request anónima a una ruta no-`permitAll` devuelve 403, exista o no el mapping. Verificado en `SecurityConfig` y en runtime (Fases 2 y 6).
