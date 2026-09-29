@@ -82,7 +82,9 @@ class PrivacyPolicyControllerTest {
             .build();
         when(service.getActivePolicy()).thenReturn(Optional.of(active));
 
-        mockMvc.perform(get("/api/v1/public/privacy-policy"))
+        // Regresion context-path: el mapping NO lleva /api/v1 (lo aporta
+        // server.servlet.context-path). Ver ContextPathRegressionTest.
+        mockMvc.perform(get("/public/privacy-policy"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.version").value("1.0"))
             .andExpect(jsonPath("$.title").value("Política de Privacidad v1.0"));
@@ -92,7 +94,7 @@ class PrivacyPolicyControllerTest {
     void getActivePolicy_noActive_returns404() throws Exception {
         when(service.getActivePolicy()).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/v1/public/privacy-policy"))
+        mockMvc.perform(get("/public/privacy-policy"))
             .andExpect(status().isNotFound());
     }
 
@@ -104,7 +106,7 @@ class PrivacyPolicyControllerTest {
             .id(UUID.randomUUID()).version("2.0").title("v2.0").active(true).build();
         when(service.listAllVersions()).thenReturn(List.of(v1, v2));
 
-        mockMvc.perform(get("/api/v1/public/privacy-policy/versions"))
+        mockMvc.perform(get("/public/privacy-policy/versions"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(2))
             .andExpect(jsonPath("$[0].version").value("1.0"))
@@ -121,7 +123,7 @@ class PrivacyPolicyControllerTest {
             .build();
         when(service.getPolicyByVersion("1.0")).thenReturn(Optional.of(version));
 
-        mockMvc.perform(get("/api/v1/public/privacy-policy/1.0"))
+        mockMvc.perform(get("/public/privacy-policy/1.0"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.version").value("1.0"));
     }
@@ -130,14 +132,14 @@ class PrivacyPolicyControllerTest {
     void getPolicyByVersion_notFound_returns404() throws Exception {
         when(service.getPolicyByVersion("99.0")).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/v1/public/privacy-policy/99.0"))
+        mockMvc.perform(get("/public/privacy-policy/99.0"))
             .andExpect(status().isNotFound());
     }
 
     @Test
     void publishNewVersion_noAuth_returns403() throws Exception {
         // CSRF filter blocks unauthenticated POST with 403 (Access Denied)
-        mockMvc.perform(post("/api/v1/admin/privacy-policy")
+        mockMvc.perform(post("/admin/privacy-policy")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"version\":\"2.0\",\"title\":\"v2.0\",\"contentMd\":\"# v2.0\",\"effectiveDate\":\"2025-01-01\"}"))
             .andExpect(status().isForbidden());
@@ -146,7 +148,7 @@ class PrivacyPolicyControllerTest {
     @Test
     @WithMockUser(username = "33333333-3333-3333-3333-333333333333", roles = "PATIENT")
     void publishNewVersion_patientRole_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/admin/privacy-policy")
+        mockMvc.perform(post("/admin/privacy-policy")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"version\":\"2.0\",\"title\":\"v2.0\",\"contentMd\":\"# v2.0\",\"effectiveDate\":\"2025-01-01\"}"))
             .andExpect(status().isForbidden());
@@ -166,7 +168,7 @@ class PrivacyPolicyControllerTest {
         when(service.publishNewVersion(eq("2.0"), eq("Política v2.0"), eq("# v2.0"), any(), any()))
             .thenReturn(newVersion);
 
-        mockMvc.perform(post("/api/v1/admin/privacy-policy")
+        mockMvc.perform(post("/admin/privacy-policy")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"version\":\"2.0\",\"title\":\"Política v2.0\",\"contentMd\":\"# v2.0\",\"effectiveDate\":\"2025-01-01\"}"))
             .andExpect(status().isCreated())

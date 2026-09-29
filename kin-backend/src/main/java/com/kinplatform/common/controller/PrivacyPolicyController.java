@@ -21,19 +21,19 @@ public class PrivacyPolicyController {
     private final PrivacyPolicyService service;
 
     // PUBLIC ENDPOINTS
-    @GetMapping("/api/v1/public/privacy-policy")
+    @GetMapping("/public/privacy-policy")
     public ResponseEntity<PrivacyPolicyVersion> getActivePolicy() {
         return service.getActivePolicy()
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/api/v1/public/privacy-policy/versions")
+    @GetMapping("/public/privacy-policy/versions")
     public ResponseEntity<List<com.kinplatform.common.entity.PrivacyPolicyVersion>> getAllVersions() {
         return ResponseEntity.ok(service.listAllVersions());
     }
 
-    @GetMapping("/api/v1/public/privacy-policy/{version}")
+    @GetMapping("/public/privacy-policy/{version}")
     public ResponseEntity<PrivacyPolicyVersion> getPolicyByVersion(@PathVariable String version) {
         return service.getPolicyByVersion(version)
             .map(ResponseEntity::ok)
@@ -41,7 +41,7 @@ public class PrivacyPolicyController {
     }
 
     // ADMIN ENDPOINTS
-    @PostMapping("/api/v1/admin/privacy-policy")
+    @PostMapping("/admin/privacy-policy")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<com.kinplatform.common.entity.PrivacyPolicyVersion> publishNewVersion(
             Authentication auth,
@@ -52,7 +52,7 @@ public class PrivacyPolicyController {
         return ResponseEntity.status(201).body(version);
     }
 
-    @PutMapping("/api/v1/admin/privacy-policy/{id}/activate")
+    @PutMapping("/admin/privacy-policy/{id}/activate")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<com.kinplatform.common.entity.PrivacyPolicyVersion> activateVersion(
             @PathVariable UUID id,

@@ -68,7 +68,7 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info")
                         .permitAll()
-                        .requestMatchers("/api/v1/public/privacy-policy/**")
+                        .requestMatchers("/public/privacy-policy/**")
                         .permitAll()
                         .requestMatchers("/actuator/**")
                         .hasRole("ADMIN")
