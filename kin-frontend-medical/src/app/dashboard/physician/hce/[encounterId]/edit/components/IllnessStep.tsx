@@ -165,8 +165,8 @@ export const IllnessStep: FC<IllnessStepProps> = ({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saveTimer, setSaveTimer] = useState<NodeJS.Timeout | null>(null);
 
-  const form = useForm<IllnessStepFormData>({
-    resolver: zodResolver(illnessStepSchema),
+  const form = useForm<any>({
+    resolver: zodResolver(illnessStepSchema) as any,
     defaultValues: {
       encounterId,
       onsetDatetime: new Date().toISOString().slice(0, 16),
@@ -179,7 +179,7 @@ export const IllnessStep: FC<IllnessStepProps> = ({
 
   const onSubmit = async (data: IllnessStepFormData) => {
     try {
-      await updateMutation.mutateAsync(data);
+      await updateMutation.mutateAsync(data as any);
       setLastSaved(new Date());
       onSave();
     } catch (err) {
@@ -190,7 +190,7 @@ export const IllnessStep: FC<IllnessStepProps> = ({
   const handleAutoSave = useCallback((data: IllnessStepFormData) => {
     if (saveTimer) clearTimeout(saveTimer);
     setSaveTimer(setTimeout(() => {
-      updateMutation.mutate(data);
+      updateMutation.mutate(data as any);
       setLastSaved(new Date());
     }, 30000));
   }, [updateMutation]);
@@ -268,7 +268,7 @@ export const IllnessStep: FC<IllnessStepProps> = ({
               <p className="mt-1 text-sm text-red-600">{onsetValidation.message}</p>
             )}
             {form.formState.errors.onsetDatetime && (
-              <p className="mt-1 text-sm text-red-600">{form.formState.errors.onsetDatetime.message}</p>
+              <p className="mt-1 text-sm text-red-600">{form.formState.errors.onsetDatetime?.message as string}</p>
             )}
           </div>
           <div>
@@ -283,7 +283,7 @@ export const IllnessStep: FC<IllnessStepProps> = ({
               className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-medical-500"
             />
             {form.formState.errors.previousEpisodes && (
-              <p className="mt-1 text-sm text-red-600">{form.formState.errors.previousEpisodes.message}</p>
+              <p className="mt-1 text-sm text-red-600">{form.formState.errors.previousEpisodes?.message as string}</p>
             )}
           </div>
         </div>
@@ -303,7 +303,7 @@ export const IllnessStep: FC<IllnessStepProps> = ({
               maxLength={2000}
             />
             {form.formState.errors.evolutionDescription && (
-              <p className="mt-1 text-sm text-red-600">{form.formState.errors.evolutionDescription.message}</p>
+              <p className="mt-1 text-sm text-red-600">{form.formState.errors.evolutionDescription?.message as string}</p>
             )}
             <p className="text-sm text-neutral-500 text-right">
               {form.watch('evolutionDescription')?.length || 0} / 2000 caracteres
@@ -367,7 +367,7 @@ export const IllnessStep: FC<IllnessStepProps> = ({
           onChange={(val) => form.setValue('severitySelfReported', val, { shouldValidate: true })}
         />
         {form.formState.errors.severitySelfReported && (
-          <p className="mt-1 text-sm text-red-600">{form.formState.errors.severitySelfReported.message}</p>
+          <p className="mt-1 text-sm text-red-600">{form.formState.errors.severitySelfReported?.message as string}</p>
         )}
       </CollapsibleSection>
 

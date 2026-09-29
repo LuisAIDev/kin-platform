@@ -15,8 +15,8 @@ export function PrivacyPolicyViewer({ content, className = '' }: PrivacyPolicyVi
         a: ({ href, children, ...props }) => (
           <a
             href={href}
-            target={href.startsWith('http') ? '_blank' : undefined}
-            rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+            target={href?.startsWith('http') ? '_blank' : undefined}
+            rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
             className="text-medical-600 hover:text-medical-700 underline hover:no-underline transition-colors"
             {...props}
           >

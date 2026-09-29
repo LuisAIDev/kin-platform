@@ -3,7 +3,7 @@
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useEffect, useCallback } from 'react';
-import { Heart, Activity, Thermometer, Weight, Ruler, Brain, AlertCircle, Save, Loader2, Gauge } from 'lucide-react';
+import { Heart, Activity, Thermometer, Weight, Ruler, Brain, AlertCircle, Save, Loader2, Gauge, ChevronUp, ChevronDown, Clock } from 'lucide-react';
 import type { FC } from 'react';
 import { physicalExamSchema, type PhysicalExamFormData, calculateBMI } from '@/lib/hce/schemas/physicalExamStep.schema';
 import { usePhysicalExam, useUpdatePhysicalExam } from '@/lib/hce/hooks/usePhysicalExam';
@@ -182,7 +182,7 @@ export const PhysicalExamStep: FC<PhysicalExamStepProps> = ({
 
   useEffect(() => {
     const subscription = form.watch((data) => {
-      handleAutoSave(data);
+      handleAutoSave(data as PhysicalExamFormData);
     });
     return () => subscription.unsubscribe();
   }, [form, handleAutoSave]);
@@ -201,7 +201,6 @@ export const PhysicalExamStep: FC<PhysicalExamStepProps> = ({
         heightCm: physicalExam.heightCm ?? undefined,
         glasgowScore: physicalExam.glasgowScore ?? undefined,
         painScale: physicalExam.painScale ?? undefined,
-        generalAppearance: physicalExam.generalAppearance ?? '',
         headNeck: physicalExam.headNeck ?? '',
         cardiovascular: physicalExam.cardiovascular ?? '',
         respiratory: physicalExam.respiratory ?? '',

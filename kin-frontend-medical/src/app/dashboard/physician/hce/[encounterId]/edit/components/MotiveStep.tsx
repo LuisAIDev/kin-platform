@@ -63,9 +63,9 @@ export const MotiveStep: FC<MotiveStepProps> = ({
     );
   }
 
-  const initialData = encounter ? {
+  const initialData: EncounterFormData = encounter ? {
     patientId: encounter.patientId,
-    encounterType: encounter.encounterType,
+    encounterType: encounter.encounterType as EncounterFormData['encounterType'],
     chiefComplaint: encounter.chiefComplaint || '',
   } : {
     patientId: '',

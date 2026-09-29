@@ -188,7 +188,7 @@ describe('HCE Wizard - Flujo completo', () => {
         diagnoses: [
           { cie10Code: 'K59.0', type: 'PRINCIPAL', isPrincipal: true },
         ],
-        treatmentPlan: undefined,
+        treatmentPlan: undefined as any,
         orders: [],
       });
       cy.get('[data-cy="stepper"]').contains('Cierre').click();

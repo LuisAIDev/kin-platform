@@ -7,7 +7,7 @@ import {
   CheckCircle2, XCircle, AlertCircle, Save, Loader2,
   ClipboardCheck, FileText, ArrowLeft, Shield,
   Stethoscope, ClipboardList, BookOpen, Pill, CheckCircle,
-  ChevronUp, ChevronDown,
+  ChevronUp, ChevronDown, X,
 } from 'lucide-react';
 import type { FC } from 'react';
 import { useRouter } from 'next/navigation';
@@ -197,7 +197,7 @@ export const ClosingStep: FC<ClosingStepProps> = ({
       <div className={`rounded-xl p-4 ${validation.valid ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}>
         <div className="flex items-start gap-3">
           {validation.valid ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+            <CheckCircle2 data-testid="check-circle" className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
           ) : (
             <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
           )}
@@ -397,7 +397,7 @@ export const ClosingStep: FC<ClosingStepProps> = ({
               </button>
 
               <button
-                onClick={onSubmit}
+                onClick={() => onSubmit({} as ClosingStepFormData)}
                 disabled={isClosing}
                 className="flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-40"
               >

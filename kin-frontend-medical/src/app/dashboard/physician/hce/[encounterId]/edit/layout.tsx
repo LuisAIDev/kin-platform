@@ -12,7 +12,7 @@ import { WIZARD_STEPS, type WizardStepId, STEP_ORDER } from './components/wizard
 import { useEncounter } from '@/lib/hce/hooks/useEncounter';
 import type { EncounterFormData } from '@/lib/hce/schemas/encounter.schema';
 
-const STEP_COMPONENTS: Record<WizardStepId, React.ComponentType<{ encounterId: string; onSave: () => void; className?: string }>> = {
+const STEP_COMPONENTS: Record<WizardStepId, React.ComponentType<any>> = {
   identification: IdentificationStep,
   motive: MotiveStep,
   illness: () => <div className="p-6 text-center text-neutral-500">Paso 3 - Enfermedad Actual (pendiente)</div>,
@@ -22,10 +22,10 @@ const STEP_COMPONENTS: Record<WizardStepId, React.ComponentType<{ encounterId: s
   closing: () => <div className="p-6 text-center text-neutral-500">Paso 7 - Cierre (pendiente)</div>,
 };
 
-export async function WizardLayout({ params }: { params: Promise<{ encounterId: string }> }) {
+export function WizardLayout() {
   const router = useRouter();
   const { encounterId } = useParams<{ encounterId: string }>();
-  const resolvedEncounterId = encounterId || (await params).encounterId;
+  const resolvedEncounterId = encounterId;
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<WizardStepId[]>([]);
@@ -174,4 +174,11 @@ export async function WizardLayout({ params }: { params: Promise<{ encounterId: 
       </main>
     </div>
   );
+}
+
+// Layout de ruta: pass-through. El contenido real vive en `page.tsx`, que
+// renderiza `WizardLayout`. Se declara el default requerido por Next sin
+// duplicar el render.
+export default function EncounterEditLayout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
 }

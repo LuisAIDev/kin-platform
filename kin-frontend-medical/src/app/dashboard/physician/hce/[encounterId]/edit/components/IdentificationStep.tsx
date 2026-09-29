@@ -102,7 +102,7 @@ export const IdentificationStep: FC<IdentificationStepProps> = ({
     regime: 'PARTICULAR',
   };
 
-  form.reset(initialData);
+  form.reset(initialData as any);
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-6 ${className || ''}`} noValidate>

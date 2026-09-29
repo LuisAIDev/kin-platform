@@ -1,7 +1,9 @@
 'use client';
 
 import { useForm, useFieldArray } from 'react-hook-form';
+import type { UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { ZodTypeAny } from 'zod';
 import { useState, useCallback, useEffect } from 'react';
 import {
   Plus, Trash2, X, ChevronDown, ChevronUp,
@@ -37,13 +39,13 @@ function HistoryTab({ type, patientId, isActive, onSave }: HistoryTabProps) {
   const [editingItem, setEditingItem] = useState<HistoryItemFormData | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  const filteredHistory = history?.filter((item: any) => item.type === type) || [];
+  const filteredHistory = ((history as any)?.filter?.((item: any) => item.type === type)) || [];
 
   const ItemSchema = createHistoryItemSchema(type);
   const defaultValues = getDefaultValuesForType(type);
 
-  const form = useForm({
-    resolver: zodResolver(ItemSchema),
+  const form = useForm<any>({
+    resolver: zodResolver(ItemSchema as ZodTypeAny),
     defaultValues,
     mode: 'onChange',
   });
@@ -244,12 +246,12 @@ function getDefaultValuesForType(type: HistoryType) {
 
 interface HistoryModalProps {
   type: HistoryType;
-  form: ReturnType<typeof useForm>;
+  form: UseFormReturn<any>;
   onSubmit: (data: any) => void;
   onClose: () => void;
   isSubmitting: boolean;
   editingItem: any;
-  schema: z.ZodTypeAny;
+  schema: ZodTypeAny;
 }
 
 function HistoryModal({ type, form, onSubmit, onClose, isSubmitting, editingItem, schema }: HistoryModalProps) {
@@ -306,7 +308,7 @@ function HistoryModal({ type, form, onSubmit, onClose, isSubmitting, editingItem
   );
 }
 
-function renderFormFields(type: HistoryType, form: ReturnType<typeof useForm>, schema: z.ZodTypeAny) {
+function renderFormFields(type: HistoryType, form: UseFormReturn<any>, schema: ZodTypeAny) {
   const commonFields = (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="md:col-span-2">
