@@ -54,7 +54,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     throw error;
   }
 
-  if (res.status === 204) return undefined as T;
+  // React Query v5 LANZA si el queryFn resuelve `undefined`; `null` sí es válido.
+  // Para respuestas 204 (sin contenido) se devuelve null.
+  if (res.status === 204) return null as T;
 
   return res.json();
 }
