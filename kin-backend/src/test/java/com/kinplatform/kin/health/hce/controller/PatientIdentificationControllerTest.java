@@ -6,6 +6,7 @@ import com.kinplatform.kin.health.hce.dto.PatientIdentificationResponse;
 import com.kinplatform.kin.health.hce.service.PatientIdentificationService;
 import com.kinplatform.common.GlobalExceptionHandler;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -21,8 +22,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -77,6 +80,38 @@ class PatientIdentificationControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.documentType").value("CC"))
                 .andExpect(jsonPath("$.documentNumber").value("1234567890"));
+    }
+
+    @Test
+    @WithMockUser(roles = "PHYSICIAN")
+    void upsertIdentification_bodyWithoutUserId_derivesFromPath_returns201() throws Exception {
+        UUID patientId = UUID.randomUUID();
+        // Body SIN userId (el backend lo deriva del path variable).
+        CreatePatientIdentificationRequest request = CreatePatientIdentificationRequest.builder()
+                .documentType("CC")
+                .documentNumber("12345678")
+                .build();
+
+        PatientIdentificationResponse response = PatientIdentificationResponse.builder()
+                .id(UUID.randomUUID())
+                .userId(patientId)
+                .documentType("CC")
+                .documentNumber("12345678")
+                .build();
+        when(service.upsertIdentification(eq(patientId), any(CreatePatientIdentificationRequest.class)))
+                .thenReturn(response);
+
+        mockMvc.perform(post("/health/hce/patients/{patientId}/identification", patientId)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.userId").value(patientId.toString()));
+
+        ArgumentCaptor<CreatePatientIdentificationRequest> captor =
+                ArgumentCaptor.forClass(CreatePatientIdentificationRequest.class);
+        verify(service).upsertIdentification(eq(patientId), captor.capture());
+        assertThat(captor.getValue().getUserId()).isEqualTo(patientId);
     }
 
     @Test

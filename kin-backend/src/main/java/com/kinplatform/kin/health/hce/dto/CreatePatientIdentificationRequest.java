@@ -15,7 +15,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreatePatientIdentificationRequest {
 
-    @NotNull(message = "User ID is required")
+    // userId se deriva del path variable en el controller (patrón AnamnesisController);
+    // no se exige en el body.
     private UUID userId;
 
     @NotNull(message = "Document type is required")

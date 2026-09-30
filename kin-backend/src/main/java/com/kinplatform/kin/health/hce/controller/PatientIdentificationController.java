@@ -30,6 +30,7 @@ public class PatientIdentificationController {
     public ResponseEntity<PatientIdentificationResponse> upsert(
             @PathVariable UUID patientId,
             @Valid @RequestBody CreatePatientIdentificationRequest request) {
+        request.setUserId(patientId); // Deriva del path (patrón AnamnesisController)
         PatientIdentificationResponse response = service.upsertIdentification(patientId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
