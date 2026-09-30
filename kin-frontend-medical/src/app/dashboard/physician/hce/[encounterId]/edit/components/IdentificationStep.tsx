@@ -45,36 +45,10 @@ export const IdentificationStep: FC<IdentificationStepProps> = ({
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className={`space-y-6 ${className || ''}`} role="status" aria-label="Cargando identificación">
-        <div className="animate-pulse space-y-4">
-          <div className="h-10 bg-neutral-200 rounded w-1/4" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="h-12 bg-neutral-200 rounded" />
-            <div className="h-12 bg-neutral-200 rounded" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={`space-y-6 ${className || ''}`} role="alert">
-        <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-red-600" aria-hidden="true" />
-            <p className="text-red-800">Error al cargar la identificación</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // `form.reset` DEBE ir dentro de un efecto: llamarlo durante el render
-  // provocaba un bucle de re-renders (React #301). Se re-ejecuta solo cuando
-  // llega/cambia la data de la query (`identification`).
+  // `form.reset` dentro de un efecto (no en render) para evitar el bucle de
+  // re-renders (React #301). Debe ir ANTES de los early-returns: si queda
+  // después, en el render de carga no se ejecuta y luego sí -> React #310
+  // ("Rendered fewer hooks than expected").
   useEffect(() => {
     if (!identification) return;
     form.reset({
@@ -101,6 +75,33 @@ export const IdentificationStep: FC<IdentificationStepProps> = ({
       guardianName: identification.guardianName || '',
     } as any);
   }, [identification, form]);
+
+  if (isLoading) {
+    return (
+      <div className={`space-y-6 ${className || ''}`} role="status" aria-label="Cargando identificación">
+        <div className="animate-pulse space-y-4">
+          <div className="h-10 bg-neutral-200 rounded w-1/4" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="h-12 bg-neutral-200 rounded" />
+            <div className="h-12 bg-neutral-200 rounded" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`space-y-6 ${className || ''}`} role="alert">
+        <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-red-600" aria-hidden="true" />
+            <p className="text-red-800">Error al cargar la identificación</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-6 ${className || ''}`} noValidate>

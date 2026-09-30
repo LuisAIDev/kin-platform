@@ -40,6 +40,18 @@ export const MotiveStep: FC<MotiveStepProps> = ({
     }
   };
 
+  // `form.reset` dentro de un efecto (no en render) para evitar el bucle de
+  // re-renders (React #301). Debe ir ANTES de los early-returns: si queda
+  // después, en el render de carga no se ejecuta y luego sí -> React #310.
+  useEffect(() => {
+    if (!encounter) return;
+    form.reset({
+      patientId: encounter.patientId,
+      encounterType: encounter.encounterType as EncounterFormData['encounterType'],
+      chiefComplaint: encounter.chiefComplaint || '',
+    });
+  }, [encounter, form]);
+
   if (isLoading) {
     return (
       <div className={`space-y-6 ${className || ''}`} role="status" aria-label="Cargando encuentro">
@@ -63,17 +75,6 @@ export const MotiveStep: FC<MotiveStepProps> = ({
       </div>
     );
   }
-
-  // `form.reset` dentro de un efecto (no en render) para evitar el bucle de
-  // re-renders (React #301). Se re-ejecuta solo cuando cambia `encounter`.
-  useEffect(() => {
-    if (!encounter) return;
-    form.reset({
-      patientId: encounter.patientId,
-      encounterType: encounter.encounterType as EncounterFormData['encounterType'],
-      chiefComplaint: encounter.chiefComplaint || '',
-    });
-  }, [encounter, form]);
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-6 ${className || ''}`} noValidate>
