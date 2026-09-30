@@ -30,6 +30,13 @@
 - **Referencia**: https://docs.spring.io/spring-security/reference/servlet/authentication/architecture.html
 - **Responsable**: PO (sprint dedicado).
 
+### TD-FE-QUERY-V5: React Query v5 no acepta `undefined` como data
+- **Prioridad**: Baja (resuelto).
+- **Causa**: `@tanstack/react-query` v5 **lanza** `throw new Error("<hash> data is undefined")` si el `queryFn` resuelve `undefined` (ver `@tanstack/query-core/build/.../query.js`). El 204 del backend ("sin identificación") hacía que `api.ts` devolviera `undefined` → el wizard mostraba "Error al cargar la identificación" **sin error de red en consola** (el throw es interno de la librería; el `console.error` de la librería es dev-only).
+- **Fix aplicado**: `api.ts` devuelve `null` en 204; los hooks de recursos opcionales mapean `404 → null` (`usePatientIdentification`, `useAnamnesis`, `usePhysicalExam`, `useTreatmentPlan`, `usePatientHistory`) y `404 → []` (`useDiagnoses`).
+- **Prevención**: en code review/CI, ningún `queryFn` debe poder resolver `undefined`; usar `null`/`[]` como valor "vacío". Añadir test que lo cubra.
+- **Referencia**: https://tanstack.com/query/v5/docs/framework/react/guides/migrating-to-v5
+
 ### TD-FE-TYPES-1: Frontend usa casts `as any` donde schema Zod ≠ DTO backend
 - **Prioridad**: Media.
 - **Causa**: los schemas Zod del wizard HCE no coinciden con los DTOs Java del backend (los `*Step.schema` divergen de los schemas base/contrato).
