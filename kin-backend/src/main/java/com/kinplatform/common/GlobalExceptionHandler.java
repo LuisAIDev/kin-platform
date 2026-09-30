@@ -8,7 +8,9 @@ import com.kinplatform.project.ProjectLimitExceededException;
 import com.kinplatform.project.ReportNotFoundException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.time.Instant;
 import java.util.UUID;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -155,5 +157,20 @@ public class GlobalExceptionHandler {
             body.put("redirectUrl", ex.getRedirectUrl());
         }
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+    }
+
+    /**
+     * Entidades inexistentes (p. ej. {@code findById(...).orElseThrow(new
+     * EntityNotFoundException(...))}): 404 en lugar del 500 por defecto de Spring
+     * para excepciones no controladas.
+     */
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleEntityNotFound(EntityNotFoundException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", Instant.now());
+        body.put("status", HttpStatus.NOT_FOUND.value());
+        body.put("error", "Not Found");
+        body.put("message", ex.getMessage() == null ? "Recurso no encontrado" : ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 }
