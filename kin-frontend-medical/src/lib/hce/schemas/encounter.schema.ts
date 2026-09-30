@@ -28,16 +28,17 @@ export type EncounterUpdateData = z.infer<typeof encounterUpdateSchema>;
 
 export const patientIdentificationSchema = z.object({
   patientId: z.string().uuid(),
-  documentType: z.enum(['CC', 'TI', 'CE', 'PA', 'RC']),
+  // Alineado con PatientIdentification.DocumentType (PP, no PA).
+  documentType: z.enum(['CC', 'TI', 'CE', 'PP', 'RC']),
   documentNumber: z.string().min(1, 'El número de documento es obligatorio').max(20),
   firstName: z.string().min(1, 'El nombre es obligatorio').max(100),
   lastName: z.string().min(1, 'El apellido es obligatorio').max(100),
   birthDate: z.string().date('Fecha de nacimiento inválida'),
-  sex: z.enum(['M', 'F', 'OTHER']),
-  bloodType: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'UNKNOWN']).optional(),
-  rhFactor: z.enum(['POSITIVE', 'NEGATIVE', 'UNKNOWN']).optional(),
+  // Alineado con PatientIdentification.RhFactor (grupo + Rh combinado). El backend no tiene sex/bloodType.
+  rhFactor: z.enum(['A_POS', 'A_NEG', 'B_POS', 'B_NEG', 'AB_POS', 'AB_NEG', 'O_POS', 'O_NEG']).optional(),
   eps: z.string().max(100).optional(),
-  regime: z.enum(['CONTRIBUTIVO', 'SUBSIDIADO', 'VINCULADO', 'PARTICULAR', 'NO_POSEE', 'ESPECIAL']).optional(),
+  // Alineado con PatientIdentification.Regimen.
+  regime: z.enum(['CONTRIBUTIVO', 'SUBSIDIADO', 'ESPECIAL', 'EXCEPCION']).optional(),
   phone: z.string().max(20).optional(),
   email: z.string().email('Email inválido').max(100).optional().or(z.literal('')),
   address: z.string().max(200).optional(),
@@ -45,7 +46,7 @@ export const patientIdentificationSchema = z.object({
   emergencyContactName: z.string().max(100).optional(),
   emergencyContactPhone: z.string().max(20).optional(),
   emergencyContactRelation: z.string().max(50).optional(),
-  guardianDocumentType: z.enum(['CC', 'TI', 'CE', 'PA', 'RC']).optional(),
+  guardianDocumentType: z.enum(['CC', 'TI', 'CE', 'PP', 'RC']).optional(),
   guardianDocumentNumber: z.string().max(20).optional(),
   guardianName: z.string().max(100).optional(),
 });

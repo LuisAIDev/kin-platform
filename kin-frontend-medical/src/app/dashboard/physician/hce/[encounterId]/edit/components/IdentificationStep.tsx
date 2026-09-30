@@ -29,10 +29,8 @@ export const IdentificationStep: FC<IdentificationStepProps> = ({
     defaultValues: {
       patientId,
       documentType: 'CC',
-      sex: 'M',
-      bloodType: 'UNKNOWN',
-      rhFactor: 'UNKNOWN',
-      regime: 'PARTICULAR',
+      rhFactor: 'A_POS',
+      regime: 'CONTRIBUTIVO',
     },
   });
 
@@ -58,11 +56,9 @@ export const IdentificationStep: FC<IdentificationStepProps> = ({
       firstName: identification.firstName,
       lastName: identification.lastName,
       birthDate: identification.birthDate?.split('T')[0] || '',
-      sex: identification.sex,
-      bloodType: identification.bloodType || 'UNKNOWN',
-      rhFactor: identification.rhFactor || 'UNKNOWN',
+      rhFactor: identification.rhFactor || 'A_POS',
       eps: identification.eps || '',
-      regime: identification.regime || 'PARTICULAR',
+      regime: identification.regime || 'CONTRIBUTIVO',
       phone: identification.phone || '',
       email: identification.email || '',
       address: identification.address || '',
@@ -123,7 +119,7 @@ export const IdentificationStep: FC<IdentificationStepProps> = ({
               <option value="CC">Cédula de Ciudadanía (CC)</option>
               <option value="TI">Tarjeta de Identidad (TI)</option>
               <option value="CE">Cédula de Extranjería (CE)</option>
-              <option value="PA">Pasaporte (PA)</option>
+              <option value="PP">Pasaporte (PP)</option>
               <option value="RC">Registro Civil (RC)</option>
             </select>
             {form.formState.errors.documentType && (
@@ -192,49 +188,20 @@ export const IdentificationStep: FC<IdentificationStepProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-1">
-              Sexo *
-            </label>
-            <select
-              {...form.register('sex')}
-              className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-medical-500"
-            >
-              <option value="M">Masculino</option>
-              <option value="F">Femenino</option>
-              <option value="OTHER">Otro</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
-              Grupo Sanguíneo
-            </label>
-            <select
-              {...form.register('bloodType')}
-              className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-medical-500"
-            >
-              <option value="UNKNOWN">Desconocido</option>
-              <option value="A+">A+</option>
-              <option value="A-">A-</option>
-              <option value="B+">B+</option>
-              <option value="B-">B-</option>
-              <option value="AB+">AB+</option>
-              <option value="AB-">AB-</option>
-              <option value="O+">O+</option>
-              <option value="O-">O-</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
-              Factor RH
+              Grupo Sanguíneo (RH)
             </label>
             <select
               {...form.register('rhFactor')}
               className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-medical-500"
             >
-              <option value="UNKNOWN">Desconocido</option>
-              <option value="POSITIVE">Positivo</option>
-              <option value="NEGATIVE">Negativo</option>
+              <option value="A_POS">A+</option>
+              <option value="A_NEG">A-</option>
+              <option value="B_POS">B+</option>
+              <option value="B_NEG">B-</option>
+              <option value="AB_POS">AB+</option>
+              <option value="AB_NEG">AB-</option>
+              <option value="O_POS">O+</option>
+              <option value="O_NEG">O-</option>
             </select>
           </div>
 
@@ -258,12 +225,10 @@ export const IdentificationStep: FC<IdentificationStepProps> = ({
               {...form.register('regime')}
               className="w-full px-4 py-3 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-medical-500"
             >
-              <option value="PARTICULAR">Particular</option>
               <option value="CONTRIBUTIVO">Contributivo</option>
               <option value="SUBSIDIADO">Subsidiado</option>
-              <option value="VINCULADO">Vinculado</option>
-              <option value="NO_POSEE">No posee</option>
               <option value="ESPECIAL">Especial</option>
+              <option value="EXCEPCION">Excepción</option>
             </select>
           </div>
 
@@ -384,7 +349,7 @@ export const IdentificationStep: FC<IdentificationStepProps> = ({
               <option value="CC">CC</option>
               <option value="TI">TI</option>
               <option value="CE">CE</option>
-              <option value="PA">PA</option>
+              <option value="PP">PP</option>
               <option value="RC">RC</option>
             </select>
           </div>

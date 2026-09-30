@@ -63,9 +63,7 @@ describe('HCE Schemas', () => {
         firstName: 'Juan',
         lastName: 'Pérez',
         birthDate: '1990-01-15',
-        sex: 'M',
-        bloodType: 'A+',
-        rhFactor: 'POSITIVE',
+        rhFactor: 'A_POS',
         eps: 'Sanitas',
         regime: 'CONTRIBUTIVO',
         phone: '3001234567',
@@ -83,7 +81,6 @@ describe('HCE Schemas', () => {
         firstName: 'Juan',
         lastName: 'Pérez',
         birthDate: '1990-01-15',
-        sex: 'M',
       };
       const result = patientIdentificationSchema.safeParse(invalidIdentification);
       expect(result.success).toBe(false);
