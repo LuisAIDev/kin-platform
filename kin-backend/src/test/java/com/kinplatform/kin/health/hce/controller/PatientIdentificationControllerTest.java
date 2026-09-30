@@ -192,7 +192,7 @@ class PatientIdentificationControllerTest {
                 .documentNumber("1234567890")
                 .build();
 
-        when(service.getByUserId(patientId)).thenReturn(response);
+        when(service.getByUserIdOptional(patientId)).thenReturn(Optional.of(response));
 
         mockMvc.perform(get("/health/hce/patients/{patientId}/identification", patientId))
                 .andExpect(status().isOk())
@@ -201,14 +201,12 @@ class PatientIdentificationControllerTest {
 
     @Test
     @WithMockUser(roles = "PHYSICIAN")
-    void getIdentification_notFound_returns404() throws Exception {
+    void getIdentification_whenNotExists_returns204() throws Exception {
         UUID patientId = UUID.randomUUID();
-        when(service.getByUserId(patientId))
-                .thenThrow(new org.springframework.web.server.ResponseStatusException(
-                        org.springframework.http.HttpStatus.NOT_FOUND, "Not found"));
+        when(service.getByUserIdOptional(patientId)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/health/hce/patients/{patientId}/identification", patientId))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNoContent());
     }
 
     @Test

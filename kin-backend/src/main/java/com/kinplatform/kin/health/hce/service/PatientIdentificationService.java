@@ -86,11 +86,20 @@ public class PatientIdentificationService {
         return mapper.toResponse(saved);
     }
 
+    /**
+     * @deprecated Usar {@link #getByUserIdOptional(UUID)}; el endpoint devuelve
+     * 204 (No Content) cuando no existe. Se conserva por compatibilidad.
+     */
+    @Deprecated
     @Transactional(readOnly = true)
     public PatientIdentificationResponse getByUserId(UUID userId) {
-        return repository.findByUserId(userId)
-                .map(mapper::toResponse)
+        return getByUserIdOptional(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Patient identification not found for user: " + userId));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<PatientIdentificationResponse> getByUserIdOptional(UUID userId) {
+        return repository.findByUserId(userId).map(mapper::toResponse);
     }
 
     @Transactional(readOnly = true)

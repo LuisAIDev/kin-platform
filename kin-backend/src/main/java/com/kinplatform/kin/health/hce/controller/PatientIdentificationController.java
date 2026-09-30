@@ -37,8 +37,12 @@ public class PatientIdentificationController {
     @GetMapping("/{patientId}/identification")
     @Operation(summary = "Obtener identificación del paciente por userId")
     public ResponseEntity<PatientIdentificationResponse> getByPatient(@PathVariable UUID patientId) {
-        PatientIdentificationResponse response = service.getByUserId(patientId);
-        return ResponseEntity.ok(response);
+        // 204 (No Content) cuando el paciente aún no tiene identificación (p. ej.
+        // un paciente nuevo): el wizard renderiza el formulario vacío en vez de
+        // un error 500 por EntityNotFoundException.
+        return service.getByUserIdOptional(patientId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @GetMapping("/identification/by-document")

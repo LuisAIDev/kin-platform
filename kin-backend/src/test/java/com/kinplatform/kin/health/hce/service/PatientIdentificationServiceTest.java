@@ -129,4 +129,27 @@ class PatientIdentificationServiceTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already registered for another user");
     }
+
+    @Test
+    void getByUserIdOptional_whenExists_returnsOptionalWithValue() {
+        when(repository.findByUserId(userId)).thenReturn(Optional.of(
+                PatientIdentification.builder()
+                        .documentType(DocumentType.CC)
+                        .documentNumber("12345678")
+                        .build()));
+
+        Optional<PatientIdentificationResponse> result = service.getByUserIdOptional(userId);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getDocumentNumber()).isEqualTo("12345678");
+    }
+
+    @Test
+    void getByUserIdOptional_whenNotExists_returnsOptionalEmpty() {
+        when(repository.findByUserId(userId)).thenReturn(Optional.empty());
+
+        Optional<PatientIdentificationResponse> result = service.getByUserIdOptional(userId);
+
+        assertThat(result).isEmpty();
+    }
 }
