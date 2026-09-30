@@ -9,7 +9,15 @@ export const anamnesisKeys = {
 export function useAnamnesis(encounterId: string | null) {
   return useQuery({
     queryKey: encounterId ? anamnesisKeys.detail(encounterId) : ['hce', 'anamnesis', 'empty'],
-    queryFn: () => hceApi.getAnamnesis(encounterId!),
+    queryFn: async () => {
+      try {
+        return await hceApi.getAnamnesis(encounterId!);
+      } catch (err) {
+        // 404 = anamnesis aún no registrada (recurso opcional) -> vacío, no error.
+        if ((err as { status?: number })?.status === 404) return null;
+        throw err;
+      }
+    },
     enabled: !!encounterId,
     staleTime: 30_000,
   });

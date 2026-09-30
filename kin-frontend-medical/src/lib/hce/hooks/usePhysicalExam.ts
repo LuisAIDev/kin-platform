@@ -9,7 +9,15 @@ export const physicalExamKeys = {
 export function usePhysicalExam(encounterId: string | null) {
   return useQuery({
     queryKey: encounterId ? physicalExamKeys.detail(encounterId) : ['hce', 'physicalExam', 'empty'],
-    queryFn: () => hceApi.getPhysicalExam(encounterId!),
+    queryFn: async () => {
+      try {
+        return await hceApi.getPhysicalExam(encounterId!);
+      } catch (err) {
+        // 404 = examen físico aún no registrado (recurso opcional) -> vacío, no error.
+        if ((err as { status?: number })?.status === 404) return null;
+        throw err;
+      }
+    },
     enabled: !!encounterId,
     staleTime: 30_000,
   });

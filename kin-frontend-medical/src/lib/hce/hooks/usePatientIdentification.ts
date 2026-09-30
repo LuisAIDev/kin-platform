@@ -9,7 +9,16 @@ export const patientIdentificationKeys = {
 export function usePatientIdentification(patientId: string | null) {
   return useQuery({
     queryKey: patientId ? patientIdentificationKeys.detail(patientId) : ['hce', 'patientIdentification', 'empty'],
-    queryFn: () => hceApi.getPatientIdentification(patientId!),
+    queryFn: async () => {
+      try {
+        return await hceApi.getPatientIdentification(patientId!);
+      } catch (err) {
+        // 404 = el paciente aún no tiene identificación (recurso opcional): se
+        // trata como "sin datos" (null) y no como error.
+        if ((err as { status?: number })?.status === 404) return null;
+        throw err;
+      }
+    },
     enabled: !!patientId,
     staleTime: 30_000,
   });

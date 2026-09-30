@@ -9,7 +9,15 @@ export const historyKeys = {
 export function usePatientHistory(patientId: string | null) {
   return useQuery({
     queryKey: patientId ? historyKeys.detail(patientId) : ['hce', 'history', 'empty'],
-    queryFn: () => hceApi.getPatientHistory(patientId!),
+    queryFn: async () => {
+      try {
+        return await hceApi.getPatientHistory(patientId!);
+      } catch (err) {
+        // 404 = paciente sin antecedentes registrados (recurso opcional) -> vacío, no error.
+        if ((err as { status?: number })?.status === 404) return null;
+        throw err;
+      }
+    },
     enabled: !!patientId,
     staleTime: 30_000,
   });

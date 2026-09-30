@@ -10,7 +10,15 @@ export const diagnosesKeys = {
 export function useDiagnoses(encounterId: string | null) {
   return useQuery({
     queryKey: encounterId ? diagnosesKeys.list(encounterId) : ['hce', 'diagnoses', 'empty'],
-    queryFn: () => hceApi.getDiagnoses(encounterId!),
+    queryFn: async () => {
+      try {
+        return await hceApi.getDiagnoses(encounterId!);
+      } catch (err) {
+        // 404 = encounter sin diagnósticos aún (lista opcional) -> lista vacía, no error.
+        if ((err as { status?: number })?.status === 404) return [];
+        throw err;
+      }
+    },
     enabled: !!encounterId,
     staleTime: 30_000,
   });
