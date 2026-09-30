@@ -52,6 +52,13 @@
 - **Fix objetivo**: refactorizar efectos/immutabilidad y volver las reglas a `error`.
 - **Responsable**: Frontend.
 
+### TD-HCE-3: Patient identification separada de User (modelo)
+- **Prioridad**: Media.
+- **Estado**: Un paciente creado desde "Nueva consulta" no tiene registro de `PatientIdentification`; `GET .../identification` lanzaba `EntityNotFoundException` sin handler → 500.
+- **Decisión actual**: el endpoint devuelve **204 No Content** cuando no existe; el frontend renderiza el formulario vacío (ya maneja 204). Además se añadió un handler global `EntityNotFoundException → 404`.
+- **Solución futura**: al crear el encounter, crear una identificación básica a partir del `User` (nombre/email).
+- **Responsable**: PO (sprint posterior).
+
 ### TD-HCE-2: Modelo de organización para pacientes sin IPS
 - **Prioridad**: Media.
 - **Estado**: Los pacientes personales (registro libre) no tienen `organization_id`, pero `encounters.organization_id` es `NOT NULL` (V75) y `EncounterService` exigía la organización del paciente → 400 al crear la consulta.
