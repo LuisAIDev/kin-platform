@@ -59,6 +59,34 @@
 - **Fix objetivo**: refactorizar efectos/immutabilidad y volver las reglas a `error`.
 - **Responsable**: Frontend.
 
+### TD-HCE-4 (CRÍTICA): `HistoryController` no existe
+- **Prioridad**: Crítica.
+- **Estado**: El frontend llama `/hce/patients/{patientId}/history` (GET/POST) y `/hce/history/{id}` (PUT/DELETE); el backend **no tiene `HistoryController`** → 404.
+- **Impacto**: Paso "Antecedentes" falla al guardar/eliminar.
+- **Fix objetivo**: Crear `HistoryController` + mapear a la entidad `PatientHistory` existente.
+- **Responsable**: PO (próximo sprint).
+
+### TD-HCE-5 (ALTA): `updateDiagnosis` endpoint no existe
+- **Prioridad**: Alta.
+- **Estado**: Frontend `PUT /hce/diagnoses/{diagnosisId}`; backend solo tiene `POST /encounters/{id}/diagnoses` y `PUT /diagnoses/{id}/principal`.
+- **Impacto**: Edición de diagnósticos falla.
+- **Fix objetivo**: Añadir `@PutMapping("/diagnoses/{id}")`.
+- **Responsable**: PO.
+
+### TD-HCE-6 (ALTA): `updateMedicalOrder` endpoint no existe
+- **Prioridad**: Alta.
+- **Estado**: Frontend `PUT /hce/orders/{orderId}`; backend solo tiene `/orders/{id}/execute` y `/orders/{id}/cancel`.
+- **Impacto**: Edición de órdenes médicas falla.
+- **Fix objetivo**: Añadir `@PutMapping("/orders/{id}")`.
+- **Responsable**: PO.
+
+### TD-HCE-7 (CRÍTICA): `DiagnosisPlanStep` no persiste
+- **Prioridad**: Crítica.
+- **Estado**: `DiagnosisPlanStep` importa solo lecturas (`useDiagnoses`, `useTreatmentPlan`, `useMedicalOrders`); sus `onSubmit` locales llaman `onSave()` sin mutación → el paso 6 (Diagnóstico/Plan) no guarda nada.
+- **Impacto**: Paso 6 no persiste datos.
+- **Fix objetivo**: Implementar las mutaciones (`useCreateDiagnosis`/`useCreateTreatmentPlan`/`useCreateMedicalOrder`, y upserts) en el step.
+- **Responsable**: PO (próximo sprint).
+
 ### TD-HCE-3: Patient identification separada de User (modelo)
 - **Prioridad**: Media.
 - **Estado**: Un paciente creado desde "Nueva consulta" no tiene registro de `PatientIdentification`; `GET .../identification` lanzaba `EntityNotFoundException` sin handler → 500.
