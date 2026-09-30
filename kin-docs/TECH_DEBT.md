@@ -59,6 +59,13 @@
 - **Fix objetivo**: refactorizar efectos/immutabilidad y volver las reglas a `error`.
 - **Responsable**: Frontend.
 
+### TD-HCE-8: Mapping gap entre `PatientIdentificationFormData` y `CreatePatientIdentificationRequest`
+- **Prioridad**: Media.
+- **Estado**: El frontend (`PatientIdentificationFormData`) envía `eps`, `city`, `regime`, `firstName`, `bloodType`, …; el backend (`CreatePatientIdentificationRequest`) espera `epsCode`, `epsName`, `cityCode`, `departmentCode`, `documentExpeditionDate`, … → los nombres no coinciden y esos campos llegan `null`.
+- **Impacto**: Los datos de identificación se guardan incompletos (no rompe el guardado; el 400 solo era por `userId`).
+- **Fix objetivo**: alinear el schema Zod con el DTO backend (usar códigos oficiales) o mapear explícitamente en `hce.api.ts`.
+- **Responsable**: PO (próximo sprint).
+
 ### TD-HCE-4 (CRÍTICA): `HistoryController` no existe
 - **Prioridad**: Crítica.
 - **Estado**: El frontend llama `/hce/patients/{patientId}/history` (GET/POST) y `/hce/history/{id}` (PUT/DELETE); el backend **no tiene `HistoryController`** → 404.
