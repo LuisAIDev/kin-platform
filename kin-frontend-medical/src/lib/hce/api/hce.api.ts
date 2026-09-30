@@ -160,7 +160,7 @@ export const hceApi = {
     medicalApi.get<PatientIdentificationResponse>(`/hce/patients/${patientId}/identification`),
 
   updatePatientIdentification: (patientId: string, data: PatientIdentificationFormData) =>
-    medicalApi.put<PatientIdentificationResponse>(`/hce/patients/${patientId}/identification`, data),
+    medicalApi.post<PatientIdentificationResponse>(`/hce/patients/${patientId}/identification`, data),
 
   // Anamnesis
   getAnamnesis: (encounterId: string) =>
@@ -200,7 +200,7 @@ export const hceApi = {
     medicalApi.post<TreatmentPlanResponse>(`/hce/encounters/${encounterId}/treatment-plan`, data),
 
   updateTreatmentPlan: (encounterId: string, data: TreatmentPlanFormData) =>
-    medicalApi.put<TreatmentPlanResponse>(`/hce/encounters/${encounterId}/treatment-plan`, data),
+    medicalApi.post<TreatmentPlanResponse>(`/hce/encounters/${encounterId}/treatment-plan`, data),
 
   // Medical Orders
   getMedicalOrders: (encounterId: string) =>
