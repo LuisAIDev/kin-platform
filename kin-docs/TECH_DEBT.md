@@ -284,6 +284,40 @@
 
 ---
 
+## Módulo Licensing
+
+### TD-LIC-1 — Auditoría de emisión
+Severidad: Media
+Cada licencia generada no se registra en audit_logs.
+Solución: LicenseAuditService que emita evento LICENSE_ISSUED al outbox.
+Cuándo: Fase 2 (después del primer cliente).
+
+### TD-LIC-2 — Contador real de médicos
+Severidad: Alta
+LicenseService cuenta médicos como 0. Validación maxPhysicians nunca se activa.
+Solución: Conectar con UserRepository para contar PHYSICIAN activos.
+Cuándo: Antes del primer cliente On-Premise.
+
+### TD-LIC-3 — GenerateKeys en main
+Severidad: Baja
+Utilidad de desarrollo en src/main/java.
+Solución: Movida a `src/test/java/com/kinplatform/licensing/tools/` (package `com.kinplatform.licensing.tools`). **RESUELTO en FASE C (2026-10-01).**
+Cuándo: Próxima limpieza.
+
+### TD-LIC-4 — Rotación de claves RSA
+Severidad: Baja
+Clave privada no rota. Leak = todas las licencias comprometidas.
+Solución: Versionado de claves (key-v1, key-v2).
+Cuándo: Fase 3.
+
+### TD-LIC-5 — fail-fast=false por defecto
+Severidad: Alta
+Si se olvida configurar KIN_LICENSE_FAIL_FAST=true, KIN arranca sin licencia en prod.
+Solución: Documentado en README + checklist de deploy.
+Cuándo: Antes del primer deploy On-Premise.
+
+---
+
 *Last Updated: 2026-09-28*  
 *Owner: Backend Team*  
 *Next Review: Sprint Planning*
