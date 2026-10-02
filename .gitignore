@@ -45,3 +45,10 @@ tmp/
 # Local database artifacts (H2 eliminado; se conservan patrones genéricos)
 *.old
 *.db
+
+# License keys
+kin-backend/config/license-keys/**
+kin-backend/config/license-keys/kin-private.pem
+
+# Generated license files
+*.key

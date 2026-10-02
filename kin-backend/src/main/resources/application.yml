@@ -369,6 +369,13 @@ kin:
       #   - label: etiqueta para el prompt
       #   - countryCode: ISO 3166-1 alpha-3 (vacío = dimensión GLOBAL)
       indicators: []
+  license:
+    # Licenciamiento On-Premise MVP KIN
+    file-path: ${KIN_LICENSE_PATH:/opt/kin/config/license.key}
+    public-key-path: classpath:license-keys/kin-public.pem
+    private-key-path: ${KIN_PRIVATE_KEY_PATH:config/license-keys/kin-private.pem}
+    fail-fast: ${KIN_LICENSE_FAIL_FAST:false}
+    grace-period-days: 0
 
   # -----------------------------------------------------------
   # Transactional Outbox (ADR-026, KIN 2.4)
