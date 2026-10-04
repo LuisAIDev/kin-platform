@@ -8,6 +8,7 @@ import com.kinplatform.kin.health.hce.entity.PatientHistory.HistoryType;
 import com.kinplatform.kin.health.hce.entity.PatientHistory.Status;
 import com.kinplatform.kin.health.hce.entity.PatientHistory.Severity;
 import com.kinplatform.kin.health.hce.repository.PatientHistoryRepository;
+import com.kinplatform.kin.health.hce.util.HistoryJsonHelper;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -20,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -82,6 +85,69 @@ public class PatientHistoryService {
                 .toList();
     }
 
+    // ===================== NUEVOS MÉTODOS PÚBLICOS (para HistoryController) =====================
+
+    /**
+     * Valida acceso al paciente delegando al método privado existente.
+     * Punto de entrada público para controllers en package .controller.
+     */
+    public void validatePatientAccess(UUID patientId, User user) {
+        checkPatientAccess(user);
+    }
+
+    /**
+     * Actualiza un historial existente manteniendo su ID.
+     * Usado por PUT /hce/history/{id}
+     */
+    @Transactional
+    public PatientHistoryResponse updateHistory(UUID id, CreatePatientHistoryRequest request) {
+        PatientHistory existing = patientHistoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Historia clínica no encontrada con id: " + id));
+
+        // Validar acceso al paciente del historial existente
+        User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
+        checkPatientAccess(userRepository.findById(existing.getPatientId())
+                .orElseThrow(() -> new EntityNotFoundException("Patient not found")));
+
+        // Actualizar SOLO campos de negocio (auditoría NO se toca)
+        existing.setDescription(request.getDescription());
+        existing.setOnsetDate(request.getOnsetDate());
+        existing.setResolutionDate(request.getResolutionDate());
+        existing.setStatus(request.getStatus() != null ? request.getStatus() : existing.getStatus());
+        existing.setSeverity(request.getSeverity());
+        existing.setNotes(request.getNotes());
+        existing.setDetails(request.getDetails() != null ? request.getDetails() : existing.getDetails());
+
+        PatientHistory saved = patientHistoryRepository.saveAndFlush(existing);
+        return toResponse(saved);
+    }
+
+    /**
+     * Busca un historial por ID.
+     * Usado por PUT/DELETE /hce/history/{id} para validar existencia y acceso.
+     */
+    @Transactional(readOnly = true)
+    public Optional<PatientHistory> findById(UUID id) {
+        return patientHistoryRepository.findById(id);
+    }
+
+    /**
+     * Elimina un historial por ID.
+     * Usado por DELETE /hce/history/{id}
+     */
+    @Transactional
+    public void deleteById(UUID id) {
+        PatientHistory existing = patientHistoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Historia clínica no encontrada con id: " + id));
+
+        User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
+        checkPatientAccess(userRepository.findById(existing.getPatientId())
+                .orElseThrow(() -> new EntityNotFoundException("Patient not found")));
+
+        patientHistoryRepository.deleteById(id);
+    }
+
+    // checkPatientAccess: SE MANTIENE PRIVATE (sin cambios de lógica ni visibilidad)
     private void checkPatientAccess(User patient) {
         User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
