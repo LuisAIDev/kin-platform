@@ -8,6 +8,10 @@ import { WizardStepper } from './components/WizardStepper';
 import { WizardNavigation } from './components/WizardNavigation';
 import { IdentificationStep } from './components/IdentificationStep';
 import { MotiveStep } from './components/MotiveStep';
+import { IllnessStep } from './components/IllnessStep';
+import { HistoryStep } from './components/HistoryStep';
+import { PhysicalExamStep } from './components/PhysicalExamStep';
+import { DiagnosisPlanStep } from './components/DiagnosisPlanStep';
 import { WIZARD_STEPS, type WizardStepId, STEP_ORDER } from './components/wizardSteps';
 import { useEncounter } from '@/lib/hce/hooks/useEncounter';
 import type { EncounterFormData } from '@/lib/hce/schemas/encounter.schema';
@@ -15,10 +19,10 @@ import type { EncounterFormData } from '@/lib/hce/schemas/encounter.schema';
 const STEP_COMPONENTS: Record<WizardStepId, React.ComponentType<any>> = {
   identification: IdentificationStep,
   motive: MotiveStep,
-  illness: () => <div className="p-6 text-center text-neutral-500">Paso 3 - Enfermedad Actual (pendiente)</div>,
-  history: () => <div className="p-6 text-center text-neutral-500">Paso 4 - Antecedentes (pendiente)</div>,
-  physicalExam: () => <div className="p-6 text-center text-neutral-500">Paso 5 - Examen Físico (pendiente)</div>,
-  diagnosisPlan: () => <div className="p-6 text-center text-neutral-500">Paso 6 - Diagnóstico y Plan (pendiente)</div>,
+  illness: IllnessStep,
+  history: HistoryStep,
+  physicalExam: PhysicalExamStep,
+  diagnosisPlan: DiagnosisPlanStep,
   closing: () => <div className="p-6 text-center text-neutral-500">Paso 7 - Cierre (pendiente)</div>,
 };
 
@@ -159,6 +163,7 @@ export function WizardLayout() {
           encounterId={resolvedEncounterId}
           patientId={encounter.patientId}
           onSave={handleSave}
+          isDirty={hasUnsavedChanges}
         />
 
         <WizardNavigation
