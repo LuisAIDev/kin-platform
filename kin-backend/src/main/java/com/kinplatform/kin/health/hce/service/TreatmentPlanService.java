@@ -83,6 +83,24 @@ public class TreatmentPlanService {
         return toResponse(updated);
     }
 
+    /**
+     * Upsert del plan de tratamiento por encounterId.
+     *
+     * COMPORTAMIENTO:
+     * - Si NO existe plan para el encounter -> crear (delega a createPlan)
+     * - Si YA existe -> actualizar (delega a updatePlan)
+     *
+     * Esto resuelve el bug del frontend que envía POST tanto para create como update.
+     */
+    @Transactional
+    public TreatmentPlanResponse upsertPlan(UUID encounterId, CreateTreatmentPlanRequest request) {
+        Optional<TreatmentPlan> existing = treatmentPlanRepository.findByEncounterId(encounterId);
+        if (existing.isPresent()) {
+            return updatePlan(existing.get().getId(), request);
+        }
+        return createPlan(request);
+    }
+
     @Transactional(readOnly = true)
     public List<TreatmentPlanResponse> getByEncounter(UUID encounterId) {
         Encounter encounter = encounterRepository.findById(encounterId)

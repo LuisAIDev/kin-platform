@@ -161,6 +161,90 @@ public class MedicalOrderService {
         }
     }
 
+    /**
+     * Resuelve el treatmentPlanId si el request no lo incluye.
+     * Busca el plan de tratamiento del encounter.
+     * Si no hay plan, retorna null (la orden queda sin plan asociado).
+     */
+    private UUID resolveTreatmentPlanId(UUID encounterId, UUID providedPlanId) {
+        if (providedPlanId != null) {
+            return providedPlanId;
+        }
+        return treatmentPlanRepository
+                .findByEncounterId(encounterId)
+                .map(TreatmentPlan::getId)
+                .orElse(null);
+    }
+
+    /**
+     * Actualiza una orden médica existente.
+     * Si el request no trae treatmentPlanId, se resuelve del encounter de la orden existente.
+     * Si no hay plan asociado, la orden queda sin plan (treatmentPlanId = null).
+     *
+     * Reglas de validación CUPS:
+     * - PROCEDURE, LAB_EXAM, IMAGING requieren cupsCode obligatorio
+     * - Se valida después de aplicar los cambios al objeto
+     */
+    @Transactional
+    public MedicalOrderResponse updateOrder(UUID id, CreateMedicalOrderRequest request) {
+        MedicalOrder existing = medicalOrderRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Medical order not found with id: " + id));
+
+        // Validar acceso usando la orden existente
+        checkAccessByOrder(existing);
+
+        // Si el request no trae treatmentPlanId, resolverlo del encounter de la orden existente
+        UUID resolvedPlanId = resolveTreatmentPlanId(existing.getEncounterId(), request.getTreatmentPlanId());
+
+        // Actualizar SOLO campos de negocio (preservar id, encounterId, patientId, physicianId, orderedAt, createdAt)
+        existing.setTreatmentPlanId(resolveTreatmentPlanId(existing.getEncounterId(), request.getTreatmentPlanId()));
+        if (request.getOrderType() != null) existing.setOrderType(request.getOrderType());
+        if (request.getPriority() != null) existing.setPriority(request.getPriority());
+        existing.setDrugName(request.getDrugName());
+        existing.setDose(request.getDose());
+        existing.setDoseUnit(request.getDoseUnit());
+        existing.setRoute(request.getRoute());
+        existing.setFrequency(request.getFrequency());
+        existing.setDurationDays(request.getDurationDays());
+        existing.setCupsCode(request.getCupsCode());
+        existing.setCupsDescription(request.getCupsDescription());
+        existing.setBodySite(request.getBodySite());
+        existing.setInstructions(request.getInstructions());
+
+        // Validar CUPS obligatorio para PROCEDURE, LAB_EXAM, IMAGING
+        if (existing.getOrderType() == MedicalOrder.OrderType.PROCEDURE
+                || existing.getOrderType() == MedicalOrder.OrderType.LAB_EXAM
+                || existing.getOrderType() == MedicalOrder.OrderType.IMAGING) {
+            if (existing.getCupsCode() == null || existing.getCupsCode().trim().isEmpty()) {
+                throw new IllegalArgumentException("cupsCode es obligatorio para PROCEDURE, LAB_EXAM e IMAGING");
+            }
+        }
+
+        MedicalOrder saved = medicalOrderRepository.saveAndFlush(existing);
+        return toResponse(saved);
+    }
+
+    /**
+     * Elimina una orden m�dica por ID.
+     * No permite borrar �rdenes ejecutadas (status EXECUTED).
+     */
+    @Transactional
+    public void deleteOrder(UUID id) {
+        MedicalOrder existing = medicalOrderRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Medical order not found with id: " + id));
+
+        checkAccessByOrder(existing);
+
+        // No permitir borrar �rdenes ya ejecutadas
+        if (existing.getStatus() == MedicalOrder.Status.EXECUTED) {
+            throw new IllegalStateException(
+                    "Cannot delete an EXECUTED medical order. Cancel it first if needed."
+            );
+        }
+
+        medicalOrderRepository.deleteById(id);
+    }
+
     private MedicalOrderResponse toResponse(MedicalOrder m) {
         return MedicalOrderResponse.builder()
                 .id(m.getId())

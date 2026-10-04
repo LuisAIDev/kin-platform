@@ -44,7 +44,7 @@ public class TreatmentPlanController {
                         : null)
                 .estimatedDuration(null)
                 .build();
-        TreatmentPlanResponse response = treatmentPlanService.createPlan(internalRequest);
+        TreatmentPlanResponse response = treatmentPlanService.upsertPlan(encounterId, internalRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

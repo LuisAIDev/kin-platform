@@ -62,12 +62,12 @@ class TreatmentPlanControllerTest {
         physicianId = UUID.randomUUID();
     }
 
-    @Test
+@Test
     @WithMockUser(roles = "PHYSICIAN")
     void createPlan_happyPath_returns201() throws Exception {
         TreatmentPlanRequest request = new TreatmentPlanRequest(
                 "OUTPATIENT_TREATMENT",
-                List.of("Controlar dolor", "Mejorar función"),
+                List.of("Controlar dolor", "Mejorar funci�n"),
                 "GOOD"
         );
 
@@ -77,8 +77,8 @@ class TreatmentPlanControllerTest {
                 .patientId(patientId)
                 .physicianId(physicianId)
                 .conduct(TreatmentPlan.Conduct.OUTPATIENT_TREATMENT)
-                .therapeuticGoals(new String[]{"Controlar dolor", "Mejorar función"})
-                .followupPlan("Revisión en 2 semanas")
+                .therapeuticGoals(new String[]{"Controlar dolor", "Mejorar funci�n"})
+                .followupPlan("Revisi�n en 2 semanas")
                 .reevaluationCriteria("Escala de dolor < 3")
                 .prognosis(TreatmentPlan.Prognosis.GOOD)
                 .estimatedDuration(Duration.ofDays(14))
@@ -86,7 +86,7 @@ class TreatmentPlanControllerTest {
                 .updatedAt(Instant.now())
                 .build();
 
-        when(treatmentPlanService.createPlan(any())).thenReturn(response);
+        when(treatmentPlanService.upsertPlan(eq(encounterId), any())).thenReturn(response);
 
         mockMvc.perform(post("/health/hce/encounters/{encounterId}/treatment-plan", encounterId)
                         .with(csrf())
@@ -251,7 +251,7 @@ class TreatmentPlanControllerTest {
                 .updatedAt(Instant.now())
                 .build();
 
-        when(treatmentPlanService.createPlan(any())).thenReturn(response);
+        when(treatmentPlanService.upsertPlan(eq(encounterId), any())).thenReturn(response);
 
         mockMvc.perform(post("/health/hce/encounters/{encounterId}/treatment-plan", encounterId)
                         .with(csrf())

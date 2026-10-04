@@ -47,12 +47,22 @@ public class MedicalOrderController {
         return ResponseEntity.ok(medicalOrderService.executeOrder(orderId, executedBy));
     }
 
-    @PutMapping("/orders/{orderId}/cancel")
-    @Operation(summary = "Cancelar orden médica")
+@PutMapping("/orders/{orderId}/cancel")
+    @Operation(summary = "Cancelar orden m�dica")
     public ResponseEntity<MedicalOrderResponse> cancel(
             @PathVariable UUID orderId,
             @Valid @RequestBody CancelOrderRequest request) {
         return ResponseEntity.ok(medicalOrderService.cancelOrder(orderId, request.getReason()));
+    }
+
+    @PutMapping("/orders/{orderId}")
+    @Operation(summary = "Actualizar orden m�dica", 
+               description = "Actualiza una orden existente. Si no se env�a treatmentPlanId, se resuelve del encounter.")
+    public ResponseEntity<MedicalOrderResponse> update(
+            @PathVariable UUID orderId,
+            @Valid @RequestBody CreateMedicalOrderRequest request) {
+        MedicalOrderResponse response = medicalOrderService.updateOrder(orderId, request);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/encounters/{encounterId}/orders")
@@ -61,9 +71,16 @@ public class MedicalOrderController {
         return ResponseEntity.ok(medicalOrderService.getByEncounter(encounterId));
     }
 
-    @GetMapping("/treatment-plans/{planId}/orders")
-    @Operation(summary = "Listar órdenes por plan de tratamiento")
+@GetMapping("/treatment-plans/{planId}/orders")
+    @Operation(summary = "Listar �rdenes por plan de tratamiento")
     public ResponseEntity<List<MedicalOrderResponse>> getByTreatmentPlan(@PathVariable UUID planId) {
         return ResponseEntity.ok(medicalOrderService.getByTreatmentPlan(planId));
+    }
+
+    @DeleteMapping("/orders/{orderId}")
+    @Operation(summary = "Eliminar orden m�dica", description = "Borra una orden por ID. No permite borrar �rdenes ejecutadas.")
+    public ResponseEntity<Void> delete(@PathVariable UUID orderId) {
+        medicalOrderService.deleteOrder(orderId);
+        return ResponseEntity.noContent().build();
     }
 }
