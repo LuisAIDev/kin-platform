@@ -51,6 +51,22 @@ public class DiagnosesController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/diagnoses/{diagnosisId}")
+    @Operation(summary = "Actualizar diagnóstico", description = "Actualiza un diagnóstico existente por ID")
+    public ResponseEntity<DiagnosesResponse> update(
+            @PathVariable UUID diagnosisId,
+            @Valid @RequestBody CreateDiagnosisRequest request) {
+        DiagnosesResponse response = diagnosesService.updateDiagnosis(diagnosisId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/diagnoses/{diagnosisId}")
+    @Operation(summary = "Eliminar diagnóstico", description = "Borra un diagnóstico por ID. No permite borrar el principal activo.")
+    public ResponseEntity<Void> delete(@PathVariable UUID diagnosisId) {
+        diagnosesService.deleteDiagnosis(diagnosisId);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/encounters/{encounterId}/diagnoses/principal")
     @Operation(summary = "Obtener diagnóstico principal", description = "Retorna el diagnóstico principal del encuentro")
     public ResponseEntity<DiagnosesResponse> getPrincipal(

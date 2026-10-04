@@ -156,6 +156,83 @@ public class DiagnosesService {
         }
     }
 
+    /**
+     * Actualiza un diagnóstico existente.
+     *
+     * COMPORTAMIENTO:
+     * - Si cambia a PRINCIPAL y ya existe otro PRINCIPAL activo -> IllegalStateException
+     * - Si cambia de PRINCIPAL a SECUNDARIO -> el encounter queda sin principal
+     *   (el usuario debe setear otro con setPrincipal)
+     * - Campos con null-check: diagnosisType, certainty, classification, status
+     * - Campos sin null-check (se sobreescriben): cie10Code, cie10Description,
+     *   supportedBy, onsetDate, resolutionDate, notes
+     */
+    @Transactional
+    public DiagnosesResponse updateDiagnosis(UUID id, CreateDiagnosisRequest request) {
+        Diagnoses existing = diagnosesRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Diagnosis not found with id: " + id));
+
+        // Validar acceso al encuentro
+        Encounter encounter = encounterRepository.findById(existing.getEncounterId())
+                .orElseThrow(() -> new EntityNotFoundException("Encounter not found"));
+        checkAccess(encounter);
+
+        // Validar si se cambia a PRINCIPAL
+        if (request.getDiagnosisType() != null && request.getDiagnosisType() == Diagnoses.DiagnosisType.PRINCIPAL) {
+            boolean hasPrincipal = diagnosesRepository.existsByEncounterIdAndDiagnosisTypeAndStatus(
+                    encounter.getId(),
+                    Diagnoses.DiagnosisType.PRINCIPAL,
+                    Diagnoses.Status.ACTIVE
+            );
+            if (hasPrincipal && !existing.getDiagnosisType().equals(Diagnoses.DiagnosisType.PRINCIPAL)) {
+                throw new IllegalStateException("Encounter already has a principal diagnosis. Use setPrincipal to change it.");
+            }
+        }
+
+        // Actualizar campos (NO tocar: id, encounterId, patientId, physicianId, createdAt)
+        existing.setCie10Code(request.getCie10Code());
+        existing.setCie10Description(request.getCie10Description());
+        if (request.getDiagnosisType() != null) {
+            existing.setDiagnosisType(request.getDiagnosisType());
+        }
+        existing.setCertainty(request.getCertainty() != null ? request.getCertainty() : existing.getCertainty());
+        existing.setClassification(request.getClassification() != null ? request.getClassification() : existing.getClassification());
+        existing.setSupportedBy(request.getSupportedBy());
+        existing.setOnsetDate(request.getOnsetDate());
+        existing.setResolutionDate(request.getResolutionDate());
+        existing.setStatus(request.getStatus() != null ? request.getStatus() : existing.getStatus());
+        existing.setNotes(request.getNotes());
+
+        Diagnoses saved = diagnosesRepository.saveAndFlush(existing);
+        return toResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<DiagnosesResponse> findById(UUID id) {
+        return diagnosesRepository.findById(id).map(this::toResponse);
+    }
+
+    @Transactional
+    public void deleteDiagnosis(UUID id) {
+        Diagnoses existing = diagnosesRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Diagnosis not found with id: " + id));
+
+        // Validar acceso al encuentro
+        Encounter encounter = encounterRepository.findById(existing.getEncounterId())
+                .orElseThrow(() -> new EntityNotFoundException("Encounter not found"));
+        checkAccess(encounter);
+
+        // No permitir borrar el PRINCIPAL activo
+        if (existing.getDiagnosisType() == Diagnoses.DiagnosisType.PRINCIPAL
+                && existing.getStatus() == Diagnoses.Status.ACTIVE) {
+            throw new IllegalStateException(
+                    "Cannot delete active PRINCIPAL diagnosis. Change it to SECUNDARIO or set another principal first."
+            );
+        }
+
+        diagnosesRepository.deleteById(id);
+    }
+
     private DiagnosesResponse toResponse(Diagnoses d) {
         return DiagnosesResponse.builder()
                 .id(d.getId())
