@@ -10,9 +10,9 @@ import com.kinplatform.kin.interview.InterviewRequest;
 import com.kinplatform.kin.interview.InterviewResult;
 import com.kinplatform.kin.interview.InterviewState;
 import com.kinplatform.kin.interview.engine.InterviewEngine;
-import com.kinplatform.kin.pipeline.PipelineContext;
-import com.kinplatform.kin.pipeline.PipelineStage;
-import com.kinplatform.kin.pipeline.stage.EngineStage;
+import com.kinplatform.common.pipeline.PipelineContext;
+import com.kinplatform.common.pipeline.PipelineStage;
+import com.kinplatform.common.pipeline.stage.EngineStage;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -145,4 +145,5 @@ public class InterviewStage implements PipelineStage {
         }
     }
 }
+
 

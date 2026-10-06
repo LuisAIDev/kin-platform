@@ -8,11 +8,11 @@ import com.kinplatform.kin.health.differential.domain.CatalogUpdateResult;
 import com.kinplatform.kin.health.differential.port.DifferentialKnowledgeRepository;
 import com.kinplatform.kin.health.triage.domain.TriageCatalog;
 import com.kinplatform.kin.health.triage.port.TriageKnowledgeRepository;
-import com.kinplatform.kin.knowledge.KnowledgeInput;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.common.knowledge.KnowledgeInput;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -134,3 +134,4 @@ public class DifferentialCatalogUpdateService {
                 .orElse(Optional.empty());
     }
 }
+

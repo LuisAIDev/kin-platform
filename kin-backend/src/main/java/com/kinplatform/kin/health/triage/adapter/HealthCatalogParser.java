@@ -9,8 +9,8 @@ import com.kinplatform.kin.health.triage.domain.Severity;
 import com.kinplatform.kin.health.triage.domain.Symptom;
 import com.kinplatform.kin.health.triage.domain.SymptomConditionRelation;
 import com.kinplatform.kin.health.triage.domain.Urgency;
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeFact;
+import com.kinplatform.common.knowledge.KnowledgeCandidate;
+import com.kinplatform.common.knowledge.KnowledgeFact;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -165,4 +165,5 @@ public class HealthCatalogParser {
         }
     }
 }
+
 

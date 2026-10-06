@@ -1,10 +1,10 @@
 package com.kinplatform.ai.performance;
 
-import com.kinplatform.kin.knowledge.KnowledgeFact;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.SourceTrust;
-import com.kinplatform.kin.knowledge.citation.CitationEngine;
-import com.kinplatform.kin.knowledge.citation.CitationStyle;
+import com.kinplatform.common.knowledge.KnowledgeFact;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.SourceTrust;
+import com.kinplatform.common.knowledge.citation.CitationEngine;
+import com.kinplatform.common.knowledge.citation.CitationStyle;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
@@ -61,3 +61,4 @@ class CitationBenchmarkTest {
         return new KnowledgeResult(facts, List.of(), List.of(), 1.0, "ok", "KnowledgeEngine", "v1");
     }
 }
+

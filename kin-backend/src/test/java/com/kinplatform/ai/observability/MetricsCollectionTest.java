@@ -1,12 +1,12 @@
 package com.kinplatform.ai.observability;
 
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeSource;
-import com.kinplatform.kin.knowledge.citation.CitationEngine;
-import com.kinplatform.kin.knowledge.citation.CitationStyle;
-import com.kinplatform.kin.knowledge.engine.SourceRegistry;
-import com.kinplatform.kin.knowledge.engine.SourceValidator;
+import com.kinplatform.common.knowledge.KnowledgeCandidate;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeSource;
+import com.kinplatform.common.knowledge.citation.CitationEngine;
+import com.kinplatform.common.knowledge.citation.CitationStyle;
+import com.kinplatform.common.knowledge.engine.SourceRegistry;
+import com.kinplatform.common.knowledge.engine.SourceValidator;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +40,7 @@ class MetricsCollectionTest {
         var observable = ObservableKnowledgeRuntime.create(new SourceRegistry(List.of(
             source(candidate("a"), candidate("b")))), validator, null, meters);
 
-        observable.acquire(com.kinplatform.kin.knowledge.KnowledgeRequest.of("Mercado del café", List.of()));
+        observable.acquire(com.kinplatform.common.knowledge.KnowledgeRequest.of("Mercado del café", List.of()));
 
         assertEquals(2.0, meters.get("kin.knowledge.quality.candidates_received").counter().count(), 1e-9);
         assertEquals(2.0, meters.get("kin.knowledge.quality.sources_accepted").counter().count(), 1e-9);
@@ -55,7 +55,7 @@ class MetricsCollectionTest {
         var observable = ObservableKnowledgeRuntime.create(new SourceRegistry(List.of(
             source(invalid))), validator, null, meters);
 
-        observable.acquire(com.kinplatform.kin.knowledge.KnowledgeRequest.of("Mercado del café", List.of()));
+        observable.acquire(com.kinplatform.common.knowledge.KnowledgeRequest.of("Mercado del café", List.of()));
 
         assertEquals(1.0, meters.get("kin.knowledge.quality.candidates_discarded").counter().count(), 1e-9);
         assertEquals(1.0, meters.get("kin.knowledge.quality.sources_rejected").counter().count(), 1e-9);
@@ -68,7 +68,7 @@ class MetricsCollectionTest {
         var observable = ObservableKnowledgeRuntime.create(new SourceRegistry(List.of(
             source(candidate("a")))), validator, null, meters);
 
-        observable.acquire(com.kinplatform.kin.knowledge.KnowledgeRequest.of("Mercado del café", List.of()));
+        observable.acquire(com.kinplatform.common.knowledge.KnowledgeRequest.of("Mercado del café", List.of()));
 
         assertTrue(meters.get("kin.knowledge.policy.decision").tag("decision", "EXTERNAL").counter().count() >= 1);
         assertTrue(meters.get("kin.knowledge.provider.requests").tag("type", "STATISTICS").counter().count() >= 1);
@@ -81,9 +81,9 @@ class MetricsCollectionTest {
         var meters = new SimpleMeterRegistry();
         var metrics = new KnowledgeMetrics(meters);
         var engine = new TimedCitationEngine(metrics);
-        var result = new com.kinplatform.kin.knowledge.KnowledgeResult(List.of(
-            com.kinplatform.kin.knowledge.KnowledgeFact.of("Dato.", "src-1", "https://example.com/x",
-                OffsetDateTime.now(), com.kinplatform.kin.knowledge.SourceTrust.OFFICIAL_PUBLIC, "MERCADO")),
+        var result = new com.kinplatform.common.knowledge.KnowledgeResult(List.of(
+            com.kinplatform.common.knowledge.KnowledgeFact.of("Dato.", "src-1", "https://example.com/x",
+                OffsetDateTime.now(), com.kinplatform.common.knowledge.SourceTrust.OFFICIAL_PUBLIC, "MERCADO")),
             List.of("src-1"), List.of(), 1.0, "ok", "KnowledgeEngine", "v1");
 
         var citation = engine.produce(result, null, CitationStyle.FOOTNOTE);
@@ -119,3 +119,5 @@ class MetricsCollectionTest {
         }
     }
 }
+
+

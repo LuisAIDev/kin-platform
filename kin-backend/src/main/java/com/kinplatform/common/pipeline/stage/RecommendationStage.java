@@ -1,0 +1,60 @@
+package com.kinplatform.common.pipeline.stage;
+
+import com.kinplatform.common.pipeline.PipelineContext;
+import com.kinplatform.common.pipeline.PipelineStage;
+import com.kinplatform.platform.reporting.RecommendationEngine;
+import com.kinplatform.platform.reporting.RecommendationInput;
+import com.kinplatform.platform.reporting.RecommendationResult;
+
+/**
+ * Etapa del pipeline que ejecuta el {@link RecommendationEngine}.
+ *
+ * <p>Composición pura sobre {@link EngineStage}: mantiene la API pública
+ * (constructor con el motor) y el comportamiento histórico mientras delega la
+ * lógica genérica de ejecución al {@code EngineStage}.</p>
+ */
+public class RecommendationStage implements PipelineStage {
+
+    private final EngineStage<RecommendationInput, RecommendationResult> delegate;
+
+    public RecommendationStage(RecommendationEngine recommendationEngine) {
+        this.delegate = new EngineStage<>(
+            "Recomendaciones",
+            recommendationEngine,
+            context -> context.projectContext() != null
+                && context.evaluation() != null
+                && context.decision() != null
+                && context.decision().shouldGenerateReport()
+                && context.scoreResult() != null,
+            context -> {
+                var input = new RecommendationInput(
+                    context.projectContext(),
+                    context.evaluation(),
+                    context.decision(),
+                    context.scoreResult()
+                );
+                var enrichment = context.enrichmentResult();
+                return enrichment == null ? input : input.withEnrichment(enrichment);
+            },
+            PipelineContext::recommendationResult
+        );
+    }
+
+    @Override
+    public String name() {
+        return delegate.name();
+    }
+
+    @Override
+    public boolean supports(PipelineContext context) {
+        return delegate.supports(context);
+    }
+
+    @Override
+    public PipelineContext execute(PipelineContext context) {
+        return delegate.execute(context);
+    }
+}
+
+
+

@@ -1,7 +1,7 @@
 package com.kinplatform.platform.enrichment;
 
-import com.kinplatform.kin.knowledge.KnowledgeFact;
-import com.kinplatform.kin.knowledge.SourceTrust;
+import com.kinplatform.common.knowledge.KnowledgeFact;
+import com.kinplatform.common.knowledge.SourceTrust;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -178,4 +178,5 @@ public final class FactRanker {
         return Math.max(0.0, Math.min(1.0, value));
     }
 }
+
 

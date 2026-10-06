@@ -53,33 +53,33 @@ import com.kinplatform.kin.interview.engine.AnswerValidator;
 import com.kinplatform.kin.interview.engine.InterviewBlueprint;
 import com.kinplatform.kin.interview.engine.InterviewEngine;
 import com.kinplatform.kin.interview.stage.InterviewStage;
-import com.kinplatform.kin.knowledge.KnowledgeRepository;
-import com.kinplatform.kin.knowledge.KnowledgeSource;
-import com.kinplatform.kin.knowledge.deduplication.DeduplicationEngine;
-import com.kinplatform.kin.knowledge.deduplication.DeduplicationStage;
-import com.kinplatform.kin.knowledge.deduplication.DeduplicationStrategy;
-import com.kinplatform.kin.knowledge.deduplication.ExactMatchStrategy;
-import com.kinplatform.kin.knowledge.deduplication.FuzzyMatchStrategy;
-import com.kinplatform.kin.knowledge.deduplication.SemanticMatchStrategy;
-import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
-import com.kinplatform.kin.knowledge.engine.KnowledgeGateway;
-import com.kinplatform.kin.knowledge.engine.SourceRegistry;
-import com.kinplatform.kin.knowledge.engine.SourceValidator;
-import com.kinplatform.kin.knowledge.stage.KnowledgeStage;
-import com.kinplatform.kin.pipeline.Pipeline;
-import com.kinplatform.kin.pipeline.resilience.StagePolicy;
-import com.kinplatform.kin.pipeline.resilience.StageRetryPolicy;
-import com.kinplatform.kin.pipeline.resilience.StageTimeoutConfig;
-import com.kinplatform.kin.pipeline.stage.AnalyzerStage;
-import com.kinplatform.kin.pipeline.stage.ConsultorStage;
-import com.kinplatform.kin.pipeline.stage.EvaluatorStage;
-import com.kinplatform.kin.pipeline.stage.EventStage;
-import com.kinplatform.kin.pipeline.stage.OpportunityStage;
-import com.kinplatform.kin.pipeline.stage.RecommendationStage;
-import com.kinplatform.kin.pipeline.stage.ReportStage;
-import com.kinplatform.kin.pipeline.stage.RiskStage;
-import com.kinplatform.kin.pipeline.stage.ScoringStage;
-import com.kinplatform.kin.pipeline.stage.StrategistStage;
+import com.kinplatform.common.knowledge.KnowledgeRepository;
+import com.kinplatform.common.knowledge.KnowledgeSource;
+import com.kinplatform.common.knowledge.deduplication.DeduplicationEngine;
+import com.kinplatform.common.knowledge.deduplication.DeduplicationStage;
+import com.kinplatform.common.knowledge.deduplication.DeduplicationStrategy;
+import com.kinplatform.common.knowledge.deduplication.ExactMatchStrategy;
+import com.kinplatform.common.knowledge.deduplication.FuzzyMatchStrategy;
+import com.kinplatform.common.knowledge.deduplication.SemanticMatchStrategy;
+import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.common.knowledge.engine.KnowledgeGateway;
+import com.kinplatform.common.knowledge.engine.SourceRegistry;
+import com.kinplatform.common.knowledge.engine.SourceValidator;
+import com.kinplatform.common.knowledge.stage.KnowledgeStage;
+import com.kinplatform.common.pipeline.Pipeline;
+import com.kinplatform.common.pipeline.resilience.StagePolicy;
+import com.kinplatform.common.pipeline.resilience.StageRetryPolicy;
+import com.kinplatform.common.pipeline.resilience.StageTimeoutConfig;
+import com.kinplatform.common.pipeline.stage.AnalyzerStage;
+import com.kinplatform.common.pipeline.stage.ConsultorStage;
+import com.kinplatform.common.pipeline.stage.EvaluatorStage;
+import com.kinplatform.common.pipeline.stage.EventStage;
+import com.kinplatform.common.pipeline.stage.OpportunityStage;
+import com.kinplatform.common.pipeline.stage.RecommendationStage;
+import com.kinplatform.common.pipeline.stage.ReportStage;
+import com.kinplatform.common.pipeline.stage.RiskStage;
+import com.kinplatform.common.pipeline.stage.ScoringStage;
+import com.kinplatform.common.pipeline.stage.StrategistStage;
 import com.kinplatform.platform.reporting.RecommendationEngine;
 import com.kinplatform.platform.reporting.RecommendationModel;
 import com.kinplatform.platform.reporting.opportunity.AutomationOpportunityAnalyzer;
@@ -670,6 +670,7 @@ public class KinConfig {
                 historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository, enterpriseProjectTrigger);
     }
 }
+
 
 
 

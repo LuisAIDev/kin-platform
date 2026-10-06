@@ -1,8 +1,8 @@
 package com.kinplatform.ai.observability;
 
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.SourceValidation;
-import com.kinplatform.kin.knowledge.orchestrator.CandidateValidator;
+import com.kinplatform.common.knowledge.KnowledgeCandidate;
+import com.kinplatform.common.knowledge.SourceValidation;
+import com.kinplatform.common.knowledge.orchestrator.CandidateValidator;
 
 import java.util.List;
 
@@ -34,3 +34,4 @@ public class TimedCandidateValidator implements CandidateValidator {
         return validations;
     }
 }
+

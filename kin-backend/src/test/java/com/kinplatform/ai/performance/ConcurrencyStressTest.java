@@ -1,7 +1,7 @@
 package com.kinplatform.ai.performance;
 
 import com.kinplatform.ai.observability.CorrelationContext;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -94,3 +94,4 @@ class ConcurrencyStressTest {
         }
     }
 }
+

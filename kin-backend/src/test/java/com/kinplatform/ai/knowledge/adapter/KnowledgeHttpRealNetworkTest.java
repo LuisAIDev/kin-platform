@@ -6,13 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.knowledge.KnowledgeInput;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
-import com.kinplatform.kin.knowledge.engine.KnowledgeGateway;
-import com.kinplatform.kin.knowledge.engine.SourceRegistry;
-import com.kinplatform.kin.knowledge.engine.SourceValidator;
+import com.kinplatform.common.knowledge.KnowledgeInput;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.common.knowledge.engine.KnowledgeGateway;
+import com.kinplatform.common.knowledge.engine.SourceRegistry;
+import com.kinplatform.common.knowledge.engine.SourceValidator;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -149,3 +149,4 @@ class KnowledgeHttpRealNetworkTest {
         assertNotNull(knowledge.explanation(), "el fallo controlado conserva un motivo trazable");
     }
 }
+

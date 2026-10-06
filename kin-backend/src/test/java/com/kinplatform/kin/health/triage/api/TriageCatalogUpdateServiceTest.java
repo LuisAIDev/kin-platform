@@ -13,8 +13,8 @@ import com.kinplatform.kin.health.triage.domain.Symptom;
 import com.kinplatform.kin.health.triage.domain.SymptomConditionRelation;
 import com.kinplatform.kin.health.triage.domain.TriageCatalog;
 import com.kinplatform.kin.health.triage.domain.Urgency;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -126,3 +126,4 @@ class TriageCatalogUpdateServiceTest {
         assertTrue(second.conditionsAdded() <= first.conditionsAdded());
     }
 }
+

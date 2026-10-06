@@ -1,23 +1,23 @@
 package com.kinplatform.ai.observability;
 
-import com.kinplatform.kin.knowledge.KnowledgeRepository;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.engine.DomainContextAssembler;
-import com.kinplatform.kin.knowledge.engine.DomainContextRanker;
-import com.kinplatform.kin.knowledge.engine.SourceRegistry;
-import com.kinplatform.kin.knowledge.engine.SourceRegistryAdapter;
-import com.kinplatform.kin.knowledge.engine.SourceValidator;
-import com.kinplatform.kin.knowledge.engine.SourceValidatorAdapter;
-import com.kinplatform.kin.knowledge.orchestrator.ContextAssembler;
-import com.kinplatform.kin.knowledge.orchestrator.ExecutionEnvironment;
-import com.kinplatform.kin.knowledge.orchestrator.KnowledgeOrchestrator;
-import com.kinplatform.kin.knowledge.orchestrator.OrchestrationDecisionType;
-import com.kinplatform.kin.knowledge.orchestrator.OrchestrationRequest;
-import com.kinplatform.kin.knowledge.orchestrator.OrchestrationResult;
-import com.kinplatform.kin.knowledge.orchestrator.OrchestrationState;
-import com.kinplatform.kin.knowledge.orchestrator.OrchestrationStrategy;
-import com.kinplatform.kin.knowledge.policy.PolicyConfig;
+import com.kinplatform.common.knowledge.KnowledgeRepository;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.engine.DomainContextAssembler;
+import com.kinplatform.common.knowledge.engine.DomainContextRanker;
+import com.kinplatform.common.knowledge.engine.SourceRegistry;
+import com.kinplatform.common.knowledge.engine.SourceRegistryAdapter;
+import com.kinplatform.common.knowledge.engine.SourceValidator;
+import com.kinplatform.common.knowledge.engine.SourceValidatorAdapter;
+import com.kinplatform.common.knowledge.orchestrator.ContextAssembler;
+import com.kinplatform.common.knowledge.orchestrator.ExecutionEnvironment;
+import com.kinplatform.common.knowledge.orchestrator.KnowledgeOrchestrator;
+import com.kinplatform.common.knowledge.orchestrator.OrchestrationDecisionType;
+import com.kinplatform.common.knowledge.orchestrator.OrchestrationRequest;
+import com.kinplatform.common.knowledge.orchestrator.OrchestrationResult;
+import com.kinplatform.common.knowledge.orchestrator.OrchestrationState;
+import com.kinplatform.common.knowledge.orchestrator.OrchestrationStrategy;
+import com.kinplatform.common.knowledge.policy.PolicyConfig;
 import io.micrometer.core.instrument.MeterRegistry;
 
 /**
@@ -156,3 +156,4 @@ public final class ObservableKnowledgeRuntime {
         KnowledgeStructuredLog.cycle(TimedQueryPlanner.toMs(startNanos), result);
     }
 }
+

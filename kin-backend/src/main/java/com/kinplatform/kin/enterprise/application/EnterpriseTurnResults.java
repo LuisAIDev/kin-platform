@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.application;
 
-import com.kinplatform.kin.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.KnowledgeResult;
 import com.kinplatform.platform.reporting.RecommendationResult;
 import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
 import com.kinplatform.platform.reporting.risk.RiskResult;
@@ -54,4 +54,5 @@ public record EnterpriseTurnResults(
         return new EnterpriseTurnResults(null, null, null, null, null);
     }
 }
+
 

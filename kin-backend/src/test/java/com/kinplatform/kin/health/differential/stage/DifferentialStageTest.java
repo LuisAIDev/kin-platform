@@ -18,7 +18,7 @@ import com.kinplatform.kin.health.triage.domain.Severity;
 import com.kinplatform.kin.health.triage.domain.TriageConditionResult;
 import com.kinplatform.kin.health.triage.domain.TriageResult;
 import com.kinplatform.kin.health.triage.domain.Urgency;
-import com.kinplatform.kin.pipeline.PipelineContext;
+import com.kinplatform.common.pipeline.PipelineContext;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
@@ -130,4 +130,5 @@ class DifferentialStageTest {
         assertNull(result.differentialResult());
     }
 }
+
 

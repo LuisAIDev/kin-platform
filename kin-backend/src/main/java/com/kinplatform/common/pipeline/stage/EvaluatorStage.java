@@ -1,0 +1,34 @@
+package com.kinplatform.common.pipeline.stage;
+
+import com.kinplatform.common.context.CompletenessEvaluator;
+import com.kinplatform.common.pipeline.PipelineContext;
+import com.kinplatform.common.pipeline.PipelineStage;
+
+public class EvaluatorStage implements PipelineStage {
+
+    private final CompletenessEvaluator evaluator;
+
+    public EvaluatorStage(CompletenessEvaluator evaluator) {
+        this.evaluator = evaluator;
+    }
+
+    @Override
+    public String name() {
+        return "Evaluador";
+    }
+
+    @Override
+    public boolean supports(PipelineContext context) {
+        return context.projectContext() != null;
+    }
+
+    @Override
+    public PipelineContext execute(PipelineContext context) {
+        var evaluation = evaluator.evaluate(context.projectContext());
+        context.evaluation(evaluation);
+        return context;
+    }
+}
+
+
+

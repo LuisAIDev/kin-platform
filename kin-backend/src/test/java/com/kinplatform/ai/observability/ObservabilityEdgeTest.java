@@ -1,8 +1,8 @@
 package com.kinplatform.ai.observability;
 
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeSource;
-import com.kinplatform.kin.knowledge.planner.ProviderType;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeSource;
+import com.kinplatform.common.knowledge.planner.ProviderType;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +40,7 @@ class ObservabilityEdgeTest {
         var source = new TimedKnowledgeSource(null, new StubSource(), metrics);
 
         var result = source.fetch(KnowledgeQuery.from(
-            com.kinplatform.kin.knowledge.KnowledgeRequest.of("tema", List.of())));
+            com.kinplatform.common.knowledge.KnowledgeRequest.of("tema", List.of())));
 
         assertNotNull(result);
         assertEquals(1.0, metrics.count("kin.knowledge.provider.requests", "type", "UNKNOWN"), 1e-9);
@@ -60,8 +60,10 @@ class ObservabilityEdgeTest {
 
     private static final class StubSource implements KnowledgeSource {
         @Override
-        public List<com.kinplatform.kin.knowledge.KnowledgeCandidate> fetch(KnowledgeQuery query) {
+        public List<com.kinplatform.common.knowledge.KnowledgeCandidate> fetch(KnowledgeQuery query) {
             return List.of();
         }
     }
 }
+
+

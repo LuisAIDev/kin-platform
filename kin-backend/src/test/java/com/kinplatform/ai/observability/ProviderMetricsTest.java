@@ -1,11 +1,11 @@
 package com.kinplatform.ai.observability;
 
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
-import com.kinplatform.kin.knowledge.KnowledgeSource;
-import com.kinplatform.kin.knowledge.engine.SourceRegistry;
-import com.kinplatform.kin.knowledge.engine.SourceValidator;
+import com.kinplatform.common.knowledge.KnowledgeCandidate;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.KnowledgeSource;
+import com.kinplatform.common.knowledge.engine.SourceRegistry;
+import com.kinplatform.common.knowledge.engine.SourceValidator;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -62,10 +62,10 @@ class ProviderMetricsTest {
     void timeout_deberiaRegistrarse() {
         var metrics = new KnowledgeMetrics(new SimpleMeterRegistry());
         var slow = new TimedKnowledgeSource(
-            com.kinplatform.kin.knowledge.planner.ProviderType.STATISTICS, new HealthySource(),
+            com.kinplatform.common.knowledge.planner.ProviderType.STATISTICS, new HealthySource(),
             metrics, 0L);
 
-        var result = slow.fetch(com.kinplatform.kin.knowledge.KnowledgeQuery.from(request()));
+        var result = slow.fetch(com.kinplatform.common.knowledge.KnowledgeQuery.from(request()));
 
         assertTrue(!result.isEmpty());
         assertTrue(metrics.count("kin.knowledge.provider.timeouts", "type", "STATISTICS") >= 1);
@@ -87,3 +87,5 @@ class ProviderMetricsTest {
         }
     }
 }
+
+

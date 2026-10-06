@@ -1,8 +1,8 @@
 package com.kinplatform.ai.observability;
 
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
-import com.kinplatform.kin.knowledge.planner.QueryPlan;
-import com.kinplatform.kin.knowledge.planner.QueryPlanner;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.planner.QueryPlan;
+import com.kinplatform.common.knowledge.planner.QueryPlanner;
 
 /**
  * Decorador observador del {@link QueryPlanner} (Fase 7 — observabilidad).
@@ -36,3 +36,4 @@ public class TimedQueryPlanner extends QueryPlanner {
         return (System.nanoTime() - startNanos) / 1_000_000L;
     }
 }
+

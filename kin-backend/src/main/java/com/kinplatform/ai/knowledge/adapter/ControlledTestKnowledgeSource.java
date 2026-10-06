@@ -1,9 +1,9 @@
 package com.kinplatform.ai.knowledge.adapter;
 
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeSource;
-import com.kinplatform.kin.knowledge.engine.SourceValidator;
+import com.kinplatform.common.knowledge.KnowledgeCandidate;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeSource;
+import com.kinplatform.common.knowledge.engine.SourceValidator;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -77,3 +77,4 @@ public class ControlledTestKnowledgeSource implements KnowledgeSource {
         }
     }
 }
+

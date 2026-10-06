@@ -12,13 +12,13 @@ import com.kinplatform.platform.enrichment.EnrichmentInput;
 import com.kinplatform.platform.enrichment.EnrichmentResult;
 import com.kinplatform.platform.enrichment.EvidenceCategory;
 import com.kinplatform.platform.enrichment.FactRanker;
-import com.kinplatform.kin.knowledge.KnowledgeInput;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
-import com.kinplatform.kin.knowledge.engine.KnowledgeGateway;
-import com.kinplatform.kin.knowledge.engine.SourceRegistry;
-import com.kinplatform.kin.knowledge.engine.SourceValidator;
+import com.kinplatform.common.knowledge.KnowledgeInput;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.common.knowledge.engine.KnowledgeGateway;
+import com.kinplatform.common.knowledge.engine.SourceRegistry;
+import com.kinplatform.common.knowledge.engine.SourceValidator;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -123,7 +123,7 @@ class KnowledgeHttpEndToEndTest {
         assertEquals(2, knowledge.factCount());
         assertEquals("src-http", knowledge.sourcesUsed().get(0));
         assertEquals(
-                com.kinplatform.kin.knowledge.SourceTrust.UNVERIFIED,
+                com.kinplatform.common.knowledge.SourceTrust.UNVERIFIED,
                 knowledge.facts().get(0).trust());
 
         EnrichmentEngine enrichmentEngine = new EnrichmentEngine(new FactRanker());
@@ -165,5 +165,7 @@ class KnowledgeHttpEndToEndTest {
         assertTrue(knowledge.isEmpty());
     }
 }
+
+
 
 

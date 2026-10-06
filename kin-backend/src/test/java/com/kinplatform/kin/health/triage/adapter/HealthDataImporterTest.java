@@ -8,8 +8,8 @@ import static org.mockito.Mockito.when;
 
 import com.kinplatform.kin.health.triage.InMemoryTriageKnowledgeRepository;
 import com.kinplatform.kin.health.triage.domain.TriageCatalog;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -32,12 +32,12 @@ class HealthDataImporterTest {
         var parser = new HealthCatalogParser();
         var importer = new HealthDataImporter(engine, adapter(), parser, repo);
 
-        var fact = com.kinplatform.kin.knowledge.KnowledgeFact.of(
+        var fact = com.kinplatform.common.knowledge.KnowledgeFact.of(
                 ENTRY,
                 "health-catalog",
                 "https://who.int/h",
                 java.time.OffsetDateTime.now(),
-                com.kinplatform.kin.knowledge.SourceTrust.OFFICIAL_PUBLIC,
+                com.kinplatform.common.knowledge.SourceTrust.OFFICIAL_PUBLIC,
                 "SALUD");
         when(engine.evaluate(any()))
                 .thenReturn(new KnowledgeResult(
@@ -91,3 +91,5 @@ class HealthDataImporterTest {
         assertTrue(repo.loadCatalog().isEmpty());
     }
 }
+
+

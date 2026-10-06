@@ -39,17 +39,17 @@ import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.event.QuestionGeneratedEvent;
 import com.kinplatform.kin.event.ReportGeneratedEvent;
-import com.kinplatform.kin.pipeline.Pipeline;
-import com.kinplatform.kin.pipeline.stage.AnalyzerStage;
-import com.kinplatform.kin.pipeline.stage.ConsultorStage;
-import com.kinplatform.kin.pipeline.stage.EvaluatorStage;
-import com.kinplatform.kin.pipeline.stage.EventStage;
-import com.kinplatform.kin.pipeline.stage.OpportunityStage;
-import com.kinplatform.kin.pipeline.stage.RecommendationStage;
-import com.kinplatform.kin.pipeline.stage.ReportStage;
-import com.kinplatform.kin.pipeline.stage.RiskStage;
-import com.kinplatform.kin.pipeline.stage.ScoringStage;
-import com.kinplatform.kin.pipeline.stage.StrategistStage;
+import com.kinplatform.common.pipeline.Pipeline;
+import com.kinplatform.common.pipeline.stage.AnalyzerStage;
+import com.kinplatform.common.pipeline.stage.ConsultorStage;
+import com.kinplatform.common.pipeline.stage.EvaluatorStage;
+import com.kinplatform.common.pipeline.stage.EventStage;
+import com.kinplatform.common.pipeline.stage.OpportunityStage;
+import com.kinplatform.common.pipeline.stage.RecommendationStage;
+import com.kinplatform.common.pipeline.stage.ReportStage;
+import com.kinplatform.common.pipeline.stage.RiskStage;
+import com.kinplatform.common.pipeline.stage.ScoringStage;
+import com.kinplatform.common.pipeline.stage.StrategistStage;
 import com.kinplatform.platform.reporting.RecommendationEngine;
 import com.kinplatform.platform.reporting.RecommendationModel;
 import com.kinplatform.platform.reporting.opportunity.MarketOpportunityAnalyzer;
@@ -298,6 +298,7 @@ class ConversationOrchestratorPipelineIntegrationTest {
         assertEquals(respuesta1, contenido1);
     }
 }
+
 
 
 

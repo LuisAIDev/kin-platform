@@ -8,7 +8,7 @@ import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.enterprise.engine.input.BusinessModelInput;
 import com.kinplatform.kin.enterprise.engine.result.BusinessModelResult;
 import com.kinplatform.kin.enterprise.valueobjects.LeanCanvas;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.KnowledgeResult;
 import com.kinplatform.platform.reporting.RecommendationResult;
 import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
 
@@ -204,6 +204,7 @@ public class DefaultBusinessModelEngine implements BusinessModelEngine {
         return "Lean Canvas construido con una cobertura de " + Math.round(confidence * 100) + "%.";
     }
 }
+
 
 
 

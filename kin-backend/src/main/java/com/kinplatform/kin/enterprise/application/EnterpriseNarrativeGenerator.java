@@ -7,7 +7,7 @@ import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
 import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.KnowledgeResult;
 import com.kinplatform.platform.reporting.Recommendation;
 import com.kinplatform.platform.reporting.RecommendationResult;
 import com.kinplatform.platform.reporting.opportunity.Opportunity;
@@ -214,5 +214,6 @@ public final class EnterpriseNarrativeGenerator {
         return null;
     }
 }
+
 
 

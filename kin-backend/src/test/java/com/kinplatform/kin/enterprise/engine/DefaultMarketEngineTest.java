@@ -130,16 +130,16 @@ class DefaultMarketEngineTest {
 
     @Test
     void evaluate_sinClaimDeCrecimiento_deberiaUsarPrimerNumero() {
-        var knowledge = new com.kinplatform.kin.knowledge.KnowledgeResult(
+        var knowledge = new com.kinplatform.common.knowledge.KnowledgeResult(
             List.of(
-                com.kinplatform.kin.knowledge.KnowledgeFact.of(
+                com.kinplatform.common.knowledge.KnowledgeFact.of(
                     "El mercado alcanza 1000000 unidades", "src1",
                     "https://example.com/a", java.time.OffsetDateTime.now(),
-                    com.kinplatform.kin.knowledge.SourceTrust.OFFICIAL_PUBLIC, "mercado"),
-                com.kinplatform.kin.knowledge.KnowledgeFact.of(
+                    com.kinplatform.common.knowledge.SourceTrust.OFFICIAL_PUBLIC, "mercado"),
+                com.kinplatform.common.knowledge.KnowledgeFact.of(
                     "Dato descriptivo sin cifras", "src2",
                     "https://example.com/b", java.time.OffsetDateTime.now(),
-                    com.kinplatform.kin.knowledge.SourceTrust.SECONDARY, "contexto")),
+                    com.kinplatform.common.knowledge.SourceTrust.SECONDARY, "contexto")),
             List.of("src1", "src2"), List.of(), 0.7,
             "Conocimiento.", "KnowledgeEngine", "1.0.0");
         var input = new MarketInput(
@@ -182,5 +182,6 @@ class DefaultMarketEngineTest {
         assertEquals("Por definir", result.plan().customerSegments().get(0));
     }
 }
+
 
 

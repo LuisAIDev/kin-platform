@@ -6,9 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.ai.knowledge.adapter.HttpKnowledgeSourceAdapter.HttpItem;
 import com.kinplatform.ai.knowledge.adapter.HttpKnowledgeSourceAdapter.HttpRequest;
 import com.kinplatform.ai.knowledge.adapter.HttpKnowledgeSourceAdapter.HttpResponse;
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.KnowledgeCandidate;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -194,3 +194,4 @@ class KnowledgeMultiSourceDecoderTest {
         assertThat(candidates).isEmpty();
     }
 }
+

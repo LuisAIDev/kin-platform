@@ -21,12 +21,12 @@ import com.kinplatform.kin.health.triage.domain.TriageCatalog;
 import com.kinplatform.kin.health.triage.domain.Urgency;
 import com.kinplatform.kin.health.triage.engine.TriageEngine;
 import com.kinplatform.kin.health.triage.port.TriageKnowledgeRepository;
-import com.kinplatform.kin.pipeline.Pipeline;
-import com.kinplatform.kin.pipeline.PipelineContext;
-import com.kinplatform.kin.pipeline.PipelineStage;
-import com.kinplatform.kin.pipeline.stage.AnalyzerStage;
-import com.kinplatform.kin.pipeline.stage.EvaluatorStage;
-import com.kinplatform.kin.pipeline.stage.StrategistStage;
+import com.kinplatform.common.pipeline.Pipeline;
+import com.kinplatform.common.pipeline.PipelineContext;
+import com.kinplatform.common.pipeline.PipelineStage;
+import com.kinplatform.common.pipeline.stage.AnalyzerStage;
+import com.kinplatform.common.pipeline.stage.EvaluatorStage;
+import com.kinplatform.common.pipeline.stage.StrategistStage;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -144,5 +144,6 @@ class TriageStagePipelineTest {
         assertTrue(result.triageResult() == null);
     }
 }
+
 
 

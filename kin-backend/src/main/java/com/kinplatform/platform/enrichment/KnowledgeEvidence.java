@@ -1,6 +1,6 @@
 package com.kinplatform.platform.enrichment;
 
-import com.kinplatform.kin.knowledge.KnowledgeFact;
+import com.kinplatform.common.knowledge.KnowledgeFact;
 
 /**
  * Evidencia de conocimiento seleccionada para el análisis (ADR-016). Inmutable.
@@ -27,4 +27,5 @@ public record KnowledgeEvidence(
         return score != null ? score.value() : 0.0;
     }
 }
+
 

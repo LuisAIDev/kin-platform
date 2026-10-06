@@ -1,14 +1,14 @@
 package com.kinplatform.ai.knowledge.adapter;
 
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.KnowledgeSource;
-import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
-import com.kinplatform.kin.knowledge.engine.KnowledgeGateway;
-import com.kinplatform.kin.knowledge.engine.SourceRegistry;
-import com.kinplatform.kin.knowledge.engine.SourceValidator;
+import com.kinplatform.common.knowledge.KnowledgeCandidate;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.KnowledgeSource;
+import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.common.knowledge.engine.KnowledgeGateway;
+import com.kinplatform.common.knowledge.engine.SourceRegistry;
+import com.kinplatform.common.knowledge.engine.SourceValidator;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -72,7 +72,7 @@ class KnowledgeAdapterGatewayPropagationTest {
         var registry = new SourceRegistry(List.of(composite, connector));
         var engine = new KnowledgeEngine(new KnowledgeGateway(registry, validator()));
 
-        KnowledgeResult result = engine.evaluate(com.kinplatform.kin.knowledge.KnowledgeInput.of(request()));
+        KnowledgeResult result = engine.evaluate(com.kinplatform.common.knowledge.KnowledgeInput.of(request()));
 
         assertFalse(result.isEmpty());
         assertEquals(4, result.factCount());
@@ -91,7 +91,7 @@ class KnowledgeAdapterGatewayPropagationTest {
         var registry = new SourceRegistry(List.of(noPermitido));
         var engine = new KnowledgeEngine(new KnowledgeGateway(registry, validator()));
 
-        KnowledgeResult result = engine.evaluate(com.kinplatform.kin.knowledge.KnowledgeInput.of(request()));
+        KnowledgeResult result = engine.evaluate(com.kinplatform.common.knowledge.KnowledgeInput.of(request()));
 
         assertTrue(result.isEmpty());
         assertEquals(0, result.factCount());
@@ -108,7 +108,7 @@ class KnowledgeAdapterGatewayPropagationTest {
         var registry = new SourceRegistry(List.of(statusError));
         var engine = new KnowledgeEngine(new KnowledgeGateway(registry, validator()));
 
-        KnowledgeResult result = engine.evaluate(com.kinplatform.kin.knowledge.KnowledgeInput.of(request()));
+        KnowledgeResult result = engine.evaluate(com.kinplatform.common.knowledge.KnowledgeInput.of(request()));
 
         assertTrue(result.isEmpty());
         assertEquals(1, result.validations().size());
@@ -119,7 +119,7 @@ class KnowledgeAdapterGatewayPropagationTest {
     void gateway_deberiaDegradarAGraciosamente_sinFuentes() {
         var engine = new KnowledgeEngine(new KnowledgeGateway(SourceRegistry.empty(), validator()));
 
-        KnowledgeResult result = engine.evaluate(com.kinplatform.kin.knowledge.KnowledgeInput.of(request()));
+        KnowledgeResult result = engine.evaluate(com.kinplatform.common.knowledge.KnowledgeInput.of(request()));
 
         assertTrue(result.isEmpty());
         assertEquals(0.0, result.confidence(), 1e-9);
@@ -130,8 +130,8 @@ class KnowledgeAdapterGatewayPropagationTest {
         var registry = new SourceRegistry(List.of(httpSource(), jdbcSource()));
         var engine = new KnowledgeEngine(new KnowledgeGateway(registry, validator()));
 
-        KnowledgeResult r1 = engine.evaluate(com.kinplatform.kin.knowledge.KnowledgeInput.of(request()));
-        KnowledgeResult r2 = engine.evaluate(com.kinplatform.kin.knowledge.KnowledgeInput.of(request()));
+        KnowledgeResult r1 = engine.evaluate(com.kinplatform.common.knowledge.KnowledgeInput.of(request()));
+        KnowledgeResult r2 = engine.evaluate(com.kinplatform.common.knowledge.KnowledgeInput.of(request()));
 
         assertEquals(r1.facts(), r2.facts());
         assertEquals(r1.confidence(), r2.confidence(), 1e-9);
@@ -143,7 +143,7 @@ class KnowledgeAdapterGatewayPropagationTest {
         var registry = new SourceRegistry(List.of(ragSource()));
         var engine = new KnowledgeEngine(new KnowledgeGateway(registry, validator()));
 
-        KnowledgeResult result = engine.evaluate(com.kinplatform.kin.knowledge.KnowledgeInput.of(request()));
+        KnowledgeResult result = engine.evaluate(com.kinplatform.common.knowledge.KnowledgeInput.of(request()));
 
         assertFalse(result.isEmpty());
         assertEquals(1, result.factCount());
@@ -151,3 +151,5 @@ class KnowledgeAdapterGatewayPropagationTest {
         assertTrue(result.facts().get(0).claim().contains("logística urbana"));
     }
 }
+
+

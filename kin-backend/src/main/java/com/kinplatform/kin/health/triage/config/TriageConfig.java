@@ -11,7 +11,7 @@ import com.kinplatform.kin.health.triage.domain.SymptomExtractor;
 import com.kinplatform.kin.health.triage.engine.TriageEngine;
 import com.kinplatform.kin.health.triage.port.TriageKnowledgeRepository;
 import com.kinplatform.kin.health.triage.stage.TriageStage;
-import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -108,3 +108,4 @@ public class TriageConfig {
                 knowledgeEngine, healthKnowledgeAdapter, knowledgeRepository, healthCatalogParser, properties);
     }
 }
+

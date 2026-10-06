@@ -18,7 +18,7 @@ import com.kinplatform.kin.health.triage.domain.Urgency;
 import com.kinplatform.kin.health.triage.engine.TriageEngine;
 import com.kinplatform.kin.health.triage.event.TriagePerformedEvent;
 import com.kinplatform.kin.health.triage.port.TriageKnowledgeRepository;
-import com.kinplatform.kin.pipeline.PipelineContext;
+import com.kinplatform.common.pipeline.PipelineContext;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
@@ -121,4 +121,5 @@ class TriageStageTest {
         assertNull(result.triageResult());
     }
 }
+
 

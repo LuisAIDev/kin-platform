@@ -5,8 +5,8 @@ import com.kinplatform.platform.enrichment.EvidenceCategory;
 import com.kinplatform.platform.enrichment.EvidenceRank;
 import com.kinplatform.platform.enrichment.EvidenceScore;
 import com.kinplatform.platform.enrichment.KnowledgeEvidence;
-import com.kinplatform.kin.knowledge.KnowledgeFact;
-import com.kinplatform.kin.knowledge.SourceTrust;
+import com.kinplatform.common.knowledge.KnowledgeFact;
+import com.kinplatform.common.knowledge.SourceTrust;
 import com.kinplatform.platform.reporting.report.assembler.ExecutiveSummaryAssembler;
 import com.kinplatform.platform.reporting.report.assembler.FinancialSectionAssembler;
 import com.kinplatform.platform.reporting.report.assembler.InnovationSectionAssembler;
@@ -76,6 +76,7 @@ class ReportEngineSourcesTest {
             "enriquecido", "Test", "v1");
     }
 }
+
 
 
 

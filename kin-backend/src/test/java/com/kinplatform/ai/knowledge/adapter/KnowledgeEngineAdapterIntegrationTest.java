@@ -1,17 +1,17 @@
 package com.kinplatform.ai.knowledge.adapter;
 
 import com.kinplatform.common.engine.EnginePhase;
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeFact;
-import com.kinplatform.kin.knowledge.KnowledgeInput;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.KnowledgeSource;
-import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
-import com.kinplatform.kin.knowledge.engine.KnowledgeGateway;
-import com.kinplatform.kin.knowledge.engine.SourceRegistry;
-import com.kinplatform.kin.knowledge.engine.SourceValidator;
+import com.kinplatform.common.knowledge.KnowledgeCandidate;
+import com.kinplatform.common.knowledge.KnowledgeFact;
+import com.kinplatform.common.knowledge.KnowledgeInput;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.KnowledgeSource;
+import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.common.knowledge.engine.KnowledgeGateway;
+import com.kinplatform.common.knowledge.engine.SourceRegistry;
+import com.kinplatform.common.knowledge.engine.SourceValidator;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -332,4 +332,5 @@ class KnowledgeEngineAdapterIntegrationTest {
         assertEquals(EnginePhase.KNOWLEDGE, engine.metadata().phase());
     }
 }
+
 

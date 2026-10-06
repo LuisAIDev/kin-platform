@@ -2,7 +2,7 @@ package com.kinplatform.platform.enrichment;
 
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.engine.EngineInput;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.KnowledgeResult;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -42,6 +42,7 @@ public record EnrichmentInput(
         return new EnrichmentInput(context, knowledge, categories, minScore);
     }
 }
+
 
 
 

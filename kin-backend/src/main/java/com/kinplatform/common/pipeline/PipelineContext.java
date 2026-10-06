@@ -1,0 +1,330 @@
+package com.kinplatform.common.pipeline;
+
+import com.kinplatform.common.context.CompletenessEvaluation;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.kin.conversation.ResponseValidation;
+import com.kinplatform.kin.conversation.TurnDirective;
+import com.kinplatform.common.decision.ConversationDecision;
+import com.kinplatform.common.engine.EngineResult;
+import com.kinplatform.platform.enrichment.EnrichmentResult;
+import com.kinplatform.kin.event.DomainEvent;
+import com.kinplatform.kin.health.differential.domain.DifferentialResult;
+import com.kinplatform.kin.health.triage.domain.TriageResult;
+import com.kinplatform.kin.interview.InterviewResult;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.deduplication.DeduplicationResult;
+import com.kinplatform.platform.reporting.RecommendationResult;
+import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.risk.RiskResult;
+import com.kinplatform.platform.scoring.ScoreResult;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import reactor.core.publisher.Flux;
+
+public class PipelineContext {
+
+    private final UUID projectId;
+    private final UUID userId;
+    private final String userMessage;
+    private final List<com.kinplatform.common.context.Message> history;
+    private final String projectTitle;
+    private final String projectDescription;
+    private final String projectCategory;
+
+    private ProjectContext projectContext;
+    private CompletenessEvaluation evaluation;
+    private ConversationDecision decision;
+    private String aiResponse;
+    private ScoreResult scoreResult;
+    private RecommendationResult recommendationResult;
+    private RiskResult riskResult;
+    private OpportunityResult opportunityResult;
+    private ConsultingReport consultingReport;
+    private KnowledgeResult knowledgeResult;
+    private InterviewResult interviewResult;
+    private TriageResult triageResult;
+    private DifferentialResult differentialResult;
+    private EnrichmentResult enrichmentResult;
+    private final List<DomainEvent> events = new ArrayList<>();
+    private final Map<String, Object> attributes = new HashMap<>();
+    private final Map<String, EngineResult> engineResults = new HashMap<>();
+    private boolean completed;
+    private String currentStage;
+    private boolean streaming;
+    private Flux<String> aiResponseFlux;
+    private TurnDirective turnDirective;
+    private ResponseValidation responseValidation;
+
+    public PipelineContext(
+            UUID projectId,
+            UUID userId,
+            String userMessage,
+            List<com.kinplatform.common.context.Message> history,
+            String projectTitle,
+            String projectDescription,
+            String projectCategory) {
+        this(projectId, userId, userMessage, history, projectTitle, projectDescription, projectCategory, null);
+    }
+
+    /**
+     * Constructor aditivo (ADR-016, Etapa E6): inicializa además el
+     * {@link EnrichmentResult} del turno. El constructor de 7 parámetros
+     * (compatibilidad) delega en este con {@code null}.
+     */
+    public PipelineContext(
+            UUID projectId,
+            UUID userId,
+            String userMessage,
+            List<com.kinplatform.common.context.Message> history,
+            String projectTitle,
+            String projectDescription,
+            String projectCategory,
+            EnrichmentResult enrichmentResult) {
+        this.projectId = projectId;
+        this.userId = userId;
+        this.userMessage = userMessage;
+        this.history = history;
+        this.projectTitle = projectTitle;
+        this.projectDescription = projectDescription;
+        this.projectCategory = projectCategory;
+        this.enrichmentResult = enrichmentResult;
+    }
+
+    public UUID projectId() {
+        return projectId;
+    }
+
+    public UUID userId() {
+        return userId;
+    }
+
+    public String userMessage() {
+        return userMessage;
+    }
+
+    public List<com.kinplatform.common.context.Message> history() {
+        return history;
+    }
+
+    public String projectTitle() {
+        return projectTitle;
+    }
+
+    public String projectDescription() {
+        return projectDescription;
+    }
+
+    public String projectCategory() {
+        return projectCategory;
+    }
+
+    public ProjectContext projectContext() {
+        return projectContext;
+    }
+
+    public void projectContext(ProjectContext ctx) {
+        this.projectContext = ctx;
+    }
+
+    public CompletenessEvaluation evaluation() {
+        return evaluation;
+    }
+
+    public void evaluation(CompletenessEvaluation e) {
+        this.evaluation = e;
+    }
+
+    public ConversationDecision decision() {
+        return decision;
+    }
+
+    public void decision(ConversationDecision d) {
+        this.decision = d;
+    }
+
+    public String aiResponse() {
+        return aiResponse;
+    }
+
+    public void aiResponse(String r) {
+        this.aiResponse = r;
+    }
+
+    public ScoreResult scoreResult() {
+        return scoreResult;
+    }
+
+    public void scoreResult(ScoreResult s) {
+        this.scoreResult = s;
+    }
+
+    public RecommendationResult recommendationResult() {
+        return recommendationResult;
+    }
+
+    public void recommendationResult(RecommendationResult r) {
+        this.recommendationResult = r;
+    }
+
+    public RiskResult riskResult() {
+        return riskResult;
+    }
+
+    public void riskResult(RiskResult r) {
+        this.riskResult = r;
+    }
+
+    public OpportunityResult opportunityResult() {
+        return opportunityResult;
+    }
+
+    public void opportunityResult(OpportunityResult r) {
+        this.opportunityResult = r;
+    }
+
+    public ConsultingReport consultingReport() {
+        return consultingReport;
+    }
+
+    public void consultingReport(ConsultingReport r) {
+        this.consultingReport = r;
+    }
+
+    public KnowledgeResult knowledgeResult() {
+        return knowledgeResult;
+    }
+
+    public void knowledgeResult(KnowledgeResult r) {
+        this.knowledgeResult = r;
+    }
+
+    public DeduplicationResult deduplicationResult() {
+        return (DeduplicationResult) attributes.get("deduplicationResult");
+    }
+
+    public void deduplicationResult(DeduplicationResult r) {
+        attributes.put("deduplicationResult", r);
+    }
+
+    public InterviewResult interviewResult() {
+        return interviewResult;
+    }
+
+    public void interviewResult(InterviewResult r) {
+        this.interviewResult = r;
+    }
+
+    public TriageResult triageResult() {
+        return triageResult;
+    }
+
+    public void triageResult(TriageResult r) {
+        this.triageResult = r;
+    }
+
+    public DifferentialResult differentialResult() {
+        return differentialResult;
+    }
+
+    public void differentialResult(DifferentialResult r) {
+        this.differentialResult = r;
+    }
+
+    public EnrichmentResult enrichmentResult() {
+        return enrichmentResult;
+    }
+
+    public void withEnrichmentResult(EnrichmentResult r) {
+        this.enrichmentResult = r;
+    }
+
+    public void setEngineResult(String engineName, EngineResult result) {
+        engineResults.put(engineName, result);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends EngineResult> T engineResult(String engineName) {
+        return (T) engineResults.get(engineName);
+    }
+
+    public Map<String, EngineResult> engineResults() {
+        return Map.copyOf(engineResults);
+    }
+
+    public List<DomainEvent> events() {
+        return List.copyOf(events);
+    }
+
+    public void addEvent(DomainEvent event) {
+        events.add(event);
+    }
+
+    public void setAttribute(String key, Object value) {
+        attributes.put(key, value);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T getAttribute(String key) {
+        return (T) attributes.get(key);
+    }
+
+    public boolean completed() {
+        return completed;
+    }
+
+    public void markCompleted() {
+        this.completed = true;
+    }
+
+    public String currentStage() {
+        return currentStage;
+    }
+
+    public void currentStage(String stage) {
+        this.currentStage = stage;
+    }
+
+    public boolean streaming() {
+        return streaming;
+    }
+
+    public void streaming(boolean streaming) {
+        this.streaming = streaming;
+    }
+
+    public Flux<String> aiResponseFlux() {
+        return aiResponseFlux;
+    }
+
+    public void aiResponseFlux(Flux<String> flux) {
+        this.aiResponseFlux = flux;
+    }
+
+    public TurnDirective turnDirective() {
+        return turnDirective;
+    }
+
+    public void turnDirective(TurnDirective directive) {
+        this.turnDirective = directive;
+    }
+
+    public ResponseValidation responseValidation() {
+        return responseValidation;
+    }
+
+    public void responseValidation(ResponseValidation validation) {
+        this.responseValidation = validation;
+    }
+}
+
+
+
+
+
+
+
+

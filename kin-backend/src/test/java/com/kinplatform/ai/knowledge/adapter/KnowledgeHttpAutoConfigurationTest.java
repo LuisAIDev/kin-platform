@@ -22,7 +22,7 @@ class KnowledgeHttpAutoConfigurationTest {
     void porDefecto_noDebeRegistrarFuentesExternas() {
         runner.run(context -> {
             assertThat(context).hasSingleBean(KnowledgeAdapterMetrics.class);
-            assertThat(context.getBeansOfType(com.kinplatform.kin.knowledge.KnowledgeSource.class))
+            assertThat(context.getBeansOfType(com.kinplatform.common.knowledge.KnowledgeSource.class))
                     .isEmpty();
         });
     }
@@ -120,3 +120,4 @@ class KnowledgeHttpAutoConfigurationTest {
         assertThat(decoder.apply(null)).isEmpty();
     }
 }
+

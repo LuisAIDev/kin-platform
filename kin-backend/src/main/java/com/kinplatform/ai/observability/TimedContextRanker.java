@@ -1,7 +1,7 @@
 package com.kinplatform.ai.observability;
 
-import com.kinplatform.kin.knowledge.orchestrator.ContextRanker;
-import com.kinplatform.kin.knowledge.orchestrator.RankedCandidate;
+import com.kinplatform.common.knowledge.orchestrator.ContextRanker;
+import com.kinplatform.common.knowledge.orchestrator.RankedCandidate;
 
 import java.util.List;
 
@@ -27,3 +27,4 @@ public class TimedContextRanker implements ContextRanker {
         return result;
     }
 }
+

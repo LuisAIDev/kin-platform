@@ -1,6 +1,6 @@
 package com.kinplatform.platform.enrichment;
 
-import com.kinplatform.kin.knowledge.KnowledgeFact;
+import com.kinplatform.common.knowledge.KnowledgeFact;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -68,4 +68,5 @@ class EvidenceRankTest {
         assertEquals(1.0, new EvidenceRank(EvidenceCategory.MARKET, List.of(), 1.5).confidence(), 1e-9);
     }
 }
+
 

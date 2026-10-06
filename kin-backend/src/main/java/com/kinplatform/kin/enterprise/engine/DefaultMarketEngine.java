@@ -8,7 +8,7 @@ import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.enterprise.engine.input.MarketInput;
 import com.kinplatform.kin.enterprise.engine.result.MarketResult;
 import com.kinplatform.kin.enterprise.valueobjects.MarketPlan;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.KnowledgeResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -205,5 +205,6 @@ public class DefaultMarketEngine implements MarketEngine {
         return lines.isEmpty() ? List.of(UNDEFINED) : List.copyOf(lines);
     }
 }
+
 
 

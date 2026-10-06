@@ -1,6 +1,6 @@
 package com.kinplatform.platform.enrichment;
 
-import com.kinplatform.kin.knowledge.KnowledgeFact;
+import com.kinplatform.common.knowledge.KnowledgeFact;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -50,4 +50,5 @@ class KnowledgeEvidenceTest {
         assertEquals(0.4, evidence.scoreValue(), 1e-9);
     }
 }
+
 

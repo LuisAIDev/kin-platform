@@ -5,8 +5,8 @@ import com.kinplatform.platform.enrichment.EvidenceCategory;
 import com.kinplatform.platform.enrichment.EvidenceRank;
 import com.kinplatform.platform.enrichment.EvidenceScore;
 import com.kinplatform.platform.enrichment.KnowledgeEvidence;
-import com.kinplatform.kin.knowledge.KnowledgeFact;
-import com.kinplatform.kin.knowledge.SourceTrust;
+import com.kinplatform.common.knowledge.KnowledgeFact;
+import com.kinplatform.common.knowledge.SourceTrust;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
@@ -72,5 +72,6 @@ class ReportInputEnrichmentTest {
             "enriquecido", "Test", "v1");
     }
 }
+
 
 

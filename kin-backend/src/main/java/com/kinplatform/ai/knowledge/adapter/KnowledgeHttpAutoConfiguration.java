@@ -2,7 +2,7 @@ package com.kinplatform.ai.knowledge.adapter;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.knowledge.KnowledgeSource;
+import com.kinplatform.common.knowledge.KnowledgeSource;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.net.http.HttpClient;
 import java.time.OffsetDateTime;
@@ -474,3 +474,4 @@ public class KnowledgeHttpAutoConfiguration {
         }
     }
 }
+

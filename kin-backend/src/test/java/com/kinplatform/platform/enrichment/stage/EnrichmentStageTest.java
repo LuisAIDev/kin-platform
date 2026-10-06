@@ -6,10 +6,10 @@ import com.kinplatform.platform.enrichment.EnrichmentEngine;
 import com.kinplatform.platform.enrichment.EnrichmentResult;
 import com.kinplatform.platform.enrichment.EvidenceCategory;
 import com.kinplatform.platform.enrichment.FactRanker;
-import com.kinplatform.kin.knowledge.KnowledgeFact;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.SourceTrust;
-import com.kinplatform.kin.pipeline.PipelineContext;
+import com.kinplatform.common.knowledge.KnowledgeFact;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.SourceTrust;
+import com.kinplatform.common.pipeline.PipelineContext;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
@@ -160,6 +160,7 @@ class EnrichmentStageTest {
         assertTrue(ctx.engineResults().containsKey(EnrichmentEngine.GENERATOR_NAME));
     }
 }
+
 
 
 

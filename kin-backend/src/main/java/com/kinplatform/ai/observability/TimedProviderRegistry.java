@@ -1,8 +1,8 @@
 package com.kinplatform.ai.observability;
 
-import com.kinplatform.kin.knowledge.KnowledgeSource;
-import com.kinplatform.kin.knowledge.orchestrator.ProviderRegistry;
-import com.kinplatform.kin.knowledge.planner.ProviderType;
+import com.kinplatform.common.knowledge.KnowledgeSource;
+import com.kinplatform.common.knowledge.orchestrator.ProviderRegistry;
+import com.kinplatform.common.knowledge.planner.ProviderType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,3 +42,4 @@ public class TimedProviderRegistry implements ProviderRegistry {
         return type == null ? "UNKNOWN" : type.name();
     }
 }
+

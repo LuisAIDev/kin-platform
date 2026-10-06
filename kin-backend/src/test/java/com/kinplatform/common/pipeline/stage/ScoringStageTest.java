@@ -1,0 +1,71 @@
+package com.kinplatform.common.pipeline.stage;
+
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
+import com.kinplatform.common.pipeline.PipelineContext;
+import com.kinplatform.platform.scoring.ScoringEngine;
+import com.kinplatform.platform.scoring.ScoringModel;
+import com.kinplatform.platform.scoring.ScoreResult;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class ScoringStageTest {
+
+    private final ScoringStage stage =
+        new ScoringStage(new ScoringEngine(ScoringModel.defaultModel()));
+
+    private PipelineContext context(ConversationDecision decision) {
+        var ctx = new PipelineContext(
+            UUID.randomUUID(), UUID.randomUUID(), "mensaje", List.of(),
+            "Proyecto", "Descripción", "Tecnología");
+        ctx.projectContext(ProjectContext.fromProject("Proyecto", "Descripción", "Tecnología"));
+        ctx.evaluation(new CompletenessEvaluation(
+            0.5, List.of(AnalyzedDimension.MVP), List.of(),
+            0.7, CompletenessEvaluation.MaturityLevel.DEVELOPING,
+            CompletenessEvaluation.ViabilityLevel.MEDIUM, 0.6,
+            List.of(), List.of(), List.of(),
+            CompletenessEvaluation.RecommendationLevel.READY_FOR_REPORT,
+            true, 8, AnalyzedDimension.values().length));
+        ctx.decision(decision);
+        return ctx;
+    }
+
+    @Test
+    void name_deberiaSerScoring() {
+        assertEquals("Scoring", stage.name());
+    }
+
+    @Test
+    void supports_deberiaSerFalso_cuandoNoHayReporte() {
+        assertFalse(stage.supports(context(ConversationDecision.ask(AnalyzedDimension.MVP, 5, "preguntar"))));
+    }
+
+    @Test
+    void supports_deberiaSerVerdadero_cuandoHayReporte() {
+        assertTrue(stage.supports(context(ConversationDecision.generateReport("reporte"))));
+    }
+
+    @Test
+    void execute_deberiaGuardarElScoreEnContextoYEnElMapaGenerico() {
+        var ctx = context(ConversationDecision.generateReport("reporte"));
+        var result = stage.execute(ctx);
+
+        assertSame(ctx, result);
+        assertNotNull(ctx.scoreResult());
+        assertEquals("ScoringEngine", ctx.scoreResult().generatedBy());
+
+        var generic = ctx.<ScoreResult>engineResult("ScoringEngine");
+        assertNotNull(generic);
+        assertEquals(ctx.scoreResult(), generic);
+    }
+}
+
+
+
+

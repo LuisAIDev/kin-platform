@@ -5,8 +5,8 @@ import com.kinplatform.kin.health.differential.domain.DifferentialResult;
 import com.kinplatform.kin.health.differential.engine.DifferentialEngine;
 import com.kinplatform.kin.health.differential.event.DifferentialPerformedEvent;
 import com.kinplatform.kin.health.triage.domain.TriageResult;
-import com.kinplatform.kin.pipeline.PipelineContext;
-import com.kinplatform.kin.pipeline.PipelineStage;
+import com.kinplatform.common.pipeline.PipelineContext;
+import com.kinplatform.common.pipeline.PipelineStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,3 +91,4 @@ public class DifferentialStage implements PipelineStage {
         return context;
     }
 }
+

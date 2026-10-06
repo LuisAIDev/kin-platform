@@ -9,8 +9,8 @@ import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.kin.conversation.ResponseFallback;
 import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.event.DomainEventBus;
-import com.kinplatform.kin.pipeline.Pipeline;
-import com.kinplatform.kin.pipeline.PipelineContext;
+import com.kinplatform.common.pipeline.Pipeline;
+import com.kinplatform.common.pipeline.PipelineContext;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -108,4 +108,5 @@ class StreamingFallbackTest {
         assertEquals("x", content);
     }
 }
+
 

@@ -1,19 +1,19 @@
 package com.kinplatform.ai.observability;
 
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
-import com.kinplatform.kin.knowledge.SourceTrust;
-import com.kinplatform.kin.knowledge.policy.ContextBudget;
-import com.kinplatform.kin.knowledge.policy.CostBudgetUsage;
-import com.kinplatform.kin.knowledge.policy.ContextPolicyConfig;
-import com.kinplatform.kin.knowledge.policy.CostPolicyConfig;
-import com.kinplatform.kin.knowledge.policy.KnowledgePolicyEngine;
-import com.kinplatform.kin.knowledge.policy.PolicyDecision;
-import com.kinplatform.kin.knowledge.policy.ProviderPolicyConfig;
-import com.kinplatform.kin.knowledge.policy.ProviderSelection;
-import com.kinplatform.kin.knowledge.policy.QueryPolicyConfig;
-import com.kinplatform.kin.knowledge.policy.QueryPolicyResult;
-import com.kinplatform.kin.knowledge.policy.QualityPolicyConfig;
+import com.kinplatform.common.knowledge.KnowledgeCandidate;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.SourceTrust;
+import com.kinplatform.common.knowledge.policy.ContextBudget;
+import com.kinplatform.common.knowledge.policy.CostBudgetUsage;
+import com.kinplatform.common.knowledge.policy.ContextPolicyConfig;
+import com.kinplatform.common.knowledge.policy.CostPolicyConfig;
+import com.kinplatform.common.knowledge.policy.KnowledgePolicyEngine;
+import com.kinplatform.common.knowledge.policy.PolicyDecision;
+import com.kinplatform.common.knowledge.policy.ProviderPolicyConfig;
+import com.kinplatform.common.knowledge.policy.ProviderSelection;
+import com.kinplatform.common.knowledge.policy.QueryPolicyConfig;
+import com.kinplatform.common.knowledge.policy.QueryPolicyResult;
+import com.kinplatform.common.knowledge.policy.QualityPolicyConfig;
 
 import java.util.Set;
 
@@ -77,3 +77,4 @@ public class TimedPolicyEngine extends KnowledgePolicyEngine {
         return result;
     }
 }
+

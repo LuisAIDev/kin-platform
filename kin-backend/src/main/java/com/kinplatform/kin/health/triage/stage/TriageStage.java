@@ -8,8 +8,8 @@ import com.kinplatform.kin.health.triage.domain.Urgency;
 import com.kinplatform.kin.health.triage.engine.TriageEngine;
 import com.kinplatform.kin.health.triage.event.TriagePerformedEvent;
 import com.kinplatform.kin.health.triage.port.TriageKnowledgeRepository;
-import com.kinplatform.kin.pipeline.PipelineContext;
-import com.kinplatform.kin.pipeline.PipelineStage;
+import com.kinplatform.common.pipeline.PipelineContext;
+import com.kinplatform.common.pipeline.PipelineStage;
 import java.util.Comparator;
 import java.util.List;
 import org.slf4j.Logger;
@@ -121,3 +121,4 @@ public class TriageStage implements PipelineStage {
         return context;
     }
 }
+

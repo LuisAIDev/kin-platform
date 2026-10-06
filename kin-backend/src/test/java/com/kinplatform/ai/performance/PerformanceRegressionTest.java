@@ -1,7 +1,7 @@
 package com.kinplatform.ai.performance;
 
-import com.kinplatform.kin.knowledge.engine.KnowledgeGateway;
-import com.kinplatform.kin.knowledge.engine.SourceRegistry;
+import com.kinplatform.common.knowledge.engine.KnowledgeGateway;
+import com.kinplatform.common.knowledge.engine.SourceRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,3 +38,4 @@ class PerformanceRegressionTest {
             "la sobrecarga de observabilidad debe ser acotada");
     }
 }
+

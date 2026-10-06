@@ -10,7 +10,7 @@ import com.kinplatform.kin.enterprise.valueobjects.LeanCanvas;
 import com.kinplatform.kin.enterprise.valueobjects.MarketPlan;
 import com.kinplatform.kin.enterprise.valueobjects.RiskMatrix;
 import com.kinplatform.kin.enterprise.valueobjects.Roadmap;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.KnowledgeResult;
 import com.kinplatform.platform.reporting.RecommendationResult;
 import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
 import com.kinplatform.platform.reporting.risk.RiskResult;
@@ -38,6 +38,7 @@ public record EnterpriseScoreInput(
     RiskResult riskResult
 ) implements EngineInput {
 }
+
 
 
 

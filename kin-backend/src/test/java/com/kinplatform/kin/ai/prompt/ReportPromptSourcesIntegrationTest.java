@@ -20,10 +20,10 @@ import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.platform.enrichment.EnrichmentEngine;
 import com.kinplatform.platform.enrichment.FactRanker;
 import com.kinplatform.platform.enrichment.stage.EnrichmentStage;
-import com.kinplatform.kin.knowledge.KnowledgeFact;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.SourceTrust;
-import com.kinplatform.kin.pipeline.PipelineContext;
+import com.kinplatform.common.knowledge.KnowledgeFact;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.SourceTrust;
+import com.kinplatform.common.pipeline.PipelineContext;
 import com.kinplatform.platform.reporting.RecommendationResult;
 import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
 import com.kinplatform.platform.reporting.report.ReportAssemblers;
@@ -149,6 +149,7 @@ class ReportPromptSourcesIntegrationTest {
             new SourcesSectionFormatter()));
     }
 }
+
 
 
 

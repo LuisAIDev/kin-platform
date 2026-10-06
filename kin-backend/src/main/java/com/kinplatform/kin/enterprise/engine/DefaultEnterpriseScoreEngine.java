@@ -10,7 +10,7 @@ import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
 import com.kinplatform.kin.enterprise.valueobjects.InnovationPlan;
 import com.kinplatform.kin.enterprise.valueobjects.MarketPlan;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.KnowledgeResult;
 import com.kinplatform.platform.reporting.risk.RiskResult;
 
 /**
@@ -207,6 +207,7 @@ public class DefaultEnterpriseScoreEngine implements EnterpriseScoreEngine {
                 + score.grade().name() + ") a partir de los planes del proyecto.";
     }
 }
+
 
 
 

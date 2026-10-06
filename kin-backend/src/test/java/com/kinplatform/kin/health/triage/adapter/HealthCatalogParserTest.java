@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeFact;
-import com.kinplatform.kin.knowledge.SourceTrust;
+import com.kinplatform.common.knowledge.KnowledgeCandidate;
+import com.kinplatform.common.knowledge.KnowledgeFact;
+import com.kinplatform.common.knowledge.SourceTrust;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -138,3 +138,4 @@ class HealthCatalogParserTest {
         assertEquals(UUID.class, a.conditions().get(0).id().getClass());
     }
 }
+

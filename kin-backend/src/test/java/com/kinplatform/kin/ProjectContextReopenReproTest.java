@@ -23,11 +23,11 @@ import com.kinplatform.kin.conversation.TurnResult;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
-import com.kinplatform.kin.pipeline.Pipeline;
-import com.kinplatform.kin.pipeline.stage.AnalyzerStage;
-import com.kinplatform.kin.pipeline.stage.EvaluatorStage;
-import com.kinplatform.kin.pipeline.stage.EventStage;
-import com.kinplatform.kin.pipeline.stage.StrategistStage;
+import com.kinplatform.common.pipeline.Pipeline;
+import com.kinplatform.common.pipeline.stage.AnalyzerStage;
+import com.kinplatform.common.pipeline.stage.EvaluatorStage;
+import com.kinplatform.common.pipeline.stage.EventStage;
+import com.kinplatform.common.pipeline.stage.StrategistStage;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,4 +117,5 @@ class ProjectContextReopenReproTest {
         assertEquals("Cafetería El Café", primerTurno.projectContext().value(AnalyzedDimension.PROJECT_NAME));
     }
 }
+
 

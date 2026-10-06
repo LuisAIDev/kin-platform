@@ -8,8 +8,8 @@ import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.enterprise.application.EnterprisePipelineResultStore;
 import com.kinplatform.kin.enterprise.application.EnterpriseTurnResults;
-import com.kinplatform.kin.pipeline.Pipeline;
-import com.kinplatform.kin.pipeline.PipelineContext;
+import com.kinplatform.common.pipeline.Pipeline;
+import com.kinplatform.common.pipeline.PipelineContext;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -252,4 +252,5 @@ public class KinMethod {
                 result.riskResult()));
     }
 }
+
 

@@ -1,9 +1,9 @@
 package com.kinplatform.ai.knowledge.adapter;
 
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
-import com.kinplatform.kin.knowledge.KnowledgeSource;
+import com.kinplatform.common.knowledge.KnowledgeCandidate;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.KnowledgeSource;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -92,3 +92,4 @@ class PublicApiConnectorTest {
         assertEquals("", new PublicApiConnector((String) null, List.of()).name());
     }
 }
+

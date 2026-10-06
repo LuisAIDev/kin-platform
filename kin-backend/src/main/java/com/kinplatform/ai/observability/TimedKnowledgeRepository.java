@@ -1,8 +1,8 @@
 package com.kinplatform.ai.observability;
 
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeRepository;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeRepository;
+import com.kinplatform.common.knowledge.KnowledgeResult;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -48,3 +48,4 @@ public class TimedKnowledgeRepository implements KnowledgeRepository {
         }
     }
 }
+

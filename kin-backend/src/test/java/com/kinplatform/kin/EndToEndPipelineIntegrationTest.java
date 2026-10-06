@@ -24,8 +24,8 @@ import com.kinplatform.kin.event.ConversationCompletedEvent;
 import com.kinplatform.kin.event.ReportGeneratedEvent;
 import com.kinplatform.kin.event.RiskDetectedEvent;
 import com.kinplatform.kin.event.ScoreCalculatedEvent;
-import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
-import com.kinplatform.kin.pipeline.PipelineContext;
+import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.common.pipeline.PipelineContext;
 import com.kinplatform.platform.scoring.ScoringEngine;
 import java.util.List;
 import java.util.UUID;
@@ -150,6 +150,7 @@ class EndToEndPipelineIntegrationTest {
         assertFalse(result.events().isEmpty());
     }
 }
+
 
 
 

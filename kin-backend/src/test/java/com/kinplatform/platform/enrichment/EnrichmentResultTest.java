@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class EnrichmentResultTest {
 
     private KnowledgeEvidence evidence(double value, String sourceId) {
-        var fact = com.kinplatform.kin.knowledge.KnowledgeFact.of("Hecho " + value, sourceId,
+        var fact = com.kinplatform.common.knowledge.KnowledgeFact.of("Hecho " + value, sourceId,
             "https://example.com", null, null, "mercado");
         return new KnowledgeEvidence(fact, EvidenceScore.of(value, EvidenceCategory.MARKET, ""));
     }
@@ -75,4 +75,5 @@ class EnrichmentResultTest {
         assertEquals(0.6, result.rankFor(EvidenceCategory.FINANCIAL).get().confidence(), 1e-9);
     }
 }
+
 

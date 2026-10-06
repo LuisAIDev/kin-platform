@@ -1,9 +1,9 @@
 package com.kinplatform.platform.enrichment;
 
 import com.kinplatform.common.context.ProjectContext;
-import com.kinplatform.kin.knowledge.KnowledgeFact;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.SourceTrust;
+import com.kinplatform.common.knowledge.KnowledgeFact;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.SourceTrust;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -151,5 +151,6 @@ class FactRankerTest {
         assertTrue(score.value() > 0.0);
     }
 }
+
 
 

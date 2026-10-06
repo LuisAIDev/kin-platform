@@ -1,9 +1,9 @@
 package com.kinplatform.ai.observability;
 
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.orchestrator.ContextAssembler;
-import com.kinplatform.kin.knowledge.orchestrator.RankedCandidate;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.orchestrator.ContextAssembler;
+import com.kinplatform.common.knowledge.orchestrator.RankedCandidate;
 
 import java.util.List;
 
@@ -35,3 +35,4 @@ public class TimedContextAssembler implements ContextAssembler {
         return delegate.emptyResult(reason);
     }
 }
+

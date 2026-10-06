@@ -1,0 +1,81 @@
+package com.kinplatform.common.pipeline.stage;
+
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
+import com.kinplatform.common.pipeline.PipelineContext;
+import com.kinplatform.platform.reporting.RecommendationEngine;
+import com.kinplatform.platform.reporting.RecommendationModel;
+import com.kinplatform.platform.reporting.RecommendationResult;
+import com.kinplatform.platform.scoring.ScoreResult;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class RecommendationStageTest {
+
+    private final RecommendationStage stage =
+        new RecommendationStage(new RecommendationEngine(RecommendationModel.defaultModel()));
+
+    private PipelineContext context(ConversationDecision decision, ScoreResult score) {
+        var ctx = new PipelineContext(
+            UUID.randomUUID(), UUID.randomUUID(), "mensaje", List.of(),
+            "Proyecto", "Descripción", "Tecnología");
+        ctx.projectContext(ProjectContext.fromProject("Proyecto", "Descripción", "Tecnología"));
+        ctx.evaluation(new CompletenessEvaluation(
+            0.5, List.of(AnalyzedDimension.MVP), List.of(),
+            0.7, CompletenessEvaluation.MaturityLevel.DEVELOPING,
+            CompletenessEvaluation.ViabilityLevel.MEDIUM, 0.6,
+            List.of(), List.of(), List.of(),
+            CompletenessEvaluation.RecommendationLevel.READY_FOR_REPORT,
+            true, 8, AnalyzedDimension.values().length));
+        ctx.decision(decision);
+        ctx.scoreResult(score);
+        return ctx;
+    }
+
+    @Test
+    void name_deberiaSerRecomendaciones() {
+        assertEquals("Recomendaciones", stage.name());
+    }
+
+    @Test
+    void supports_deberiaSerFalso_cuandoNoHayReporte() {
+        var ctx = context(ConversationDecision.ask(AnalyzedDimension.MVP, 5, "preguntar"),
+            ScoreResult.empty());
+        assertFalse(stage.supports(ctx));
+    }
+
+    @Test
+    void supports_deberiaSerFalso_cuandoNoHayScore() {
+        var ctx = context(ConversationDecision.generateReport("reporte"), null);
+        ctx.scoreResult(null);
+        assertFalse(stage.supports(ctx));
+    }
+
+    @Test
+    void supports_deberiaSerVerdadero_cuandoReporteYScorePresentes() {
+        var ctx = context(ConversationDecision.generateReport("reporte"), ScoreResult.empty());
+        assertTrue(stage.supports(ctx));
+    }
+
+    @Test
+    void execute_deberiaGuardarRecomendacionesEnContexto() {
+        var ctx = context(ConversationDecision.generateReport("reporte"), ScoreResult.empty());
+        var result = stage.execute(ctx);
+        assertSame(ctx, result);
+        RecommendationResult rr = ctx.recommendationResult();
+        assertNotNull(rr);
+        assertEquals(RecommendationEngine.GENERATOR_NAME, rr.generatedBy());
+    }
+}
+
+
+
+
+

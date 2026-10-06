@@ -1,7 +1,7 @@
 package com.kinplatform.ai.performance;
 
-import com.kinplatform.kin.knowledge.planner.QueryPlanner;
-import com.kinplatform.kin.knowledge.planner.QueryStrategy;
+import com.kinplatform.common.knowledge.planner.QueryPlanner;
+import com.kinplatform.common.knowledge.planner.QueryStrategy;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -46,3 +46,4 @@ class PlannerBenchmarkTest {
     private record Case(String topic, QueryStrategy strategy, boolean stable) {
     }
 }
+

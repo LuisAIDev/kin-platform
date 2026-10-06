@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.ai.PromptAssembler;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
-import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
-import com.kinplatform.kin.knowledge.engine.KnowledgeGateway;
-import com.kinplatform.kin.knowledge.stage.KnowledgeStage;
-import com.kinplatform.kin.pipeline.Pipeline;
+import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.common.knowledge.engine.KnowledgeGateway;
+import com.kinplatform.common.knowledge.stage.KnowledgeStage;
+import com.kinplatform.common.pipeline.Pipeline;
 import com.kinplatform.test.PostgresTestSupport;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -56,3 +56,4 @@ class EnterpriseRuntimeCertificationTest extends PostgresTestSupport {
         assertNotNull(context.getBean(MeterRegistry.class));
     }
 }
+

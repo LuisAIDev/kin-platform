@@ -1,10 +1,10 @@
 package com.kinplatform.kin.health.differential.adapter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeSource;
-import com.kinplatform.kin.knowledge.engine.SourceValidator;
+import com.kinplatform.common.knowledge.KnowledgeCandidate;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeSource;
+import com.kinplatform.common.knowledge.engine.SourceValidator;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -125,3 +125,4 @@ public class DifferentialKnowledgeAdapter implements KnowledgeSource {
         }
     }
 }
+

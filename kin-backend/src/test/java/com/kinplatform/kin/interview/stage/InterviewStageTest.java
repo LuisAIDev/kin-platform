@@ -14,7 +14,7 @@ import com.kinplatform.kin.interview.InMemoryInterviewRepository;
 import com.kinplatform.kin.interview.engine.AnswerValidator;
 import com.kinplatform.kin.interview.engine.InterviewBlueprint;
 import com.kinplatform.kin.interview.engine.InterviewEngine;
-import com.kinplatform.kin.pipeline.PipelineContext;
+import com.kinplatform.common.pipeline.PipelineContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -268,5 +268,6 @@ class InterviewStageTest {
             () -> new InterviewStage(realEngine(), null));
     }
 }
+
 
 

@@ -3,11 +3,11 @@ package com.kinplatform.kin.health.triage.adapter;
 import com.kinplatform.kin.health.triage.domain.CatalogUpdate;
 import com.kinplatform.kin.health.triage.domain.CatalogUpdateResult;
 import com.kinplatform.kin.health.triage.port.TriageKnowledgeRepository;
-import com.kinplatform.kin.knowledge.KnowledgeInput;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.common.knowledge.KnowledgeInput;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
 import java.time.Duration;
 import java.util.List;
 import org.slf4j.Logger;
@@ -95,3 +95,4 @@ public class HealthDataImporter {
                 "SALUD");
     }
 }
+

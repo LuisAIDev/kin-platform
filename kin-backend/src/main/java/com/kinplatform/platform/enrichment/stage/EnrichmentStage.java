@@ -3,9 +3,9 @@ package com.kinplatform.platform.enrichment.stage;
 import com.kinplatform.platform.enrichment.EnrichmentEngine;
 import com.kinplatform.platform.enrichment.EnrichmentInput;
 import com.kinplatform.platform.enrichment.EnrichmentResult;
-import com.kinplatform.kin.pipeline.PipelineContext;
-import com.kinplatform.kin.pipeline.PipelineStage;
-import com.kinplatform.kin.pipeline.stage.EngineStage;
+import com.kinplatform.common.pipeline.PipelineContext;
+import com.kinplatform.common.pipeline.PipelineStage;
+import com.kinplatform.common.pipeline.stage.EngineStage;
 
 /**
  * Etapa de enriquecimiento del pipeline (ADR-016, Etapa E6): ejecuta el
@@ -14,7 +14,7 @@ import com.kinplatform.kin.pipeline.stage.EngineStage;
  * <p>Composición pura sobre {@link EngineStage} (mismo patrón que
  * {@code KnowledgeStage}/{@code InterviewStage}): lee únicamente el
  * {@link com.kinplatform.common.context.ProjectContext} y el
- * {@link com.kinplatform.kin.knowledge.KnowledgeResult} del
+ * {@link com.kinplatform.common.knowledge.KnowledgeResult} del
  * {@link PipelineContext}, construye el {@link EnrichmentInput}, invoca el
  * motor y almacena el {@link EnrichmentResult} en
  * {@code PipelineContext.enrichmentResult} (campo aditivo sancionado por
@@ -58,6 +58,8 @@ public class EnrichmentStage implements PipelineStage {
         return delegate.execute(context);
     }
 }
+
+
 
 
 

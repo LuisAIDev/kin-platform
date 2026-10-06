@@ -1,8 +1,8 @@
 package com.kinplatform.ai.knowledge.adapter;
 
-import com.kinplatform.kin.knowledge.KnowledgeCandidate;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.KnowledgeCandidate;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -162,3 +162,4 @@ class DocumentKnowledgeSourceTest {
         }
     }
 }
+

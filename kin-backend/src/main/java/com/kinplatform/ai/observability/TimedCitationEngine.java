@@ -1,10 +1,10 @@
 package com.kinplatform.ai.observability;
 
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.citation.CitationEngine;
-import com.kinplatform.kin.knowledge.citation.CitationPolicy;
-import com.kinplatform.kin.knowledge.citation.CitationResult;
-import com.kinplatform.kin.knowledge.citation.CitationStyle;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.citation.CitationEngine;
+import com.kinplatform.common.knowledge.citation.CitationPolicy;
+import com.kinplatform.common.knowledge.citation.CitationResult;
+import com.kinplatform.common.knowledge.citation.CitationStyle;
 
 /**
  * Decorador observador del {@link CitationEngine} (Fase 7 — observabilidad).
@@ -30,3 +30,4 @@ public class TimedCitationEngine extends CitationEngine {
         return citation;
     }
 }
+

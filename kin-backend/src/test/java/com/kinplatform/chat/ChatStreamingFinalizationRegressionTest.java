@@ -32,7 +32,7 @@ import com.kinplatform.kin.event.ConversationCompletedEvent;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.QuestionGeneratedEvent;
 import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
-import com.kinplatform.kin.pipeline.Pipeline;
+import com.kinplatform.common.pipeline.Pipeline;
 import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.project.Project;
 import com.kinplatform.project.ProjectRepository;
@@ -274,24 +274,26 @@ class ChatStreamingFinalizationRegressionTest {
                             new com.kinplatform.kin.ai.prompt.formatter.NextStepsSectionFormatter(),
                             new com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter())));
             var pipeline = new Pipeline(List.of(
-                    new com.kinplatform.kin.pipeline.stage.AnalyzerStage(
+                    new com.kinplatform.common.pipeline.stage.AnalyzerStage(
                             (message, ctx) -> com.kinplatform.common.context.AnalysisResult.empty()),
-                    new com.kinplatform.kin.pipeline.stage.EvaluatorStage(
+                    new com.kinplatform.common.pipeline.stage.EvaluatorStage(
                             new com.kinplatform.common.context.CompletenessEvaluator(
                                     com.kinplatform.common.context.EvaluationPolicies.defaults())),
-                    new com.kinplatform.kin.pipeline.stage.StrategistStage(
+                    new com.kinplatform.common.pipeline.stage.StrategistStage(
                             new com.kinplatform.common.context.strategy.ConversationStrategist(
                                     new com.kinplatform.common.context.strategy.DefaultExplorationStrategy(
                                             com.kinplatform.common.context.ExplorationPriority.defaultPriorities()))),
-                    new com.kinplatform.kin.pipeline.stage.ScoringStage(new com.kinplatform.platform.scoring.ScoringEngine(
+                    new com.kinplatform.common.pipeline.stage.ScoringStage(new com.kinplatform.platform.scoring.ScoringEngine(
                             com.kinplatform.platform.scoring.ScoringModel.defaultModel())),
-                    new com.kinplatform.kin.pipeline.stage.ConsultorStage(
+                    new com.kinplatform.common.pipeline.stage.ConsultorStage(
                             aiResponder, promptAssembler, new ResponseGuard()),
-                    new com.kinplatform.kin.pipeline.stage.EventStage()));
+                    new com.kinplatform.common.pipeline.stage.EventStage()));
             return new com.kinplatform.kin.KinMethod(pipeline, contextRepository);
         }
     }
 }
+
+
 
 
 

@@ -6,7 +6,7 @@ import com.kinplatform.kin.health.differential.engine.DifferentialEngine;
 import com.kinplatform.kin.health.differential.port.DifferentialKnowledgeRepository;
 import com.kinplatform.kin.health.differential.stage.DifferentialStage;
 import com.kinplatform.kin.health.triage.port.TriageKnowledgeRepository;
-import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
+import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -69,3 +69,4 @@ public class DifferentialConfig {
                 properties);
     }
 }
+

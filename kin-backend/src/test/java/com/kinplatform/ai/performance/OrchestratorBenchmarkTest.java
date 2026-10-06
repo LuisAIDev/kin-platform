@@ -1,13 +1,13 @@
 package com.kinplatform.ai.performance;
 
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeRepository;
-import com.kinplatform.kin.knowledge.KnowledgeRequest;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.knowledge.orchestrator.ExecutionEnvironment;
-import com.kinplatform.kin.knowledge.orchestrator.KnowledgeOrchestrator;
-import com.kinplatform.kin.knowledge.orchestrator.OrchestrationRequest;
-import com.kinplatform.kin.knowledge.orchestrator.OrchestrationStrategy;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeRepository;
+import com.kinplatform.common.knowledge.KnowledgeRequest;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.orchestrator.ExecutionEnvironment;
+import com.kinplatform.common.knowledge.orchestrator.KnowledgeOrchestrator;
+import com.kinplatform.common.knowledge.orchestrator.OrchestrationRequest;
+import com.kinplatform.common.knowledge.orchestrator.OrchestrationStrategy;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -28,7 +28,7 @@ class OrchestratorBenchmarkTest {
     private OrchestrationRequest orchestration(OrchestrationStrategy strategy, ExecutionEnvironment env) {
         return OrchestrationRequest.of(
             BenchmarkSupport.request("Mercado del café colombiano"),
-            com.kinplatform.kin.knowledge.policy.PolicyConfig.defaults(), strategy, env);
+            com.kinplatform.common.knowledge.policy.PolicyConfig.defaults(), strategy, env);
     }
 
     @Test
@@ -97,3 +97,5 @@ class OrchestratorBenchmarkTest {
         }
     }
 }
+
+

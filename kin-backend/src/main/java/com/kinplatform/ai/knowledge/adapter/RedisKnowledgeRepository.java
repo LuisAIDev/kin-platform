@@ -2,9 +2,9 @@ package com.kinplatform.ai.knowledge.adapter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.knowledge.KnowledgeQuery;
-import com.kinplatform.kin.knowledge.KnowledgeRepository;
-import com.kinplatform.kin.knowledge.KnowledgeResult;
+import com.kinplatform.common.knowledge.KnowledgeQuery;
+import com.kinplatform.common.knowledge.KnowledgeRepository;
+import com.kinplatform.common.knowledge.KnowledgeResult;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -178,3 +178,4 @@ public class RedisKnowledgeRepository implements KnowledgeRepository {
         return KEY_PREFIX + CONTENT_KEY + Integer.toHexString(seed.hashCode());
     }
 }
+
