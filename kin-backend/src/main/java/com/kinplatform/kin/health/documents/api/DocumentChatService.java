@@ -1,7 +1,7 @@
 package com.kinplatform.kin.health.documents.api;
 
-import com.kinplatform.kin.ai.AIRequest;
-import com.kinplatform.kin.ai.AIResponder;
+import com.kinplatform.common.ai.AIRequest;
+import com.kinplatform.common.ai.AIResponder;
 import com.kinplatform.common.context.Message;
 import com.kinplatform.common.audit.api.AuditService;
 import com.kinplatform.common.audit.domain.AuditAction;
@@ -208,5 +208,6 @@ public class DocumentChatService {
             DocumentChatMessage assistantMessage,
             String verificationStatus) {}
 }
+
 
 

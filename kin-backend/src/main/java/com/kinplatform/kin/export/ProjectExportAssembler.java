@@ -1,15 +1,15 @@
 package com.kinplatform.kin.export;
 
-import com.kinplatform.kin.ai.prompt.formatter.ExecutiveSummaryFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.FinancialSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.InnovationSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.MarketSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.NextStepsSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.OpportunitiesSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.SourcesSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.ExecutiveSummaryFormatter;
+import com.kinplatform.common.ai.prompt.formatter.FinancialSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.InnovationSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.MarketSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.NextStepsSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.OpportunitiesSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.RecommendationsSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.RisksSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.ScoresSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.SourcesSectionFormatter;
 import com.kinplatform.kin.export.assemble.MarkdownTextToBlocks;
 import com.kinplatform.kin.export.model.ExportBlock;
 import com.kinplatform.kin.export.model.ExportDocument;
@@ -254,4 +254,5 @@ public class ProjectExportAssembler {
                 "No existe formatter para sección " + section.getClass().getSimpleName());
     }
 }
+
 

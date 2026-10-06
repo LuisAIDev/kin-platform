@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enterprise.application;
 
-import com.kinplatform.kin.ai.AIRequest;
-import com.kinplatform.kin.ai.AIResponder;
+import com.kinplatform.common.ai.AIRequest;
+import com.kinplatform.common.ai.AIResponder;
 import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
 import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
@@ -88,3 +88,4 @@ class EnterpriseNarrativeGeneratorTest {
         assertTrue(documents.get(0).content().contains("65"));
     }
 }
+

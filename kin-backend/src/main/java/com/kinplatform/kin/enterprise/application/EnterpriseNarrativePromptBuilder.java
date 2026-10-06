@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.application;
 
-import com.kinplatform.kin.ai.AIRequest;
+import com.kinplatform.common.ai.AIRequest;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.Message;
 import com.kinplatform.common.context.ProjectContext;
@@ -182,6 +182,7 @@ public final class EnterpriseNarrativePromptBuilder {
         return value == null || value.isBlank() ? "(no definido)" : value;
     }
 }
+
 
 
 

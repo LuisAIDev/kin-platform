@@ -6,9 +6,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.ai.AIRequest;
-import com.kinplatform.kin.ai.AIResponder;
-import com.kinplatform.kin.ai.PromptAssembler;
+import com.kinplatform.common.ai.AIRequest;
+import com.kinplatform.common.ai.AIResponder;
+import com.kinplatform.common.ai.PromptAssembler;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.CompletenessEvaluator;
 import com.kinplatform.common.context.ContextRepository;
@@ -87,18 +87,18 @@ class KinMethodTest {
 
     @BeforeEach
     void setUp() {
-        var conversationBuilder = new com.kinplatform.kin.ai.prompt.ConversationPromptBuilder();
-        var reportBuilder = new com.kinplatform.kin.ai.prompt.ReportPromptBuilder(List.of(
-                new com.kinplatform.kin.ai.prompt.formatter.ExecutiveSummaryFormatter(),
-                new com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter(),
-                new com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter(),
-                new com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter(),
-                new com.kinplatform.kin.ai.prompt.formatter.OpportunitiesSectionFormatter(),
-                new com.kinplatform.kin.ai.prompt.formatter.FinancialSectionFormatter(),
-                new com.kinplatform.kin.ai.prompt.formatter.MarketSectionFormatter(),
-                new com.kinplatform.kin.ai.prompt.formatter.InnovationSectionFormatter(),
-                new com.kinplatform.kin.ai.prompt.formatter.NextStepsSectionFormatter(),
-                new com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter()));
+        var conversationBuilder = new com.kinplatform.common.ai.prompt.ConversationPromptBuilder();
+        var reportBuilder = new com.kinplatform.common.ai.prompt.ReportPromptBuilder(List.of(
+                new com.kinplatform.common.ai.prompt.formatter.ExecutiveSummaryFormatter(),
+                new com.kinplatform.common.ai.prompt.formatter.ScoresSectionFormatter(),
+                new com.kinplatform.common.ai.prompt.formatter.RecommendationsSectionFormatter(),
+                new com.kinplatform.common.ai.prompt.formatter.RisksSectionFormatter(),
+                new com.kinplatform.common.ai.prompt.formatter.OpportunitiesSectionFormatter(),
+                new com.kinplatform.common.ai.prompt.formatter.FinancialSectionFormatter(),
+                new com.kinplatform.common.ai.prompt.formatter.MarketSectionFormatter(),
+                new com.kinplatform.common.ai.prompt.formatter.InnovationSectionFormatter(),
+                new com.kinplatform.common.ai.prompt.formatter.NextStepsSectionFormatter(),
+                new com.kinplatform.common.ai.prompt.formatter.ReportMetadataFormatter()));
         var promptAssembler = new PromptAssembler(conversationBuilder, reportBuilder);
         var pipeline = new Pipeline(List.of(
                 new AnalyzerStage((message, ctx) -> com.kinplatform.common.context.AnalysisResult.empty()),
@@ -256,6 +256,8 @@ class KinMethodTest {
         assertFalse(captor.getValue().systemPrompt().contains("## DIRECTIVA DE COMUNICACIÓN"));
     }
 }
+
+
 
 
 

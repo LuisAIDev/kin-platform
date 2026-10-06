@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enterprise.application;
 
-import com.kinplatform.kin.ai.AIRequest;
-import com.kinplatform.kin.ai.AIResponder;
+import com.kinplatform.common.ai.AIRequest;
+import com.kinplatform.common.ai.AIResponder;
 import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.kin.enterprise.aggregate.GenerationStatus;
 import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
@@ -107,4 +107,5 @@ class EnterpriseGenerationServiceNarrativeTest {
             EngineTestFixtures.knowledge(0.8), EngineTestFixtures.riskResult(0.8));
     }
 }
+
 

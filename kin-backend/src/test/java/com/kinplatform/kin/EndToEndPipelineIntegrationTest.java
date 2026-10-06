@@ -8,8 +8,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.ai.AIRequest;
-import com.kinplatform.kin.ai.AIResponder;
+import com.kinplatform.common.ai.AIRequest;
+import com.kinplatform.common.ai.AIResponder;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.conversation.ConversationOrchestrator;
@@ -150,6 +150,7 @@ class EndToEndPipelineIntegrationTest {
         assertFalse(result.events().isEmpty());
     }
 }
+
 
 
 

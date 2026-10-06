@@ -1,9 +1,9 @@
 package com.kinplatform.common.pipeline.stage;
 
-import com.kinplatform.kin.ai.AIRequest;
-import com.kinplatform.kin.ai.AIResponder;
-import com.kinplatform.kin.ai.PromptAssembler;
-import com.kinplatform.kin.ai.PromptRequest;
+import com.kinplatform.common.ai.AIRequest;
+import com.kinplatform.common.ai.AIResponder;
+import com.kinplatform.common.ai.PromptAssembler;
+import com.kinplatform.common.ai.PromptRequest;
 import com.kinplatform.common.conversation.CommunicationMode;
 import com.kinplatform.common.conversation.ConversationPhase;
 import com.kinplatform.common.conversation.ResponseFallback;
@@ -180,6 +180,7 @@ public class ConsultorStage implements PipelineStage {
         return null;
     }
 }
+
 
 
 

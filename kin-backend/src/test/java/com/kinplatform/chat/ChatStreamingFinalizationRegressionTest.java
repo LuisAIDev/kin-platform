@@ -17,11 +17,11 @@ import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.ChatRequest;
 import com.kinplatform.chat.dto.ChatResponse;
 import com.kinplatform.chat.dto.SaveMessageRequest;
-import com.kinplatform.kin.ai.AIRequest;
-import com.kinplatform.kin.ai.AIResponder;
-import com.kinplatform.kin.ai.PromptAssembler;
-import com.kinplatform.kin.ai.prompt.ConversationPromptBuilder;
-import com.kinplatform.kin.ai.prompt.ReportPromptBuilder;
+import com.kinplatform.common.ai.AIRequest;
+import com.kinplatform.common.ai.AIResponder;
+import com.kinplatform.common.ai.PromptAssembler;
+import com.kinplatform.common.ai.prompt.ConversationPromptBuilder;
+import com.kinplatform.common.ai.prompt.ReportPromptBuilder;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.conversation.ConversationOrchestrator;
@@ -263,16 +263,16 @@ class ChatStreamingFinalizationRegressionTest {
             var promptAssembler = new PromptAssembler(
                     new ConversationPromptBuilder(),
                     new ReportPromptBuilder(List.of(
-                            new com.kinplatform.kin.ai.prompt.formatter.ExecutiveSummaryFormatter(),
-                            new com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter(),
-                            new com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter(),
-                            new com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter(),
-                            new com.kinplatform.kin.ai.prompt.formatter.OpportunitiesSectionFormatter(),
-                            new com.kinplatform.kin.ai.prompt.formatter.FinancialSectionFormatter(),
-                            new com.kinplatform.kin.ai.prompt.formatter.MarketSectionFormatter(),
-                            new com.kinplatform.kin.ai.prompt.formatter.InnovationSectionFormatter(),
-                            new com.kinplatform.kin.ai.prompt.formatter.NextStepsSectionFormatter(),
-                            new com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter())));
+                            new com.kinplatform.common.ai.prompt.formatter.ExecutiveSummaryFormatter(),
+                            new com.kinplatform.common.ai.prompt.formatter.ScoresSectionFormatter(),
+                            new com.kinplatform.common.ai.prompt.formatter.RecommendationsSectionFormatter(),
+                            new com.kinplatform.common.ai.prompt.formatter.RisksSectionFormatter(),
+                            new com.kinplatform.common.ai.prompt.formatter.OpportunitiesSectionFormatter(),
+                            new com.kinplatform.common.ai.prompt.formatter.FinancialSectionFormatter(),
+                            new com.kinplatform.common.ai.prompt.formatter.MarketSectionFormatter(),
+                            new com.kinplatform.common.ai.prompt.formatter.InnovationSectionFormatter(),
+                            new com.kinplatform.common.ai.prompt.formatter.NextStepsSectionFormatter(),
+                            new com.kinplatform.common.ai.prompt.formatter.ReportMetadataFormatter())));
             var pipeline = new Pipeline(List.of(
                     new com.kinplatform.common.pipeline.stage.AnalyzerStage(
                             (message, ctx) -> com.kinplatform.common.context.AnalysisResult.empty()),
@@ -292,6 +292,8 @@ class ChatStreamingFinalizationRegressionTest {
         }
     }
 }
+
+
 
 
 

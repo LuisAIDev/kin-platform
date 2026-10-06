@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.application;
 
-import com.kinplatform.kin.ai.AIRequest;
+import com.kinplatform.common.ai.AIRequest;
 import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
 import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
 import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
@@ -89,3 +89,4 @@ class EnterpriseNarrativePromptBuilderTest {
         assertTrue(request.userMessage().contains("contenido determinista del KPI"));
     }
 }
+

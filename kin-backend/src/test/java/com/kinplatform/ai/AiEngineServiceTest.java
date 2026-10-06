@@ -1,7 +1,7 @@
 package com.kinplatform.ai;
 
 import com.kinplatform.ai.provider.ProviderRouter;
-import com.kinplatform.kin.ai.AIRequest;
+import com.kinplatform.common.ai.AIRequest;
 import com.kinplatform.common.context.Message;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -104,4 +104,5 @@ class AiEngineServiceTest {
         verify(providerRouter).routeStream(history, USER_MSG, SYSTEM_PROMPT);
     }
 }
+
 

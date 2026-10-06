@@ -1,8 +1,8 @@
 package com.kinplatform.kin.health.aiassist.adapter;
 
 import com.kinplatform.kin.health.aiassist.port.AIProviderPort;
-import com.kinplatform.kin.ai.AIRequest;
-import com.kinplatform.kin.ai.AIResponder;
+import com.kinplatform.common.ai.AIRequest;
+import com.kinplatform.common.ai.AIResponder;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
@@ -27,3 +27,4 @@ public class DeepSeekAIProvider implements AIProviderPort {
         return generate(prompt);
     }
 }
+

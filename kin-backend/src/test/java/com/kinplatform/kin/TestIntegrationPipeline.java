@@ -1,19 +1,19 @@
 package com.kinplatform.kin;
 
-import com.kinplatform.kin.ai.AIResponder;
-import com.kinplatform.kin.ai.PromptAssembler;
-import com.kinplatform.kin.ai.prompt.ConversationPromptBuilder;
-import com.kinplatform.kin.ai.prompt.ReportPromptBuilder;
-import com.kinplatform.kin.ai.prompt.formatter.ExecutiveSummaryFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.FinancialSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.InnovationSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.MarketSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.NextStepsSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.OpportunitiesSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
-import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
+import com.kinplatform.common.ai.AIResponder;
+import com.kinplatform.common.ai.PromptAssembler;
+import com.kinplatform.common.ai.prompt.ConversationPromptBuilder;
+import com.kinplatform.common.ai.prompt.ReportPromptBuilder;
+import com.kinplatform.common.ai.prompt.formatter.ExecutiveSummaryFormatter;
+import com.kinplatform.common.ai.prompt.formatter.FinancialSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.InnovationSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.MarketSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.NextStepsSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.OpportunitiesSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.RecommendationsSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.ReportMetadataFormatter;
+import com.kinplatform.common.ai.prompt.formatter.RisksSectionFormatter;
+import com.kinplatform.common.ai.prompt.formatter.ScoresSectionFormatter;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.CompletenessEvaluator;
 import com.kinplatform.common.context.ContextRepository;
@@ -250,6 +250,7 @@ public final class TestIntegrationPipeline {
         }
     }
 }
+
 
 
 

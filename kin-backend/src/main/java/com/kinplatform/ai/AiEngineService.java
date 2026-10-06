@@ -1,8 +1,8 @@
 package com.kinplatform.ai;
 
 import com.kinplatform.ai.provider.ProviderRouter;
-import com.kinplatform.kin.ai.AIRequest;
-import com.kinplatform.kin.ai.AIResponder;
+import com.kinplatform.common.ai.AIRequest;
+import com.kinplatform.common.ai.AIResponder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -52,3 +52,4 @@ public class AiEngineService implements AIResponder {
                 }));
     }
 }
+

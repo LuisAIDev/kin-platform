@@ -3,7 +3,7 @@ package com.kinplatform.kin.enterprise.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import com.kinplatform.kin.ai.AIResponder;
+import com.kinplatform.common.ai.AIResponder;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.kin.enterprise.application.DefaultEnterpriseProjectTrigger;
 import com.kinplatform.kin.enterprise.application.EnterpriseAiBudgetGate;
@@ -106,5 +106,6 @@ class EnterpriseWebConfigTest {
         }
     }
 }
+
 
 

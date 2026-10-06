@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.ai.AIRequest;
-import com.kinplatform.kin.ai.AIResponder;
+import com.kinplatform.common.ai.AIRequest;
+import com.kinplatform.common.ai.AIResponder;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.conversation.ConversationOrchestrator;
 import com.kinplatform.common.conversation.ConversationTurn;
@@ -106,5 +106,6 @@ class PipelineFlowIntegrationTest {
         assertFalse(content.contains("Motivo"));
     }
 }
+
 
 
