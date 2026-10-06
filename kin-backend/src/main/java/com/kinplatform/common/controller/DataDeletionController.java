@@ -2,7 +2,7 @@ package com.kinplatform.common.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.kinplatform.common.entity.DataDeletionRequest;
-import com.kinplatform.common.service.DataDeletionService;
+import com.kinplatform.kin.health.legal.DataDeletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

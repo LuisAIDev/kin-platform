@@ -1,4 +1,4 @@
-package com.kinplatform.common.service;
+package com.kinplatform.kin.health.legal;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -289,4 +289,5 @@ public class DataDeletionService {
         return hasHCE;
     }
 }
+
 

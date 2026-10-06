@@ -5,7 +5,7 @@ import com.kinplatform.common.entity.DataRectificationRequest;
 import com.kinplatform.common.security.JwtAuthenticationFilter;
 import com.kinplatform.common.security.RateLimitingFilter;
 import com.kinplatform.common.security.SubscriptionAccessFilter;
-import com.kinplatform.common.service.DataRectificationService;
+import com.kinplatform.kin.health.legal.DataRectificationService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;

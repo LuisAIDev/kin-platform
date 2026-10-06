@@ -1,4 +1,4 @@
-package com.kinplatform.common.service;
+package com.kinplatform.kin.health.legal;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -330,3 +330,4 @@ class DataDeletionServiceTest {
         assertThat(result.getDeletedCount()).isGreaterThanOrEqualTo(0);
     }
 }
+

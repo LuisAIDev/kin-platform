@@ -7,7 +7,7 @@ import com.kinplatform.common.entity.DataDeletionRequest;
 import com.kinplatform.common.security.JwtAuthenticationFilter;
 import com.kinplatform.common.security.RateLimitingFilter;
 import com.kinplatform.common.security.SubscriptionAccessFilter;
-import com.kinplatform.common.service.DataDeletionService;
+import com.kinplatform.kin.health.legal.DataDeletionService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;

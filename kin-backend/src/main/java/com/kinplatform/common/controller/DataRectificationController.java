@@ -1,7 +1,7 @@
 package com.kinplatform.common.controller;
 
 import com.kinplatform.common.entity.DataRectificationRequest;
-import com.kinplatform.common.service.DataRectificationService;
+import com.kinplatform.kin.health.legal.DataRectificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

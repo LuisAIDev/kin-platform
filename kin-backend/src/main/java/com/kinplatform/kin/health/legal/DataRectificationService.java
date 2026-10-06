@@ -1,4 +1,4 @@
-package com.kinplatform.common.service;
+package com.kinplatform.kin.health.legal;
 
 import com.kinplatform.common.entity.DataRectificationRequest;
 import com.kinplatform.common.repository.DataRectificationRepository;
@@ -238,4 +238,5 @@ public class DataRectificationService {
         }
     }
 }
+
 

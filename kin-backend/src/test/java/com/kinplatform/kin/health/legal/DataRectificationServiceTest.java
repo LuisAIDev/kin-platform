@@ -1,4 +1,4 @@
-package com.kinplatform.common.service;
+package com.kinplatform.kin.health.legal;
 
 import com.kinplatform.common.entity.DataRectificationRequest;
 import com.kinplatform.common.repository.DataRectificationRepository;
@@ -311,3 +311,4 @@ class DataRectificationServiceTest {
         verify(patientIdentificationRepository).save(argThat(pi -> "987654321".equals(pi.getDocumentNumber())));
     }
 }
+
