@@ -9,7 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.context.Message;
+import com.kinplatform.common.context.Message;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
@@ -387,3 +387,4 @@ class DeepSeekProviderTest {
         assertEquals("El usuario preguntó por las diferencias entre Claude y DeepSeek.", content);
     }
 }
+

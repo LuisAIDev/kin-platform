@@ -8,11 +8,11 @@ import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.ChatRequest;
 import com.kinplatform.chat.dto.ChatResponse;
 import com.kinplatform.chat.dto.SaveMessageRequest;
-import com.kinplatform.kin.context.Message;
+import com.kinplatform.common.context.Message;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.ConversationTurn;
 import com.kinplatform.kin.conversation.StreamingTurnOutcome;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.export.intent.ExportAction;
 import com.kinplatform.kin.export.intent.ExportChatIntentService;
@@ -860,3 +860,4 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         return messages;
     }
 }
+

@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.context.Message;
+import com.kinplatform.common.context.Message;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -139,3 +139,4 @@ class DeepSeekProviderStreamTimeoutTest {
         assertEquals("un mensaje largo", sb.toString());
     }
 }
+

@@ -1,8 +1,8 @@
 package com.kinplatform.kin.ai;
 
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.conversation.TurnDirective;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 
 /**
@@ -66,3 +66,4 @@ public record PromptRequest(
         return new PromptRequest(consultingReport, PromptType.REPORT, null, null, null);
     }
 }
+

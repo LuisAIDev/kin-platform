@@ -1,8 +1,8 @@
 package com.kinplatform.kin.conversation.policy;
 
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.conversation.TurnDirective;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 
 /**
  * Contrato de la política de turno del Conversation Orchestrator (ADR-013).
@@ -16,3 +16,4 @@ public interface TurnPolicy {
 
     TurnDirective decide(ProjectContext context, ConversationDecision previousDecision);
 }
+

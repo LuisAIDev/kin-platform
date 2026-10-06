@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enrichment;
 
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.engine.EngineInput;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 
@@ -42,4 +42,5 @@ public record EnrichmentInput(
         return new EnrichmentInput(context, knowledge, categories, minScore);
     }
 }
+
 

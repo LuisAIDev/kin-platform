@@ -1,7 +1,7 @@
 package com.kinplatform.kin.reporting.risk;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluation;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -97,3 +97,4 @@ class RiskAssemblerTest {
         assertEquals(a.confidence(), b.confidence(), 0.0001);
     }
 }
+

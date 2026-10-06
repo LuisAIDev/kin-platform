@@ -15,14 +15,14 @@ import com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.conversation.CommunicationMode;
 import com.kinplatform.kin.conversation.ConversationPhase;
 import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.conversation.TurnConstraints;
 import com.kinplatform.kin.conversation.TurnDirective;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.interview.AnswerRules;
 import com.kinplatform.kin.interview.InterviewDecision;
 import com.kinplatform.kin.interview.InterviewDirective;
@@ -349,3 +349,4 @@ class ConsultorStageTest {
         assertFalse(prompt.contains("## ENTREVISTA ESTRATÉGICA"));
     }
 }
+

@@ -1,6 +1,6 @@
 package com.kinplatform.kin;
 
-import com.kinplatform.kin.context.Message;
+import com.kinplatform.common.context.Message;
 import com.kinplatform.kin.conversation.TurnDirective;
 
 import java.util.List;
@@ -23,4 +23,5 @@ public record KinMethodCommand(
             projectTitle, projectDescription, projectCategory, null);
     }
 }
+
 

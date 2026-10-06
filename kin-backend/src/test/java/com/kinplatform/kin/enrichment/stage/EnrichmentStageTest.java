@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enrichment.stage;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.enrichment.EnrichmentEngine;
 import com.kinplatform.kin.enrichment.EnrichmentResult;
 import com.kinplatform.kin.enrichment.EvidenceCategory;
@@ -160,3 +160,4 @@ class EnrichmentStageTest {
         assertTrue(ctx.engineResults().containsKey(EnrichmentEngine.GENERATOR_NAME));
     }
 }
+

@@ -1,4 +1,4 @@
-package com.kinplatform.kin.context;
+package com.kinplatform.common.context;
 
 public record Message(String role, String content) {
 
@@ -14,3 +14,4 @@ public record Message(String role, String content) {
         return new Message("SYSTEM", content);
     }
 }
+

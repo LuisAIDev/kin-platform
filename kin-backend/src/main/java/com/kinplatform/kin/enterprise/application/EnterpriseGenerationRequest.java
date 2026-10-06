@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.application;
 
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.reporting.RecommendationResult;
 import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
@@ -52,3 +52,4 @@ public record EnterpriseGenerationRequest(
         riskResult = riskResult == null ? RiskResult.empty() : riskResult;
     }
 }
+

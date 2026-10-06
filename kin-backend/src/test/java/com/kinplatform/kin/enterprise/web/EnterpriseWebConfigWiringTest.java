@@ -11,7 +11,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.kin.enterprise.application.EnterpriseGenerationOrchestrator;
 import com.kinplatform.kin.enterprise.application.EnterpriseGenerationRequest;
 import com.kinplatform.kin.enterprise.application.EnterpriseProjectRequestedListener;
@@ -95,3 +95,4 @@ class EnterpriseWebConfigWiringTest {
         verify(orchestrator).generateRequested(any(EnterpriseGenerationRequest.class), eq(1));
     }
 }
+

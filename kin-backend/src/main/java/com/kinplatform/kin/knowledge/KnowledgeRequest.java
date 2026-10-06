@@ -1,6 +1,6 @@
 package com.kinplatform.kin.knowledge;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import java.time.Duration;
 import java.util.List;
 import java.util.Set;
@@ -51,3 +51,4 @@ public record KnowledgeRequest(
         return new KnowledgeRequest("", Set.of(), List.of(), DEFAULT_LIMIT, DEFAULT_TIME_WINDOW, "");
     }
 }
+

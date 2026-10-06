@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enterprise.web;
 
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ContextRepository;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.kin.enterprise.application.EnterpriseDocumentBundle;
 import com.kinplatform.kin.enterprise.application.EnterpriseExportOrchestrator;
@@ -783,3 +783,4 @@ public class EnterpriseController {
         return value;
     }
 }
+

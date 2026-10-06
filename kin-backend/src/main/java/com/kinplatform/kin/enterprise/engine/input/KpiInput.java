@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.engine.input;
 
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.engine.EngineInput;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
 import com.kinplatform.kin.enterprise.valueobjects.KpiSet;
@@ -19,4 +19,5 @@ public record KpiInput(
     FinancialPlan financialPlan
 ) implements EngineInput {
 }
+
 

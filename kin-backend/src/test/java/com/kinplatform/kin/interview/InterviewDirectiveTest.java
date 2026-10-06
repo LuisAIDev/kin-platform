@@ -1,6 +1,6 @@
 package com.kinplatform.kin.interview;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,3 +55,4 @@ class InterviewDirectiveTest {
         assertTrue(a.toString().contains("questionId=q1"));
     }
 }
+

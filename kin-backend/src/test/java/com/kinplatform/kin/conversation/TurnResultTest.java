@@ -1,8 +1,8 @@
 package com.kinplatform.kin.conversation;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.QuestionGeneratedEvent;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
@@ -84,3 +84,4 @@ class TurnResultTest {
             context, decision, directive, "resp", null, null, List.of()));
     }
 }
+

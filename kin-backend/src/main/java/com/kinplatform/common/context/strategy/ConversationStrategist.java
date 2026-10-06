@@ -1,9 +1,9 @@
-package com.kinplatform.kin.context.strategy;
+package com.kinplatform.common.context.strategy;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluation;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,3 +60,5 @@ public class ConversationStrategist {
         return defaultStrategy;
     }
 }
+
+

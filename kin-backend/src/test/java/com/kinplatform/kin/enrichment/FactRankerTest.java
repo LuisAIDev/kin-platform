@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enrichment;
 
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.knowledge.SourceTrust;
@@ -151,3 +151,4 @@ class FactRankerTest {
         assertTrue(score.value() > 0.0);
     }
 }
+

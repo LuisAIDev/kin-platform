@@ -1,4 +1,4 @@
-package com.kinplatform.kin.context;
+package com.kinplatform.common.context;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -26,3 +26,4 @@ public interface ContextRepository {
 
     void delete(UUID projectId);
 }
+

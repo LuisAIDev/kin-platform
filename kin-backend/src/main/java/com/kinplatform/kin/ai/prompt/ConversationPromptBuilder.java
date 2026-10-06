@@ -2,10 +2,10 @@ package com.kinplatform.kin.ai.prompt;
 
 import com.kinplatform.kin.ai.PromptRequest;
 import com.kinplatform.kin.ai.PromptType;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.conversation.TurnConstraints;
 import com.kinplatform.kin.conversation.TurnDirective;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.interview.AnswerRules;
 import com.kinplatform.kin.interview.InterviewDirective;
 import com.kinplatform.kin.interview.InterviewResult;
@@ -457,14 +457,14 @@ public class ConversationPromptBuilder {
             Categoria indicada por el usuario: %s
             Cobertura: %.1f%%
             """,
-                context.value(com.kinplatform.kin.context.AnalyzedDimension.PROJECT_NAME) != null
-                        ? context.value(com.kinplatform.kin.context.AnalyzedDimension.PROJECT_NAME)
+                context.value(com.kinplatform.common.context.AnalyzedDimension.PROJECT_NAME) != null
+                        ? context.value(com.kinplatform.common.context.AnalyzedDimension.PROJECT_NAME)
                         : "Sin t\u00edtulo",
-                context.value(com.kinplatform.kin.context.AnalyzedDimension.SOLUTION) != null
-                        ? context.value(com.kinplatform.kin.context.AnalyzedDimension.SOLUTION)
+                context.value(com.kinplatform.common.context.AnalyzedDimension.SOLUTION) != null
+                        ? context.value(com.kinplatform.common.context.AnalyzedDimension.SOLUTION)
                         : "Sin descripci\u00f3n",
-                context.value(com.kinplatform.kin.context.AnalyzedDimension.SECTOR) != null
-                        ? context.value(com.kinplatform.kin.context.AnalyzedDimension.SECTOR)
+                context.value(com.kinplatform.common.context.AnalyzedDimension.SECTOR) != null
+                        ? context.value(com.kinplatform.common.context.AnalyzedDimension.SECTOR)
                         : "Sin categoria",
                 context.coverageRatio() * 100));
 
@@ -554,3 +554,5 @@ public class ConversationPromptBuilder {
         return sb.toString();
     }
 }
+
+

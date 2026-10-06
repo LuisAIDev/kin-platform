@@ -1,6 +1,6 @@
 package com.kinplatform.kin.interview;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 
 import java.util.Set;
 import java.util.UUID;
@@ -50,3 +50,4 @@ public record InterviewContext(
         return coveredDimensions.contains(dimension);
     }
 }
+

@@ -7,15 +7,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.kinplatform.kin.KinMethod;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ContextRepository;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.ConversationTurn;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
 import com.kinplatform.kin.enterprise.engine.DefaultBusinessModelEngine;
@@ -177,3 +177,4 @@ class EnterprisePipelineResultsIntegrationTest {
         return ProjectContext.restore(data, EnumSet.allOf(AnalyzedDimension.class), null, 5, false);
     }
 }
+

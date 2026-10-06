@@ -21,15 +21,15 @@ import com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.SourcesSectionFormatter;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluator;
-import com.kinplatform.kin.context.ContextAnalyzerPort;
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.EvaluationPolicies;
-import com.kinplatform.kin.context.ExplorationPriority;
-import com.kinplatform.kin.context.ProjectContextSyncPort;
-import com.kinplatform.kin.context.strategy.ConversationStrategist;
-import com.kinplatform.kin.context.strategy.DefaultExplorationStrategy;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluator;
+import com.kinplatform.common.context.ContextAnalyzerPort;
+import com.kinplatform.common.context.ContextRepository;
+import com.kinplatform.common.context.EvaluationPolicies;
+import com.kinplatform.common.context.ExplorationPriority;
+import com.kinplatform.common.context.ProjectContextSyncPort;
+import com.kinplatform.common.context.strategy.ConversationStrategist;
+import com.kinplatform.common.context.strategy.DefaultExplorationStrategy;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.ResponseFallback;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
@@ -670,4 +670,5 @@ public class KinConfig {
                 historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository, enterpriseProjectTrigger);
     }
 }
+
 

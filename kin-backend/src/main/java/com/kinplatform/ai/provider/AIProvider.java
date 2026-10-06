@@ -1,6 +1,6 @@
 package com.kinplatform.ai.provider;
 
-import com.kinplatform.kin.context.Message;
+import com.kinplatform.common.context.Message;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -17,3 +17,4 @@ public interface AIProvider {
 
     String providerName();
 }
+

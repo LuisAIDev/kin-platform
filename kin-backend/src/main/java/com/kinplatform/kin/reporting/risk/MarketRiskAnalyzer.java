@@ -1,7 +1,7 @@
 package com.kinplatform.kin.reporting.risk;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluation;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.kin.enrichment.EnrichmentResult;
 import com.kinplatform.kin.enrichment.EvidenceCategory;
 import com.kinplatform.kin.enrichment.EvidenceRank;
@@ -160,3 +160,4 @@ public class MarketRiskAnalyzer implements RiskAnalyzer {
         return fact.claim() + " (fuente: " + source + ")";
     }
 }
+

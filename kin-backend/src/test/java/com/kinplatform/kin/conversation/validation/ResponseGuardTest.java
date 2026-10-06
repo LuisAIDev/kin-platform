@@ -1,12 +1,12 @@
 package com.kinplatform.kin.conversation.validation;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.kin.conversation.CommunicationMode;
 import com.kinplatform.kin.conversation.ConversationPhase;
 import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.conversation.TurnConstraints;
 import com.kinplatform.kin.conversation.TurnDirective;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -290,3 +290,4 @@ class ResponseGuardTest {
         assertTrue(ResponseGuard.requiresFallback(validation));
     }
 }
+

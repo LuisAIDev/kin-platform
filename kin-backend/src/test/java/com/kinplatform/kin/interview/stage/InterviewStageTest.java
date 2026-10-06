@@ -1,8 +1,8 @@
 package com.kinplatform.kin.interview.stage;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.common.engine.EngineMetadata;
 import com.kinplatform.common.engine.EnginePhase;
 import com.kinplatform.common.engine.EngineType;
@@ -268,4 +268,5 @@ class InterviewStageTest {
             () -> new InterviewStage(realEngine(), null));
     }
 }
+
 

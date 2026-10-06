@@ -1,8 +1,8 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.AnalysisResult;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalysisResult;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.knowledge.SourceTrust;
@@ -123,3 +123,4 @@ public final class EngineTestFixtures {
         return RiskResult.empty();
     }
 }
+

@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.application;
 
-import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
 import com.kinplatform.kin.event.InMemoryDomainEventBus;
@@ -95,3 +95,4 @@ class EnterpriseProjectRequestedListenerPipelineResultsTest {
         assertTrue(request.knowledge().isEmpty());
     }
 }
+

@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.integration;
 
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import java.util.UUID;
 
 /**
@@ -18,3 +18,4 @@ public interface EnterpriseContextEnricher {
 
     ProjectContext enrich(UUID projectId, ProjectContext context);
 }
+

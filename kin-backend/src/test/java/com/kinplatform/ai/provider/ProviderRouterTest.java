@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.context.Message;
+import com.kinplatform.common.context.Message;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -95,3 +95,4 @@ class ProviderRouterTest {
         StepVerifier.create(router().routeStream(history, "hi", "sys")).verifyComplete();
     }
 }
+

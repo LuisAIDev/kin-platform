@@ -1,9 +1,9 @@
 package com.kinplatform.ai.context.adapter;
 
-import com.kinplatform.kin.context.AnalysisResult;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ContextAnalyzerPort;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalysisResult;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ContextAnalyzerPort;
+import com.kinplatform.common.context.ProjectContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,3 +78,4 @@ public class HeuristicContextAnalyzerAdapter implements ContextAnalyzerPort {
         }
     }
 }
+

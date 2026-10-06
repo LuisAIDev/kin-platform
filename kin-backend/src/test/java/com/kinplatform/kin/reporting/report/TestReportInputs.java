@@ -1,9 +1,9 @@
 package com.kinplatform.kin.reporting.report;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluation;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.reporting.EffortLevel;
 import com.kinplatform.kin.reporting.ImpactLevel;
 import com.kinplatform.kin.reporting.Recommendation;
@@ -107,3 +107,4 @@ public final class TestReportInputs {
             ConversationDecision.generateReport("ok"), score(), recommendation(), risk(), opportunity());
     }
 }
+

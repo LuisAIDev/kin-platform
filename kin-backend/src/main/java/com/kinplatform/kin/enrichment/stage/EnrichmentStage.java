@@ -13,7 +13,7 @@ import com.kinplatform.kin.pipeline.stage.EngineStage;
  *
  * <p>Composición pura sobre {@link EngineStage} (mismo patrón que
  * {@code KnowledgeStage}/{@code InterviewStage}): lee únicamente el
- * {@link com.kinplatform.kin.context.ProjectContext} y el
+ * {@link com.kinplatform.common.context.ProjectContext} y el
  * {@link com.kinplatform.kin.knowledge.KnowledgeResult} del
  * {@link PipelineContext}, construye el {@link EnrichmentInput}, invoca el
  * motor y almacena el {@link EnrichmentResult} en
@@ -58,3 +58,4 @@ public class EnrichmentStage implements PipelineStage {
         return delegate.execute(context);
     }
 }
+

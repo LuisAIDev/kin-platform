@@ -1,7 +1,7 @@
 package com.kinplatform.kin.reporting.opportunity;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluation;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.kin.reporting.EffortLevel;
 import com.kinplatform.kin.reporting.ImpactLevel;
 
@@ -69,3 +69,4 @@ public final class OpportunityAssembler {
         return Math.max(0.0, Math.min(1.0, raw));
     }
 }
+

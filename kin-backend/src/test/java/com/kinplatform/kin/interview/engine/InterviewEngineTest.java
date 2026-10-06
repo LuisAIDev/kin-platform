@@ -1,6 +1,6 @@
 package com.kinplatform.kin.interview.engine;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.engine.EnginePhase;
 import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.interview.AnswerRules;
@@ -262,4 +262,5 @@ class InterviewEngineTest {
         assertFalse(result.isEmpty());
     }
 }
+
 

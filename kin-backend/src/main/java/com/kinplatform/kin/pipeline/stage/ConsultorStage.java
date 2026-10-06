@@ -11,7 +11,7 @@ import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.conversation.TurnConstraints;
 import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.interview.InterviewResult;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
@@ -180,3 +180,4 @@ public class ConsultorStage implements PipelineStage {
         return null;
     }
 }
+

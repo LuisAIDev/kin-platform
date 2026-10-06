@@ -1,8 +1,8 @@
 package com.kinplatform.kin.pipeline.stage;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 import com.kinplatform.kin.reporting.risk.Risk;
@@ -64,3 +64,4 @@ final class TestEventContexts {
             List.of("rule"), AnalyzedDimension.COMPETITION, "RiskEngine");
     }
 }
+

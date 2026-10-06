@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.enrichment.EnrichmentEngine;
 import com.kinplatform.kin.enrichment.EnrichmentInput;
 import com.kinplatform.kin.enrichment.EnrichmentResult;
@@ -165,3 +165,4 @@ class KnowledgeHttpEndToEndTest {
         assertTrue(knowledge.isEmpty());
     }
 }
+

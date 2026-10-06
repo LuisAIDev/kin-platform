@@ -111,7 +111,7 @@ class DefaultEnterpriseScoreEngineTest {
         var risk = Risk.create(RiskCategory.MARKET, "Riesgo bajo", "Descripción",
             RiskLevel.LOW, RiskLevel.LOW, RiskLevel.LOW, 1.0,
             RiskExplanation.of(List.of("dato"), "regla", "razón", "evidencia"),
-            List.of("r1"), com.kinplatform.kin.context.AnalyzedDimension.COMPETITION, "1.0.0");
+            List.of("r1"), com.kinplatform.common.context.AnalyzedDimension.COMPETITION, "1.0.0");
         return new RiskResult(List.of(risk), RiskLevel.LOW, List.of(risk), 1.0,
             "Riesgos bajos.", "RiskEngine", "1.0.0");
     }
@@ -137,4 +137,5 @@ class DefaultEnterpriseScoreEngineTest {
             FinancialPlan.Scenario.of(1210.0, 60.0));
     }
 }
+
 

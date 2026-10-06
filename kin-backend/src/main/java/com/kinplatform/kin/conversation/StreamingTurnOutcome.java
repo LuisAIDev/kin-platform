@@ -1,6 +1,6 @@
 package com.kinplatform.kin.conversation;
 
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 import java.util.List;
@@ -38,3 +38,4 @@ public record StreamingTurnOutcome(
         this(flux, decision, consultingReport, List.of());
     }
 }
+

@@ -11,7 +11,7 @@ import com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.kin.reporting.EffortLevel;
 import com.kinplatform.kin.reporting.ImpactLevel;
 import com.kinplatform.kin.reporting.Recommendation;
@@ -150,8 +150,8 @@ class ReportPromptBuilderTest {
 
     @Test
     void build_deberiaRechazarTipoConversation() {
-        var ctx = com.kinplatform.kin.context.ProjectContext.fromProject("Mi App", null, "Software");
-        var decision = com.kinplatform.kin.decision.ConversationDecision.ask(
+        var ctx = com.kinplatform.common.context.ProjectContext.fromProject("Mi App", null, "Software");
+        var decision = com.kinplatform.common.decision.ConversationDecision.ask(
             AnalyzedDimension.PROBLEM, 10, "explorar problema");
         var request = PromptRequest.forConversation(ctx, decision);
         var ex = assertThrows(IllegalArgumentException.class, () -> builder.build(request));
@@ -259,3 +259,5 @@ class ReportPromptBuilderTest {
         }
     }
 }
+
+

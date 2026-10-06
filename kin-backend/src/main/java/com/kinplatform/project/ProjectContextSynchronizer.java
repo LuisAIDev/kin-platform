@@ -1,8 +1,8 @@
 package com.kinplatform.project;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.context.ProjectContextSyncPort;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContextSyncPort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,3 +73,4 @@ public class ProjectContextSynchronizer implements ProjectContextSyncPort {
         return value == null || value.isBlank();
     }
 }
+

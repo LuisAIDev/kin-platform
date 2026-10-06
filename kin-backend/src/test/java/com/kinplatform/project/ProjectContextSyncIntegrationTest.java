@@ -13,14 +13,14 @@ import com.kinplatform.ai.context.adapter.ProjectContextEntity;
 import com.kinplatform.ai.context.adapter.ProjectContextJpaRepository;
 import com.kinplatform.chat.ChatMessageRepository;
 import com.kinplatform.kin.KinMethod;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluator;
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.EvaluationPolicies;
-import com.kinplatform.kin.context.ExplorationPriority;
-import com.kinplatform.kin.context.ProjectContextSyncPort;
-import com.kinplatform.kin.context.strategy.ConversationStrategist;
-import com.kinplatform.kin.context.strategy.DefaultExplorationStrategy;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluator;
+import com.kinplatform.common.context.ContextRepository;
+import com.kinplatform.common.context.EvaluationPolicies;
+import com.kinplatform.common.context.ExplorationPriority;
+import com.kinplatform.common.context.ProjectContextSyncPort;
+import com.kinplatform.common.context.strategy.ConversationStrategist;
+import com.kinplatform.common.context.strategy.DefaultExplorationStrategy;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.ConversationTurn;
 import com.kinplatform.kin.conversation.TurnResult;
@@ -184,3 +184,4 @@ class ProjectContextSyncIntegrationTest {
         assertEquals("Título Existente", project.getTitle());
     }
 }
+

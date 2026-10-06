@@ -1,6 +1,6 @@
 package com.kinplatform.kin.interview.stage;
 
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.interview.InterviewAnswer;
 import com.kinplatform.kin.interview.InterviewContext;
 import com.kinplatform.kin.interview.InterviewDirective;
@@ -145,3 +145,4 @@ public class InterviewStage implements PipelineStage {
         }
     }
 }
+

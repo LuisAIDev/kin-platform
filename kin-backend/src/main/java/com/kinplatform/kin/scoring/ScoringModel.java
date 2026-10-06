@@ -1,6 +1,6 @@
 package com.kinplatform.kin.scoring;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -37,3 +37,4 @@ public class ScoringModel {
         return new ScoringModel(w, "v1", "Modelo de scoring por dimensiones con pesos configurables");
     }
 }
+

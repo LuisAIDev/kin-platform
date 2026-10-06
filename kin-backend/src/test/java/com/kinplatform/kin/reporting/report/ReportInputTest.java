@@ -1,9 +1,9 @@
 package com.kinplatform.kin.reporting.report;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluation;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.reporting.RecommendationResult;
 import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
 import com.kinplatform.kin.reporting.report.model.ReportSection;
@@ -59,4 +59,5 @@ class ReportInputTest {
         assertEquals(AnalyzedDimension.PROJECT_NAME, AnalyzedDimension.PROJECT_NAME);
     }
 }
+
 

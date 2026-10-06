@@ -1,4 +1,4 @@
-package com.kinplatform.kin.context;
+package com.kinplatform.common.context;
 
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -42,3 +42,4 @@ public class ExplorationPriority {
         return new ExplorationPriority(p);
     }
 }
+

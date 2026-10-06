@@ -1,6 +1,6 @@
 package com.kinplatform.kin.reporting;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -131,3 +131,4 @@ class RecommendationResultTest {
         assertNull(input.projectContext());
     }
 }
+

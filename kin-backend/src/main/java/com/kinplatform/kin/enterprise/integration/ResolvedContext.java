@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enterprise.integration;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.projectinfo.StructuredInfoSourceType;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -136,3 +136,4 @@ public final class ResolvedContext {
         return map;
     }
 }
+

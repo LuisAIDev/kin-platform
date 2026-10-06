@@ -1,7 +1,7 @@
 package com.kinplatform.kin.conversation;
 
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 
@@ -38,3 +38,4 @@ public record TurnResult(
         events = (events != null) ? List.copyOf(events) : List.of();
     }
 }
+

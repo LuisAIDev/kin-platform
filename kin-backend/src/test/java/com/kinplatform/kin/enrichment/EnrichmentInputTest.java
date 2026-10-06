@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enrichment;
 
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import org.junit.jupiter.api.Test;
 
@@ -75,3 +75,4 @@ class EnrichmentInputTest {
         assertEquals(EnumSet.allOf(EvidenceCategory.class), input.categories());
     }
 }
+

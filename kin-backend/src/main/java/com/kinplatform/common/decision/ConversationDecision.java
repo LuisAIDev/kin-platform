@@ -1,6 +1,6 @@
-package com.kinplatform.kin.decision;
+package com.kinplatform.common.decision;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -65,3 +65,5 @@ public record ConversationDecision(
         };
     }
 }
+
+

@@ -1,6 +1,6 @@
 package com.kinplatform.kin.interview;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -153,3 +153,4 @@ class InterviewResultTest {
         assertEquals(1.0, result.state().toProgress(1).completenessRatio(), 0.0001);
     }
 }
+

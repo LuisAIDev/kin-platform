@@ -1,4 +1,4 @@
-package com.kinplatform.kin.context;
+package com.kinplatform.common.context;
 
 public enum AnalyzedDimension {
 
@@ -27,3 +27,4 @@ public enum AnalyzedDimension {
         return displayName;
     }
 }
+

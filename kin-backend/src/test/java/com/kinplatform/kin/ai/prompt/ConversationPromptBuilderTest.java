@@ -2,9 +2,9 @@ package com.kinplatform.kin.ai.prompt;
 
 import com.kinplatform.kin.ai.PromptRequest;
 import com.kinplatform.kin.ai.PromptType;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -893,3 +893,4 @@ class ConversationPromptBuilderTest {
         assertTrue(prompt.contains("El proveedor configurado actualmente es DeepSeek, mediante DeepSeekProvider"));
     }
 }
+

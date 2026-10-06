@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.health.triage.InMemoryTriageKnowledgeRepository;
 import com.kinplatform.kin.health.triage.domain.Condition;
 import com.kinplatform.kin.health.triage.domain.Severity;
@@ -121,3 +121,4 @@ class TriageStageTest {
         assertNull(result.triageResult());
     }
 }
+

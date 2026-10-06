@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.integration;
 
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import java.util.UUID;
 
 /**
@@ -13,3 +13,4 @@ public interface EnterpriseDataProvider {
 
     EnterpriseIntegrationData load(UUID projectId, ProjectContext context);
 }
+

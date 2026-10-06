@@ -1,6 +1,6 @@
 package com.kinplatform.kin.interview;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -95,3 +95,4 @@ class InterviewQuestionTest {
         assertTrue(a.toString().contains("id=q1"));
     }
 }
+

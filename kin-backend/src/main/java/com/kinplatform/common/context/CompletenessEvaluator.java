@@ -1,4 +1,4 @@
-package com.kinplatform.kin.context;
+package com.kinplatform.common.context;
 
 import java.util.List;
 
@@ -92,3 +92,4 @@ public class CompletenessEvaluator {
             && criticalMissing.size() <= (AnalyzedDimension.values().length - policies.minimumCriticalDimensions());
     }
 }
+

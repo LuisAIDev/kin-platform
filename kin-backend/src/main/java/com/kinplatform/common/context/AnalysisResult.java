@@ -1,4 +1,4 @@
-package com.kinplatform.kin.context;
+package com.kinplatform.common.context;
 
 import java.util.Collections;
 import java.util.Map;
@@ -19,3 +19,4 @@ public record AnalysisResult(Map<AnalyzedDimension, String> extracted) {
         return new AnalysisResult(Collections.emptyMap());
     }
 }
+

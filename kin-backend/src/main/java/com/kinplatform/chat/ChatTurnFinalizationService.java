@@ -2,7 +2,7 @@ package com.kinplatform.chat;
 
 import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.SaveMessageRequest;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.kin.reporting.report.ReportRepository;
@@ -85,3 +85,4 @@ public class ChatTurnFinalizationService {
         return assistant;
     }
 }
+

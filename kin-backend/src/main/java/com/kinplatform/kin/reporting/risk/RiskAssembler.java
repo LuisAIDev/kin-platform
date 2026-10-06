@@ -1,7 +1,7 @@
 package com.kinplatform.kin.reporting.risk;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluation;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
 
 import java.util.List;
 
@@ -39,3 +39,4 @@ public final class RiskAssembler {
         return Math.max(0.0, Math.min(1.0, raw));
     }
 }
+

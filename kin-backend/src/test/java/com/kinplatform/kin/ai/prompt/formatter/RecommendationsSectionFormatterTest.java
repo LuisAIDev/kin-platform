@@ -5,7 +5,7 @@ import com.kinplatform.kin.reporting.RecommendationCategory;
 import com.kinplatform.kin.reporting.RecommendationExplanation;
 import com.kinplatform.kin.reporting.EffortLevel;
 import com.kinplatform.kin.reporting.ImpactLevel;
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.kin.reporting.report.model.RecommendationsSection;
 import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
 import org.junit.jupiter.api.Test;
@@ -76,3 +76,4 @@ class RecommendationsSectionFormatterTest {
         assertTrue(result.contains("_Sin recomendaciones generadas._"));
     }
 }
+

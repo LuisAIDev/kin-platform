@@ -1,6 +1,6 @@
 package com.kinplatform.kin.pipeline.stage;
 
-import com.kinplatform.kin.context.ContextAnalyzerPort;
+import com.kinplatform.common.context.ContextAnalyzerPort;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
 
@@ -29,3 +29,4 @@ public class AnalyzerStage implements PipelineStage {
         return context;
     }
 }
+

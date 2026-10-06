@@ -126,7 +126,8 @@ class DefaultInnovationEngineTest {
             com.kinplatform.kin.reporting.ImpactLevel.HIGH,
             com.kinplatform.kin.reporting.EffortLevel.MEDIUM, 0.9,
             OpportunityExplanation.of(List.of(), "regla", "razón", "evidencia"),
-            List.of("r1"), com.kinplatform.kin.context.AnalyzedDimension.SCALABILITY, "1.0.0");
+            List.of("r1"), com.kinplatform.common.context.AnalyzedDimension.SCALABILITY, "1.0.0");
     }
 }
+
 

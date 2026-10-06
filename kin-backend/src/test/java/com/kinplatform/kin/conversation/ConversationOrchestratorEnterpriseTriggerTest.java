@@ -3,14 +3,14 @@ package com.kinplatform.kin.conversation;
 import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.KinMethodCommand;
 import com.kinplatform.kin.KinMethodResult;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ContextRepository;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.policy.TurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.enterprise.application.DefaultEnterpriseProjectTrigger;
 import com.kinplatform.kin.enterprise.application.EnterpriseGenerationOrchestrator;
 import com.kinplatform.kin.enterprise.application.EnterpriseGenerationService;
@@ -264,3 +264,4 @@ class ConversationOrchestratorEnterpriseTriggerTest {
             .noneMatch(e -> e instanceof EnterpriseProjectRequested));
     }
 }
+

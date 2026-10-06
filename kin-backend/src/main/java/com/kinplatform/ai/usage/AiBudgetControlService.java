@@ -72,7 +72,7 @@ public class AiBudgetControlService {
      * por solicitud lanza {@link AiBudgetExceededException} (HTTP 403).
      */
     public AiReservation reserve(
-            UUID userId, PricingPlan plan, String userMessage, List<com.kinplatform.kin.context.Message> history) {
+            UUID userId, PricingPlan plan, String userMessage, List<com.kinplatform.common.context.Message> history) {
         if (!isCostControlEnabled()) {
             return null;
         }
@@ -81,7 +81,7 @@ public class AiBudgetControlService {
                 history == null
                         ? null
                         : history.stream()
-                                .map(com.kinplatform.kin.context.Message::content)
+                                .map(com.kinplatform.common.context.Message::content)
                                 .toList());
         if (estimate.compareTo(maxRequestEstimateUsd) > 0) {
             log.warn(
@@ -178,3 +178,4 @@ public class AiBudgetControlService {
                 period.end());
     }
 }
+

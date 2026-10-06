@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.engine.EngineMetadata;
 import com.kinplatform.common.engine.EnginePhase;
 import com.kinplatform.common.engine.EngineType;
@@ -205,4 +205,5 @@ public class DefaultMarketEngine implements MarketEngine {
         return lines.isEmpty() ? List.of(UNDEFINED) : List.copyOf(lines);
     }
 }
+
 

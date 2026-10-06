@@ -1,6 +1,6 @@
 package com.kinplatform.kin.reporting.opportunity;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.kin.reporting.EffortLevel;
 import com.kinplatform.kin.reporting.ImpactLevel;
 import org.junit.jupiter.api.Test;
@@ -154,3 +154,4 @@ class OpportunityResultTest {
         assertEquals("Monetización", OpportunityCategory.MONETIZACION.displayName());
     }
 }
+

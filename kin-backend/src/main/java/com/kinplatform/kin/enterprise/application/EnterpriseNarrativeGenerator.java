@@ -2,7 +2,7 @@ package com.kinplatform.kin.enterprise.application;
 
 import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.ai.AIResponder;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
@@ -214,3 +214,4 @@ public final class EnterpriseNarrativeGenerator {
         return null;
     }
 }
+

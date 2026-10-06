@@ -1,6 +1,6 @@
 package com.kinplatform.kin.interview;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 
 /**
  * Directiva de la pregunta de entrevista que el LLM debe formular (ADR-015).
@@ -35,3 +35,4 @@ public record InterviewDirective(
         return new InterviewDirective(questionId, dimension, topic, rules);
     }
 }
+

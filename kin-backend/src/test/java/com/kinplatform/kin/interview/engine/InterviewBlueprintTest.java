@@ -1,6 +1,6 @@
 package com.kinplatform.kin.interview.engine;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.kin.interview.AnswerRules;
 import com.kinplatform.kin.interview.InterviewQuestion;
 import com.kinplatform.kin.interview.InterviewState;
@@ -240,3 +240,4 @@ class InterviewBlueprintTest {
         assertTrue(blueprint.pendingIds(null).isEmpty());
     }
 }
+

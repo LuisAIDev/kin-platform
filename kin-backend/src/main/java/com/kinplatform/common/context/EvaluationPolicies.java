@@ -1,4 +1,4 @@
-package com.kinplatform.kin.context;
+package com.kinplatform.common.context;
 
 public record EvaluationPolicies(
     double minimumCoverage,
@@ -13,3 +13,4 @@ public record EvaluationPolicies(
         return new EvaluationPolicies(0.65, 0.5, 5, 3, 0.65, 0.6);
     }
 }
+

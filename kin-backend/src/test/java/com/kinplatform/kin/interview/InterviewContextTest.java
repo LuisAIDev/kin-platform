@@ -1,6 +1,6 @@
 package com.kinplatform.kin.interview;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
@@ -92,3 +92,4 @@ class InterviewContextTest {
         assertTrue(a.toString().contains("projectId"));
     }
 }
+

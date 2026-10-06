@@ -1,7 +1,7 @@
 package com.kinplatform.kin.knowledge.stage;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.knowledge.KnowledgeInput;
 import com.kinplatform.kin.knowledge.KnowledgeRequest;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
@@ -133,3 +133,4 @@ public class KnowledgeStage implements PipelineStage {
         return executed;
     }
 }
+

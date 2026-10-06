@@ -12,13 +12,13 @@ class FinancialSectionTest {
     @Test
     void seccion_deberiaProtegerCobertura() {
         var coverage = new ArrayList<>(List.of(new DimensionCoverage(
-            com.kinplatform.kin.context.AnalyzedDimension.REVENUE_MODEL, true)));
+            com.kinplatform.common.context.AnalyzedDimension.REVENUE_MODEL, true)));
         var section = new FinancialSection("suscripcion", "recurso", "objetivo", coverage);
         coverage.clear();
         assertEquals(1, section.coverage().size());
         assertThrows(UnsupportedOperationException.class,
             () -> section.coverage().add(new DimensionCoverage(
-                com.kinplatform.kin.context.AnalyzedDimension.OBJECTIVES, false)));
+                com.kinplatform.common.context.AnalyzedDimension.OBJECTIVES, false)));
     }
 
     @Test
@@ -43,3 +43,4 @@ class FinancialSectionTest {
         assertFalse(section.isEmpty());
     }
 }
+

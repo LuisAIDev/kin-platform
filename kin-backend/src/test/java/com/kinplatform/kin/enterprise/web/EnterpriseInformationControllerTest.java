@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.kin.enterprise.integration.DocumentDescriptor;
 import com.kinplatform.kin.enterprise.integration.EnterpriseDataProvider;
 import com.kinplatform.kin.enterprise.integration.EnterpriseIntegrationData;
@@ -75,3 +75,4 @@ class EnterpriseInformationControllerTest {
                         .value((String) null));
     }
 }
+

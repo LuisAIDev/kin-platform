@@ -1,9 +1,9 @@
 package com.kinplatform.kin.ai.prompt;
 
 import com.kinplatform.kin.ai.PromptRequest;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.interview.AnswerRules;
 import com.kinplatform.kin.interview.InterviewDecision;
 import com.kinplatform.kin.interview.InterviewDirective;
@@ -103,3 +103,4 @@ class ConversationPromptBuilderInterviewTest {
             () -> builder.build(request, resultadoEntrevistaActiva()));
     }
 }
+

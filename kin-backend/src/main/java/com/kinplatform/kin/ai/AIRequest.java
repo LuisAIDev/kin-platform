@@ -1,6 +1,6 @@
 package com.kinplatform.kin.ai;
 
-import com.kinplatform.kin.context.Message;
+import com.kinplatform.common.context.Message;
 
 import java.util.List;
 
@@ -15,3 +15,4 @@ public record AIRequest(
     String systemPrompt
 ) {
 }
+

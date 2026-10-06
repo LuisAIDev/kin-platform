@@ -2,9 +2,9 @@ package com.kinplatform.kin.ai;
 
 import com.kinplatform.kin.ai.prompt.ConversationPromptBuilder;
 import com.kinplatform.kin.ai.prompt.ReportPromptBuilder;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 import org.junit.jupiter.api.Test;
 
@@ -113,3 +113,4 @@ class PromptAssemblerTest {
         verifyNoInteractions(reportBuilder);
     }
 }
+

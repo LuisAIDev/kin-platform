@@ -3,9 +3,9 @@ package com.kinplatform.ai.enterprise.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.projectinfo.ProjectStructuredInfo;
 import com.kinplatform.projectinfo.ProjectStructuredInfoRepository;
 import com.kinplatform.projectinfo.StructuredInfoSourceType;
@@ -84,3 +84,4 @@ class DefaultEnterpriseContextEnricherTest {
         assertThat(enriched.isDimensionCovered(AnalyzedDimension.MVP)).isFalse();
     }
 }
+

@@ -1,6 +1,6 @@
 package com.kinplatform.kin.reporting.risk;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.engine.DeterministicId;
 
 import java.util.List;
@@ -53,4 +53,5 @@ public record Risk(
             confidence, explanation, appliedRules, relatedDimension, engineVersion);
     }
 }
+
 

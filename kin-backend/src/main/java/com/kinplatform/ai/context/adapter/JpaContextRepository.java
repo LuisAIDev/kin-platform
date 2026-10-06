@@ -2,10 +2,10 @@ package com.kinplatform.ai.context.adapter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ContextRepository;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -131,3 +131,4 @@ public class JpaContextRepository implements ContextRepository {
             boolean reportGenerated,
             String projectCategory) {}
 }
+

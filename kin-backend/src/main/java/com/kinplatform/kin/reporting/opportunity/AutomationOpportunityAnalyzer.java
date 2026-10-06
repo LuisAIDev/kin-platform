@@ -1,7 +1,7 @@
 package com.kinplatform.kin.reporting.opportunity;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluation;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.kin.reporting.EffortLevel;
 import com.kinplatform.kin.reporting.ImpactLevel;
 
@@ -90,3 +90,4 @@ public class AutomationOpportunityAnalyzer implements OpportunityAnalyzer {
             impact, effort, rules, dimension, reason, evidence, evaluation, version());
     }
 }
+

@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.health.differential.InMemoryDifferentialKnowledgeRepository;
 import com.kinplatform.kin.health.differential.domain.DifferentialCatalog;
 import com.kinplatform.kin.health.differential.domain.RecommendedTest;
@@ -130,3 +130,4 @@ class DifferentialStageTest {
         assertNull(result.differentialResult());
     }
 }
+

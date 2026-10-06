@@ -1,7 +1,7 @@
 package com.kinplatform.kin.scoring;
 
-import com.kinplatform.kin.context.CompletenessEvaluation;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.CompletenessEvaluation;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.engine.EngineInput;
 
 /**
@@ -16,4 +16,5 @@ public record ScoringInput(
     CompletenessEvaluation evaluation
 ) implements EngineInput {
 }
+
 

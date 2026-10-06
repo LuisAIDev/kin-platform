@@ -10,15 +10,15 @@ import static org.mockito.Mockito.when;
 
 import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.ai.AIResponder;
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ContextRepository;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.ConversationTurn;
 import com.kinplatform.kin.conversation.TurnResult;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.enrichment.EnrichmentEngine;
 import com.kinplatform.kin.event.ConversationCompletedEvent;
 import com.kinplatform.kin.event.ReportGeneratedEvent;
@@ -150,3 +150,4 @@ class EndToEndPipelineIntegrationTest {
         assertFalse(result.events().isEmpty());
     }
 }
+

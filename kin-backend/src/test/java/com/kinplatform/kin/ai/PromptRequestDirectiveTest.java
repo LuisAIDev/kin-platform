@@ -1,12 +1,12 @@
 package com.kinplatform.kin.ai;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.conversation.CommunicationMode;
 import com.kinplatform.kin.conversation.ConversationPhase;
 import com.kinplatform.kin.conversation.TurnConstraints;
 import com.kinplatform.kin.conversation.TurnDirective;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 import org.junit.jupiter.api.Test;
 
@@ -82,3 +82,4 @@ class PromptRequestDirectiveTest {
             () -> PromptRequest.forConversation(context, null, directive));
     }
 }
+

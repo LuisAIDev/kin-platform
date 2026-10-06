@@ -1,8 +1,8 @@
 package com.kinplatform.kin.reporting.risk;
 
-import com.kinplatform.kin.context.CompletenessEvaluation;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.CompletenessEvaluation;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.common.engine.EngineInput;
 import com.kinplatform.kin.enrichment.EnrichmentResult;
 import com.kinplatform.kin.scoring.ScoreResult;
@@ -42,4 +42,5 @@ public record RiskInput(
         return new RiskInput(projectContext, evaluation, decision, score, enrichment);
     }
 }
+
 

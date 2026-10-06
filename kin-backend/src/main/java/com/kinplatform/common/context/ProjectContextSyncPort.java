@@ -1,4 +1,4 @@
-package com.kinplatform.kin.context;
+package com.kinplatform.common.context;
 
 import java.util.UUID;
 
@@ -24,3 +24,4 @@ public interface ProjectContextSyncPort {
      */
     void sync(UUID projectId, ProjectContext context);
 }
+

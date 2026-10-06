@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enrichment;
 
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.knowledge.SourceTrust;
@@ -134,3 +134,4 @@ class FactRankerCategoryTest {
         assertTrue(ranker.score(deCompetencia, EvidenceCategory.COMPETITIVE, ref).value() > 0.0);
     }
 }
+

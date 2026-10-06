@@ -1,7 +1,7 @@
 package com.kinplatform.kin.reporting;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluation;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.common.engine.EngineMetadata;
 import com.kinplatform.common.engine.EnginePhase;
@@ -391,4 +391,5 @@ public class RecommendationEngine implements DomainEngine<RecommendationInput, R
         }
     }
 }
+
 

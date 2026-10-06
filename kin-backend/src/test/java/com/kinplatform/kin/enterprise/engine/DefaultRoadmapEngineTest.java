@@ -10,7 +10,7 @@ import com.kinplatform.kin.reporting.Recommendation;
 import com.kinplatform.kin.reporting.RecommendationCategory;
 import com.kinplatform.kin.reporting.RecommendationExplanation;
 import com.kinplatform.kin.reporting.RecommendationResult;
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.kin.reporting.ImpactLevel;
 import com.kinplatform.kin.reporting.EffortLevel;
 import org.junit.jupiter.api.Test;
@@ -126,4 +126,5 @@ class DefaultRoadmapEngineTest {
             FinancialPlan.Scenario.of(1210.0, 60.0));
     }
 }
+
 

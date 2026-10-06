@@ -7,8 +7,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ContextRepository;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.event.InMemoryDomainEventBus;
@@ -90,3 +90,4 @@ class EnterpriseProjectRequestedListenerBudgetTest {
         verify(aiBudgetGate).clear();
     }
 }
+

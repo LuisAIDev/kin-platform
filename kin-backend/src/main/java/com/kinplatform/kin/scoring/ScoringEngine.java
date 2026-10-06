@@ -1,8 +1,8 @@
 package com.kinplatform.kin.scoring;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluation;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.common.engine.EngineMetadata;
 import com.kinplatform.common.engine.EnginePhase;
@@ -131,4 +131,5 @@ public class ScoringEngine implements DomainEngine<ScoringInput, ScoreResult> {
         return weaknesses;
     }
 }
+
 

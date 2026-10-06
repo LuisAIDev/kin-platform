@@ -1,6 +1,6 @@
 package com.kinplatform.kin.conversation.history;
 
-import com.kinplatform.kin.context.Message;
+import com.kinplatform.common.context.Message;
 
 import java.util.List;
 
@@ -41,3 +41,4 @@ public final class HistoryWindow {
         return List.copyOf(history.subList(history.size() - maxMessages, history.size()));
     }
 }
+

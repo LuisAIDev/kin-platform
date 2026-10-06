@@ -9,8 +9,8 @@ import com.kinplatform.ai.guardrails.PromptGuardrail;
 import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.ChatRequest;
 import com.kinplatform.chat.dto.SaveMessageRequest;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.conversation.CommunicationMode;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.ConversationPhase;
@@ -20,7 +20,7 @@ import com.kinplatform.kin.conversation.StreamingTurnOutcome;
 import com.kinplatform.kin.conversation.TurnConstraints;
 import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.conversation.TurnResult;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.reporting.report.ReportRepository;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 import com.kinplatform.project.Category;
@@ -426,3 +426,4 @@ class ChatOrchestratorServiceImplTest {
         verify(reportRepository).save(PROJECT_ID, report);
     }
 }
+

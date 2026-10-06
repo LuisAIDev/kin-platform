@@ -13,10 +13,10 @@ import com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.SourcesSectionFormatter;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluation;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.enrichment.EnrichmentEngine;
 import com.kinplatform.kin.enrichment.FactRanker;
 import com.kinplatform.kin.enrichment.stage.EnrichmentStage;
@@ -149,3 +149,4 @@ class ReportPromptSourcesIntegrationTest {
             new SourcesSectionFormatter()));
     }
 }
+

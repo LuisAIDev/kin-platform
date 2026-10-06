@@ -22,7 +22,8 @@ class FinancialSectionAssemblerTest {
         var section = assembler.assemble(TestReportInputs.input());
         assertEquals(3, section.coverage().size());
         assertTrue(section.coverage().stream().allMatch(dc -> dc.covered()));
-        assertEquals(com.kinplatform.kin.context.AnalyzedDimension.REVENUE_MODEL,
+        assertEquals(com.kinplatform.common.context.AnalyzedDimension.REVENUE_MODEL,
             section.coverage().get(0).dimension());
     }
 }
+

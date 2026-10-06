@@ -5,11 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ContextRepository;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.conversation.ResponseFallback;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.enterprise.application.EnterprisePipelineResultStore;
 import com.kinplatform.kin.enterprise.application.InMemoryEnterprisePipelineResultStore;
 import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
@@ -185,3 +185,4 @@ class KinMethodPipelineResultsCaptureTest {
                 PROJECT_ID, USER_ID, message, List.of(), "Proyecto Test", "Descripción", "Software");
     }
 }
+

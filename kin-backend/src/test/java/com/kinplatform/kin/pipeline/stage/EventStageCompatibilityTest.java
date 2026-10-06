@@ -1,7 +1,7 @@
 package com.kinplatform.kin.pipeline.stage;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.event.ConversationCompletedEvent;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.QuestionGeneratedEvent;
@@ -86,3 +86,4 @@ class EventStageCompatibilityTest {
         org.junit.jupiter.api.Assertions.assertFalse(supported);
     }
 }
+

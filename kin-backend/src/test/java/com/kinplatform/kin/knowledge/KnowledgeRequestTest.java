@@ -1,6 +1,6 @@
 package com.kinplatform.kin.knowledge;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -85,3 +85,4 @@ class KnowledgeRequestTest {
         assertEquals(1, request.dimensions().size());
     }
 }
+

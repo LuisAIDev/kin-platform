@@ -14,7 +14,7 @@ import static org.mockito.Mockito.when;
 
 import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.SaveMessageRequest;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.event.ConversationCompletedEvent;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.ReportGeneratedEvent;
@@ -157,3 +157,4 @@ class ChatTurnFinalizationServiceTest {
         assertTrue(true);
     }
 }
+

@@ -1,6 +1,6 @@
 package com.kinplatform.kin.reporting.report.model;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.kin.reporting.EffortLevel;
 import com.kinplatform.kin.reporting.ImpactLevel;
 import com.kinplatform.kin.reporting.opportunity.Opportunity;
@@ -58,3 +58,4 @@ class OpportunitiesSectionTest {
         assertFalse(section.isEmpty());
     }
 }
+

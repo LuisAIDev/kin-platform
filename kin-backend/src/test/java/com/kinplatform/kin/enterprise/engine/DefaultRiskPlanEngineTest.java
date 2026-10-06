@@ -13,7 +13,7 @@ import com.kinplatform.kin.reporting.risk.RiskCategory;
 import com.kinplatform.kin.reporting.risk.RiskExplanation;
 import com.kinplatform.kin.reporting.risk.RiskLevel;
 import com.kinplatform.kin.reporting.risk.RiskResult;
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -139,4 +139,5 @@ class DefaultRiskPlanEngineTest {
             FinancialPlan.Scenario.of(1210.0, 60.0));
     }
 }
+
 

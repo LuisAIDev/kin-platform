@@ -1,6 +1,6 @@
 package com.kinplatform.kin.conversation;
 
-import com.kinplatform.kin.context.Message;
+import com.kinplatform.common.context.Message;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,3 +24,4 @@ public record ConversationTurn(
         history = (history != null) ? List.copyOf(history) : List.of();
     }
 }
+

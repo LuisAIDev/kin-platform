@@ -1,9 +1,9 @@
 package com.kinplatform.kin.pipeline.stage;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluation;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.scoring.ScoringEngine;
 import com.kinplatform.kin.scoring.ScoringModel;
@@ -65,3 +65,4 @@ class ScoringStageTest {
         assertEquals(ctx.scoreResult(), generic);
     }
 }
+

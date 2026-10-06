@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enterprise.application;
 
 import com.kinplatform.kin.ai.AIResponder;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
 import com.kinplatform.kin.enterprise.engine.BusinessModelEngine;
@@ -519,3 +519,4 @@ public final class EnterpriseGenerationService {
         return value;
     }
 }
+

@@ -1,7 +1,7 @@
 package com.kinplatform.kin.conversation;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.decision.ConversationDecision;
 
 /**
  * Política del turno: fase, acción, dimensión objetivo, modo de comunicación y
@@ -40,3 +40,4 @@ public record TurnDirective(
         return communicationMode == CommunicationMode.EXPLAIN_REPORT;
     }
 }
+

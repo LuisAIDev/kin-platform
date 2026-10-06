@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.kin.conversation.ResponseFallback;
 import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.event.DomainEventBus;
@@ -100,3 +100,4 @@ class KinMethodFallbackTest {
                 kinMethod(new ResponseFallback(List.of("respuesta segura"), 0)).executeStream(command()));
     }
 }
+

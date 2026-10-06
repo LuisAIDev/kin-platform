@@ -1,6 +1,6 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.kin.reporting.report.model.DimensionCoverage;
 import com.kinplatform.kin.reporting.report.model.MarketSection;
 import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
@@ -61,3 +61,4 @@ class MarketSectionFormatterTest {
         assertTrue(result.contains("_Sin datos de mercado disponibles._"));
     }
 }
+

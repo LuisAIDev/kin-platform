@@ -14,7 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.kin.enterprise.application.EnterpriseExportOrchestrator;
 import com.kinplatform.kin.enterprise.application.EnterpriseGenerationOrchestrator;
@@ -497,3 +497,4 @@ class EnterpriseControllerTest {
                         dataProvider()));
     }
 }
+

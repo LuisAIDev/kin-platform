@@ -1,6 +1,6 @@
 package com.kinplatform.kin.interview;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 
 import java.util.List;
 
@@ -56,3 +56,4 @@ public record InterviewQuestion(
         return !followUpIds.isEmpty();
     }
 }
+

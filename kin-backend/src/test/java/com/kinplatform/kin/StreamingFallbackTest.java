@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.kin.conversation.ResponseFallback;
 import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.event.DomainEventBus;
@@ -108,3 +108,4 @@ class StreamingFallbackTest {
         assertEquals("x", content);
     }
 }
+

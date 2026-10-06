@@ -1,13 +1,13 @@
 package com.kinplatform.kin.enrichment.stage;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluator;
-import com.kinplatform.kin.context.EvaluationPolicies;
-import com.kinplatform.kin.context.ExplorationPriority;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.context.strategy.ConversationStrategist;
-import com.kinplatform.kin.context.strategy.DefaultExplorationStrategy;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluator;
+import com.kinplatform.common.context.EvaluationPolicies;
+import com.kinplatform.common.context.ExplorationPriority;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.context.strategy.ConversationStrategist;
+import com.kinplatform.common.context.strategy.DefaultExplorationStrategy;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.enrichment.EnrichmentEngine;
 import com.kinplatform.kin.enrichment.EnrichmentResult;
 import com.kinplatform.kin.enrichment.FactRanker;
@@ -131,7 +131,7 @@ class EnrichmentStagePipelineTest {
 
     private List<PipelineStage> analysisStages(KnowledgeStage knowledge) {
         return List.of(
-            new AnalyzerStage((message, ctx) -> com.kinplatform.kin.context.AnalysisResult.empty()),
+            new AnalyzerStage((message, ctx) -> com.kinplatform.common.context.AnalysisResult.empty()),
             new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())),
             new StrategistStage(new ConversationStrategist(
                 new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))),
@@ -273,7 +273,7 @@ class EnrichmentStagePipelineTest {
                 return OpportunityResult.empty(); });
 
         var pipeline = new Pipeline(List.of(
-            new AnalyzerStage((message, ctx) -> com.kinplatform.kin.context.AnalysisResult.empty()),
+            new AnalyzerStage((message, ctx) -> com.kinplatform.common.context.AnalysisResult.empty()),
             new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())),
             new StrategistStage(new ConversationStrategist(
                 new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))),
@@ -328,4 +328,6 @@ class EnrichmentStagePipelineTest {
         }
     }
 }
+
+
 

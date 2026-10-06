@@ -1,6 +1,6 @@
 package com.kinplatform.kin.conversation;
 
-import com.kinplatform.kin.context.Message;
+import com.kinplatform.common.context.Message;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -59,3 +59,4 @@ class ConversationTurnTest {
         assertSame(null, turn.projectCategory());
     }
 }
+

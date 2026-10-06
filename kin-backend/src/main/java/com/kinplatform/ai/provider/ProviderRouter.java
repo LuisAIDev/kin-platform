@@ -1,6 +1,6 @@
 package com.kinplatform.ai.provider;
 
-import com.kinplatform.kin.context.Message;
+import com.kinplatform.common.context.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -54,3 +54,4 @@ public class ProviderRouter {
         return stream;
     }
 }
+

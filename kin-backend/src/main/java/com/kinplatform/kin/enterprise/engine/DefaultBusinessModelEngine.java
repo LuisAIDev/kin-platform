@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.engine.EngineMetadata;
 import com.kinplatform.common.engine.EnginePhase;
 import com.kinplatform.common.engine.EngineType;
@@ -204,4 +204,5 @@ public class DefaultBusinessModelEngine implements BusinessModelEngine {
         return "Lean Canvas construido con una cobertura de " + Math.round(confidence * 100) + "%.";
     }
 }
+
 

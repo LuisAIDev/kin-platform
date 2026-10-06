@@ -1,6 +1,6 @@
 package com.kinplatform.kin.reporting.report.model;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.kin.reporting.risk.Risk;
 import com.kinplatform.kin.reporting.risk.RiskCategory;
 import com.kinplatform.kin.reporting.risk.RiskExplanation;
@@ -59,3 +59,4 @@ class RisksSectionTest {
         assertFalse(section.isEmpty());
     }
 }
+

@@ -1,6 +1,6 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.kin.reporting.risk.Risk;
 import com.kinplatform.kin.reporting.risk.RiskCategory;
 import com.kinplatform.kin.reporting.risk.RiskExplanation;
@@ -88,3 +88,4 @@ class RisksSectionFormatterTest {
         assertTrue(result.contains("_Sin riesgos identificados._"));
     }
 }
+

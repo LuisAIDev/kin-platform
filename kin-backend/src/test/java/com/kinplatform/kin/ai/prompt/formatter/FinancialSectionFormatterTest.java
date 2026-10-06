@@ -1,6 +1,6 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.kin.reporting.report.model.DimensionCoverage;
 import com.kinplatform.kin.reporting.report.model.FinancialSection;
 import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
@@ -47,3 +47,4 @@ class FinancialSectionFormatterTest {
         assertFalse(result.contains("**Modelo de ingresos:**"));
     }
 }
+

@@ -1,4 +1,4 @@
-package com.kinplatform.kin.context;
+package com.kinplatform.common.context;
 
 import java.util.List;
 
@@ -52,3 +52,4 @@ public record CompletenessEvaluation(
         );
     }
 }
+

@@ -30,7 +30,7 @@ class ReportBuilderTest {
                 List.of(), 0.0))
             .opportunities(new OpportunitiesSection(List.of(), List.of(), 0.0))
             .financial(new FinancialSection("modelo", "recursos", "objetivos",
-                List.of(new DimensionCoverage(com.kinplatform.kin.context.AnalyzedDimension.REVENUE_MODEL, true))))
+                List.of(new DimensionCoverage(com.kinplatform.common.context.AnalyzedDimension.REVENUE_MODEL, true))))
             .market(new MarketSection("tech", "pymes", "BA", "problema", List.of()))
             .innovation(new InnovationSection("sol", "valor", "mvp", List.of(), List.of()))
             .nextSteps(new NextStepsSection(List.of(NextStep.of(NextStep.SOURCE_RECOMMENDATION, "A", 7, "razon"))))
@@ -108,3 +108,4 @@ class ReportBuilderTest {
             report.metadata().sectionsIncluded());
     }
 }
+

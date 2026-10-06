@@ -3,13 +3,13 @@ package com.kinplatform.kin.knowledge.stage;
 import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.kin.ai.PromptAssembler;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluator;
-import com.kinplatform.kin.context.EvaluationPolicies;
-import com.kinplatform.kin.context.ExplorationPriority;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.context.strategy.ConversationStrategist;
-import com.kinplatform.kin.context.strategy.DefaultExplorationStrategy;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluator;
+import com.kinplatform.common.context.EvaluationPolicies;
+import com.kinplatform.common.context.ExplorationPriority;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.context.strategy.ConversationStrategist;
+import com.kinplatform.common.context.strategy.DefaultExplorationStrategy;
 import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
 import com.kinplatform.kin.knowledge.engine.KnowledgeGateway;
 import com.kinplatform.kin.knowledge.engine.SourceRegistry;
@@ -102,7 +102,7 @@ class KnowledgeStagePipelineTest {
 
     private Pipeline fullPipeline() {
         return new Pipeline(List.of(
-            new AnalyzerStage((message, ctx) -> com.kinplatform.kin.context.AnalysisResult.empty()),
+            new AnalyzerStage((message, ctx) -> com.kinplatform.common.context.AnalysisResult.empty()),
             new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())),
             new StrategistStage(new ConversationStrategist(
                 new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))),
@@ -182,7 +182,7 @@ class KnowledgeStagePipelineTest {
 
         var order = new ArrayList<String>();
         var pipeline = new Pipeline(List.of(
-            record(new AnalyzerStage((message, ctx) -> com.kinplatform.kin.context.AnalysisResult.empty()), order),
+            record(new AnalyzerStage((message, ctx) -> com.kinplatform.common.context.AnalysisResult.empty()), order),
             record(new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())), order),
             record(new StrategistStage(new ConversationStrategist(
                 new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))), order),
@@ -215,7 +215,7 @@ class KnowledgeStagePipelineTest {
 
         assertNotNull(result.knowledgeResult());
         assertNotNull(result.consultingReport());
-        assertEquals(com.kinplatform.kin.decision.ConversationDecision.Action.REPORT,
+        assertEquals(com.kinplatform.common.decision.ConversationDecision.Action.REPORT,
             result.decision().action());
         assertEquals(KnowledgeEngine.GENERATOR_NAME, result.knowledgeResult().generatedBy());
         assertNotNull(result.engineResult(KnowledgeEngine.GENERATOR_NAME));
@@ -270,3 +270,5 @@ class KnowledgeStagePipelineTest {
         };
     }
 }
+
+

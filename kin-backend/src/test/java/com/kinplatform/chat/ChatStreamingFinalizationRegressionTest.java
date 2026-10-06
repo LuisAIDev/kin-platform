@@ -22,8 +22,8 @@ import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.kin.ai.PromptAssembler;
 import com.kinplatform.kin.ai.prompt.ConversationPromptBuilder;
 import com.kinplatform.kin.ai.prompt.ReportPromptBuilder;
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ContextRepository;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
@@ -275,14 +275,14 @@ class ChatStreamingFinalizationRegressionTest {
                             new com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter())));
             var pipeline = new Pipeline(List.of(
                     new com.kinplatform.kin.pipeline.stage.AnalyzerStage(
-                            (message, ctx) -> com.kinplatform.kin.context.AnalysisResult.empty()),
+                            (message, ctx) -> com.kinplatform.common.context.AnalysisResult.empty()),
                     new com.kinplatform.kin.pipeline.stage.EvaluatorStage(
-                            new com.kinplatform.kin.context.CompletenessEvaluator(
-                                    com.kinplatform.kin.context.EvaluationPolicies.defaults())),
+                            new com.kinplatform.common.context.CompletenessEvaluator(
+                                    com.kinplatform.common.context.EvaluationPolicies.defaults())),
                     new com.kinplatform.kin.pipeline.stage.StrategistStage(
-                            new com.kinplatform.kin.context.strategy.ConversationStrategist(
-                                    new com.kinplatform.kin.context.strategy.DefaultExplorationStrategy(
-                                            com.kinplatform.kin.context.ExplorationPriority.defaultPriorities()))),
+                            new com.kinplatform.common.context.strategy.ConversationStrategist(
+                                    new com.kinplatform.common.context.strategy.DefaultExplorationStrategy(
+                                            com.kinplatform.common.context.ExplorationPriority.defaultPriorities()))),
                     new com.kinplatform.kin.pipeline.stage.ScoringStage(new com.kinplatform.kin.scoring.ScoringEngine(
                             com.kinplatform.kin.scoring.ScoringModel.defaultModel())),
                     new com.kinplatform.kin.pipeline.stage.ConsultorStage(
@@ -292,3 +292,5 @@ class ChatStreamingFinalizationRegressionTest {
         }
     }
 }
+
+

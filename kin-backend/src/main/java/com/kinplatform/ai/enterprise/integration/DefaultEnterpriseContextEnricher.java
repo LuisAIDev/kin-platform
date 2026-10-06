@@ -1,7 +1,7 @@
 package com.kinplatform.ai.enterprise.integration;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.enterprise.integration.EnterpriseContextEnricher;
 import com.kinplatform.kin.enterprise.integration.ResolvedContext;
 import com.kinplatform.kin.enterprise.integration.ResolvedValue;
@@ -62,3 +62,4 @@ public class DefaultEnterpriseContextEnricher implements EnterpriseContextEnrich
         return new StructuredDatum(entity.getSection(), entity.getKey(), entity.getValue(), entity.getSourceType());
     }
 }
+

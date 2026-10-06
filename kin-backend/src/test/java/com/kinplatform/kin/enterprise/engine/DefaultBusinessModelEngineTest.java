@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.enterprise.engine.input.BusinessModelInput;
 import com.kinplatform.kin.enterprise.engine.result.BusinessModelResult;
 import com.kinplatform.kin.enterprise.valueobjects.LeanCanvas;
@@ -131,4 +131,5 @@ class DefaultBusinessModelEngineTest {
         assertEquals(3, result.canvas().customerSegments().size());
     }
 }
+
 

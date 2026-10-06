@@ -1,7 +1,7 @@
 package com.kinplatform.kin.reporting.report.assembler;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluation;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.kin.reporting.report.ReportInput;
 import com.kinplatform.kin.reporting.report.SectionAssembler;
 import com.kinplatform.kin.reporting.report.model.DimensionCoverage;
@@ -36,3 +36,4 @@ public class InnovationSectionAssembler implements SectionAssembler<InnovationSe
             .toList();
     }
 }
+

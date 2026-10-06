@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import com.kinplatform.kin.ai.AIResponder;
-import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.kin.enterprise.application.DefaultEnterpriseProjectTrigger;
 import com.kinplatform.kin.enterprise.application.EnterpriseAiBudgetGate;
 import com.kinplatform.kin.enterprise.application.EnterpriseExportOrchestrator;
@@ -106,3 +106,4 @@ class EnterpriseWebConfigTest {
         }
     }
 }
+

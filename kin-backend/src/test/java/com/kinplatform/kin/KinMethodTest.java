@@ -9,14 +9,14 @@ import static org.mockito.Mockito.when;
 import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.kin.ai.PromptAssembler;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluator;
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.EvaluationPolicies;
-import com.kinplatform.kin.context.ExplorationPriority;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.context.strategy.ConversationStrategist;
-import com.kinplatform.kin.context.strategy.DefaultExplorationStrategy;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluator;
+import com.kinplatform.common.context.ContextRepository;
+import com.kinplatform.common.context.EvaluationPolicies;
+import com.kinplatform.common.context.ExplorationPriority;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.context.strategy.ConversationStrategist;
+import com.kinplatform.common.context.strategy.DefaultExplorationStrategy;
 import com.kinplatform.kin.conversation.CommunicationMode;
 import com.kinplatform.kin.conversation.ConversationPhase;
 import com.kinplatform.kin.conversation.TurnConstraints;
@@ -101,7 +101,7 @@ class KinMethodTest {
                 new com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter()));
         var promptAssembler = new PromptAssembler(conversationBuilder, reportBuilder);
         var pipeline = new Pipeline(List.of(
-                new AnalyzerStage((message, ctx) -> com.kinplatform.kin.context.AnalysisResult.empty()),
+                new AnalyzerStage((message, ctx) -> com.kinplatform.common.context.AnalysisResult.empty()),
                 new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())),
                 new StrategistStage(new ConversationStrategist(
                         new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))),
@@ -168,7 +168,7 @@ class KinMethodTest {
 
         assertEquals("respuesta de KIN", result.aiResponse());
         assertEquals(
-                com.kinplatform.kin.decision.ConversationDecision.Action.ASK,
+                com.kinplatform.common.decision.ConversationDecision.Action.ASK,
                 result.decision().action());
         assertNotNull(result.projectContext());
         assertEquals(1, result.projectContext().exchangeCount());
@@ -187,7 +187,7 @@ class KinMethodTest {
         var result = kinMethod.execute(command("generá el informe"));
 
         assertEquals(
-                com.kinplatform.kin.decision.ConversationDecision.Action.REPORT,
+                com.kinplatform.common.decision.ConversationDecision.Action.REPORT,
                 result.decision().action());
         assertNotNull(result.score());
         assertEquals("ScoringEngine", result.score().generatedBy());
@@ -228,7 +228,7 @@ class KinMethodTest {
         when(aiResponder.respond(any(AIRequest.class))).thenReturn("¿Apuntás a empresas?");
         var directive = new TurnDirective(
                 ConversationPhase.EXPLORATION,
-                com.kinplatform.kin.decision.ConversationDecision.Action.ASK,
+                com.kinplatform.common.decision.ConversationDecision.Action.ASK,
                 AnalyzedDimension.PROBLEM,
                 CommunicationMode.QUESTION,
                 TurnConstraints.question());
@@ -256,3 +256,5 @@ class KinMethodTest {
         assertFalse(captor.getValue().systemPrompt().contains("## DIRECTIVA DE COMUNICACIÓN"));
     }
 }
+
+

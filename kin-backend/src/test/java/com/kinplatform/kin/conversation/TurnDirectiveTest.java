@@ -1,7 +1,7 @@
 package com.kinplatform.kin.conversation;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.decision.ConversationDecision;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -85,3 +85,4 @@ class TurnDirectiveTest {
         assertEquals(CommunicationMode.SUMMARY, directive.communicationMode());
     }
 }
+

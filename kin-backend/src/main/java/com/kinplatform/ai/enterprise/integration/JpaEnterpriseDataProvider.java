@@ -1,6 +1,6 @@
 package com.kinplatform.ai.enterprise.integration;
 
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.enterprise.integration.DocumentDescriptor;
 import com.kinplatform.kin.enterprise.integration.DocumentRelevance;
 import com.kinplatform.kin.enterprise.integration.EnterpriseDataProvider;
@@ -72,3 +72,4 @@ public class JpaEnterpriseDataProvider implements EnterpriseDataProvider {
                 relevant);
     }
 }
+

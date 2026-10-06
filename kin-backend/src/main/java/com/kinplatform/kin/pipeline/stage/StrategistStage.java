@@ -1,6 +1,6 @@
 package com.kinplatform.kin.pipeline.stage;
 
-import com.kinplatform.kin.context.strategy.ConversationStrategist;
+import com.kinplatform.common.context.strategy.ConversationStrategist;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
 
@@ -33,3 +33,4 @@ public class StrategistStage implements PipelineStage {
         return context;
     }
 }
+

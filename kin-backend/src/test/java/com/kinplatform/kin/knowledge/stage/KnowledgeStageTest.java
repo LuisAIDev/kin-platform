@@ -1,7 +1,7 @@
 package com.kinplatform.kin.knowledge.stage;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.knowledge.KnowledgeCandidate;
 import com.kinplatform.kin.knowledge.KnowledgeQuery;
 import com.kinplatform.kin.knowledge.KnowledgeRequest;
@@ -176,3 +176,4 @@ class KnowledgeStageTest {
         }
     }
 }
+

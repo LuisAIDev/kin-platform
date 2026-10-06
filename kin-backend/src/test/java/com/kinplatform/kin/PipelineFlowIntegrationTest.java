@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.ai.AIResponder;
-import com.kinplatform.kin.context.ContextRepository;
+import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.ConversationTurn;
 import com.kinplatform.kin.conversation.ResponseFallback;
@@ -106,3 +106,4 @@ class PipelineFlowIntegrationTest {
         assertFalse(content.contains("Motivo"));
     }
 }
+

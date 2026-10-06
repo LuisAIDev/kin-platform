@@ -1,6 +1,6 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
+import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.kin.reporting.EffortLevel;
 import com.kinplatform.kin.reporting.ImpactLevel;
 import com.kinplatform.kin.reporting.opportunity.Opportunity;
@@ -86,3 +86,4 @@ class OpportunitiesSectionFormatterTest {
         assertTrue(result.contains("_Sin oportunidades identificadas._"));
     }
 }
+

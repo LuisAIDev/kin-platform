@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enrichment;
 
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.engine.EnginePhase;
 import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
@@ -143,4 +143,5 @@ class EnrichmentEngineTest {
         assertFalse(result.rankFor(EvidenceCategory.MARKET).isPresent());
     }
 }
+
 

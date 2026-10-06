@@ -1,10 +1,10 @@
 package com.kinplatform.kin.pipeline;
 
-import com.kinplatform.kin.context.CompletenessEvaluation;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.CompletenessEvaluation;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.conversation.TurnDirective;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.common.engine.EngineResult;
 import com.kinplatform.kin.enrichment.EnrichmentResult;
 import com.kinplatform.kin.event.DomainEvent;
@@ -30,7 +30,7 @@ public class PipelineContext {
     private final UUID projectId;
     private final UUID userId;
     private final String userMessage;
-    private final List<com.kinplatform.kin.context.Message> history;
+    private final List<com.kinplatform.common.context.Message> history;
     private final String projectTitle;
     private final String projectDescription;
     private final String projectCategory;
@@ -63,7 +63,7 @@ public class PipelineContext {
             UUID projectId,
             UUID userId,
             String userMessage,
-            List<com.kinplatform.kin.context.Message> history,
+            List<com.kinplatform.common.context.Message> history,
             String projectTitle,
             String projectDescription,
             String projectCategory) {
@@ -79,7 +79,7 @@ public class PipelineContext {
             UUID projectId,
             UUID userId,
             String userMessage,
-            List<com.kinplatform.kin.context.Message> history,
+            List<com.kinplatform.common.context.Message> history,
             String projectTitle,
             String projectDescription,
             String projectCategory,
@@ -106,7 +106,7 @@ public class PipelineContext {
         return userMessage;
     }
 
-    public List<com.kinplatform.kin.context.Message> history() {
+    public List<com.kinplatform.common.context.Message> history() {
         return history;
     }
 
@@ -320,4 +320,6 @@ public class PipelineContext {
         this.responseValidation = validation;
     }
 }
+
+
 

@@ -24,19 +24,19 @@ import com.kinplatform.kin.ai.prompt.formatter.RecommendationsSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.CompletenessEvaluator;
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.EvaluationPolicies;
-import com.kinplatform.kin.context.ExplorationPriority;
-import com.kinplatform.kin.context.Message;
-import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.context.strategy.ConversationStrategist;
-import com.kinplatform.kin.context.strategy.DefaultExplorationStrategy;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.CompletenessEvaluator;
+import com.kinplatform.common.context.ContextRepository;
+import com.kinplatform.common.context.EvaluationPolicies;
+import com.kinplatform.common.context.ExplorationPriority;
+import com.kinplatform.common.context.Message;
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.context.strategy.ConversationStrategist;
+import com.kinplatform.common.context.strategy.DefaultExplorationStrategy;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.event.QuestionGeneratedEvent;
 import com.kinplatform.kin.event.ReportGeneratedEvent;
 import com.kinplatform.kin.pipeline.Pipeline;
@@ -117,7 +117,7 @@ class ConversationOrchestratorPipelineIntegrationTest {
                 new ReportMetadataFormatter()));
         var promptAssembler = new PromptAssembler(conversationBuilder, reportBuilder);
         var pipeline = new Pipeline(List.of(
-                new AnalyzerStage((message, ctx) -> com.kinplatform.kin.context.AnalysisResult.empty()),
+                new AnalyzerStage((message, ctx) -> com.kinplatform.common.context.AnalysisResult.empty()),
                 new EvaluatorStage(new CompletenessEvaluator(EvaluationPolicies.defaults())),
                 new StrategistStage(new ConversationStrategist(
                         new DefaultExplorationStrategy(ExplorationPriority.defaultPriorities()))),
@@ -298,3 +298,5 @@ class ConversationOrchestratorPipelineIntegrationTest {
         assertEquals(respuesta1, contenido1);
     }
 }
+
+

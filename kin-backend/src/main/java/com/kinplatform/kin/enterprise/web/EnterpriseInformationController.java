@@ -1,8 +1,8 @@
 package com.kinplatform.kin.enterprise.web;
 
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ContextRepository;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.enterprise.integration.DocumentDescriptor;
 import com.kinplatform.kin.enterprise.integration.EnterpriseDataProvider;
 import com.kinplatform.kin.enterprise.integration.EnterpriseIntegrationData;
@@ -119,3 +119,4 @@ public class EnterpriseInformationController {
                 document.relevantFacts());
     }
 }
+

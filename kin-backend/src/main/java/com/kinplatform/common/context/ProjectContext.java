@@ -1,6 +1,6 @@
-package com.kinplatform.kin.context;
+package com.kinplatform.common.context;
 
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -163,3 +163,5 @@ public class ProjectContext {
         return dimensionsCovered.size();
     }
 }
+
+

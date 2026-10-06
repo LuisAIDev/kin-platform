@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.engine.input;
 
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.engine.EngineInput;
 import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
@@ -38,4 +38,5 @@ public record EnterpriseScoreInput(
     RiskResult riskResult
 ) implements EngineInput {
 }
+
 

@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.engine.EngineMetadata;
 import com.kinplatform.common.engine.EnginePhase;
 import com.kinplatform.common.engine.EngineType;
@@ -88,10 +88,10 @@ public class DefaultEnterpriseScoreEngine implements EnterpriseScoreEngine {
         double viability = viabilityScore(context);
         double financial = financialScore(input.financialPlan());
         double risk = riskScore(input.riskResult());
-        double scalability = context.isDimensionCovered(com.kinplatform.kin.context.AnalyzedDimension.SCALABILITY)
+        double scalability = context.isDimensionCovered(com.kinplatform.common.context.AnalyzedDimension.SCALABILITY)
                 ? COVERED_SCORE
                 : UNCOVERED_SCORE;
-        double team = context.isDimensionCovered(com.kinplatform.kin.context.AnalyzedDimension.RESOURCES)
+        double team = context.isDimensionCovered(com.kinplatform.common.context.AnalyzedDimension.RESOURCES)
                 ? COVERED_SCORE
                 : UNCOVERED_SCORE;
         double sustainability = sustainabilityScore(input.knowledge());
@@ -207,4 +207,6 @@ public class DefaultEnterpriseScoreEngine implements EnterpriseScoreEngine {
                 + score.grade().name() + ") a partir de los planes del proyecto.";
     }
 }
+
+
 

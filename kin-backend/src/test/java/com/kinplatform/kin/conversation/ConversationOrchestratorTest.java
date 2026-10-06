@@ -4,15 +4,15 @@ import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.KinMethodCommand;
 import com.kinplatform.kin.KinMethodResult;
 import com.kinplatform.kin.StreamingMethodOutcome;
-import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.context.ContextRepository;
-import com.kinplatform.kin.context.Message;
-import com.kinplatform.kin.context.ProjectContext;
+import com.kinplatform.common.context.AnalyzedDimension;
+import com.kinplatform.common.context.ContextRepository;
+import com.kinplatform.common.context.Message;
+import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.policy.TurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
-import com.kinplatform.kin.decision.ConversationDecision;
+import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.event.QuestionGeneratedEvent;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 import org.junit.jupiter.api.Test;
@@ -484,3 +484,4 @@ class ConversationOrchestratorTest {
         assertNull(orchestrator().orchestrateStreamWithOutcome(turn(List.of())));
     }
 }
+
