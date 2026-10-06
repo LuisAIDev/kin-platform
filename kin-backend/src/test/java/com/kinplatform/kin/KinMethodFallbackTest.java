@@ -5,8 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.kinplatform.common.context.ContextRepository;
-import com.kinplatform.kin.conversation.ResponseFallback;
-import com.kinplatform.kin.conversation.ResponseValidation;
+import com.kinplatform.common.conversation.ResponseFallback;
+import com.kinplatform.common.conversation.ResponseValidation;
 import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.common.pipeline.Pipeline;
 import com.kinplatform.common.pipeline.PipelineContext;
@@ -100,6 +100,7 @@ class KinMethodFallbackTest {
                 kinMethod(new ResponseFallback(List.of("respuesta segura"), 0)).executeStream(command()));
     }
 }
+
 
 
 

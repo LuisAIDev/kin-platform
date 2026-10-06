@@ -5,8 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.kinplatform.common.security.JwtService;
-import com.kinplatform.kin.conversation.ConversationOrchestrator;
-import com.kinplatform.kin.conversation.StreamingTurnOutcome;
+import com.kinplatform.common.conversation.ConversationOrchestrator;
+import com.kinplatform.common.conversation.StreamingTurnOutcome;
 import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.PricingPlanRepository;
 import com.kinplatform.pricing.SupportLevel;
@@ -168,3 +168,4 @@ class ChatStreamSecurityAsyncTest extends PostgresTestSupport {
 
     private record StreamResult(int statusCode, String body) {}
 }
+

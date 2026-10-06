@@ -2,9 +2,9 @@ package com.kinplatform.ai.interview.adapter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.interview.InterviewAnswer;
-import com.kinplatform.kin.interview.InterviewRepository;
-import com.kinplatform.kin.interview.InterviewState;
+import com.kinplatform.common.interview.InterviewAnswer;
+import com.kinplatform.common.interview.InterviewRepository;
+import com.kinplatform.common.interview.InterviewState;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -191,3 +191,4 @@ class JpaInterviewRepositoryTest {
         assertFalse(JpaInterviewRepository.class.isInterface());
     }
 }
+

@@ -98,7 +98,7 @@ class PipelineContextTest {
     @Test
     void enrichmentResult_deberiaSerIndependienteDeLosOtrosCamposAditivos() {
         var ctx = context();
-        var interview = com.kinplatform.kin.interview.InterviewResult.empty();
+        var interview = com.kinplatform.common.interview.InterviewResult.empty();
         var knowledge = com.kinplatform.common.knowledge.KnowledgeResult.empty();
         var enrichment = enrichment();
         ctx.interviewResult(interview);
@@ -120,6 +120,7 @@ class PipelineContextTest {
         assertTrue(ctx.enrichmentResult().isEmpty());
     }
 }
+
 
 
 

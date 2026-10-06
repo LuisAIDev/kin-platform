@@ -11,15 +11,15 @@ import com.kinplatform.chat.dto.ChatRequest;
 import com.kinplatform.chat.dto.SaveMessageRequest;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.ProjectContext;
-import com.kinplatform.kin.conversation.CommunicationMode;
-import com.kinplatform.kin.conversation.ConversationOrchestrator;
-import com.kinplatform.kin.conversation.ConversationPhase;
-import com.kinplatform.kin.conversation.ConversationTurn;
-import com.kinplatform.kin.conversation.ResponseValidation;
-import com.kinplatform.kin.conversation.StreamingTurnOutcome;
-import com.kinplatform.kin.conversation.TurnConstraints;
-import com.kinplatform.kin.conversation.TurnDirective;
-import com.kinplatform.kin.conversation.TurnResult;
+import com.kinplatform.common.conversation.CommunicationMode;
+import com.kinplatform.common.conversation.ConversationOrchestrator;
+import com.kinplatform.common.conversation.ConversationPhase;
+import com.kinplatform.common.conversation.ConversationTurn;
+import com.kinplatform.common.conversation.ResponseValidation;
+import com.kinplatform.common.conversation.StreamingTurnOutcome;
+import com.kinplatform.common.conversation.TurnConstraints;
+import com.kinplatform.common.conversation.TurnDirective;
+import com.kinplatform.common.conversation.TurnResult;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.platform.reporting.report.model.ConsultingReport;
@@ -426,5 +426,6 @@ class ChatOrchestratorServiceImplTest {
         verify(reportRepository).save(PROJECT_ID, report);
     }
 }
+
 
 

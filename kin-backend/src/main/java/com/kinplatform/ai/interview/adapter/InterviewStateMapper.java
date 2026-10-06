@@ -1,7 +1,7 @@
 package com.kinplatform.ai.interview.adapter;
 
-import com.kinplatform.kin.interview.InterviewAnswer;
-import com.kinplatform.kin.interview.InterviewState;
+import com.kinplatform.common.interview.InterviewAnswer;
+import com.kinplatform.common.interview.InterviewState;
 
 import java.util.Map;
 import java.util.UUID;
@@ -44,3 +44,4 @@ public final class InterviewStateMapper {
         );
     }
 }
+

@@ -1,7 +1,7 @@
 package com.kinplatform.ai.interview.adapter;
 
-import com.kinplatform.kin.interview.InterviewAnswer;
-import com.kinplatform.kin.interview.InterviewState;
+import com.kinplatform.common.interview.InterviewAnswer;
+import com.kinplatform.common.interview.InterviewState;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -103,3 +103,4 @@ class InterviewStateMapperTest {
         assertEquals("q-proyecto", restored.current());
     }
 }
+

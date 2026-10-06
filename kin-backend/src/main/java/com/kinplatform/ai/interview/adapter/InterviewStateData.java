@@ -1,6 +1,6 @@
 package com.kinplatform.ai.interview.adapter;
 
-import com.kinplatform.kin.interview.InterviewAnswer;
+import com.kinplatform.common.interview.InterviewAnswer;
 
 import java.util.List;
 import java.util.Map;
@@ -24,3 +24,4 @@ public record InterviewStateData(
     int exchangeUsed
 ) {
 }
+

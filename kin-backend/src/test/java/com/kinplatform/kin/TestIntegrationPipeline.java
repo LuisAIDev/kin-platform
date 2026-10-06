@@ -22,18 +22,18 @@ import com.kinplatform.common.context.ExplorationPriority;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.context.strategy.ConversationStrategist;
 import com.kinplatform.common.context.strategy.DefaultExplorationStrategy;
-import com.kinplatform.kin.conversation.validation.ResponseGuard;
+import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.platform.enrichment.EnrichmentEngine;
 import com.kinplatform.platform.enrichment.FactRanker;
 import com.kinplatform.platform.enrichment.stage.EnrichmentStage;
-import com.kinplatform.kin.interview.InMemoryInterviewRepository;
-import com.kinplatform.kin.interview.InterviewAnswer;
-import com.kinplatform.kin.interview.InterviewQuestion;
-import com.kinplatform.kin.interview.InterviewState;
-import com.kinplatform.kin.interview.engine.AnswerValidator;
-import com.kinplatform.kin.interview.engine.InterviewBlueprint;
-import com.kinplatform.kin.interview.engine.InterviewEngine;
-import com.kinplatform.kin.interview.stage.InterviewStage;
+import com.kinplatform.common.interview.InMemoryInterviewRepository;
+import com.kinplatform.common.interview.InterviewAnswer;
+import com.kinplatform.common.interview.InterviewQuestion;
+import com.kinplatform.common.interview.InterviewState;
+import com.kinplatform.common.interview.engine.AnswerValidator;
+import com.kinplatform.common.interview.engine.InterviewBlueprint;
+import com.kinplatform.common.interview.engine.InterviewEngine;
+import com.kinplatform.common.interview.stage.InterviewStage;
 import com.kinplatform.common.knowledge.KnowledgeCandidate;
 import com.kinplatform.common.knowledge.KnowledgeQuery;
 import com.kinplatform.common.knowledge.KnowledgeSource;
@@ -250,6 +250,7 @@ public final class TestIntegrationPipeline {
         }
     }
 }
+
 
 
 

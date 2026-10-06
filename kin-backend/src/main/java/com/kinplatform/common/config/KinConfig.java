@@ -30,11 +30,11 @@ import com.kinplatform.common.context.ExplorationPriority;
 import com.kinplatform.common.context.ProjectContextSyncPort;
 import com.kinplatform.common.context.strategy.ConversationStrategist;
 import com.kinplatform.common.context.strategy.DefaultExplorationStrategy;
-import com.kinplatform.kin.conversation.ConversationOrchestrator;
-import com.kinplatform.kin.conversation.ResponseFallback;
-import com.kinplatform.kin.conversation.history.HistoryWindow;
-import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
-import com.kinplatform.kin.conversation.validation.ResponseGuard;
+import com.kinplatform.common.conversation.ConversationOrchestrator;
+import com.kinplatform.common.conversation.ResponseFallback;
+import com.kinplatform.common.conversation.history.HistoryWindow;
+import com.kinplatform.common.conversation.policy.DefaultTurnPolicy;
+import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.common.engine.EngineExecutor;
 import com.kinplatform.common.engine.EngineRegistry;
@@ -47,12 +47,12 @@ import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.common.event.InMemoryDomainEventBus;
 import com.kinplatform.kin.health.differential.stage.DifferentialStage;
 import com.kinplatform.kin.health.triage.stage.TriageStage;
-import com.kinplatform.kin.interview.InterviewQuestion;
-import com.kinplatform.kin.interview.InterviewRepository;
-import com.kinplatform.kin.interview.engine.AnswerValidator;
-import com.kinplatform.kin.interview.engine.InterviewBlueprint;
-import com.kinplatform.kin.interview.engine.InterviewEngine;
-import com.kinplatform.kin.interview.stage.InterviewStage;
+import com.kinplatform.common.interview.InterviewQuestion;
+import com.kinplatform.common.interview.InterviewRepository;
+import com.kinplatform.common.interview.engine.AnswerValidator;
+import com.kinplatform.common.interview.engine.InterviewBlueprint;
+import com.kinplatform.common.interview.engine.InterviewEngine;
+import com.kinplatform.common.interview.stage.InterviewStage;
 import com.kinplatform.common.knowledge.KnowledgeRepository;
 import com.kinplatform.common.knowledge.KnowledgeSource;
 import com.kinplatform.common.knowledge.deduplication.DeduplicationEngine;
@@ -670,6 +670,7 @@ public class KinConfig {
                 historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository, enterpriseProjectTrigger);
     }
 }
+
 
 
 

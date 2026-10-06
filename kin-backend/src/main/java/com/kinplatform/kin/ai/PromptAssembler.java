@@ -2,7 +2,7 @@ package com.kinplatform.kin.ai;
 
 import com.kinplatform.kin.ai.prompt.ConversationPromptBuilder;
 import com.kinplatform.kin.ai.prompt.ReportPromptBuilder;
-import com.kinplatform.kin.interview.InterviewResult;
+import com.kinplatform.common.interview.InterviewResult;
 
 /**
  * Fachada única para ensamblado de prompts.
@@ -44,3 +44,4 @@ public class PromptAssembler {
         };
     }
 }
+

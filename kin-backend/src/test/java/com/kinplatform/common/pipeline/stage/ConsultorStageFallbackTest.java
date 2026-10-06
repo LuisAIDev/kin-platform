@@ -16,12 +16,12 @@ import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.ProjectContext;
-import com.kinplatform.kin.conversation.CommunicationMode;
-import com.kinplatform.kin.conversation.ConversationPhase;
-import com.kinplatform.kin.conversation.ResponseFallback;
-import com.kinplatform.kin.conversation.TurnConstraints;
-import com.kinplatform.kin.conversation.TurnDirective;
-import com.kinplatform.kin.conversation.validation.ResponseGuard;
+import com.kinplatform.common.conversation.CommunicationMode;
+import com.kinplatform.common.conversation.ConversationPhase;
+import com.kinplatform.common.conversation.ResponseFallback;
+import com.kinplatform.common.conversation.TurnConstraints;
+import com.kinplatform.common.conversation.TurnDirective;
+import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.common.pipeline.PipelineContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -156,6 +156,7 @@ class ConsultorStageFallbackTest {
         verify(aiResponder, times(3)).respondStream(any());
     }
 }
+
 
 
 

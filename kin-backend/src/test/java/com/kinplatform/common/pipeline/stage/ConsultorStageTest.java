@@ -17,17 +17,17 @@ import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.ProjectContext;
-import com.kinplatform.kin.conversation.CommunicationMode;
-import com.kinplatform.kin.conversation.ConversationPhase;
-import com.kinplatform.kin.conversation.ResponseValidation;
-import com.kinplatform.kin.conversation.TurnConstraints;
-import com.kinplatform.kin.conversation.TurnDirective;
+import com.kinplatform.common.conversation.CommunicationMode;
+import com.kinplatform.common.conversation.ConversationPhase;
+import com.kinplatform.common.conversation.ResponseValidation;
+import com.kinplatform.common.conversation.TurnConstraints;
+import com.kinplatform.common.conversation.TurnDirective;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.interview.AnswerRules;
-import com.kinplatform.kin.interview.InterviewDecision;
-import com.kinplatform.kin.interview.InterviewDirective;
-import com.kinplatform.kin.interview.InterviewResult;
-import com.kinplatform.kin.interview.InterviewState;
+import com.kinplatform.common.interview.AnswerRules;
+import com.kinplatform.common.interview.InterviewDecision;
+import com.kinplatform.common.interview.InterviewDirective;
+import com.kinplatform.common.interview.InterviewResult;
+import com.kinplatform.common.interview.InterviewState;
 import com.kinplatform.common.pipeline.PipelineContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -349,6 +349,7 @@ class ConsultorStageTest {
         assertFalse(prompt.contains("## ENTREVISTA ESTRATÉGICA"));
     }
 }
+
 
 
 

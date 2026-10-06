@@ -10,14 +10,14 @@ import static org.mockito.Mockito.when;
 import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.common.context.ContextRepository;
-import com.kinplatform.kin.conversation.ConversationOrchestrator;
-import com.kinplatform.kin.conversation.ConversationTurn;
-import com.kinplatform.kin.conversation.ResponseFallback;
-import com.kinplatform.kin.conversation.TurnConstraints;
-import com.kinplatform.kin.conversation.TurnResult;
-import com.kinplatform.kin.conversation.history.HistoryWindow;
-import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
-import com.kinplatform.kin.conversation.validation.ResponseGuard;
+import com.kinplatform.common.conversation.ConversationOrchestrator;
+import com.kinplatform.common.conversation.ConversationTurn;
+import com.kinplatform.common.conversation.ResponseFallback;
+import com.kinplatform.common.conversation.TurnConstraints;
+import com.kinplatform.common.conversation.TurnResult;
+import com.kinplatform.common.conversation.history.HistoryWindow;
+import com.kinplatform.common.conversation.policy.DefaultTurnPolicy;
+import com.kinplatform.common.conversation.validation.ResponseGuard;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -106,4 +106,5 @@ class PipelineFlowIntegrationTest {
         assertFalse(content.contains("Motivo"));
     }
 }
+
 

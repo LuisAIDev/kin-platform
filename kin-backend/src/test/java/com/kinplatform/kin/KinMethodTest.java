@@ -17,10 +17,10 @@ import com.kinplatform.common.context.ExplorationPriority;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.context.strategy.ConversationStrategist;
 import com.kinplatform.common.context.strategy.DefaultExplorationStrategy;
-import com.kinplatform.kin.conversation.CommunicationMode;
-import com.kinplatform.kin.conversation.ConversationPhase;
-import com.kinplatform.kin.conversation.TurnConstraints;
-import com.kinplatform.kin.conversation.TurnDirective;
+import com.kinplatform.common.conversation.CommunicationMode;
+import com.kinplatform.common.conversation.ConversationPhase;
+import com.kinplatform.common.conversation.TurnConstraints;
+import com.kinplatform.common.conversation.TurnDirective;
 import com.kinplatform.common.event.QuestionGeneratedEvent;
 import com.kinplatform.common.event.ReportGeneratedEvent;
 import com.kinplatform.common.event.ScoreCalculatedEvent;
@@ -256,6 +256,7 @@ class KinMethodTest {
         assertFalse(captor.getValue().systemPrompt().contains("## DIRECTIVA DE COMUNICACIÓN"));
     }
 }
+
 
 
 

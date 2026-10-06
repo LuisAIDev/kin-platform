@@ -2,15 +2,15 @@ package com.kinplatform.common.pipeline;
 
 import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.context.ProjectContext;
-import com.kinplatform.kin.conversation.ResponseValidation;
-import com.kinplatform.kin.conversation.TurnDirective;
+import com.kinplatform.common.conversation.ResponseValidation;
+import com.kinplatform.common.conversation.TurnDirective;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.common.engine.EngineResult;
 import com.kinplatform.platform.enrichment.EnrichmentResult;
 import com.kinplatform.common.event.DomainEvent;
 import com.kinplatform.kin.health.differential.domain.DifferentialResult;
 import com.kinplatform.kin.health.triage.domain.TriageResult;
-import com.kinplatform.kin.interview.InterviewResult;
+import com.kinplatform.common.interview.InterviewResult;
 import com.kinplatform.common.knowledge.KnowledgeResult;
 import com.kinplatform.common.knowledge.deduplication.DeduplicationResult;
 import com.kinplatform.platform.reporting.RecommendationResult;
@@ -320,6 +320,7 @@ public class PipelineContext {
         this.responseValidation = validation;
     }
 }
+
 
 
 

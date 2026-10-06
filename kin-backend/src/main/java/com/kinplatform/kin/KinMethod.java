@@ -2,9 +2,9 @@ package com.kinplatform.kin;
 
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.ProjectContextSyncPort;
-import com.kinplatform.kin.conversation.ResponseFallback;
-import com.kinplatform.kin.conversation.ResponseValidation;
-import com.kinplatform.kin.conversation.validation.ResponseGuard;
+import com.kinplatform.common.conversation.ResponseFallback;
+import com.kinplatform.common.conversation.ResponseValidation;
+import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.enterprise.application.EnterprisePipelineResultStore;
 import com.kinplatform.kin.enterprise.application.EnterpriseTurnResults;
@@ -252,6 +252,7 @@ public class KinMethod {
                 result.riskResult()));
     }
 }
+
 
 
 

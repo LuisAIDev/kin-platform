@@ -3,10 +3,10 @@ package com.kinplatform.kin.ai.prompt;
 import com.kinplatform.kin.ai.PromptRequest;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.ProjectContext;
-import com.kinplatform.kin.conversation.CommunicationMode;
-import com.kinplatform.kin.conversation.ConversationPhase;
-import com.kinplatform.kin.conversation.TurnConstraints;
-import com.kinplatform.kin.conversation.TurnDirective;
+import com.kinplatform.common.conversation.CommunicationMode;
+import com.kinplatform.common.conversation.ConversationPhase;
+import com.kinplatform.common.conversation.TurnConstraints;
+import com.kinplatform.common.conversation.TurnDirective;
 import com.kinplatform.common.decision.ConversationDecision;
 import org.junit.jupiter.api.Test;
 
@@ -63,4 +63,5 @@ class ConversationPromptBuilderDirectiveTest {
         assertTrue(prompt.contains("explorar problema"));
     }
 }
+
 

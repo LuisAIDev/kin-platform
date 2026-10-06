@@ -5,11 +5,11 @@ import com.kinplatform.kin.ai.prompt.ReportPromptBuilder;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.interview.AnswerRules;
-import com.kinplatform.kin.interview.InterviewDecision;
-import com.kinplatform.kin.interview.InterviewDirective;
-import com.kinplatform.kin.interview.InterviewResult;
-import com.kinplatform.kin.interview.InterviewState;
+import com.kinplatform.common.interview.AnswerRules;
+import com.kinplatform.common.interview.InterviewDecision;
+import com.kinplatform.common.interview.InterviewDirective;
+import com.kinplatform.common.interview.InterviewResult;
+import com.kinplatform.common.interview.InterviewState;
 import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import org.junit.jupiter.api.Test;
 
@@ -85,5 +85,6 @@ class PromptAssemblerInterviewTest {
         verify(conversationBuilder, never()).build(any());
     }
 }
+
 
 

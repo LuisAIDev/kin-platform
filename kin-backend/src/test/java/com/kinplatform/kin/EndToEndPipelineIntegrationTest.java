@@ -12,12 +12,12 @@ import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.ProjectContext;
-import com.kinplatform.kin.conversation.ConversationOrchestrator;
-import com.kinplatform.kin.conversation.ConversationTurn;
-import com.kinplatform.kin.conversation.TurnResult;
-import com.kinplatform.kin.conversation.history.HistoryWindow;
-import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
-import com.kinplatform.kin.conversation.validation.ResponseGuard;
+import com.kinplatform.common.conversation.ConversationOrchestrator;
+import com.kinplatform.common.conversation.ConversationTurn;
+import com.kinplatform.common.conversation.TurnResult;
+import com.kinplatform.common.conversation.history.HistoryWindow;
+import com.kinplatform.common.conversation.policy.DefaultTurnPolicy;
+import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.platform.enrichment.EnrichmentEngine;
 import com.kinplatform.common.event.ConversationCompletedEvent;
@@ -150,6 +150,7 @@ class EndToEndPipelineIntegrationTest {
         assertFalse(result.events().isEmpty());
     }
 }
+
 
 
 

@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.kinplatform.kin.KinMethod;
 import com.kinplatform.kin.ai.PromptAssembler;
-import com.kinplatform.kin.conversation.ConversationOrchestrator;
+import com.kinplatform.common.conversation.ConversationOrchestrator;
 import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
 import com.kinplatform.common.knowledge.engine.KnowledgeGateway;
 import com.kinplatform.common.knowledge.stage.KnowledgeStage;
@@ -56,4 +56,5 @@ class EnterpriseRuntimeCertificationTest extends PostgresTestSupport {
         assertNotNull(context.getBean(MeterRegistry.class));
     }
 }
+
 

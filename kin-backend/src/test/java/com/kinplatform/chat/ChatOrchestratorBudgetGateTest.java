@@ -19,11 +19,11 @@ import com.kinplatform.chat.dto.ChatRequest;
 import com.kinplatform.chat.dto.ChatResponse;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.ProjectContext;
-import com.kinplatform.kin.conversation.ConversationOrchestrator;
-import com.kinplatform.kin.conversation.ConversationTurn;
-import com.kinplatform.kin.conversation.ResponseValidation;
-import com.kinplatform.kin.conversation.TurnDirective;
-import com.kinplatform.kin.conversation.TurnResult;
+import com.kinplatform.common.conversation.ConversationOrchestrator;
+import com.kinplatform.common.conversation.ConversationTurn;
+import com.kinplatform.common.conversation.ResponseValidation;
+import com.kinplatform.common.conversation.TurnDirective;
+import com.kinplatform.common.conversation.TurnResult;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.kin.usage.AiBudgetExceededException;
@@ -210,14 +210,16 @@ class ChatOrchestratorBudgetGateTest {
         var ctx = ProjectContext.fromProject("Proyecto", "Desc", "Software");
         var decision = ConversationDecision.ask(AnalyzedDimension.SECTOR, 5, "pregunta");
         var directive = new TurnDirective(
-                com.kinplatform.kin.conversation.ConversationPhase.EXPLORATION,
+                com.kinplatform.common.conversation.ConversationPhase.EXPLORATION,
                 ConversationDecision.Action.ASK,
                 AnalyzedDimension.SECTOR,
-                com.kinplatform.kin.conversation.CommunicationMode.QUESTION,
-                com.kinplatform.kin.conversation.TurnConstraints.question());
+                com.kinplatform.common.conversation.CommunicationMode.QUESTION,
+                com.kinplatform.common.conversation.TurnConstraints.question());
         return new TurnResult(ctx, decision, directive, "¿pregunta?", ResponseValidation.ok(), null, List.of());
     }
 }
+
+
 
 
 

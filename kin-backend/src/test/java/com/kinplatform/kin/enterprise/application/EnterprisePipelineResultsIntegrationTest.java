@@ -10,11 +10,11 @@ import com.kinplatform.kin.KinMethod;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.ProjectContext;
-import com.kinplatform.kin.conversation.ConversationOrchestrator;
-import com.kinplatform.kin.conversation.ConversationTurn;
-import com.kinplatform.kin.conversation.history.HistoryWindow;
-import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
-import com.kinplatform.kin.conversation.validation.ResponseGuard;
+import com.kinplatform.common.conversation.ConversationOrchestrator;
+import com.kinplatform.common.conversation.ConversationTurn;
+import com.kinplatform.common.conversation.history.HistoryWindow;
+import com.kinplatform.common.conversation.policy.DefaultTurnPolicy;
+import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
@@ -67,8 +67,8 @@ class EnterprisePipelineResultsIntegrationTest {
         var kinMethod = new KinMethod(
                 pipelineReporteConResultados(),
                 contextRepository,
-                new com.kinplatform.kin.conversation.ResponseFallback(
-                        List.of(com.kinplatform.kin.conversation.ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
+                new com.kinplatform.common.conversation.ResponseFallback(
+                        List.of(com.kinplatform.common.conversation.ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
                 (projectId, ctx) -> {},
                 store);
         var trigger = new DefaultEnterpriseProjectTrigger(enterpriseRepository, bus);
@@ -177,6 +177,8 @@ class EnterprisePipelineResultsIntegrationTest {
         return ProjectContext.restore(data, EnumSet.allOf(AnalyzedDimension.class), null, 5, false);
     }
 }
+
+
 
 
 

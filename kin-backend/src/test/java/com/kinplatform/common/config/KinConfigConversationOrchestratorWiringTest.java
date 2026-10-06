@@ -5,11 +5,11 @@ import com.kinplatform.kin.KinMethodCommand;
 import com.kinplatform.kin.KinMethodResult;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.ProjectContext;
-import com.kinplatform.kin.conversation.ConversationOrchestrator;
-import com.kinplatform.kin.conversation.ConversationTurn;
-import com.kinplatform.kin.conversation.history.HistoryWindow;
-import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
-import com.kinplatform.kin.conversation.validation.ResponseGuard;
+import com.kinplatform.common.conversation.ConversationOrchestrator;
+import com.kinplatform.common.conversation.ConversationTurn;
+import com.kinplatform.common.conversation.history.HistoryWindow;
+import com.kinplatform.common.conversation.policy.DefaultTurnPolicy;
+import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
 import com.kinplatform.platform.reporting.report.model.ConsultingReport;
@@ -80,5 +80,6 @@ class KinConfigConversationOrchestratorWiringTest {
             "Proyecto Test", "Descripción", "Software");
     }
 }
+
 
 

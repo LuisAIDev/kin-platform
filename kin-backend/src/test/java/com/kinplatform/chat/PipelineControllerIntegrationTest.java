@@ -18,10 +18,10 @@ import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.ProjectContext;
-import com.kinplatform.kin.conversation.ConversationOrchestrator;
-import com.kinplatform.kin.conversation.history.HistoryWindow;
-import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
-import com.kinplatform.kin.conversation.validation.ResponseGuard;
+import com.kinplatform.common.conversation.ConversationOrchestrator;
+import com.kinplatform.common.conversation.history.HistoryWindow;
+import com.kinplatform.common.conversation.policy.DefaultTurnPolicy;
+import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.project.Project;
 import com.kinplatform.project.ProjectRepository;
 import com.kinplatform.user.User;
@@ -114,4 +114,5 @@ class PipelineControllerIntegrationTest {
         verify(contextRepository).save(any(UUID.class), any(ProjectContext.class));
     }
 }
+
 

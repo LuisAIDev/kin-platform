@@ -4,15 +4,15 @@ import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.ai.AIResponder;
 import com.kinplatform.kin.ai.PromptAssembler;
 import com.kinplatform.kin.ai.PromptRequest;
-import com.kinplatform.kin.conversation.CommunicationMode;
-import com.kinplatform.kin.conversation.ConversationPhase;
-import com.kinplatform.kin.conversation.ResponseFallback;
-import com.kinplatform.kin.conversation.ResponseValidation;
-import com.kinplatform.kin.conversation.TurnConstraints;
-import com.kinplatform.kin.conversation.TurnDirective;
-import com.kinplatform.kin.conversation.validation.ResponseGuard;
+import com.kinplatform.common.conversation.CommunicationMode;
+import com.kinplatform.common.conversation.ConversationPhase;
+import com.kinplatform.common.conversation.ResponseFallback;
+import com.kinplatform.common.conversation.ResponseValidation;
+import com.kinplatform.common.conversation.TurnConstraints;
+import com.kinplatform.common.conversation.TurnDirective;
+import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.interview.InterviewResult;
+import com.kinplatform.common.interview.InterviewResult;
 import com.kinplatform.common.pipeline.PipelineContext;
 import com.kinplatform.common.pipeline.PipelineStage;
 import com.kinplatform.platform.reporting.report.model.ConsultingReport;
@@ -180,6 +180,7 @@ public class ConsultorStage implements PipelineStage {
         return null;
     }
 }
+
 
 
 

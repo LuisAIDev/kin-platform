@@ -3,12 +3,12 @@ package com.kinplatform.kin.ai.prompt;
 import com.kinplatform.kin.ai.PromptRequest;
 import com.kinplatform.kin.ai.PromptType;
 import com.kinplatform.common.context.ProjectContext;
-import com.kinplatform.kin.conversation.TurnConstraints;
-import com.kinplatform.kin.conversation.TurnDirective;
+import com.kinplatform.common.conversation.TurnConstraints;
+import com.kinplatform.common.conversation.TurnDirective;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.interview.AnswerRules;
-import com.kinplatform.kin.interview.InterviewDirective;
-import com.kinplatform.kin.interview.InterviewResult;
+import com.kinplatform.common.interview.AnswerRules;
+import com.kinplatform.common.interview.InterviewDirective;
+import com.kinplatform.common.interview.InterviewResult;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Locale;
 
@@ -554,5 +554,6 @@ public class ConversationPromptBuilder {
         return sb.toString();
     }
 }
+
 
 

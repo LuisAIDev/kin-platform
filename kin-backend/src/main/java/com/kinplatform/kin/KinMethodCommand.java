@@ -1,7 +1,7 @@
 package com.kinplatform.kin;
 
 import com.kinplatform.common.context.Message;
-import com.kinplatform.kin.conversation.TurnDirective;
+import com.kinplatform.common.conversation.TurnDirective;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,5 +23,6 @@ public record KinMethodCommand(
             projectTitle, projectDescription, projectCategory, null);
     }
 }
+
 
 
