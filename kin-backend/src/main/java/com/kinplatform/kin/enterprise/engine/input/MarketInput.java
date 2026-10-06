@@ -4,8 +4,8 @@ import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.engine.EngineInput;
 import com.kinplatform.kin.enterprise.valueobjects.MarketPlan;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.reporting.RecommendationResult;
-import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
+import com.kinplatform.platform.reporting.RecommendationResult;
+import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
 
 /**
  * Entrada tipada del {@code MarketEngine} (Fase 10, Milestone 2D).
@@ -23,5 +23,6 @@ public record MarketInput(
     KnowledgeResult knowledge
 ) implements EngineInput {
 }
+
 
 

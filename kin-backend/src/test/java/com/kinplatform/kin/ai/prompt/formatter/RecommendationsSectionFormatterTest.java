@@ -1,13 +1,13 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
-import com.kinplatform.kin.reporting.Recommendation;
-import com.kinplatform.kin.reporting.RecommendationCategory;
-import com.kinplatform.kin.reporting.RecommendationExplanation;
-import com.kinplatform.kin.reporting.EffortLevel;
-import com.kinplatform.kin.reporting.ImpactLevel;
+import com.kinplatform.platform.reporting.Recommendation;
+import com.kinplatform.platform.reporting.RecommendationCategory;
+import com.kinplatform.platform.reporting.RecommendationExplanation;
+import com.kinplatform.platform.reporting.EffortLevel;
+import com.kinplatform.platform.reporting.ImpactLevel;
 import com.kinplatform.common.context.AnalyzedDimension;
-import com.kinplatform.kin.reporting.report.model.RecommendationsSection;
-import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
+import com.kinplatform.platform.reporting.report.model.RecommendationsSection;
+import com.kinplatform.platform.reporting.report.model.ReportSectionKind;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -76,4 +76,5 @@ class RecommendationsSectionFormatterTest {
         assertTrue(result.contains("_Sin recomendaciones generadas._"));
     }
 }
+
 

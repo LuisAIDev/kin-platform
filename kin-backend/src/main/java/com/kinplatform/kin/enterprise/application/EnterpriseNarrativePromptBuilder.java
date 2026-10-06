@@ -8,9 +8,9 @@ import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
 import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.reporting.RecommendationResult;
-import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
-import com.kinplatform.kin.reporting.risk.RiskResult;
+import com.kinplatform.platform.reporting.RecommendationResult;
+import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
+import com.kinplatform.platform.reporting.risk.RiskResult;
 
 import java.util.List;
 
@@ -182,4 +182,5 @@ public final class EnterpriseNarrativePromptBuilder {
         return value == null || value.isBlank() ? "(no definido)" : value;
     }
 }
+
 

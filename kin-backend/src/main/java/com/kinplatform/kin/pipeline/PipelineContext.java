@@ -13,10 +13,10 @@ import com.kinplatform.kin.health.triage.domain.TriageResult;
 import com.kinplatform.kin.interview.InterviewResult;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.knowledge.deduplication.DeduplicationResult;
-import com.kinplatform.kin.reporting.RecommendationResult;
-import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
-import com.kinplatform.kin.reporting.risk.RiskResult;
+import com.kinplatform.platform.reporting.RecommendationResult;
+import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.risk.RiskResult;
 import com.kinplatform.platform.scoring.ScoreResult;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -320,6 +320,7 @@ public class PipelineContext {
         this.responseValidation = validation;
     }
 }
+
 
 
 

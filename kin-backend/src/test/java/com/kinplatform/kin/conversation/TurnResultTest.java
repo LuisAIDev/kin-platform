@@ -5,7 +5,7 @@ import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.QuestionGeneratedEvent;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -84,4 +84,5 @@ class TurnResultTest {
             context, decision, directive, "resp", null, null, List.of()));
     }
 }
+
 

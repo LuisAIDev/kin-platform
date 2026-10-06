@@ -7,7 +7,7 @@ import com.kinplatform.kin.event.RiskDetectedEvent;
 import com.kinplatform.kin.event.ScoreCalculatedEvent;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
-import com.kinplatform.kin.reporting.risk.RiskResult;
+import com.kinplatform.platform.reporting.risk.RiskResult;
 
 /**
  * Etapa final del pipeline que publica los eventos de dominio según el flujo
@@ -94,3 +94,4 @@ public class EventStage implements PipelineStage {
         }
     }
 }
+

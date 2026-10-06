@@ -47,9 +47,9 @@ import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
 import com.kinplatform.kin.enterprise.valueobjects.MarketPlan;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.reporting.RecommendationResult;
-import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
-import com.kinplatform.kin.reporting.risk.RiskResult;
+import com.kinplatform.platform.reporting.RecommendationResult;
+import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
+import com.kinplatform.platform.reporting.risk.RiskResult;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -519,4 +519,5 @@ public final class EnterpriseGenerationService {
         return value;
     }
 }
+
 

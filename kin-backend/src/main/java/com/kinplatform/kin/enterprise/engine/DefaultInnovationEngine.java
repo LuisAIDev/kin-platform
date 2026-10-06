@@ -8,9 +8,9 @@ import com.kinplatform.kin.enterprise.engine.result.InnovationResult;
 import com.kinplatform.kin.enterprise.valueobjects.InnovationLevel;
 import com.kinplatform.kin.enterprise.valueobjects.InnovationPlan;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.reporting.opportunity.Opportunity;
-import com.kinplatform.kin.reporting.opportunity.OpportunityCategory;
-import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
+import com.kinplatform.platform.reporting.opportunity.Opportunity;
+import com.kinplatform.platform.reporting.opportunity.OpportunityCategory;
+import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -159,4 +159,5 @@ public class DefaultInnovationEngine implements InnovationEngine {
             + " oportunidades previas.";
     }
 }
+
 

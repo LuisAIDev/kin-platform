@@ -5,23 +5,23 @@ import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.pipeline.PipelineContext;
-import com.kinplatform.kin.reporting.RecommendationResult;
-import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
-import com.kinplatform.kin.reporting.report.ReportAssemblers;
-import com.kinplatform.kin.reporting.report.ReportEngine;
-import com.kinplatform.kin.reporting.report.ReportModel;
-import com.kinplatform.kin.reporting.report.assembler.ExecutiveSummaryAssembler;
-import com.kinplatform.kin.reporting.report.assembler.FinancialSectionAssembler;
-import com.kinplatform.kin.reporting.report.assembler.InnovationSectionAssembler;
-import com.kinplatform.kin.reporting.report.assembler.MarketSectionAssembler;
-import com.kinplatform.kin.reporting.report.assembler.NextStepsSectionAssembler;
-import com.kinplatform.kin.reporting.report.assembler.OpportunitiesSectionAssembler;
-import com.kinplatform.kin.reporting.report.assembler.RecommendationsSectionAssembler;
-import com.kinplatform.kin.reporting.report.assembler.ReportMetadataAssembler;
-import com.kinplatform.kin.reporting.report.assembler.RisksSectionAssembler;
-import com.kinplatform.kin.reporting.report.assembler.ScoresSectionAssembler;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
-import com.kinplatform.kin.reporting.risk.RiskResult;
+import com.kinplatform.platform.reporting.RecommendationResult;
+import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
+import com.kinplatform.platform.reporting.report.ReportAssemblers;
+import com.kinplatform.platform.reporting.report.ReportEngine;
+import com.kinplatform.platform.reporting.report.ReportModel;
+import com.kinplatform.platform.reporting.report.assembler.ExecutiveSummaryAssembler;
+import com.kinplatform.platform.reporting.report.assembler.FinancialSectionAssembler;
+import com.kinplatform.platform.reporting.report.assembler.InnovationSectionAssembler;
+import com.kinplatform.platform.reporting.report.assembler.MarketSectionAssembler;
+import com.kinplatform.platform.reporting.report.assembler.NextStepsSectionAssembler;
+import com.kinplatform.platform.reporting.report.assembler.OpportunitiesSectionAssembler;
+import com.kinplatform.platform.reporting.report.assembler.RecommendationsSectionAssembler;
+import com.kinplatform.platform.reporting.report.assembler.ReportMetadataAssembler;
+import com.kinplatform.platform.reporting.report.assembler.RisksSectionAssembler;
+import com.kinplatform.platform.reporting.report.assembler.ScoresSectionAssembler;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.risk.RiskResult;
 import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.Test;
 
@@ -112,5 +112,6 @@ class ReportStageTest {
         assertEquals(report, ctx.engineResult(ReportEngine.GENERATOR_NAME));
     }
 }
+
 
 

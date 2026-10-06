@@ -2,9 +2,9 @@ package com.kinplatform.kin.pipeline.stage;
 
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
-import com.kinplatform.kin.reporting.report.ReportEngine;
-import com.kinplatform.kin.reporting.report.ReportInput;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.ReportEngine;
+import com.kinplatform.platform.reporting.report.ReportInput;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 
 /**
  * Etapa del pipeline que ejecuta el {@link ReportEngine}.
@@ -57,3 +57,4 @@ public class ReportStage implements PipelineStage {
         return delegate.execute(context);
     }
 }
+

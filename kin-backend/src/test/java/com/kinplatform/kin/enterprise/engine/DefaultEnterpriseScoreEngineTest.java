@@ -9,11 +9,11 @@ import com.kinplatform.kin.enterprise.valueobjects.InnovationLevel;
 import com.kinplatform.kin.enterprise.valueobjects.InnovationPlan;
 import com.kinplatform.kin.enterprise.valueobjects.MarketPlan;
 import com.kinplatform.kin.enterprise.valueobjects.ScoreGrade;
-import com.kinplatform.kin.reporting.risk.Risk;
-import com.kinplatform.kin.reporting.risk.RiskCategory;
-import com.kinplatform.kin.reporting.risk.RiskExplanation;
-import com.kinplatform.kin.reporting.risk.RiskLevel;
-import com.kinplatform.kin.reporting.risk.RiskResult;
+import com.kinplatform.platform.reporting.risk.Risk;
+import com.kinplatform.platform.reporting.risk.RiskCategory;
+import com.kinplatform.platform.reporting.risk.RiskExplanation;
+import com.kinplatform.platform.reporting.risk.RiskLevel;
+import com.kinplatform.platform.reporting.risk.RiskResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -137,5 +137,6 @@ class DefaultEnterpriseScoreEngineTest {
             FinancialPlan.Scenario.of(1210.0, 60.0));
     }
 }
+
 
 

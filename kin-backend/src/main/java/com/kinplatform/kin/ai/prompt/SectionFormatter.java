@@ -1,7 +1,7 @@
 package com.kinplatform.kin.ai.prompt;
 
-import com.kinplatform.kin.reporting.report.model.ReportSection;
-import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
+import com.kinplatform.platform.reporting.report.model.ReportSection;
+import com.kinplatform.platform.reporting.report.model.ReportSectionKind;
 
 /**
  * Formatea una {@link ReportSection} a texto legible (Markdown ligero).

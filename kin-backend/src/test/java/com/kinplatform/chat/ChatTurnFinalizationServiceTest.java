@@ -20,8 +20,8 @@ import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.ReportGeneratedEvent;
 import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.kin.infrastructure.outbox.TransactionalOutboxEventPublisher;
-import com.kinplatform.kin.reporting.report.ReportRepository;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.ReportRepository;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -157,4 +157,5 @@ class ChatTurnFinalizationServiceTest {
         assertTrue(true);
     }
 }
+
 

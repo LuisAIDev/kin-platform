@@ -1,6 +1,6 @@
 package com.kinplatform.project.dto;
 
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -19,3 +19,4 @@ public record ReportResponse(
         ConsultingReport report
 ) {
 }
+

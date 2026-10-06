@@ -16,7 +16,7 @@ import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
 import com.kinplatform.kin.pipeline.Pipeline;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
@@ -185,4 +185,5 @@ class KinMethodPipelineResultsCaptureTest {
                 PROJECT_ID, USER_ID, message, List.of(), "Proyecto Test", "Descripción", "Software");
     }
 }
+
 

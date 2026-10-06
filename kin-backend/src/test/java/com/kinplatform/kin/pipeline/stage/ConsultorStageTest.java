@@ -147,7 +147,7 @@ class ConsultorStageTest {
         var ctx = context(false);
         var decision = ConversationDecision.generateReport("contexto completo");
         ctx.decision(decision);
-        ctx.consultingReport(com.kinplatform.kin.reporting.report.model.ConsultingReport.empty());
+        ctx.consultingReport(com.kinplatform.platform.reporting.report.model.ConsultingReport.empty());
         stage.execute(ctx);
 
         var captor = ArgumentCaptor.forClass(AIRequest.class);
@@ -249,7 +249,7 @@ class ConsultorStageTest {
 
         var ctx = context(true);
         ctx.decision(ConversationDecision.generateReport("contexto completo"));
-        ctx.consultingReport(com.kinplatform.kin.reporting.report.model.ConsultingReport.empty());
+        ctx.consultingReport(com.kinplatform.platform.reporting.report.model.ConsultingReport.empty());
         stage.execute(ctx);
 
         ctx.aiResponseFlux().blockLast();
@@ -304,7 +304,7 @@ class ConsultorStageTest {
 
         var ctx = context(false);
         ctx.decision(ConversationDecision.generateReport("contexto completo"));
-        ctx.consultingReport(com.kinplatform.kin.reporting.report.model.ConsultingReport.empty());
+        ctx.consultingReport(com.kinplatform.platform.reporting.report.model.ConsultingReport.empty());
         ctx.interviewResult(resultadoEntrevistaActiva());
         stage.execute(ctx);
 
@@ -321,7 +321,7 @@ class ConsultorStageTest {
 
         var ctx = context(false);
         ctx.decision(ConversationDecision.generateReport("contexto completo"));
-        ctx.consultingReport(com.kinplatform.kin.reporting.report.model.ConsultingReport.empty());
+        ctx.consultingReport(com.kinplatform.platform.reporting.report.model.ConsultingReport.empty());
         ctx.interviewResult(resultadoEntrevistaCompleta());
         stage.execute(ctx);
 
@@ -338,7 +338,7 @@ class ConsultorStageTest {
 
         var ctx = context(false);
         ctx.decision(ConversationDecision.generateReport("contexto completo"));
-        ctx.consultingReport(com.kinplatform.kin.reporting.report.model.ConsultingReport.empty());
+        ctx.consultingReport(com.kinplatform.platform.reporting.report.model.ConsultingReport.empty());
         ctx.interviewResult(InterviewResult.empty());
         stage.execute(ctx);
 
@@ -349,4 +349,5 @@ class ConsultorStageTest {
         assertFalse(prompt.contains("## ENTREVISTA ESTRATÉGICA"));
     }
 }
+
 

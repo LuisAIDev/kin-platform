@@ -1,9 +1,9 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
 import com.kinplatform.kin.ai.prompt.SectionFormatter;
-import com.kinplatform.kin.reporting.report.model.RisksSection;
-import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
-import com.kinplatform.kin.reporting.risk.Risk;
+import com.kinplatform.platform.reporting.report.model.RisksSection;
+import com.kinplatform.platform.reporting.report.model.ReportSectionKind;
+import com.kinplatform.platform.reporting.risk.Risk;
 
 import java.util.List;
 import java.util.Locale;

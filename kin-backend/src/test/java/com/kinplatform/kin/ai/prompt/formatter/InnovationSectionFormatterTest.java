@@ -1,9 +1,9 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
 import com.kinplatform.common.context.AnalyzedDimension;
-import com.kinplatform.kin.reporting.report.model.DimensionCoverage;
-import com.kinplatform.kin.reporting.report.model.InnovationSection;
-import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
+import com.kinplatform.platform.reporting.report.model.DimensionCoverage;
+import com.kinplatform.platform.reporting.report.model.InnovationSection;
+import com.kinplatform.platform.reporting.report.model.ReportSectionKind;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -62,4 +62,5 @@ class InnovationSectionFormatterTest {
         assertTrue(result.contains("_Sin datos de innovación disponibles._"));
     }
 }
+
 

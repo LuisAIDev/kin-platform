@@ -2,9 +2,9 @@ package com.kinplatform.ai.report.adapter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.reporting.report.ReportRepository;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
-import com.kinplatform.kin.reporting.report.model.ReportMetadata;
+import com.kinplatform.platform.reporting.report.ReportRepository;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.model.ReportMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,3 +121,4 @@ public class JpaReportRepository implements ReportRepository {
         }
     }
 }
+

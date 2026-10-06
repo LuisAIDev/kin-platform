@@ -8,8 +8,8 @@ import com.kinplatform.kin.export.model.ExportBlockType;
 import com.kinplatform.kin.export.model.ExportDocument;
 import com.kinplatform.kin.export.model.ExportSection;
 import com.kinplatform.kin.export.model.ExportTable;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
-import com.kinplatform.kin.reporting.report.model.ReportSection;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.model.ReportSection;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -242,3 +242,4 @@ public final class ProjectExportTemplateMapper {
         ReportSection of(ConsultingReport report);
     }
 }
+

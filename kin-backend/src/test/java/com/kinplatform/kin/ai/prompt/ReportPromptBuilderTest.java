@@ -12,33 +12,33 @@ import com.kinplatform.kin.ai.prompt.formatter.ReportMetadataFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.RisksSectionFormatter;
 import com.kinplatform.kin.ai.prompt.formatter.ScoresSectionFormatter;
 import com.kinplatform.common.context.AnalyzedDimension;
-import com.kinplatform.kin.reporting.EffortLevel;
-import com.kinplatform.kin.reporting.ImpactLevel;
-import com.kinplatform.kin.reporting.Recommendation;
-import com.kinplatform.kin.reporting.RecommendationCategory;
-import com.kinplatform.kin.reporting.RecommendationExplanation;
-import com.kinplatform.kin.reporting.opportunity.Opportunity;
-import com.kinplatform.kin.reporting.opportunity.OpportunityCategory;
-import com.kinplatform.kin.reporting.opportunity.OpportunityExplanation;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
-import com.kinplatform.kin.reporting.report.model.DimensionCoverage;
-import com.kinplatform.kin.reporting.report.model.ExecutiveSummary;
-import com.kinplatform.kin.reporting.report.model.FinancialSection;
-import com.kinplatform.kin.reporting.report.model.InnovationSection;
-import com.kinplatform.kin.reporting.report.model.MarketSection;
-import com.kinplatform.kin.reporting.report.model.NextStep;
-import com.kinplatform.kin.reporting.report.model.NextStepsSection;
-import com.kinplatform.kin.reporting.report.model.OpportunitiesSection;
-import com.kinplatform.kin.reporting.report.model.RecommendationsSection;
-import com.kinplatform.kin.reporting.report.model.ReportMetadata;
-import com.kinplatform.kin.reporting.report.model.ReportSection;
-import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
-import com.kinplatform.kin.reporting.report.model.RisksSection;
-import com.kinplatform.kin.reporting.report.model.ScoresSection;
-import com.kinplatform.kin.reporting.risk.Risk;
-import com.kinplatform.kin.reporting.risk.RiskCategory;
-import com.kinplatform.kin.reporting.risk.RiskExplanation;
-import com.kinplatform.kin.reporting.risk.RiskLevel;
+import com.kinplatform.platform.reporting.EffortLevel;
+import com.kinplatform.platform.reporting.ImpactLevel;
+import com.kinplatform.platform.reporting.Recommendation;
+import com.kinplatform.platform.reporting.RecommendationCategory;
+import com.kinplatform.platform.reporting.RecommendationExplanation;
+import com.kinplatform.platform.reporting.opportunity.Opportunity;
+import com.kinplatform.platform.reporting.opportunity.OpportunityCategory;
+import com.kinplatform.platform.reporting.opportunity.OpportunityExplanation;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.model.DimensionCoverage;
+import com.kinplatform.platform.reporting.report.model.ExecutiveSummary;
+import com.kinplatform.platform.reporting.report.model.FinancialSection;
+import com.kinplatform.platform.reporting.report.model.InnovationSection;
+import com.kinplatform.platform.reporting.report.model.MarketSection;
+import com.kinplatform.platform.reporting.report.model.NextStep;
+import com.kinplatform.platform.reporting.report.model.NextStepsSection;
+import com.kinplatform.platform.reporting.report.model.OpportunitiesSection;
+import com.kinplatform.platform.reporting.report.model.RecommendationsSection;
+import com.kinplatform.platform.reporting.report.model.ReportMetadata;
+import com.kinplatform.platform.reporting.report.model.ReportSection;
+import com.kinplatform.platform.reporting.report.model.ReportSectionKind;
+import com.kinplatform.platform.reporting.report.model.RisksSection;
+import com.kinplatform.platform.reporting.report.model.ScoresSection;
+import com.kinplatform.platform.reporting.risk.Risk;
+import com.kinplatform.platform.reporting.risk.RiskCategory;
+import com.kinplatform.platform.reporting.risk.RiskExplanation;
+import com.kinplatform.platform.reporting.risk.RiskLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -259,5 +259,6 @@ class ReportPromptBuilderTest {
         }
     }
 }
+
 
 

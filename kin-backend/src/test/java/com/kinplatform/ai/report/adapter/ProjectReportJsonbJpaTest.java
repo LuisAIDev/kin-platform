@@ -7,19 +7,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
-import com.kinplatform.kin.reporting.report.model.ExecutiveSummary;
-import com.kinplatform.kin.reporting.report.model.FinancialSection;
-import com.kinplatform.kin.reporting.report.model.InnovationSection;
-import com.kinplatform.kin.reporting.report.model.MarketSection;
-import com.kinplatform.kin.reporting.report.model.NextStepsSection;
-import com.kinplatform.kin.reporting.report.model.OpportunitiesSection;
-import com.kinplatform.kin.reporting.report.model.RecommendationsSection;
-import com.kinplatform.kin.reporting.report.model.ReportBuilder;
-import com.kinplatform.kin.reporting.report.model.ReportMetadata;
-import com.kinplatform.kin.reporting.report.model.RisksSection;
-import com.kinplatform.kin.reporting.report.model.ScoresSection;
-import com.kinplatform.kin.reporting.report.model.SourcesSection;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.model.ExecutiveSummary;
+import com.kinplatform.platform.reporting.report.model.FinancialSection;
+import com.kinplatform.platform.reporting.report.model.InnovationSection;
+import com.kinplatform.platform.reporting.report.model.MarketSection;
+import com.kinplatform.platform.reporting.report.model.NextStepsSection;
+import com.kinplatform.platform.reporting.report.model.OpportunitiesSection;
+import com.kinplatform.platform.reporting.report.model.RecommendationsSection;
+import com.kinplatform.platform.reporting.report.model.ReportBuilder;
+import com.kinplatform.platform.reporting.report.model.ReportMetadata;
+import com.kinplatform.platform.reporting.report.model.RisksSection;
+import com.kinplatform.platform.reporting.report.model.ScoresSection;
+import com.kinplatform.platform.reporting.report.model.SourcesSection;
 import com.kinplatform.project.Project;
 import com.kinplatform.project.ProjectRepository;
 import com.kinplatform.test.PostgresTestSupport;
@@ -167,3 +167,4 @@ class ProjectReportJsonbJpaTest extends PostgresTestSupport {
         assertTrue(repository.findByProjectIdAndVersion(projectId, 2).isPresent());
     }
 }
+

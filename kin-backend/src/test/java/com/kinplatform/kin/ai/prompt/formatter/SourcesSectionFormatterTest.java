@@ -1,9 +1,9 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
 import com.kinplatform.platform.enrichment.EvidenceCategory;
-import com.kinplatform.kin.reporting.report.model.CitedSource;
-import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
-import com.kinplatform.kin.reporting.report.model.SourcesSection;
+import com.kinplatform.platform.reporting.report.model.CitedSource;
+import com.kinplatform.platform.reporting.report.model.ReportSectionKind;
+import com.kinplatform.platform.reporting.report.model.SourcesSection;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -58,4 +58,5 @@ class SourcesSectionFormatterTest {
         assertFalse(output.contains("https://"));
     }
 }
+
 

@@ -4,7 +4,7 @@ import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.engine.EngineInput;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
 import com.kinplatform.kin.enterprise.valueobjects.Roadmap;
-import com.kinplatform.kin.reporting.RecommendationResult;
+import com.kinplatform.platform.reporting.RecommendationResult;
 
 /**
  * Entrada tipada del {@code RoadmapEngine} (Fase 10, Milestone 2D).
@@ -19,5 +19,6 @@ public record RoadmapInput(
     FinancialPlan financialPlan
 ) implements EngineInput {
 }
+
 
 

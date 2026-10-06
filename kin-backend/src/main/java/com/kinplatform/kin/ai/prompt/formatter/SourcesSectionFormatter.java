@@ -1,9 +1,9 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
 import com.kinplatform.kin.ai.prompt.SectionFormatter;
-import com.kinplatform.kin.reporting.report.model.CitedSource;
-import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
-import com.kinplatform.kin.reporting.report.model.SourcesSection;
+import com.kinplatform.platform.reporting.report.model.CitedSource;
+import com.kinplatform.platform.reporting.report.model.ReportSectionKind;
+import com.kinplatform.platform.reporting.report.model.SourcesSection;
 
 import java.util.Locale;
 
@@ -50,3 +50,4 @@ public class SourcesSectionFormatter implements SectionFormatter<SourcesSection>
         return sb.toString();
     }
 }
+

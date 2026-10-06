@@ -1,7 +1,7 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
-import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
-import com.kinplatform.kin.reporting.report.model.ScoresSection;
+import com.kinplatform.platform.reporting.report.model.ReportSectionKind;
+import com.kinplatform.platform.reporting.report.model.ScoresSection;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -53,3 +53,4 @@ class ScoresSectionFormatterTest {
         assertFalse(result.contains("### Debilidades"));
     }
 }
+

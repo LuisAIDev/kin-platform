@@ -31,7 +31,7 @@ public record ExportInput(
         String aiSummary,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
-        com.kinplatform.kin.reporting.report.model.ConsultingReport report,
+        com.kinplatform.platform.reporting.report.model.ConsultingReport report,
         java.util.List<StructuredInfo> info,
         ExportMode mode) {
 
@@ -44,3 +44,4 @@ public record ExportInput(
         mode = mode == null ? ExportMode.COMPLETE : mode;
     }
 }
+

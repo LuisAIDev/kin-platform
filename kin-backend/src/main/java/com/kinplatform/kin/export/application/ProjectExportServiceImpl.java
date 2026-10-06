@@ -10,8 +10,8 @@ import com.kinplatform.kin.export.renderer.ExportRendererFactory;
 import com.kinplatform.kin.export.template.ExportTemplate;
 import com.kinplatform.kin.export.template.ProjectExportTemplateMapper;
 import com.kinplatform.kin.export.template.ProjectExportTemplateParser;
-import com.kinplatform.kin.reporting.report.ReportRepository;
-import com.kinplatform.kin.reporting.report.model.ReportSection;
+import com.kinplatform.platform.reporting.report.ReportRepository;
+import com.kinplatform.platform.reporting.report.model.ReportSection;
 import com.kinplatform.project.Project;
 import com.kinplatform.project.ProjectRepository;
 import com.kinplatform.projectdoc.ProjectDocument;
@@ -179,3 +179,4 @@ public class ProjectExportServiceImpl implements ProjectExportService {
         return "KIN_" + sanitized;
     }
 }
+

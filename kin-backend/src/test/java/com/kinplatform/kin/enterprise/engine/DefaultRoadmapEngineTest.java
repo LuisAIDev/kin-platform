@@ -6,13 +6,13 @@ import com.kinplatform.kin.enterprise.engine.input.RoadmapInput;
 import com.kinplatform.kin.enterprise.engine.result.RoadmapResult;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
 import com.kinplatform.kin.enterprise.valueobjects.Roadmap;
-import com.kinplatform.kin.reporting.Recommendation;
-import com.kinplatform.kin.reporting.RecommendationCategory;
-import com.kinplatform.kin.reporting.RecommendationExplanation;
-import com.kinplatform.kin.reporting.RecommendationResult;
+import com.kinplatform.platform.reporting.Recommendation;
+import com.kinplatform.platform.reporting.RecommendationCategory;
+import com.kinplatform.platform.reporting.RecommendationExplanation;
+import com.kinplatform.platform.reporting.RecommendationResult;
 import com.kinplatform.common.context.AnalyzedDimension;
-import com.kinplatform.kin.reporting.ImpactLevel;
-import com.kinplatform.kin.reporting.EffortLevel;
+import com.kinplatform.platform.reporting.ImpactLevel;
+import com.kinplatform.platform.reporting.EffortLevel;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -126,5 +126,6 @@ class DefaultRoadmapEngineTest {
             FinancialPlan.Scenario.of(1210.0, 60.0));
     }
 }
+
 
 

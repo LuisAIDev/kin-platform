@@ -16,8 +16,8 @@ import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.export.intent.ExportAction;
 import com.kinplatform.kin.export.intent.ExportChatIntentService;
-import com.kinplatform.kin.reporting.report.ReportRepository;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.ReportRepository;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import com.kinplatform.kin.usage.AiBudgetExceededException;
 import com.kinplatform.kin.usage.AiReservation;
 import com.kinplatform.pricing.service.SubscriptionValidatorService;
@@ -860,4 +860,5 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         return messages;
     }
 }
+
 

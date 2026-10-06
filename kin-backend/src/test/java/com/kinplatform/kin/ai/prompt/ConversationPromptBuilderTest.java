@@ -34,7 +34,7 @@ class ConversationPromptBuilderTest {
     @Test
     void build_deberiaExigirPromptRequestConversation() {
         var exception = assertThrows(IllegalArgumentException.class,
-            () -> builder.build(PromptRequest.forReport(com.kinplatform.kin.reporting.report.model.ConsultingReport.empty())));
+            () -> builder.build(PromptRequest.forReport(com.kinplatform.platform.reporting.report.model.ConsultingReport.empty())));
 
         assertEquals("ConversationPromptBuilder solo soporta CONVERSATION", exception.getMessage());
     }
@@ -163,7 +163,7 @@ class ConversationPromptBuilderTest {
     void promptRequest_conversation_noDeberiaAceptarConsultingReport() {
         var ctx = contextConDatos();
         var decision = ConversationDecision.ask(AnalyzedDimension.PROBLEM, 9, "explorar");
-        var report = com.kinplatform.kin.reporting.report.model.ConsultingReport.empty();
+        var report = com.kinplatform.platform.reporting.report.model.ConsultingReport.empty();
 
         var exception = assertThrows(IllegalArgumentException.class,
             () -> new PromptRequest(report, PromptType.CONVERSATION, ctx, decision));
@@ -893,4 +893,5 @@ class ConversationPromptBuilderTest {
         assertTrue(prompt.contains("El proveedor configurado actualmente es DeepSeek, mediante DeepSeekProvider"));
     }
 }
+
 

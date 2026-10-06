@@ -2,9 +2,9 @@ package com.kinplatform.kin.pipeline.stage;
 
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
-import com.kinplatform.kin.reporting.RecommendationEngine;
-import com.kinplatform.kin.reporting.RecommendationInput;
-import com.kinplatform.kin.reporting.RecommendationResult;
+import com.kinplatform.platform.reporting.RecommendationEngine;
+import com.kinplatform.platform.reporting.RecommendationInput;
+import com.kinplatform.platform.reporting.RecommendationResult;
 
 /**
  * Etapa del pipeline que ejecuta el {@link RecommendationEngine}.
@@ -55,3 +55,4 @@ public class RecommendationStage implements PipelineStage {
         return delegate.execute(context);
     }
 }
+

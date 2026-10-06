@@ -16,19 +16,19 @@ import com.kinplatform.kin.export.model.ExportDocument;
 import com.kinplatform.kin.export.model.ExportMode;
 import com.kinplatform.kin.export.model.ExportSection;
 import com.kinplatform.kin.export.model.ExportTable;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
-import com.kinplatform.kin.reporting.report.model.ExecutiveSummary;
-import com.kinplatform.kin.reporting.report.model.FinancialSection;
-import com.kinplatform.kin.reporting.report.model.InnovationSection;
-import com.kinplatform.kin.reporting.report.model.MarketSection;
-import com.kinplatform.kin.reporting.report.model.NextStepsSection;
-import com.kinplatform.kin.reporting.report.model.OpportunitiesSection;
-import com.kinplatform.kin.reporting.report.model.RecommendationsSection;
-import com.kinplatform.kin.reporting.report.model.ReportMetadata;
-import com.kinplatform.kin.reporting.report.model.ReportSection;
-import com.kinplatform.kin.reporting.report.model.RisksSection;
-import com.kinplatform.kin.reporting.report.model.ScoresSection;
-import com.kinplatform.kin.reporting.report.model.SourcesSection;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.model.ExecutiveSummary;
+import com.kinplatform.platform.reporting.report.model.FinancialSection;
+import com.kinplatform.platform.reporting.report.model.InnovationSection;
+import com.kinplatform.platform.reporting.report.model.MarketSection;
+import com.kinplatform.platform.reporting.report.model.NextStepsSection;
+import com.kinplatform.platform.reporting.report.model.OpportunitiesSection;
+import com.kinplatform.platform.reporting.report.model.RecommendationsSection;
+import com.kinplatform.platform.reporting.report.model.ReportMetadata;
+import com.kinplatform.platform.reporting.report.model.ReportSection;
+import com.kinplatform.platform.reporting.report.model.RisksSection;
+import com.kinplatform.platform.reporting.report.model.ScoresSection;
+import com.kinplatform.platform.reporting.report.model.SourcesSection;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -254,3 +254,4 @@ public class ProjectExportAssembler {
                 "No existe formatter para sección " + section.getClass().getSimpleName());
     }
 }
+

@@ -7,7 +7,7 @@ import com.kinplatform.kin.enterprise.engine.input.RoadmapInput;
 import com.kinplatform.kin.enterprise.engine.result.RoadmapResult;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
 import com.kinplatform.kin.enterprise.valueobjects.Roadmap;
-import com.kinplatform.kin.reporting.RecommendationResult;
+import com.kinplatform.platform.reporting.RecommendationResult;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -166,4 +166,5 @@ public class DefaultRoadmapEngine implements RoadmapEngine {
         return "Roadmap de " + phases.size() + " fases sobre un horizonte de " + horizon + " meses.";
     }
 }
+
 

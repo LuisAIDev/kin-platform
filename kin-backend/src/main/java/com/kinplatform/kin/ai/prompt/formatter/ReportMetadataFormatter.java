@@ -1,8 +1,8 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
 import com.kinplatform.kin.ai.prompt.SectionFormatter;
-import com.kinplatform.kin.reporting.report.model.ReportMetadata;
-import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
+import com.kinplatform.platform.reporting.report.model.ReportMetadata;
+import com.kinplatform.platform.reporting.report.model.ReportSectionKind;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;

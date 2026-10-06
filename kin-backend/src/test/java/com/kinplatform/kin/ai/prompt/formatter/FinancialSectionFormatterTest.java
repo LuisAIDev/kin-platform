@@ -1,9 +1,9 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
 import com.kinplatform.common.context.AnalyzedDimension;
-import com.kinplatform.kin.reporting.report.model.DimensionCoverage;
-import com.kinplatform.kin.reporting.report.model.FinancialSection;
-import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
+import com.kinplatform.platform.reporting.report.model.DimensionCoverage;
+import com.kinplatform.platform.reporting.report.model.FinancialSection;
+import com.kinplatform.platform.reporting.report.model.ReportSectionKind;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -47,4 +47,5 @@ class FinancialSectionFormatterTest {
         assertFalse(result.contains("**Modelo de ingresos:**"));
     }
 }
+
 

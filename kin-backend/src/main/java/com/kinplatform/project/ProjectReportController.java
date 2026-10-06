@@ -1,7 +1,7 @@
 package com.kinplatform.project;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
-import com.kinplatform.kin.reporting.report.ReportRepository;
+import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.project.dto.ReportResponse;
 import com.kinplatform.project.dto.ReportVersionResponse;
 import com.kinplatform.user.UserRepository;
@@ -93,3 +93,4 @@ public class ProjectReportController {
         return AuthenticatedUsers.require(userRepository, auth).getId();
     }
 }
+

@@ -7,7 +7,7 @@ import com.kinplatform.kin.conversation.ConversationPhase;
 import com.kinplatform.kin.conversation.TurnConstraints;
 import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 
 /**
  * Política de turno determinista del Conversation Orchestrator (ADR-013).
@@ -88,4 +88,5 @@ public class DefaultTurnPolicy implements TurnPolicy {
         };
     }
 }
+
 

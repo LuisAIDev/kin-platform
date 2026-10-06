@@ -15,7 +15,7 @@ import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.interview.InterviewResult;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -180,4 +180,5 @@ public class ConsultorStage implements PipelineStage {
         return null;
     }
 }
+
 

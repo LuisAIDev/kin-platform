@@ -1,7 +1,7 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
-import com.kinplatform.kin.reporting.report.model.ReportMetadata;
-import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
+import com.kinplatform.platform.reporting.report.model.ReportMetadata;
+import com.kinplatform.platform.reporting.report.model.ReportSectionKind;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
@@ -61,3 +61,4 @@ class ReportMetadataFormatterTest {
         assertFalse(result.contains("### Secciones Incluidas"));
     }
 }
+

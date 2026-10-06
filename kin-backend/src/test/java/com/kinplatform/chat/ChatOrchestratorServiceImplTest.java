@@ -21,8 +21,8 @@ import com.kinplatform.kin.conversation.TurnConstraints;
 import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.conversation.TurnResult;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.reporting.report.ReportRepository;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.ReportRepository;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import com.kinplatform.project.Category;
 import com.kinplatform.project.Project;
 import com.kinplatform.project.ProjectRepository;
@@ -426,4 +426,5 @@ class ChatOrchestratorServiceImplTest {
         verify(reportRepository).save(PROJECT_ID, report);
     }
 }
+
 

@@ -10,7 +10,7 @@ import com.kinplatform.kin.interview.InterviewDecision;
 import com.kinplatform.kin.interview.InterviewDirective;
 import com.kinplatform.kin.interview.InterviewResult;
 import com.kinplatform.kin.interview.InterviewState;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -85,4 +85,5 @@ class PromptAssemblerInterviewTest {
         verify(conversationBuilder, never()).build(any());
     }
 }
+
 

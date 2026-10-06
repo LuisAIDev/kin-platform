@@ -97,10 +97,11 @@ class ConversationPromptBuilderInterviewTest {
     @Test
     void build_conEntrevista_deberiaSeguirRechazandoModoReporte() {
         var request = PromptRequest.forReport(
-            com.kinplatform.kin.reporting.report.model.ConsultingReport.empty());
+            com.kinplatform.platform.reporting.report.model.ConsultingReport.empty());
 
         assertThrows(IllegalArgumentException.class,
             () -> builder.build(request, resultadoEntrevistaActiva()));
     }
 }
+
 

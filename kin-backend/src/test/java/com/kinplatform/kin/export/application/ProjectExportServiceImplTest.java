@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.kinplatform.kin.export.model.ExportFormat;
 import com.kinplatform.kin.export.model.ExportMode;
-import com.kinplatform.kin.reporting.report.ReportRepository;
+import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.project.Project;
 import com.kinplatform.project.ProjectRepository;
 import com.kinplatform.projectdoc.ProjectDocument;
@@ -262,3 +262,4 @@ class ProjectExportServiceImplTest {
         assertEquals(404, ex.getStatusCode().value());
     }
 }
+

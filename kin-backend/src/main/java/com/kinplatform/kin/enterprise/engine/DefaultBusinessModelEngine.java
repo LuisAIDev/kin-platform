@@ -9,8 +9,8 @@ import com.kinplatform.kin.enterprise.engine.input.BusinessModelInput;
 import com.kinplatform.kin.enterprise.engine.result.BusinessModelResult;
 import com.kinplatform.kin.enterprise.valueobjects.LeanCanvas;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.reporting.RecommendationResult;
-import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
+import com.kinplatform.platform.reporting.RecommendationResult;
+import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -142,11 +142,11 @@ public class DefaultBusinessModelEngine implements BusinessModelEngine {
         if (opportunities != null) {
             for (var opportunity : opportunities.topOpportunities()) {
                 var category = opportunity.category();
-                if (category != null && (category == com.kinplatform.kin.reporting.opportunity
+                if (category != null && (category == com.kinplatform.platform.reporting.opportunity
                         .OpportunityCategory.INNOVACION
-                    || category == com.kinplatform.kin.reporting.opportunity
+                    || category == com.kinplatform.platform.reporting.opportunity
                         .OpportunityCategory.TECNOLOGICA
-                    || category == com.kinplatform.kin.reporting.opportunity
+                    || category == com.kinplatform.platform.reporting.opportunity
                         .OpportunityCategory.COMPETITIVA)
                     && opportunity.title() != null && !opportunity.title().isBlank()) {
                     advantages.add(opportunity.title());
@@ -204,5 +204,7 @@ public class DefaultBusinessModelEngine implements BusinessModelEngine {
         return "Lean Canvas construido con una cobertura de " + Math.round(confidence * 100) + "%.";
     }
 }
+
+
 
 

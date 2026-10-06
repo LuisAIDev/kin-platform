@@ -2,9 +2,9 @@ package com.kinplatform.kin.pipeline.stage;
 
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
-import com.kinplatform.kin.reporting.risk.RiskEngine;
-import com.kinplatform.kin.reporting.risk.RiskInput;
-import com.kinplatform.kin.reporting.risk.RiskResult;
+import com.kinplatform.platform.reporting.risk.RiskEngine;
+import com.kinplatform.platform.reporting.risk.RiskInput;
+import com.kinplatform.platform.reporting.risk.RiskResult;
 
 /**
  * Etapa del pipeline que ejecuta el {@link RiskEngine}.
@@ -55,3 +55,4 @@ public class RiskStage implements PipelineStage {
         return delegate.execute(context);
     }
 }
+

@@ -2,9 +2,9 @@ package com.kinplatform.kin.pipeline.stage;
 
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
-import com.kinplatform.kin.reporting.opportunity.OpportunityEngine;
-import com.kinplatform.kin.reporting.opportunity.OpportunityInput;
-import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
+import com.kinplatform.platform.reporting.opportunity.OpportunityEngine;
+import com.kinplatform.platform.reporting.opportunity.OpportunityInput;
+import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
 
 /**
  * Etapa del pipeline que ejecuta el {@link OpportunityEngine}.
@@ -55,3 +55,4 @@ public class OpportunityStage implements PipelineStage {
         return delegate.execute(context);
     }
 }
+

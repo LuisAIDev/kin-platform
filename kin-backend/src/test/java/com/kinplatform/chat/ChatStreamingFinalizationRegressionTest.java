@@ -33,7 +33,7 @@ import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.QuestionGeneratedEvent;
 import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.kin.pipeline.Pipeline;
-import com.kinplatform.kin.reporting.report.ReportRepository;
+import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.project.Project;
 import com.kinplatform.project.ProjectRepository;
 import com.kinplatform.user.User;
@@ -292,6 +292,7 @@ class ChatStreamingFinalizationRegressionTest {
         }
     }
 }
+
 
 
 

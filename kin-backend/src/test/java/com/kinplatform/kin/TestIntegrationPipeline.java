@@ -55,29 +55,29 @@ import com.kinplatform.kin.pipeline.stage.ReportStage;
 import com.kinplatform.kin.pipeline.stage.RiskStage;
 import com.kinplatform.kin.pipeline.stage.ScoringStage;
 import com.kinplatform.kin.pipeline.stage.StrategistStage;
-import com.kinplatform.kin.reporting.RecommendationEngine;
-import com.kinplatform.kin.reporting.RecommendationModel;
-import com.kinplatform.kin.reporting.opportunity.MarketOpportunityAnalyzer;
-import com.kinplatform.kin.reporting.opportunity.MonetizationOpportunityAnalyzer;
-import com.kinplatform.kin.reporting.opportunity.OpportunityEngine;
-import com.kinplatform.kin.reporting.opportunity.OpportunityModel;
-import com.kinplatform.kin.reporting.report.ReportAssemblers;
-import com.kinplatform.kin.reporting.report.ReportEngine;
-import com.kinplatform.kin.reporting.report.ReportModel;
-import com.kinplatform.kin.reporting.report.assembler.ExecutiveSummaryAssembler;
-import com.kinplatform.kin.reporting.report.assembler.FinancialSectionAssembler;
-import com.kinplatform.kin.reporting.report.assembler.InnovationSectionAssembler;
-import com.kinplatform.kin.reporting.report.assembler.MarketSectionAssembler;
-import com.kinplatform.kin.reporting.report.assembler.NextStepsSectionAssembler;
-import com.kinplatform.kin.reporting.report.assembler.OpportunitiesSectionAssembler;
-import com.kinplatform.kin.reporting.report.assembler.RecommendationsSectionAssembler;
-import com.kinplatform.kin.reporting.report.assembler.ReportMetadataAssembler;
-import com.kinplatform.kin.reporting.report.assembler.RisksSectionAssembler;
-import com.kinplatform.kin.reporting.report.assembler.ScoresSectionAssembler;
-import com.kinplatform.kin.reporting.risk.BusinessRiskAnalyzer;
-import com.kinplatform.kin.reporting.risk.MarketRiskAnalyzer;
-import com.kinplatform.kin.reporting.risk.RiskEngine;
-import com.kinplatform.kin.reporting.risk.RiskModel;
+import com.kinplatform.platform.reporting.RecommendationEngine;
+import com.kinplatform.platform.reporting.RecommendationModel;
+import com.kinplatform.platform.reporting.opportunity.MarketOpportunityAnalyzer;
+import com.kinplatform.platform.reporting.opportunity.MonetizationOpportunityAnalyzer;
+import com.kinplatform.platform.reporting.opportunity.OpportunityEngine;
+import com.kinplatform.platform.reporting.opportunity.OpportunityModel;
+import com.kinplatform.platform.reporting.report.ReportAssemblers;
+import com.kinplatform.platform.reporting.report.ReportEngine;
+import com.kinplatform.platform.reporting.report.ReportModel;
+import com.kinplatform.platform.reporting.report.assembler.ExecutiveSummaryAssembler;
+import com.kinplatform.platform.reporting.report.assembler.FinancialSectionAssembler;
+import com.kinplatform.platform.reporting.report.assembler.InnovationSectionAssembler;
+import com.kinplatform.platform.reporting.report.assembler.MarketSectionAssembler;
+import com.kinplatform.platform.reporting.report.assembler.NextStepsSectionAssembler;
+import com.kinplatform.platform.reporting.report.assembler.OpportunitiesSectionAssembler;
+import com.kinplatform.platform.reporting.report.assembler.RecommendationsSectionAssembler;
+import com.kinplatform.platform.reporting.report.assembler.ReportMetadataAssembler;
+import com.kinplatform.platform.reporting.report.assembler.RisksSectionAssembler;
+import com.kinplatform.platform.reporting.report.assembler.ScoresSectionAssembler;
+import com.kinplatform.platform.reporting.risk.BusinessRiskAnalyzer;
+import com.kinplatform.platform.reporting.risk.MarketRiskAnalyzer;
+import com.kinplatform.platform.reporting.risk.RiskEngine;
+import com.kinplatform.platform.reporting.risk.RiskModel;
 import com.kinplatform.platform.scoring.ScoringEngine;
 import com.kinplatform.platform.scoring.ScoringModel;
 import java.time.Duration;
@@ -250,6 +250,7 @@ public final class TestIntegrationPipeline {
         }
     }
 }
+
 
 
 

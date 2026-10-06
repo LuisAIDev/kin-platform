@@ -6,21 +6,21 @@ import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.knowledge.SourceTrust;
-import com.kinplatform.kin.reporting.EffortLevel;
-import com.kinplatform.kin.reporting.ImpactLevel;
-import com.kinplatform.kin.reporting.Recommendation;
-import com.kinplatform.kin.reporting.RecommendationCategory;
-import com.kinplatform.kin.reporting.RecommendationExplanation;
-import com.kinplatform.kin.reporting.RecommendationResult;
-import com.kinplatform.kin.reporting.opportunity.Opportunity;
-import com.kinplatform.kin.reporting.opportunity.OpportunityCategory;
-import com.kinplatform.kin.reporting.opportunity.OpportunityExplanation;
-import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
-import com.kinplatform.kin.reporting.risk.Risk;
-import com.kinplatform.kin.reporting.risk.RiskCategory;
-import com.kinplatform.kin.reporting.risk.RiskExplanation;
-import com.kinplatform.kin.reporting.risk.RiskLevel;
-import com.kinplatform.kin.reporting.risk.RiskResult;
+import com.kinplatform.platform.reporting.EffortLevel;
+import com.kinplatform.platform.reporting.ImpactLevel;
+import com.kinplatform.platform.reporting.Recommendation;
+import com.kinplatform.platform.reporting.RecommendationCategory;
+import com.kinplatform.platform.reporting.RecommendationExplanation;
+import com.kinplatform.platform.reporting.RecommendationResult;
+import com.kinplatform.platform.reporting.opportunity.Opportunity;
+import com.kinplatform.platform.reporting.opportunity.OpportunityCategory;
+import com.kinplatform.platform.reporting.opportunity.OpportunityExplanation;
+import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
+import com.kinplatform.platform.reporting.risk.Risk;
+import com.kinplatform.platform.reporting.risk.RiskCategory;
+import com.kinplatform.platform.reporting.risk.RiskExplanation;
+import com.kinplatform.platform.reporting.risk.RiskLevel;
+import com.kinplatform.platform.reporting.risk.RiskResult;
 
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
@@ -123,4 +123,5 @@ public final class EngineTestFixtures {
         return RiskResult.empty();
     }
 }
+
 

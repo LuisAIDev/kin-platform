@@ -5,7 +5,7 @@ import com.kinplatform.kin.ai.prompt.ReportPromptBuilder;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -113,4 +113,5 @@ class PromptAssemblerTest {
         verifyNoInteractions(reportBuilder);
     }
 }
+
 

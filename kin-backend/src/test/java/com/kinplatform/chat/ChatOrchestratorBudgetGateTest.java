@@ -25,7 +25,7 @@ import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.conversation.TurnResult;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.reporting.report.ReportRepository;
+import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.kin.usage.AiBudgetExceededException;
 import com.kinplatform.kin.usage.AiReservation;
 import com.kinplatform.kin.usage.UsagePeriod;
@@ -144,7 +144,7 @@ class ChatOrchestratorBudgetGateTest {
     private ReportRepository reportRepositoryNoOp() {
         return new ReportRepository() {
             @Override
-            public int save(UUID projectId, com.kinplatform.kin.reporting.report.model.ConsultingReport report) {
+            public int save(UUID projectId, com.kinplatform.platform.reporting.report.model.ConsultingReport report) {
                 return 0;
             }
 
@@ -218,4 +218,6 @@ class ChatOrchestratorBudgetGateTest {
         return new TurnResult(ctx, decision, directive, "¿pregunta?", ResponseValidation.ok(), null, List.of());
     }
 }
+
+
 

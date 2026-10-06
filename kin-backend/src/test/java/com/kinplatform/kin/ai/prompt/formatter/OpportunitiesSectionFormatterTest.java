@@ -1,13 +1,13 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
 import com.kinplatform.common.context.AnalyzedDimension;
-import com.kinplatform.kin.reporting.EffortLevel;
-import com.kinplatform.kin.reporting.ImpactLevel;
-import com.kinplatform.kin.reporting.opportunity.Opportunity;
-import com.kinplatform.kin.reporting.opportunity.OpportunityCategory;
-import com.kinplatform.kin.reporting.opportunity.OpportunityExplanation;
-import com.kinplatform.kin.reporting.report.model.OpportunitiesSection;
-import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
+import com.kinplatform.platform.reporting.EffortLevel;
+import com.kinplatform.platform.reporting.ImpactLevel;
+import com.kinplatform.platform.reporting.opportunity.Opportunity;
+import com.kinplatform.platform.reporting.opportunity.OpportunityCategory;
+import com.kinplatform.platform.reporting.opportunity.OpportunityExplanation;
+import com.kinplatform.platform.reporting.report.model.OpportunitiesSection;
+import com.kinplatform.platform.reporting.report.model.ReportSectionKind;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -86,4 +86,5 @@ class OpportunitiesSectionFormatterTest {
         assertTrue(result.contains("_Sin oportunidades identificadas._"));
     }
 }
+
 

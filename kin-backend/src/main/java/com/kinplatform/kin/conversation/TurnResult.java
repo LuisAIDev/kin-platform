@@ -3,7 +3,7 @@ package com.kinplatform.kin.conversation;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 
 import java.util.List;
 
@@ -38,4 +38,5 @@ public record TurnResult(
         events = (events != null) ? List.copyOf(events) : List.of();
     }
 }
+
 

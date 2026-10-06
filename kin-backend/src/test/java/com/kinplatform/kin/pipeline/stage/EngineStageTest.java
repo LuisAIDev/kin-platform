@@ -5,10 +5,10 @@ import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.pipeline.PipelineContext;
-import com.kinplatform.kin.reporting.RecommendationEngine;
-import com.kinplatform.kin.reporting.RecommendationInput;
-import com.kinplatform.kin.reporting.RecommendationModel;
-import com.kinplatform.kin.reporting.RecommendationResult;
+import com.kinplatform.platform.reporting.RecommendationEngine;
+import com.kinplatform.platform.reporting.RecommendationInput;
+import com.kinplatform.platform.reporting.RecommendationModel;
+import com.kinplatform.platform.reporting.RecommendationResult;
 import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.Test;
 
@@ -77,5 +77,6 @@ class EngineStageTest {
         assertEquals(1, ctx.engineResults().size());
     }
 }
+
 
 

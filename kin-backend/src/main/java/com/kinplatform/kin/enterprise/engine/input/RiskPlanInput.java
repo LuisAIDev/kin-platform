@@ -3,7 +3,7 @@ package com.kinplatform.kin.enterprise.engine.input;
 import com.kinplatform.common.engine.EngineInput;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
 import com.kinplatform.kin.enterprise.valueobjects.RiskMatrix;
-import com.kinplatform.kin.reporting.risk.RiskResult;
+import com.kinplatform.platform.reporting.risk.RiskResult;
 
 /**
  * Entrada tipada del {@code RiskPlanEngine} (Fase 10, Milestone 2D).
@@ -18,4 +18,5 @@ public record RiskPlanInput(
     FinancialPlan financialPlan
 ) implements EngineInput {
 }
+
 

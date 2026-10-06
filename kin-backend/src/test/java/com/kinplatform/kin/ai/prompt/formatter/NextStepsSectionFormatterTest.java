@@ -1,8 +1,8 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
-import com.kinplatform.kin.reporting.report.model.NextStep;
-import com.kinplatform.kin.reporting.report.model.NextStepsSection;
-import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
+import com.kinplatform.platform.reporting.report.model.NextStep;
+import com.kinplatform.platform.reporting.report.model.NextStepsSection;
+import com.kinplatform.platform.reporting.report.model.ReportSectionKind;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -48,3 +48,4 @@ class NextStepsSectionFormatterTest {
         assertTrue(result.contains("_Sin próximos pasos definidos._"));
     }
 }
+

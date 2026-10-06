@@ -6,10 +6,10 @@ import com.kinplatform.kin.enterprise.engine.input.InnovationInput;
 import com.kinplatform.kin.enterprise.engine.result.InnovationResult;
 import com.kinplatform.kin.enterprise.valueobjects.InnovationLevel;
 import com.kinplatform.kin.enterprise.valueobjects.InnovationPlan;
-import com.kinplatform.kin.reporting.opportunity.Opportunity;
-import com.kinplatform.kin.reporting.opportunity.OpportunityCategory;
-import com.kinplatform.kin.reporting.opportunity.OpportunityExplanation;
-import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
+import com.kinplatform.platform.reporting.opportunity.Opportunity;
+import com.kinplatform.platform.reporting.opportunity.OpportunityCategory;
+import com.kinplatform.platform.reporting.opportunity.OpportunityExplanation;
+import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -123,11 +123,13 @@ class DefaultInnovationEngineTest {
 
     private Opportunity opportunity(OpportunityCategory category, String title, int priority) {
         return Opportunity.create(category, title, "Descripción", priority,
-            com.kinplatform.kin.reporting.ImpactLevel.HIGH,
-            com.kinplatform.kin.reporting.EffortLevel.MEDIUM, 0.9,
+            com.kinplatform.platform.reporting.ImpactLevel.HIGH,
+            com.kinplatform.platform.reporting.EffortLevel.MEDIUM, 0.9,
             OpportunityExplanation.of(List.of(), "regla", "razón", "evidencia"),
             List.of("r1"), com.kinplatform.common.context.AnalyzedDimension.SCALABILITY, "1.0.0");
     }
 }
+
+
 
 

@@ -9,9 +9,9 @@ import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
 import com.kinplatform.kin.enterprise.valueobjects.RiskMatrix;
 import com.kinplatform.kin.enterprise.valueobjects.RiskSeverity;
 import com.kinplatform.kin.enterprise.valueobjects.RiskStatus;
-import com.kinplatform.kin.reporting.risk.Risk;
-import com.kinplatform.kin.reporting.risk.RiskLevel;
-import com.kinplatform.kin.reporting.risk.RiskResult;
+import com.kinplatform.platform.reporting.risk.Risk;
+import com.kinplatform.platform.reporting.risk.RiskLevel;
+import com.kinplatform.platform.reporting.risk.RiskResult;
 import java.util.ArrayList;
 
 /**
@@ -148,4 +148,5 @@ public class DefaultRiskPlanEngine implements RiskPlanEngine {
         return sb.toString();
     }
 }
+
 

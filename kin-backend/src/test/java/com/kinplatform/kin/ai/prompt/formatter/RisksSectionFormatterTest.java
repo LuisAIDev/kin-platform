@@ -1,12 +1,12 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
 import com.kinplatform.common.context.AnalyzedDimension;
-import com.kinplatform.kin.reporting.risk.Risk;
-import com.kinplatform.kin.reporting.risk.RiskCategory;
-import com.kinplatform.kin.reporting.risk.RiskExplanation;
-import com.kinplatform.kin.reporting.risk.RiskLevel;
-import com.kinplatform.kin.reporting.report.model.RisksSection;
-import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
+import com.kinplatform.platform.reporting.risk.Risk;
+import com.kinplatform.platform.reporting.risk.RiskCategory;
+import com.kinplatform.platform.reporting.risk.RiskExplanation;
+import com.kinplatform.platform.reporting.risk.RiskLevel;
+import com.kinplatform.platform.reporting.report.model.RisksSection;
+import com.kinplatform.platform.reporting.report.model.ReportSectionKind;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -88,4 +88,5 @@ class RisksSectionFormatterTest {
         assertTrue(result.contains("_Sin riesgos identificados._"));
     }
 }
+
 

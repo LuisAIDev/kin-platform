@@ -3,7 +3,7 @@ package com.kinplatform.kin.enterprise.engine.input;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.engine.EngineInput;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
-import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
+import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
 
 /**
  * Entrada tipada del {@code InnovationEngine} (Fase 10, Milestone 2D).
@@ -19,5 +19,6 @@ public record InnovationInput(
     KnowledgeResult knowledge
 ) implements EngineInput {
 }
+
 
 

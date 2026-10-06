@@ -5,12 +5,12 @@ import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.pipeline.PipelineContext;
-import com.kinplatform.kin.reporting.opportunity.MarketOpportunityAnalyzer;
-import com.kinplatform.kin.reporting.opportunity.MonetizationOpportunityAnalyzer;
-import com.kinplatform.kin.reporting.opportunity.OpportunityCategory;
-import com.kinplatform.kin.reporting.opportunity.OpportunityEngine;
-import com.kinplatform.kin.reporting.opportunity.OpportunityModel;
-import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
+import com.kinplatform.platform.reporting.opportunity.MarketOpportunityAnalyzer;
+import com.kinplatform.platform.reporting.opportunity.MonetizationOpportunityAnalyzer;
+import com.kinplatform.platform.reporting.opportunity.OpportunityCategory;
+import com.kinplatform.platform.reporting.opportunity.OpportunityEngine;
+import com.kinplatform.platform.reporting.opportunity.OpportunityModel;
+import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
 import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.Test;
 
@@ -82,5 +82,6 @@ class OpportunityStageTest {
         assertNotNull(ctx.engineResult(OpportunityEngine.GENERATOR_NAME));
     }
 }
+
 
 

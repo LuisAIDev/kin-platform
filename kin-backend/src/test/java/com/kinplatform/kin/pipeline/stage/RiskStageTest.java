@@ -5,11 +5,11 @@ import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.pipeline.PipelineContext;
-import com.kinplatform.kin.reporting.risk.BusinessRiskAnalyzer;
-import com.kinplatform.kin.reporting.risk.MarketRiskAnalyzer;
-import com.kinplatform.kin.reporting.risk.RiskEngine;
-import com.kinplatform.kin.reporting.risk.RiskModel;
-import com.kinplatform.kin.reporting.risk.RiskResult;
+import com.kinplatform.platform.reporting.risk.BusinessRiskAnalyzer;
+import com.kinplatform.platform.reporting.risk.MarketRiskAnalyzer;
+import com.kinplatform.platform.reporting.risk.RiskEngine;
+import com.kinplatform.platform.reporting.risk.RiskModel;
+import com.kinplatform.platform.reporting.risk.RiskResult;
 import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.Test;
 
@@ -75,9 +75,11 @@ class RiskStageTest {
         assertNotNull(rr);
         assertEquals(RiskEngine.GENERATOR_NAME, rr.generatedBy());
         assertTrue(rr.risks().stream()
-            .allMatch(r -> r.category() == com.kinplatform.kin.reporting.risk.RiskCategory.BUSINESS
-                || r.category() == com.kinplatform.kin.reporting.risk.RiskCategory.MARKET));
+            .allMatch(r -> r.category() == com.kinplatform.platform.reporting.risk.RiskCategory.BUSINESS
+                || r.category() == com.kinplatform.platform.reporting.risk.RiskCategory.MARKET));
     }
 }
+
+
 
 

@@ -6,7 +6,7 @@ import com.kinplatform.kin.event.ReportGeneratedEvent;
 import com.kinplatform.kin.event.RiskDetectedEvent;
 import com.kinplatform.kin.event.ScoreCalculatedEvent;
 import com.kinplatform.kin.pipeline.PipelineContext;
-import com.kinplatform.kin.reporting.risk.RiskLevel;
+import com.kinplatform.platform.reporting.risk.RiskLevel;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -99,3 +99,4 @@ class EventStageOrderingTest {
         return events.stream().filter(type::isInstance).count();
     }
 }
+

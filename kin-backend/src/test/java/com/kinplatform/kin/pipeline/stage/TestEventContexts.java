@@ -4,12 +4,12 @@ import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.pipeline.PipelineContext;
-import com.kinplatform.kin.reporting.report.model.ConsultingReport;
-import com.kinplatform.kin.reporting.risk.Risk;
-import com.kinplatform.kin.reporting.risk.RiskCategory;
-import com.kinplatform.kin.reporting.risk.RiskExplanation;
-import com.kinplatform.kin.reporting.risk.RiskLevel;
-import com.kinplatform.kin.reporting.risk.RiskResult;
+import com.kinplatform.platform.reporting.report.model.ConsultingReport;
+import com.kinplatform.platform.reporting.risk.Risk;
+import com.kinplatform.platform.reporting.risk.RiskCategory;
+import com.kinplatform.platform.reporting.risk.RiskExplanation;
+import com.kinplatform.platform.reporting.risk.RiskLevel;
+import com.kinplatform.platform.reporting.risk.RiskResult;
 import com.kinplatform.platform.scoring.ScoreResult;
 
 import java.util.List;
@@ -64,5 +64,6 @@ final class TestEventContexts {
             List.of("rule"), AnalyzedDimension.COMPETITION, "RiskEngine");
     }
 }
+
 
 
