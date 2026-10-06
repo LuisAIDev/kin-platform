@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.events;
 
-import com.kinplatform.kin.event.DomainEvent;
+import com.kinplatform.common.event.DomainEvent;
 
 import java.util.UUID;
 
@@ -31,3 +31,4 @@ public record EnterpriseProjectFailed(UUID projectId, int version, String reason
         return projectId;
     }
 }
+

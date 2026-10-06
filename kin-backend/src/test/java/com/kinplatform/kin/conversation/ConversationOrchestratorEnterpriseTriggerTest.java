@@ -31,7 +31,7 @@ import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectGenerated;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -264,5 +264,6 @@ class ConversationOrchestratorEnterpriseTriggerTest {
             .noneMatch(e -> e instanceof EnterpriseProjectRequested));
     }
 }
+
 
 

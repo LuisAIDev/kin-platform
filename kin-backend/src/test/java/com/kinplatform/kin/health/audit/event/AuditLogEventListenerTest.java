@@ -2,7 +2,7 @@ package com.kinplatform.common.audit.event;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import com.kinplatform.common.audit.InMemoryAuditLogRepository;
 import com.kinplatform.common.audit.config.AuditProperties;
 import com.kinplatform.common.audit.domain.AuditAction;
@@ -55,4 +55,5 @@ class AuditLogEventListenerTest {
         assertEquals(0, repo.all().size());
     }
 }
+
 

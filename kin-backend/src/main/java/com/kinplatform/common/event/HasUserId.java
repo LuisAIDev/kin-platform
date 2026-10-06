@@ -1,4 +1,4 @@
-package com.kinplatform.kin.event;
+package com.kinplatform.common.event;
 
 /**
  * Interfaz opcional para eventos que llevan un {@code userId}.

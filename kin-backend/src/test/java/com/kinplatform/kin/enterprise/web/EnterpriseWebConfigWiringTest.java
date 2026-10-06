@@ -19,8 +19,8 @@ import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
 import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
-import com.kinplatform.kin.eventbus.IdempotencyService;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
+import com.kinplatform.common.eventbus.IdempotencyService;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -95,4 +95,5 @@ class EnterpriseWebConfigWiringTest {
         verify(orchestrator).generateRequested(any(EnterpriseGenerationRequest.class), eq(1));
     }
 }
+
 

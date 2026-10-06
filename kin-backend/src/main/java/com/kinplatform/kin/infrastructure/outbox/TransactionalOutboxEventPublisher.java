@@ -2,12 +2,12 @@ package com.kinplatform.kin.infrastructure.outbox;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.HasUserId;
-import com.kinplatform.kin.eventbus.EventSerializationException;
-import com.kinplatform.kin.eventbus.domain.OutboxRecord;
-import com.kinplatform.kin.eventbus.domain.OutboxStatus;
-import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.HasUserId;
+import com.kinplatform.common.eventbus.EventSerializationException;
+import com.kinplatform.common.eventbus.domain.OutboxRecord;
+import com.kinplatform.common.eventbus.domain.OutboxStatus;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

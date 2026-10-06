@@ -8,7 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.event.DomainEventBus;
+import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.kin.health.common.exception.QuotaExceededException;
 import com.kinplatform.kin.health.physician.InMemoryPhysicianRepositories;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
@@ -494,3 +494,4 @@ class RelationshipServiceTest {
         assertEquals(RelationshipStatus.PENDING, invitation.status());
     }
 }
+

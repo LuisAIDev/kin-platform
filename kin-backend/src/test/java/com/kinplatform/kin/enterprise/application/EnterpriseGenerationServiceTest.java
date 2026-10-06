@@ -24,7 +24,7 @@ import com.kinplatform.kin.enterprise.events.EnterpriseProjectFailed;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectGenerated;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -437,3 +437,4 @@ class EnterpriseGenerationServiceTest {
             repository, eventBus, Runnable::run));
     }
 }
+

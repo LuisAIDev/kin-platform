@@ -37,8 +37,8 @@ import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.event.QuestionGeneratedEvent;
-import com.kinplatform.kin.event.ReportGeneratedEvent;
+import com.kinplatform.common.event.QuestionGeneratedEvent;
+import com.kinplatform.common.event.ReportGeneratedEvent;
 import com.kinplatform.common.pipeline.Pipeline;
 import com.kinplatform.common.pipeline.stage.AnalyzerStage;
 import com.kinplatform.common.pipeline.stage.ConsultorStage;
@@ -244,7 +244,7 @@ class ConversationOrchestratorPipelineIntegrationTest {
         var outcome = orchestrator.orchestrateStreamWithOutcome(turn());
         assertFalse(outcome.events().isEmpty());
         assertTrue(outcome.events().stream()
-                .anyMatch(e -> e instanceof com.kinplatform.kin.event.ConversationCompletedEvent));
+                .anyMatch(e -> e instanceof com.kinplatform.common.event.ConversationCompletedEvent));
     }
 
     @Test
@@ -298,6 +298,8 @@ class ConversationOrchestratorPipelineIntegrationTest {
         assertEquals(respuesta1, contenido1);
     }
 }
+
+
 
 
 

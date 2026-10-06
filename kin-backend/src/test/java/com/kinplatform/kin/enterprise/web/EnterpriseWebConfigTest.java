@@ -17,8 +17,8 @@ import com.kinplatform.kin.enterprise.application.EnterpriseRendererFactory;
 import com.kinplatform.kin.enterprise.application.InMemoryEnterpriseProjectRepository;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectAccessControl;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
-import com.kinplatform.kin.event.DomainEventBus;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.DomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import java.util.concurrent.Executor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -106,4 +106,5 @@ class EnterpriseWebConfigTest {
         }
     }
 }
+
 

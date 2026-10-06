@@ -9,7 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.eventbus.IdempotencyService;
+import com.kinplatform.common.eventbus.IdempotencyService;
 import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.PricingPlanRepository;
 import java.math.BigDecimal;
@@ -195,3 +195,4 @@ class WompiServiceTest {
         }
     }
 }
+

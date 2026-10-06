@@ -1,7 +1,7 @@
 package com.kinplatform.payment;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.eventbus.IdempotencyService;
+import com.kinplatform.common.eventbus.IdempotencyService;
 import com.kinplatform.pricing.PricingPlanRepository;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
@@ -296,3 +296,4 @@ public class WompiService implements PaymentGateway {
         return value == null || value.isBlank();
     }
 }
+

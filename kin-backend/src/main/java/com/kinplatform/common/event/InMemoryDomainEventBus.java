@@ -1,4 +1,4 @@
-package com.kinplatform.kin.event;
+package com.kinplatform.common.event;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,3 +36,4 @@ public class InMemoryDomainEventBus implements DomainEventBus {
         subscribers.clear();
     }
 }
+

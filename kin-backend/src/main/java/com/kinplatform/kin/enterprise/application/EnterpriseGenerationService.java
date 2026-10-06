@@ -45,7 +45,7 @@ import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
 import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
 import com.kinplatform.kin.enterprise.valueobjects.MarketPlan;
-import com.kinplatform.kin.event.DomainEventBus;
+import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.common.knowledge.KnowledgeResult;
 import com.kinplatform.platform.reporting.RecommendationResult;
 import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
@@ -519,6 +519,7 @@ public final class EnterpriseGenerationService {
         return value;
     }
 }
+
 
 
 

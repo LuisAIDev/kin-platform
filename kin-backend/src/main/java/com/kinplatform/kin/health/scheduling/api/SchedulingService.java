@@ -1,8 +1,8 @@
 package com.kinplatform.kin.health.scheduling.api;
 
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.DomainEventBus;
-import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.DomainEventBus;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.common.audit.api.AuditService;
 import com.kinplatform.common.audit.domain.AuditAction;
 import com.kinplatform.common.audit.domain.AuditResourceType;
@@ -372,4 +372,5 @@ public class SchedulingService {
         }
     }
 }
+
 

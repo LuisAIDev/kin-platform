@@ -25,7 +25,7 @@ import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
 import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
 import com.kinplatform.kin.enterprise.valueobjects.RenderFormat;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -497,4 +497,5 @@ class EnterpriseControllerTest {
                         dataProvider()));
     }
 }
+
 

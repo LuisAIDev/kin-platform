@@ -12,7 +12,7 @@ import com.kinplatform.kin.conversation.policy.TurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
-import com.kinplatform.kin.event.DomainEvent;
+import com.kinplatform.common.event.DomainEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -319,4 +319,5 @@ public class ConversationOrchestrator {
         }
     }
 }
+
 

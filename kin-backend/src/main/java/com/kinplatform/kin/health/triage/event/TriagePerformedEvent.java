@@ -1,7 +1,7 @@
 package com.kinplatform.kin.health.triage.event;
 
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.HasUserId;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.HasUserId;
 import com.kinplatform.kin.health.triage.domain.Urgency;
 import java.util.List;
 import java.util.UUID;
@@ -47,3 +47,4 @@ public record TriagePerformedEvent(
         return userId;
     }
 }
+

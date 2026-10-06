@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import com.kinplatform.kin.health.physician.api.PhysicianService;
 import com.kinplatform.kin.health.triage.domain.Urgency;
 import com.kinplatform.kin.health.triage.event.TriagePerformedEvent;
@@ -91,3 +91,4 @@ class ClinicalAlertEventListenerTest {
         assertEquals(0, bus.publishedEvents().size());
     }
 }
+

@@ -15,10 +15,10 @@ import static org.mockito.Mockito.when;
 import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.SaveMessageRequest;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.event.ConversationCompletedEvent;
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.ReportGeneratedEvent;
-import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
+import com.kinplatform.common.event.ConversationCompletedEvent;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.ReportGeneratedEvent;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.kin.infrastructure.outbox.TransactionalOutboxEventPublisher;
 import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.platform.reporting.report.model.ConsultingReport;
@@ -157,5 +157,6 @@ class ChatTurnFinalizationServiceTest {
         assertTrue(true);
     }
 }
+
 
 

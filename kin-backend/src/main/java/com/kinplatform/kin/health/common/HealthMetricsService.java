@@ -1,6 +1,6 @@
 package com.kinplatform.kin.health.common;
 
-import com.kinplatform.kin.event.DomainEventBus;
+import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.kin.health.telemedicine.event.TelemedicineEvent;
 import com.kinplatform.kin.health.triage.event.TriagePerformedEvent;
 import io.micrometer.core.instrument.Counter;
@@ -76,3 +76,4 @@ public class HealthMetricsService {
         }
     }
 }
+

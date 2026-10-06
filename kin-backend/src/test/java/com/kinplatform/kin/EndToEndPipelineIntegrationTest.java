@@ -20,10 +20,10 @@ import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.platform.enrichment.EnrichmentEngine;
-import com.kinplatform.kin.event.ConversationCompletedEvent;
-import com.kinplatform.kin.event.ReportGeneratedEvent;
-import com.kinplatform.kin.event.RiskDetectedEvent;
-import com.kinplatform.kin.event.ScoreCalculatedEvent;
+import com.kinplatform.common.event.ConversationCompletedEvent;
+import com.kinplatform.common.event.ReportGeneratedEvent;
+import com.kinplatform.common.event.RiskDetectedEvent;
+import com.kinplatform.common.event.ScoreCalculatedEvent;
 import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
 import com.kinplatform.common.pipeline.PipelineContext;
 import com.kinplatform.platform.scoring.ScoringEngine;
@@ -150,6 +150,7 @@ class EndToEndPipelineIntegrationTest {
         assertFalse(result.events().isEmpty());
     }
 }
+
 
 
 

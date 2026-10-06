@@ -3,7 +3,7 @@ package com.kinplatform.kin.enterprise.application;
 import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
-import com.kinplatform.kin.event.DomainEventBus;
+import com.kinplatform.common.event.DomainEventBus;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -70,3 +70,4 @@ public final class DefaultEnterpriseProjectTrigger implements EnterpriseProjectT
         return value;
     }
 }
+

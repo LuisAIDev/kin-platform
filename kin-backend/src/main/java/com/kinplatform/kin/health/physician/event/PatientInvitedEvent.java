@@ -1,7 +1,7 @@
 package com.kinplatform.kin.health.physician.event;
 
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.HasUserId;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.HasUserId;
 import java.util.UUID;
 
 /**
@@ -42,3 +42,4 @@ public record PatientInvitedEvent(
         return patientId;
     }
 }
+

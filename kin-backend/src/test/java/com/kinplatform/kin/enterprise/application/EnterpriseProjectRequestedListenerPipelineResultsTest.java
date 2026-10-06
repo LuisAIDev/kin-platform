@@ -3,7 +3,7 @@ package com.kinplatform.kin.enterprise.application;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -95,4 +95,5 @@ class EnterpriseProjectRequestedListenerPipelineResultsTest {
         assertTrue(request.knowledge().isEmpty());
     }
 }
+
 

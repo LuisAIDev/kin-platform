@@ -1,4 +1,4 @@
-package com.kinplatform.kin.event;
+package com.kinplatform.common.event;
 
 import java.util.Set;
 import java.util.UUID;
@@ -14,3 +14,4 @@ public record ProjectContextUpdatedEvent(
     @Override
     public Object aggregateId() { return projectId; }
 }
+

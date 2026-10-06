@@ -1,7 +1,7 @@
 package com.kinplatform.kin.health.telemedicine.event;
 
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.HasUserId;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.HasUserId;
 import java.util.UUID;
 
 /**
@@ -40,3 +40,4 @@ public record TelemedicineEvent(UUID userId, String eventName, UUID relatedId) i
         return new TelemedicineEvent(userId, "appointment_status", appointmentId);
     }
 }
+

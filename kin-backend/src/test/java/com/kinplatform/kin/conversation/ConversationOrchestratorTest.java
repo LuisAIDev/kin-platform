@@ -13,7 +13,7 @@ import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.policy.TurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.event.QuestionGeneratedEvent;
+import com.kinplatform.common.event.QuestionGeneratedEvent;
 import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -484,5 +484,6 @@ class ConversationOrchestratorTest {
         assertNull(orchestrator().orchestrateStreamWithOutcome(turn(List.of())));
     }
 }
+
 
 

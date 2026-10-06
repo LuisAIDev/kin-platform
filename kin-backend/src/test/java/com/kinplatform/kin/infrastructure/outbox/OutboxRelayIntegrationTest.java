@@ -1,12 +1,12 @@
 package com.kinplatform.kin.infrastructure.outbox;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.ReportGeneratedEvent;
-import com.kinplatform.kin.event.DomainEventBus;
-import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
-import com.kinplatform.kin.eventbus.domain.OutboxRecord;
-import com.kinplatform.kin.eventbus.domain.OutboxStatus;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.ReportGeneratedEvent;
+import com.kinplatform.common.event.DomainEventBus;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
+import com.kinplatform.common.eventbus.domain.OutboxRecord;
+import com.kinplatform.common.eventbus.domain.OutboxStatus;
 import com.kinplatform.kin.infrastructure.outbox.OutboxRecordRowMapper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -62,7 +62,7 @@ class OutboxRelayIntegrationTest extends com.kinplatform.test.PostgresTestSuppor
     @Autowired
     private MeterRegistry meterRegistry;
 
-    private static final String TEST_EVENT_TYPE = "com.kinplatform.kin.event.ReportGeneratedEvent";
+    private static final String TEST_EVENT_TYPE = "com.kinplatform.common.event.ReportGeneratedEvent";
 
     @BeforeEach
     void setUp() {
@@ -222,3 +222,4 @@ class OutboxRelayIntegrationTest extends com.kinplatform.test.PostgresTestSuppor
         return meterRegistry.find(name).counter().count();
     }
 }
+

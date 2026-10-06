@@ -1,9 +1,9 @@
 package com.kinplatform.kin.infrastructure.outbox;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.DomainEventBus;
-import com.kinplatform.kin.eventbus.domain.OutboxRecord;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.DomainEventBus;
+import com.kinplatform.common.eventbus.domain.OutboxRecord;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -256,3 +256,4 @@ public class OutboxRelay {
         return message.length() > 1000 ? message.substring(0, 1000) : message;
     }
 }
+

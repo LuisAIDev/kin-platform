@@ -30,7 +30,7 @@ import reactor.core.publisher.Flux;
  * Eventos) reciben siempre un {@code projectContext} no nulo.</p>
  *
  * <p><strong>Responsabilidad de eventos:</strong> el pipeline produce los
- * {@link com.kinplatform.kin.event.DomainEvent} y KinMethod los entrega como
+ * {@link com.kinplatform.common.event.DomainEvent} y KinMethod los entrega como
  * parte del resultado ({@link KinMethodResult#events()} /
  * {@link StreamingMethodOutcome}). KinMethod NO persiste eventos en el outbox:
  * esa publicación transaccional la realiza la capa de I/O
@@ -252,5 +252,6 @@ public class KinMethod {
                 result.riskResult()));
     }
 }
+
 
 

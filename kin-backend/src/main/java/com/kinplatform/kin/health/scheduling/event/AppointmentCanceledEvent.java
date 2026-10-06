@@ -1,7 +1,7 @@
 package com.kinplatform.kin.health.scheduling.event;
 
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.HasUserId;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.HasUserId;
 import java.util.UUID;
 
 /**
@@ -29,3 +29,4 @@ public record AppointmentCanceledEvent(UUID appointmentId, UUID patientId, UUID 
         return patientId;
     }
 }
+

@@ -3,8 +3,8 @@ package com.kinplatform.kin.conversation;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.QuestionGeneratedEvent;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.QuestionGeneratedEvent;
 import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import org.junit.jupiter.api.Test;
 
@@ -84,5 +84,6 @@ class TurnResultTest {
             context, decision, directive, "resp", null, null, List.of()));
     }
 }
+
 
 

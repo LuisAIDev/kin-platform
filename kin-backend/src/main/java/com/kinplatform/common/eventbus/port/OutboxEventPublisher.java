@@ -1,6 +1,6 @@
-package com.kinplatform.kin.eventbus.port;
+package com.kinplatform.common.eventbus.port;
 
-import com.kinplatform.kin.event.DomainEvent;
+import com.kinplatform.common.event.DomainEvent;
 
 /**
  * Puerto de dominio para publicar eventos en el Outbox transaccional.
@@ -11,7 +11,7 @@ import com.kinplatform.kin.event.DomainEvent;
  * o no se persiste nada.</p>
  *
  * <p>El relé ({@code OutboxRelay}) leerá posteriormente de la tabla y publicará
- * en el {@link com.kinplatform.kin.event.DomainEventBus} real (in-memory,
+ * en el {@link com.kinplatform.common.event.DomainEventBus} real (in-memory,
  * Kafka, etc.).</p>
  */
 public interface OutboxEventPublisher {
@@ -25,3 +25,5 @@ public interface OutboxEventPublisher {
      */
     void publish(DomainEvent event);
 }
+
+

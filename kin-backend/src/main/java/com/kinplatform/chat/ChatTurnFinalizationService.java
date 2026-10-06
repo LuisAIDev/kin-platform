@@ -3,8 +3,8 @@ package com.kinplatform.chat;
 import com.kinplatform.chat.dto.ChatMessageResponse;
 import com.kinplatform.chat.dto.SaveMessageRequest;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import java.util.List;
@@ -85,5 +85,6 @@ public class ChatTurnFinalizationService {
         return assistant;
     }
 }
+
 
 

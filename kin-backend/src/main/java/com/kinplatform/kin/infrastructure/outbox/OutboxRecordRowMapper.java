@@ -1,7 +1,7 @@
 package com.kinplatform.kin.infrastructure.outbox;
 
-import com.kinplatform.kin.eventbus.domain.OutboxRecord;
-import com.kinplatform.kin.eventbus.domain.OutboxStatus;
+import com.kinplatform.common.eventbus.domain.OutboxRecord;
+import com.kinplatform.common.eventbus.domain.OutboxStatus;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;

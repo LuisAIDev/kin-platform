@@ -10,8 +10,8 @@ import static org.mockito.Mockito.when;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
-import com.kinplatform.kin.event.DomainEventBus;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.DomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -90,4 +90,5 @@ class EnterpriseProjectRequestedListenerBudgetTest {
         verify(aiBudgetGate).clear();
     }
 }
+
 

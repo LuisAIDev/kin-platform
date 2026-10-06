@@ -1,4 +1,4 @@
-package com.kinplatform.kin.eventbus;
+package com.kinplatform.common.eventbus;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;

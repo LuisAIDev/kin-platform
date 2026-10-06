@@ -1,6 +1,6 @@
 package com.kinplatform.kin.health.physician.config;
 
-import com.kinplatform.kin.event.DomainEventBus;
+import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.kin.health.physician.api.PhysicianService;
 import com.kinplatform.kin.health.triage.domain.Urgency;
 import com.kinplatform.kin.health.triage.event.TriagePerformedEvent;
@@ -46,3 +46,4 @@ public class ClinicalAlertEventListener {
         }
     }
 }
+

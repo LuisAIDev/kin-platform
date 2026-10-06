@@ -13,7 +13,7 @@ import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.ConversationTurn;
 import com.kinplatform.kin.conversation.StreamingTurnOutcome;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.event.DomainEvent;
+import com.kinplatform.common.event.DomainEvent;
 import com.kinplatform.kin.export.intent.ExportAction;
 import com.kinplatform.kin.export.intent.ExportChatIntentService;
 import com.kinplatform.platform.reporting.report.ReportRepository;
@@ -860,5 +860,6 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         return messages;
     }
 }
+
 
 

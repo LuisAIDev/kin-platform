@@ -1,7 +1,7 @@
 package com.kinplatform.common.audit.api;
 
-import com.kinplatform.kin.event.DomainEventBus;
-import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
+import com.kinplatform.common.event.DomainEventBus;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.common.audit.config.AuditProperties;
 import com.kinplatform.common.audit.domain.AuditAction;
 import com.kinplatform.common.audit.domain.AuditResourceType;
@@ -126,5 +126,6 @@ public class AuditService {
         return null;
     }
 }
+
 
 

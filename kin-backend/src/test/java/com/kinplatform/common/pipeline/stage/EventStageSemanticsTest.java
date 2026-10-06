@@ -1,10 +1,10 @@
 package com.kinplatform.common.pipeline.stage;
 
-import com.kinplatform.kin.event.ConversationCompletedEvent;
-import com.kinplatform.kin.event.QuestionGeneratedEvent;
-import com.kinplatform.kin.event.ReportGeneratedEvent;
-import com.kinplatform.kin.event.RiskDetectedEvent;
-import com.kinplatform.kin.event.ScoreCalculatedEvent;
+import com.kinplatform.common.event.ConversationCompletedEvent;
+import com.kinplatform.common.event.QuestionGeneratedEvent;
+import com.kinplatform.common.event.ReportGeneratedEvent;
+import com.kinplatform.common.event.RiskDetectedEvent;
+import com.kinplatform.common.event.ScoreCalculatedEvent;
 import com.kinplatform.common.pipeline.PipelineContext;
 import com.kinplatform.platform.reporting.risk.RiskLevel;
 import org.junit.jupiter.api.Test;
@@ -124,6 +124,7 @@ class EventStageSemanticsTest {
         assertEquals("HIGH", event.severity());
     }
 }
+
 
 
 

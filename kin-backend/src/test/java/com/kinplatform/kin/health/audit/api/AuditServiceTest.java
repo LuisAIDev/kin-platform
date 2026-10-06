@@ -3,7 +3,7 @@ package com.kinplatform.common.audit.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import com.kinplatform.common.audit.config.AuditProperties;
 import com.kinplatform.common.audit.domain.AuditAction;
 import com.kinplatform.common.audit.domain.AuditResourceType;
@@ -74,4 +74,5 @@ class AuditServiceTest {
         assertTrue(true);
     }
 }
+
 

@@ -1,4 +1,4 @@
-package com.kinplatform.kin.eventbus.domain;
+package com.kinplatform.common.eventbus.domain;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;

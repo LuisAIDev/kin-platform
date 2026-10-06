@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.events;
 
-import com.kinplatform.kin.event.DomainEvent;
+import com.kinplatform.common.event.DomainEvent;
 
 import java.util.UUID;
 
@@ -27,3 +27,4 @@ public record EnterpriseProjectGenerated(UUID projectId, int version) implements
         return projectId;
     }
 }
+

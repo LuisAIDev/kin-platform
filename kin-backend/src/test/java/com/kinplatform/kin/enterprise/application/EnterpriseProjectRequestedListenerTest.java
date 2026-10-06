@@ -4,7 +4,7 @@ import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -127,4 +127,5 @@ class EnterpriseProjectRequestedListenerTest {
             () -> new EnterpriseProjectRequestedListener(orchestrator, contextRepository, eventBus, null));
     }
 }
+
 

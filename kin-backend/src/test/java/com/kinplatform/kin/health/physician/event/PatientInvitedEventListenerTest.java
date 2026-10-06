@@ -13,7 +13,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.kinplatform.auth.email.EmailSender;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -332,3 +332,4 @@ class PatientInvitedEventListenerTest {
                         anyString(), anyString(), anyString(), any(), anyString(), anyString(), anyBoolean());
     }
 }
+

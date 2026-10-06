@@ -19,7 +19,7 @@ import com.kinplatform.kin.enterprise.engine.FinancialPlanEngine;
 import com.kinplatform.kin.enterprise.engine.input.FinancialPlanInput;
 import com.kinplatform.kin.enterprise.integration.EnterpriseSupplementalInput;
 import com.kinplatform.kin.enterprise.integration.ResolvedValue;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import com.kinplatform.projectinfo.StructuredInfoSourceType;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
@@ -110,3 +110,4 @@ class EnterpriseGenerationSupplementalIntegrationTest {
         return engine;
     }
 }
+

@@ -21,9 +21,9 @@ import com.kinplatform.kin.conversation.CommunicationMode;
 import com.kinplatform.kin.conversation.ConversationPhase;
 import com.kinplatform.kin.conversation.TurnConstraints;
 import com.kinplatform.kin.conversation.TurnDirective;
-import com.kinplatform.kin.event.QuestionGeneratedEvent;
-import com.kinplatform.kin.event.ReportGeneratedEvent;
-import com.kinplatform.kin.event.ScoreCalculatedEvent;
+import com.kinplatform.common.event.QuestionGeneratedEvent;
+import com.kinplatform.common.event.ReportGeneratedEvent;
+import com.kinplatform.common.event.ScoreCalculatedEvent;
 import com.kinplatform.common.pipeline.Pipeline;
 import com.kinplatform.common.pipeline.stage.AnalyzerStage;
 import com.kinplatform.common.pipeline.stage.ConsultorStage;
@@ -176,7 +176,7 @@ class KinMethodTest {
 
         assertTrue(result.events().stream().anyMatch(e -> e instanceof QuestionGeneratedEvent));
         assertTrue(result.events().stream()
-                .anyMatch(e -> e instanceof com.kinplatform.kin.event.ConversationCompletedEvent));
+                .anyMatch(e -> e instanceof com.kinplatform.common.event.ConversationCompletedEvent));
     }
 
     @Test
@@ -219,7 +219,7 @@ class KinMethodTest {
         verify(contextRepository).save(eq(PROJECT_ID), any(ProjectContext.class));
         assertFalse(outcome.result().events().isEmpty());
         assertTrue(outcome.result().events().stream()
-                .anyMatch(e -> e instanceof com.kinplatform.kin.event.ConversationCompletedEvent));
+                .anyMatch(e -> e instanceof com.kinplatform.common.event.ConversationCompletedEvent));
     }
 
     @Test
@@ -256,6 +256,8 @@ class KinMethodTest {
         assertFalse(captor.getValue().systemPrompt().contains("## DIRECTIVA DE COMUNICACIÓN"));
     }
 }
+
+
 
 
 

@@ -1,13 +1,13 @@
-package com.kinplatform.kin.eventbus;
+package com.kinplatform.common.eventbus;
 
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.HasUserId;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.HasUserId;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.kin.infrastructure.outbox.TransactionalOutboxEventPublisher;
-import com.kinplatform.kin.event.ReportGeneratedEvent;
-import com.kinplatform.kin.eventbus.EventSerializationException;
+import com.kinplatform.common.event.ReportGeneratedEvent;
+import com.kinplatform.common.eventbus.EventSerializationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -138,7 +138,7 @@ class TransactionalOutboxEventPublisherTest {
     void publish_eventWithHasUserId_includesUserIdInMetadata() {
         // Verificar la lógica de buildMetadata directamente usando reflection
         try {
-            var buildMetadataMethod = publisher.getClass().getDeclaredMethod("buildMetadata", com.kinplatform.kin.event.DomainEvent.class);
+            var buildMetadataMethod = publisher.getClass().getDeclaredMethod("buildMetadata", com.kinplatform.common.event.DomainEvent.class);
             buildMetadataMethod.setAccessible(true);
             
             class TestEventWithUser implements DomainEvent, HasUserId {
@@ -170,7 +170,7 @@ class TransactionalOutboxEventPublisherTest {
     void publish_eventWithoutHasUserId_excludesUserIdFromMetadata() {
         // Verificar la lógica de buildMetadata directamente usando reflection
         try {
-            var buildMetadataMethod = publisher.getClass().getDeclaredMethod("buildMetadata", com.kinplatform.kin.event.DomainEvent.class);
+            var buildMetadataMethod = publisher.getClass().getDeclaredMethod("buildMetadata", com.kinplatform.common.event.DomainEvent.class);
             buildMetadataMethod.setAccessible(true);
             
             var event = new ReportGeneratedEvent(UUID.randomUUID(), "PDF");
@@ -182,3 +182,5 @@ class TransactionalOutboxEventPublisherTest {
         }
     }
 }
+
+

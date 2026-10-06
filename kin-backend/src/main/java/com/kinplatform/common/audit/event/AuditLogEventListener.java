@@ -1,6 +1,6 @@
 package com.kinplatform.common.audit.event;
 
-import com.kinplatform.kin.event.DomainEventBus;
+import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.common.audit.config.AuditProperties;
 import com.kinplatform.common.audit.domain.AuditLog;
 import com.kinplatform.common.audit.port.AuditLogRepository;
@@ -65,5 +65,6 @@ public class AuditLogEventListener {
         }
     }
 }
+
 
 

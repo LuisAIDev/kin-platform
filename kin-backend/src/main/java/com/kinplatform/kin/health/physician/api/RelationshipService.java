@@ -1,8 +1,8 @@
 package com.kinplatform.kin.health.physician.api;
 
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.DomainEventBus;
-import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.DomainEventBus;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.kin.health.common.exception.QuotaExceededException;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
 import com.kinplatform.kin.health.physician.domain.PhysicianPatientAssignment;
@@ -386,3 +386,4 @@ public class RelationshipService {
         return email.trim().toLowerCase();
     }
 }
+

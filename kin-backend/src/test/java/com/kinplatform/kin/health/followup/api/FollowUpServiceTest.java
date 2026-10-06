@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import com.kinplatform.kin.health.followup.InMemoryFollowUpRepositories;
 import com.kinplatform.kin.health.followup.config.FollowUpProperties;
 import com.kinplatform.kin.health.followup.domain.FollowUpFrequency;
@@ -314,4 +314,5 @@ class FollowUpServiceTest {
         assertFalse(service.pendingTaskCountForPatient(PATIENT) > 0);
     }
 }
+
 

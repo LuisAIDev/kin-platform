@@ -1,7 +1,7 @@
 package com.kinplatform.kin.infrastructure.outbox;
 
-import com.kinplatform.kin.event.ReportGeneratedEvent;
-import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
+import com.kinplatform.common.event.ReportGeneratedEvent;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

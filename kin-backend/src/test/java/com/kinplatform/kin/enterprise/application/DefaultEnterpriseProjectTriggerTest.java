@@ -2,7 +2,7 @@ package com.kinplatform.kin.enterprise.application;
 
 import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
@@ -111,3 +111,4 @@ class DefaultEnterpriseProjectTriggerTest {
             && requested.version() == 3);
     }
 }
+

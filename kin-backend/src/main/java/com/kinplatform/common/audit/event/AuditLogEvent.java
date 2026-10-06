@@ -1,7 +1,7 @@
 package com.kinplatform.common.audit.event;
 
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.HasUserId;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.HasUserId;
 import com.kinplatform.common.audit.domain.AuditAction;
 import com.kinplatform.common.audit.domain.AuditResourceType;
 import java.util.Map;
@@ -42,5 +42,6 @@ public record AuditLogEvent(
         return userId;
     }
 }
+
 
 

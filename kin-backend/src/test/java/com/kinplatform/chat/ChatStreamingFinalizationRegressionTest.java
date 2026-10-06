@@ -28,10 +28,10 @@ import com.kinplatform.kin.conversation.ConversationOrchestrator;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
-import com.kinplatform.kin.event.ConversationCompletedEvent;
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.QuestionGeneratedEvent;
-import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
+import com.kinplatform.common.event.ConversationCompletedEvent;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.QuestionGeneratedEvent;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.common.pipeline.Pipeline;
 import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.project.Project;
@@ -292,6 +292,7 @@ class ChatStreamingFinalizationRegressionTest {
         }
     }
 }
+
 
 
 

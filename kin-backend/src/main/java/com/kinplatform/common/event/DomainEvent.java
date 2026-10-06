@@ -1,4 +1,4 @@
-package com.kinplatform.kin.event;
+package com.kinplatform.common.event;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -11,3 +11,4 @@ public interface DomainEvent {
     String type();
     Object aggregateId();
 }
+

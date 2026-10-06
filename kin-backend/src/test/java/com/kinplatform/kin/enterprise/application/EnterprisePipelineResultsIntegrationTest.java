@@ -28,7 +28,7 @@ import com.kinplatform.kin.enterprise.engine.DefaultRiskPlanEngine;
 import com.kinplatform.kin.enterprise.engine.DefaultRoadmapEngine;
 import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import com.kinplatform.common.pipeline.Pipeline;
 import com.kinplatform.common.pipeline.PipelineContext;
 import com.kinplatform.common.pipeline.PipelineStage;
@@ -177,6 +177,7 @@ class EnterprisePipelineResultsIntegrationTest {
         return ProjectContext.restore(data, EnumSet.allOf(AnalyzedDimension.class), null, 5, false);
     }
 }
+
 
 
 

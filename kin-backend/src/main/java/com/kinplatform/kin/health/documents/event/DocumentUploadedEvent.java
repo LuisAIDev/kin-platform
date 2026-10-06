@@ -1,7 +1,7 @@
 package com.kinplatform.kin.health.documents.event;
 
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.HasUserId;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.HasUserId;
 import java.util.UUID;
 
 /**
@@ -29,3 +29,4 @@ public record DocumentUploadedEvent(UUID documentId, UUID patientId, UUID physic
         return patientId;
     }
 }
+

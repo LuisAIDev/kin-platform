@@ -1,4 +1,4 @@
-package com.kinplatform.kin.eventbus.domain;
+package com.kinplatform.common.eventbus.domain;
 
 /**
  * Estados del ciclo de vida de un mensaje en el Outbox transaccional.

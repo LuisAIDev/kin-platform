@@ -1,7 +1,7 @@
 package com.kinplatform.kin.health.differential.event;
 
-import com.kinplatform.kin.event.DomainEvent;
-import com.kinplatform.kin.event.HasUserId;
+import com.kinplatform.common.event.DomainEvent;
+import com.kinplatform.common.event.HasUserId;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,3 +27,4 @@ public record DifferentialPerformedEvent(UUID userId, UUID projectId, List<Strin
         return userId;
     }
 }
+

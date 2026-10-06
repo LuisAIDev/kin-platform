@@ -18,8 +18,8 @@ import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectAccessControl;
 import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
 import com.kinplatform.kin.enterprise.progress.EnterpriseProgressPublisher;
-import com.kinplatform.kin.event.DomainEventBus;
-import com.kinplatform.kin.eventbus.IdempotencyService;
+import com.kinplatform.common.event.DomainEventBus;
+import com.kinplatform.common.eventbus.IdempotencyService;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -231,4 +231,5 @@ public class EnterpriseWebConfig {
         };
     }
 }
+
 

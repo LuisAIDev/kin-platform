@@ -1,6 +1,6 @@
-package com.kinplatform.kin.eventbus;
+package com.kinplatform.common.eventbus;
 
-import com.kinplatform.kin.event.DomainEvent;
+import com.kinplatform.common.event.DomainEvent;
 
 /**
  * Excepción lanzada cuando falla la serialización de un evento de dominio
@@ -34,3 +34,4 @@ public class EventSerializationException extends RuntimeException {
         );
     }
 }
+

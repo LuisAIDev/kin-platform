@@ -1,7 +1,7 @@
 package com.kinplatform.kin.health.physician.event;
 
 import com.kinplatform.auth.email.EmailSender;
-import com.kinplatform.kin.event.DomainEventBus;
+import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -146,3 +146,4 @@ public class PatientInvitedEventListener {
         return frontendBaseUrl == null || frontendBaseUrl.isBlank() ? "http://localhost:3000" : frontendBaseUrl;
     }
 }
+

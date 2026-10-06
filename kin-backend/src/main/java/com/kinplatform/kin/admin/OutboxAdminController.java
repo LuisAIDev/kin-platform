@@ -1,6 +1,6 @@
 package com.kinplatform.kin.admin;
 
-import com.kinplatform.kin.eventbus.domain.OutboxRecord;
+import com.kinplatform.common.eventbus.domain.OutboxRecord;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
 import java.util.Map;
@@ -162,3 +162,4 @@ public class OutboxAdminController {
                 "topAggregates", byAggregate));
     }
 }
+

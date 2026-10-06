@@ -15,7 +15,7 @@ import com.kinplatform.kin.enterprise.engine.DefaultRiskPlanEngine;
 import com.kinplatform.kin.enterprise.engine.DefaultRoadmapEngine;
 import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
 import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
-import com.kinplatform.kin.event.InMemoryDomainEventBus;
+import com.kinplatform.common.event.InMemoryDomainEventBus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -107,3 +107,4 @@ class EnterpriseGenerationServiceNarrativeTest {
             EngineTestFixtures.knowledge(0.8), EngineTestFixtures.riskResult(0.8));
     }
 }
+
