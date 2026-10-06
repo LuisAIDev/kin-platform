@@ -19,14 +19,14 @@ import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.enrichment.EnrichmentEngine;
+import com.kinplatform.platform.enrichment.EnrichmentEngine;
 import com.kinplatform.kin.event.ConversationCompletedEvent;
 import com.kinplatform.kin.event.ReportGeneratedEvent;
 import com.kinplatform.kin.event.RiskDetectedEvent;
 import com.kinplatform.kin.event.ScoreCalculatedEvent;
 import com.kinplatform.kin.knowledge.engine.KnowledgeEngine;
 import com.kinplatform.kin.pipeline.PipelineContext;
-import com.kinplatform.kin.scoring.ScoringEngine;
+import com.kinplatform.platform.scoring.ScoringEngine;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -150,4 +150,6 @@ class EndToEndPipelineIntegrationTest {
         assertFalse(result.events().isEmpty());
     }
 }
+
+
 

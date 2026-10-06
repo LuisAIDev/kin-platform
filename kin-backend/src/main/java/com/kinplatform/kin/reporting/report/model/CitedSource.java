@@ -1,6 +1,6 @@
 package com.kinplatform.kin.reporting.report.model;
 
-import com.kinplatform.kin.enrichment.EvidenceCategory;
+import com.kinplatform.platform.enrichment.EvidenceCategory;
 
 /**
  * Fuente externa citada en el reporte (ADR-016, Etapa E5). Value Object
@@ -27,3 +27,4 @@ public record CitedSource(
         return sourceId.isBlank() && url.isBlank() && claim.isBlank();
     }
 }
+

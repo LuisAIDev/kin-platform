@@ -283,8 +283,8 @@ class ChatStreamingFinalizationRegressionTest {
                             new com.kinplatform.common.context.strategy.ConversationStrategist(
                                     new com.kinplatform.common.context.strategy.DefaultExplorationStrategy(
                                             com.kinplatform.common.context.ExplorationPriority.defaultPriorities()))),
-                    new com.kinplatform.kin.pipeline.stage.ScoringStage(new com.kinplatform.kin.scoring.ScoringEngine(
-                            com.kinplatform.kin.scoring.ScoringModel.defaultModel())),
+                    new com.kinplatform.kin.pipeline.stage.ScoringStage(new com.kinplatform.platform.scoring.ScoringEngine(
+                            com.kinplatform.platform.scoring.ScoringModel.defaultModel())),
                     new com.kinplatform.kin.pipeline.stage.ConsultorStage(
                             aiResponder, promptAssembler, new ResponseGuard()),
                     new com.kinplatform.kin.pipeline.stage.EventStage()));
@@ -292,5 +292,6 @@ class ChatStreamingFinalizationRegressionTest {
         }
     }
 }
+
 
 

@@ -10,7 +10,7 @@ import com.kinplatform.kin.reporting.risk.MarketRiskAnalyzer;
 import com.kinplatform.kin.reporting.risk.RiskEngine;
 import com.kinplatform.kin.reporting.risk.RiskModel;
 import com.kinplatform.kin.reporting.risk.RiskResult;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -79,4 +79,5 @@ class RiskStageTest {
                 || r.category() == com.kinplatform.kin.reporting.risk.RiskCategory.MARKET));
     }
 }
+
 

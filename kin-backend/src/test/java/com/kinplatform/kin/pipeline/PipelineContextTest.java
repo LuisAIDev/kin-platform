@@ -1,11 +1,11 @@
 package com.kinplatform.kin.pipeline;
 
 import com.kinplatform.common.context.AnalyzedDimension;
-import com.kinplatform.kin.enrichment.EnrichmentResult;
-import com.kinplatform.kin.enrichment.EvidenceCategory;
-import com.kinplatform.kin.enrichment.EvidenceRank;
-import com.kinplatform.kin.enrichment.EvidenceScore;
-import com.kinplatform.kin.enrichment.KnowledgeEvidence;
+import com.kinplatform.platform.enrichment.EnrichmentResult;
+import com.kinplatform.platform.enrichment.EvidenceCategory;
+import com.kinplatform.platform.enrichment.EvidenceRank;
+import com.kinplatform.platform.enrichment.EvidenceScore;
+import com.kinplatform.platform.enrichment.KnowledgeEvidence;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
 import com.kinplatform.kin.knowledge.SourceTrust;
 import org.junit.jupiter.api.Test;
@@ -114,11 +114,13 @@ class PipelineContextTest {
     void enrichmentResult_deberiaSerAditivoAlFlujoDeDatosDelPipeline() {
         var ctx = context();
         ctx.projectContext(com.kinplatform.common.context.ProjectContext.fromProject("P", "D", "C"));
-        ctx.withEnrichmentResult(com.kinplatform.kin.enrichment.EnrichmentResult.empty());
+        ctx.withEnrichmentResult(com.kinplatform.platform.enrichment.EnrichmentResult.empty());
 
         assertEquals("P", ctx.projectContext().value(AnalyzedDimension.PROJECT_NAME));
         assertTrue(ctx.enrichmentResult().isEmpty());
     }
 }
+
+
 
 

@@ -3,7 +3,7 @@ package com.kinplatform.common.engine;
 import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -111,5 +111,6 @@ class EngineExecutorTest {
         assertEquals(List.of("b", "a"), results.stream().map(e -> e.result().value()).toList());
     }
 }
+
 
 

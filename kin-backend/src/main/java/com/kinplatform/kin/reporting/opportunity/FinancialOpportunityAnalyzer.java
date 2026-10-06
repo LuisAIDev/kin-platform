@@ -2,10 +2,10 @@ package com.kinplatform.kin.reporting.opportunity;
 
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.CompletenessEvaluation;
-import com.kinplatform.kin.enrichment.EnrichmentResult;
-import com.kinplatform.kin.enrichment.EvidenceCategory;
-import com.kinplatform.kin.enrichment.EvidenceRank;
-import com.kinplatform.kin.enrichment.KnowledgeEvidence;
+import com.kinplatform.platform.enrichment.EnrichmentResult;
+import com.kinplatform.platform.enrichment.EvidenceCategory;
+import com.kinplatform.platform.enrichment.EvidenceRank;
+import com.kinplatform.platform.enrichment.KnowledgeEvidence;
 import com.kinplatform.kin.reporting.EffortLevel;
 import com.kinplatform.kin.reporting.ImpactLevel;
 import java.util.ArrayList;
@@ -180,4 +180,5 @@ public class FinancialOpportunityAnalyzer implements OpportunityAnalyzer {
         return fact.claim() + " (fuente: " + source + ")";
     }
 }
+
 

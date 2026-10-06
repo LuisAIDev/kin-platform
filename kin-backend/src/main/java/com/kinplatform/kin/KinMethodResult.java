@@ -5,7 +5,7 @@ import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 
 import java.util.List;
 
@@ -19,4 +19,5 @@ public record KinMethodResult(
     ConsultingReport consultingReport
 ) {
 }
+
 

@@ -19,7 +19,7 @@ import com.kinplatform.kin.reporting.risk.RiskCategory;
 import com.kinplatform.kin.reporting.risk.RiskExplanation;
 import com.kinplatform.kin.reporting.risk.RiskLevel;
 import com.kinplatform.kin.reporting.risk.RiskResult;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 
 import java.util.List;
 import java.util.Map;
@@ -107,4 +107,5 @@ public final class TestReportInputs {
             ConversationDecision.generateReport("ok"), score(), recommendation(), risk(), opportunity());
     }
 }
+
 

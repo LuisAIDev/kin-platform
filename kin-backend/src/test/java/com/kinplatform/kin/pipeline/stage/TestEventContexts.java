@@ -10,7 +10,7 @@ import com.kinplatform.kin.reporting.risk.RiskCategory;
 import com.kinplatform.kin.reporting.risk.RiskExplanation;
 import com.kinplatform.kin.reporting.risk.RiskLevel;
 import com.kinplatform.kin.reporting.risk.RiskResult;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 
 import java.util.List;
 import java.util.Map;
@@ -64,4 +64,5 @@ final class TestEventContexts {
             List.of("rule"), AnalyzedDimension.COMPETITION, "RiskEngine");
     }
 }
+
 

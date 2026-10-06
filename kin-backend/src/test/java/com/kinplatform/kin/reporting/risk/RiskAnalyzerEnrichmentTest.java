@@ -5,14 +5,14 @@ import com.kinplatform.common.context.AnalysisResult;
 import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.enrichment.EnrichmentResult;
-import com.kinplatform.kin.enrichment.EvidenceCategory;
-import com.kinplatform.kin.enrichment.EvidenceRank;
-import com.kinplatform.kin.enrichment.EvidenceScore;
-import com.kinplatform.kin.enrichment.KnowledgeEvidence;
+import com.kinplatform.platform.enrichment.EnrichmentResult;
+import com.kinplatform.platform.enrichment.EvidenceCategory;
+import com.kinplatform.platform.enrichment.EvidenceRank;
+import com.kinplatform.platform.enrichment.EvidenceScore;
+import com.kinplatform.platform.enrichment.KnowledgeEvidence;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
 import com.kinplatform.kin.knowledge.SourceTrust;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
@@ -165,4 +165,6 @@ class RiskAnalyzerEnrichmentTest {
         return risks.stream().anyMatch(r -> r.appliedRules().contains(rule));
     }
 }
+
+
 

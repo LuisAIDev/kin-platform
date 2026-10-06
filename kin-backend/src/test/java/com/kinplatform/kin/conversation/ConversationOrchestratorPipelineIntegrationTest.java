@@ -73,8 +73,8 @@ import com.kinplatform.kin.reporting.risk.BusinessRiskAnalyzer;
 import com.kinplatform.kin.reporting.risk.MarketRiskAnalyzer;
 import com.kinplatform.kin.reporting.risk.RiskEngine;
 import com.kinplatform.kin.reporting.risk.RiskModel;
-import com.kinplatform.kin.scoring.ScoringEngine;
-import com.kinplatform.kin.scoring.ScoringModel;
+import com.kinplatform.platform.scoring.ScoringEngine;
+import com.kinplatform.platform.scoring.ScoringModel;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
@@ -298,5 +298,6 @@ class ConversationOrchestratorPipelineIntegrationTest {
         assertEquals(respuesta1, contenido1);
     }
 }
+
 
 

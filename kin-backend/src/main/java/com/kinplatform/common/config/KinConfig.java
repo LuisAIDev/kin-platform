@@ -38,9 +38,9 @@ import com.kinplatform.kin.conversation.validation.ResponseGuard;
 import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.common.engine.EngineExecutor;
 import com.kinplatform.common.engine.EngineRegistry;
-import com.kinplatform.kin.enrichment.EnrichmentEngine;
-import com.kinplatform.kin.enrichment.FactRanker;
-import com.kinplatform.kin.enrichment.stage.EnrichmentStage;
+import com.kinplatform.platform.enrichment.EnrichmentEngine;
+import com.kinplatform.platform.enrichment.FactRanker;
+import com.kinplatform.platform.enrichment.stage.EnrichmentStage;
 import com.kinplatform.kin.enterprise.application.EnterprisePipelineResultStore;
 import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
 import com.kinplatform.kin.event.DomainEventBus;
@@ -113,8 +113,8 @@ import com.kinplatform.kin.reporting.risk.RiskAnalyzer;
 import com.kinplatform.kin.reporting.risk.RiskEngine;
 import com.kinplatform.kin.reporting.risk.RiskModel;
 import com.kinplatform.kin.reporting.risk.TechnicalRiskAnalyzer;
-import com.kinplatform.kin.scoring.ScoringEngine;
-import com.kinplatform.kin.scoring.ScoringModel;
+import com.kinplatform.platform.scoring.ScoringEngine;
+import com.kinplatform.platform.scoring.ScoringModel;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -670,5 +670,7 @@ public class KinConfig {
                 historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository, enterpriseProjectTrigger);
     }
 }
+
+
 
 

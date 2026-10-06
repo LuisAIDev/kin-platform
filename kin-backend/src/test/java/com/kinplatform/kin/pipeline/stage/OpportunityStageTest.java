@@ -11,7 +11,7 @@ import com.kinplatform.kin.reporting.opportunity.OpportunityCategory;
 import com.kinplatform.kin.reporting.opportunity.OpportunityEngine;
 import com.kinplatform.kin.reporting.opportunity.OpportunityModel;
 import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -82,4 +82,5 @@ class OpportunityStageTest {
         assertNotNull(ctx.engineResult(OpportunityEngine.GENERATOR_NAME));
     }
 }
+
 

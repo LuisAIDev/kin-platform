@@ -5,7 +5,7 @@ import com.kinplatform.common.context.AnalysisResult;
 import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
@@ -331,4 +331,5 @@ class RecommendationEngineTest {
         assertTrue(r1.confidence() >= 0.0 && r1.confidence() <= 1.0);
     }
 }
+
 

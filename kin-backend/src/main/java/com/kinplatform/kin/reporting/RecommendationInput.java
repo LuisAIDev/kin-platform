@@ -4,8 +4,8 @@ import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.common.engine.EngineInput;
-import com.kinplatform.kin.enrichment.EnrichmentResult;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.enrichment.EnrichmentResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 
 /**
  * Entrada tipada para el RecommendationEngine. Solo consume información
@@ -42,5 +42,7 @@ public record RecommendationInput(
         return new RecommendationInput(projectContext, evaluation, decision, score, enrichment);
     }
 }
+
+
 
 

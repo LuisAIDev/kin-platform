@@ -9,7 +9,7 @@ import com.kinplatform.kin.reporting.RecommendationEngine;
 import com.kinplatform.kin.reporting.RecommendationInput;
 import com.kinplatform.kin.reporting.RecommendationModel;
 import com.kinplatform.kin.reporting.RecommendationResult;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -77,4 +77,5 @@ class EngineStageTest {
         assertEquals(1, ctx.engineResults().size());
     }
 }
+
 

@@ -6,7 +6,7 @@ import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.common.engine.EngineResult;
-import com.kinplatform.kin.enrichment.EnrichmentResult;
+import com.kinplatform.platform.enrichment.EnrichmentResult;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.health.differential.domain.DifferentialResult;
 import com.kinplatform.kin.health.triage.domain.TriageResult;
@@ -17,7 +17,7 @@ import com.kinplatform.kin.reporting.RecommendationResult;
 import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 import com.kinplatform.kin.reporting.risk.RiskResult;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -320,6 +320,8 @@ public class PipelineContext {
         this.responseValidation = validation;
     }
 }
+
+
 
 
 

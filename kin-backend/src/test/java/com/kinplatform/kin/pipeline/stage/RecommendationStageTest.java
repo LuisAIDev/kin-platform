@@ -8,7 +8,7 @@ import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.reporting.RecommendationEngine;
 import com.kinplatform.kin.reporting.RecommendationModel;
 import com.kinplatform.kin.reporting.RecommendationResult;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -74,4 +74,5 @@ class RecommendationStageTest {
         assertEquals(RecommendationEngine.GENERATOR_NAME, rr.generatedBy());
     }
 }
+
 

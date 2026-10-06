@@ -6,7 +6,7 @@ import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.common.engine.EngineMetadata;
 import com.kinplatform.common.engine.EnginePhase;
 import com.kinplatform.common.engine.EngineType;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -391,5 +391,6 @@ public class RecommendationEngine implements DomainEngine<RecommendationInput, R
         }
     }
 }
+
 
 

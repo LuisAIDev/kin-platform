@@ -2,9 +2,9 @@ package com.kinplatform.kin.pipeline.stage;
 
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
-import com.kinplatform.kin.scoring.ScoringEngine;
-import com.kinplatform.kin.scoring.ScoringInput;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoringEngine;
+import com.kinplatform.platform.scoring.ScoringInput;
+import com.kinplatform.platform.scoring.ScoreResult;
 
 /**
  * Etapa del pipeline que ejecuta el {@link ScoringEngine}.
@@ -48,3 +48,4 @@ public class ScoringStage implements PipelineStage {
         return delegate.execute(context);
     }
 }
+

@@ -5,7 +5,7 @@ import com.kinplatform.common.context.AnalysisResult;
 import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -267,4 +267,5 @@ class RiskEngineTest {
         assertTrue(result.risks().stream().allMatch(r -> r.category() == RiskCategory.BUSINESS));
     }
 }
+
 

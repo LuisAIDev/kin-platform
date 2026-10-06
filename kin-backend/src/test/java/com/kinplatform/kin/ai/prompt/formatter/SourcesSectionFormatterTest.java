@@ -1,6 +1,6 @@
 package com.kinplatform.kin.ai.prompt.formatter;
 
-import com.kinplatform.kin.enrichment.EvidenceCategory;
+import com.kinplatform.platform.enrichment.EvidenceCategory;
 import com.kinplatform.kin.reporting.report.model.CitedSource;
 import com.kinplatform.kin.reporting.report.model.ReportSectionKind;
 import com.kinplatform.kin.reporting.report.model.SourcesSection;
@@ -58,3 +58,4 @@ class SourcesSectionFormatterTest {
         assertFalse(output.contains("https://"));
     }
 }
+

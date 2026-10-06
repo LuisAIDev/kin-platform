@@ -8,7 +8,7 @@ import com.kinplatform.kin.reporting.RecommendationResult;
 import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
 import com.kinplatform.kin.reporting.report.model.ReportSection;
 import com.kinplatform.kin.reporting.risk.RiskResult;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -59,5 +59,6 @@ class ReportInputTest {
         assertEquals(AnalyzedDimension.PROJECT_NAME, AnalyzedDimension.PROJECT_NAME);
     }
 }
+
 
 

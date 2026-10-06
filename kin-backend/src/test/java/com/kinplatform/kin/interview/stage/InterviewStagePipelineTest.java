@@ -60,8 +60,8 @@ import com.kinplatform.kin.reporting.risk.BusinessRiskAnalyzer;
 import com.kinplatform.kin.reporting.risk.MarketRiskAnalyzer;
 import com.kinplatform.kin.reporting.risk.RiskEngine;
 import com.kinplatform.kin.reporting.risk.RiskModel;
-import com.kinplatform.kin.scoring.ScoringEngine;
-import com.kinplatform.kin.scoring.ScoringModel;
+import com.kinplatform.platform.scoring.ScoringEngine;
+import com.kinplatform.platform.scoring.ScoringModel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -307,5 +307,6 @@ class InterviewStagePipelineTest {
         };
     }
 }
+
 
 

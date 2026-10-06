@@ -22,7 +22,7 @@ import com.kinplatform.kin.reporting.report.assembler.RisksSectionAssembler;
 import com.kinplatform.kin.reporting.report.assembler.ScoresSectionAssembler;
 import com.kinplatform.kin.reporting.report.model.ConsultingReport;
 import com.kinplatform.kin.reporting.risk.RiskResult;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -112,4 +112,5 @@ class ReportStageTest {
         assertEquals(report, ctx.engineResult(ReportEngine.GENERATOR_NAME));
     }
 }
+
 

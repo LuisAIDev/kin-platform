@@ -17,9 +17,9 @@ import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.enrichment.EnrichmentEngine;
-import com.kinplatform.kin.enrichment.FactRanker;
-import com.kinplatform.kin.enrichment.stage.EnrichmentStage;
+import com.kinplatform.platform.enrichment.EnrichmentEngine;
+import com.kinplatform.platform.enrichment.FactRanker;
+import com.kinplatform.platform.enrichment.stage.EnrichmentStage;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.knowledge.SourceTrust;
@@ -42,7 +42,7 @@ import com.kinplatform.kin.reporting.report.assembler.RisksSectionAssembler;
 import com.kinplatform.kin.reporting.report.assembler.ScoresSectionAssembler;
 import com.kinplatform.kin.reporting.report.model.SourcesSection;
 import com.kinplatform.kin.reporting.risk.RiskResult;
-import com.kinplatform.kin.scoring.ScoreResult;
+import com.kinplatform.platform.scoring.ScoreResult;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
@@ -149,4 +149,6 @@ class ReportPromptSourcesIntegrationTest {
             new SourcesSectionFormatter()));
     }
 }
+
+
 

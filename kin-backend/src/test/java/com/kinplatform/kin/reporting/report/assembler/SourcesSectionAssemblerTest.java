@@ -1,10 +1,10 @@
 package com.kinplatform.kin.reporting.report.assembler;
 
-import com.kinplatform.kin.enrichment.EnrichmentResult;
-import com.kinplatform.kin.enrichment.EvidenceCategory;
-import com.kinplatform.kin.enrichment.EvidenceRank;
-import com.kinplatform.kin.enrichment.EvidenceScore;
-import com.kinplatform.kin.enrichment.KnowledgeEvidence;
+import com.kinplatform.platform.enrichment.EnrichmentResult;
+import com.kinplatform.platform.enrichment.EvidenceCategory;
+import com.kinplatform.platform.enrichment.EvidenceRank;
+import com.kinplatform.platform.enrichment.EvidenceScore;
+import com.kinplatform.platform.enrichment.KnowledgeEvidence;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
 import com.kinplatform.kin.knowledge.SourceTrust;
 import com.kinplatform.kin.reporting.report.TestReportInputs;
@@ -88,3 +88,4 @@ class SourcesSectionAssemblerTest {
             List.of(new KnowledgeEvidence(fact, EvidenceScore.of(score, category, "Relevante."))));
     }
 }
+

@@ -23,9 +23,9 @@ import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.context.strategy.ConversationStrategist;
 import com.kinplatform.common.context.strategy.DefaultExplorationStrategy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
-import com.kinplatform.kin.enrichment.EnrichmentEngine;
-import com.kinplatform.kin.enrichment.FactRanker;
-import com.kinplatform.kin.enrichment.stage.EnrichmentStage;
+import com.kinplatform.platform.enrichment.EnrichmentEngine;
+import com.kinplatform.platform.enrichment.FactRanker;
+import com.kinplatform.platform.enrichment.stage.EnrichmentStage;
 import com.kinplatform.kin.interview.InMemoryInterviewRepository;
 import com.kinplatform.kin.interview.InterviewAnswer;
 import com.kinplatform.kin.interview.InterviewQuestion;
@@ -78,8 +78,8 @@ import com.kinplatform.kin.reporting.risk.BusinessRiskAnalyzer;
 import com.kinplatform.kin.reporting.risk.MarketRiskAnalyzer;
 import com.kinplatform.kin.reporting.risk.RiskEngine;
 import com.kinplatform.kin.reporting.risk.RiskModel;
-import com.kinplatform.kin.scoring.ScoringEngine;
-import com.kinplatform.kin.scoring.ScoringModel;
+import com.kinplatform.platform.scoring.ScoringEngine;
+import com.kinplatform.platform.scoring.ScoringModel;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.EnumMap;
@@ -250,5 +250,7 @@ public final class TestIntegrationPipeline {
         }
     }
 }
+
+
 
 

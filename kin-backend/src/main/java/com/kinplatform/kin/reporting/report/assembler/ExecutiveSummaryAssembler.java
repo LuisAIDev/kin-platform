@@ -31,7 +31,7 @@ public class ExecutiveSummaryAssembler implements SectionAssembler<ExecutiveSumm
             highlights);
     }
 
-    private String buildSummaryText(ReportInput input, com.kinplatform.kin.scoring.ScoreResult score) {
+    private String buildSummaryText(ReportInput input, com.kinplatform.platform.scoring.ScoreResult score) {
         var evaluation = input.evaluation();
         return "El proyecto \u00AB" + input.projectTitle() + "\u00BB alcanza una cobertura del "
             + Math.round(evaluation.coveragePercent() * 100) + "% y un score de " + score.totalScore()
@@ -41,3 +41,4 @@ public class ExecutiveSummaryAssembler implements SectionAssembler<ExecutiveSumm
             + input.opportunity().opportunities().size() + " oportunidades.";
     }
 }
+
