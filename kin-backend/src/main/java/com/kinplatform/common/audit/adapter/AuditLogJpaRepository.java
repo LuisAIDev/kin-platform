@@ -1,7 +1,7 @@
-package com.kinplatform.kin.health.audit.adapter;
+package com.kinplatform.common.audit.adapter;
 
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -46,3 +46,5 @@ public interface AuditLogJpaRepository extends JpaRepository<AuditLogEntity, UUI
             @Param("end") OffsetDateTime end,
             Pageable pageable);
 }
+
+

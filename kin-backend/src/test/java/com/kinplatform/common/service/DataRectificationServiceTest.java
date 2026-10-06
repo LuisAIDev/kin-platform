@@ -2,7 +2,7 @@ package com.kinplatform.common.service;
 
 import com.kinplatform.common.entity.DataRectificationRequest;
 import com.kinplatform.common.repository.DataRectificationRepository;
-import com.kinplatform.kin.health.audit.adapter.AuditLogJpaRepository;
+import com.kinplatform.common.audit.adapter.AuditLogJpaRepository;
 import com.kinplatform.kin.health.hce.entity.PatientIdentification;
 import com.kinplatform.kin.health.hce.repository.PatientIdentificationRepository;
 import com.kinplatform.user.User;

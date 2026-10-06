@@ -83,7 +83,7 @@ class PilotOnboardingServiceTest {
     }
 
     private PilotOnboardingService service() {
-        var auditProps = new com.kinplatform.kin.health.audit.config.AuditProperties();
+        var auditProps = new com.kinplatform.common.audit.config.AuditProperties();
         auditProps.setEnabled(false);
         var physicianService = new PhysicianService(
                 physicianRepos.patientRepository(),
@@ -94,7 +94,7 @@ class PilotOnboardingServiceTest {
                 new PhysicianProperties(),
                 new com.kinplatform.kin.health.physician.access.RelationshipAccessValidator(
                         physicianRepos.patientRepository()),
-                new com.kinplatform.kin.health.audit.api.AuditService(null, null, null, auditProps),
+                new com.kinplatform.common.audit.api.AuditService(null, null, null, auditProps),
                 healthQuotaPort());
         return new PilotOnboardingService(userRepository, passwordEncoder, physicianService);
     }
@@ -150,3 +150,4 @@ class PilotOnboardingServiceTest {
         assertEquals(2, result.usersCreated());
     }
 }
+

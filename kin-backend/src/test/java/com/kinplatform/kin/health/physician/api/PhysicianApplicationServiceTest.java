@@ -12,9 +12,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.health.audit.api.AuditService;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.api.AuditService;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
@@ -82,7 +82,7 @@ class PhysicianApplicationServiceTest {
         assertEquals(PhysicianVerificationStatus.PENDING, status);
         verify(auditService).logAccessFromPrincipal(
                 eq(AuditAction.PHYSICIAN_APPLICATION_REQUESTED),
-                eq(com.kinplatform.kin.health.audit.domain.AuditResourceType.USER),
+                eq(com.kinplatform.common.audit.domain.AuditResourceType.USER),
                 any(),
                 eq(null),
                 argThat(details -> "CEDULA-12345".equals(details.get("licenseNumber"))

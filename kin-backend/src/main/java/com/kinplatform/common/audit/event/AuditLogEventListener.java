@@ -1,9 +1,9 @@
-package com.kinplatform.kin.health.audit.event;
+package com.kinplatform.common.audit.event;
 
 import com.kinplatform.kin.event.DomainEventBus;
-import com.kinplatform.kin.health.audit.config.AuditProperties;
-import com.kinplatform.kin.health.audit.domain.AuditLog;
-import com.kinplatform.kin.health.audit.port.AuditLogRepository;
+import com.kinplatform.common.audit.config.AuditProperties;
+import com.kinplatform.common.audit.domain.AuditLog;
+import com.kinplatform.common.audit.port.AuditLogRepository;
 import jakarta.annotation.PostConstruct;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -65,3 +65,5 @@ public class AuditLogEventListener {
         }
     }
 }
+
+

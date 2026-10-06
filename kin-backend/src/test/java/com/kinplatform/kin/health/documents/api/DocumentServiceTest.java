@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.kinplatform.kin.event.InMemoryDomainEventBus;
-import com.kinplatform.kin.health.audit.api.AuditService;
-import com.kinplatform.kin.health.audit.config.AuditProperties;
+import com.kinplatform.common.audit.api.AuditService;
+import com.kinplatform.common.audit.config.AuditProperties;
 import com.kinplatform.kin.health.documents.InMemoryClinicalDocumentRepository;
 import com.kinplatform.kin.health.documents.config.DocumentProperties;
 import com.kinplatform.kin.health.documents.event.DocumentUploadedEvent;
@@ -190,3 +190,4 @@ class DocumentServiceTest {
                 () -> service.listMyDocuments(PATIENT));
     }
 }
+

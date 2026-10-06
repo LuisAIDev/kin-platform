@@ -1,12 +1,12 @@
-package com.kinplatform.kin.health.audit.event;
+package com.kinplatform.common.audit.event;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.kinplatform.kin.event.InMemoryDomainEventBus;
-import com.kinplatform.kin.health.audit.InMemoryAuditLogRepository;
-import com.kinplatform.kin.health.audit.config.AuditProperties;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.InMemoryAuditLogRepository;
+import com.kinplatform.common.audit.config.AuditProperties;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -55,3 +55,4 @@ class AuditLogEventListenerTest {
         assertEquals(0, repo.all().size());
     }
 }
+

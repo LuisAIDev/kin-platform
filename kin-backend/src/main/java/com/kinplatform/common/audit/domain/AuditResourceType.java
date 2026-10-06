@@ -1,4 +1,4 @@
-package com.kinplatform.kin.health.audit.domain;
+package com.kinplatform.common.audit.domain;
 
 /**
  * Tipos de recurso de salud accedidos (ADR-035).
@@ -21,3 +21,4 @@ public enum AuditResourceType {
     /** Suministro MIPRES. */
     MIPRES_SUPPLY
 }
+

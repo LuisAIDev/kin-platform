@@ -1,13 +1,13 @@
-package com.kinplatform.kin.health.audit.api;
+package com.kinplatform.common.audit.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.kinplatform.kin.event.InMemoryDomainEventBus;
-import com.kinplatform.kin.health.audit.config.AuditProperties;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
-import com.kinplatform.kin.health.audit.event.AuditLogEvent;
+import com.kinplatform.common.audit.config.AuditProperties;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.event.AuditLogEvent;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -74,3 +74,4 @@ class AuditServiceTest {
         assertTrue(true);
     }
 }
+

@@ -1,8 +1,8 @@
-package com.kinplatform.kin.health.audit.port;
+package com.kinplatform.common.audit.port;
 
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditLog;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditLog;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,3 +32,5 @@ public interface AuditLogRepository {
     Page<AuditLog> search(
             UUID userId, UUID patientId, AuditAction action, OffsetDateTime start, OffsetDateTime end, Pageable pageable);
 }
+
+

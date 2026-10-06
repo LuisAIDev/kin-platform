@@ -1,9 +1,9 @@
-package com.kinplatform.kin.health.audit;
+package com.kinplatform.common.audit;
 
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditLog;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
-import com.kinplatform.kin.health.audit.port.AuditLogRepository;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditLog;
+import com.kinplatform.common.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.port.AuditLogRepository;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -84,3 +84,5 @@ public class InMemoryAuditLogRepository implements AuditLogRepository {
         return new PageImpl<>(content, pageable, list.size());
     }
 }
+
+

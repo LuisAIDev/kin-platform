@@ -6,9 +6,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
-import com.kinplatform.kin.health.audit.api.AuditService;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.api.AuditService;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import com.kinplatform.kin.health.documents.config.DocumentProperties;
 import com.kinplatform.kin.health.documents.domain.ClinicalDocument;
 import com.kinplatform.kin.health.documents.domain.DocumentStatus;
@@ -452,3 +452,4 @@ public class DocumentService {
         }
     }
 }
+

@@ -1,9 +1,9 @@
 package com.kinplatform.kin.health.telemedicine.api;
 
 import com.kinplatform.kin.event.DomainEventBus;
-import com.kinplatform.kin.health.audit.api.AuditService;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.api.AuditService;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
 import com.kinplatform.kin.health.telemedicine.config.TelemedicineProperties;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment;
@@ -264,3 +264,4 @@ public class TelemedicineService {
         accessValidator.requireActiveRelationshipBetween(a, b);
     }
 }
+

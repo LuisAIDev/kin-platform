@@ -73,7 +73,7 @@ class SchedulingServiceTest {
     }
 
     private SchedulingService service() {
-        var auditProps = new com.kinplatform.kin.health.audit.config.AuditProperties();
+        var auditProps = new com.kinplatform.common.audit.config.AuditProperties();
         auditProps.setEnabled(false);
         return new SchedulingService(
                 scheduling.availabilityRepository(),
@@ -81,7 +81,7 @@ class SchedulingServiceTest {
                 new RelationshipAccessValidator(physicians.patientRepository()),
                 userRepository,
                 properties,
-                new com.kinplatform.kin.health.audit.api.AuditService(null, null, null, auditProps),
+                new com.kinplatform.common.audit.api.AuditService(null, null, null, auditProps),
                 bus,
                 null);
     }
@@ -178,7 +178,7 @@ class SchedulingServiceTest {
     @Test
     void requestAppointment_sinRelacionActiva_deberiaLanzar() {
         var noRel = new InMemoryPhysicianRepositories();
-        var auditProps = new com.kinplatform.kin.health.audit.config.AuditProperties();
+        var auditProps = new com.kinplatform.common.audit.config.AuditProperties();
         auditProps.setEnabled(false);
         var service = new SchedulingService(
                 scheduling.availabilityRepository(),
@@ -186,7 +186,7 @@ class SchedulingServiceTest {
                 new RelationshipAccessValidator(noRel.patientRepository()),
                 userRepository,
                 properties,
-                new com.kinplatform.kin.health.audit.api.AuditService(null, null, null, auditProps),
+                new com.kinplatform.common.audit.api.AuditService(null, null, null, auditProps),
                 bus,
                 null);
         setDailyAvailability();
@@ -314,3 +314,4 @@ class SchedulingServiceTest {
         return TEST_MONDAY;
     }
 }
+

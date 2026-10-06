@@ -2,7 +2,7 @@ package com.kinplatform.common.service;
 
 import com.kinplatform.common.entity.PrivacyPolicyVersion;
 import com.kinplatform.common.repository.PrivacyPolicyVersionRepository;
-import com.kinplatform.kin.health.audit.adapter.AuditLogJpaRepository;
+import com.kinplatform.common.audit.adapter.AuditLogJpaRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
@@ -36,7 +36,7 @@ class PrivacyPolicyServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private com.kinplatform.kin.health.audit.adapter.AuditLogJpaRepository auditRepository;
+    private com.kinplatform.common.audit.adapter.AuditLogJpaRepository auditRepository;
 
     private PrivacyPolicyService service;
 

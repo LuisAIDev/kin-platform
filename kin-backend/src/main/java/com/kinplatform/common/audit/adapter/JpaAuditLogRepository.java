@@ -1,11 +1,11 @@
-package com.kinplatform.kin.health.audit.adapter;
+package com.kinplatform.common.audit.adapter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditLog;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
-import com.kinplatform.kin.health.audit.port.AuditLogRepository;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditLog;
+import com.kinplatform.common.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.port.AuditLogRepository;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -147,3 +147,5 @@ public class JpaAuditLogRepository implements AuditLogRepository {
         }
     }
 }
+
+

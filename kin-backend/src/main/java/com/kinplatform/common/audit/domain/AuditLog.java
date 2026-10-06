@@ -1,4 +1,4 @@
-package com.kinplatform.kin.health.audit.domain;
+package com.kinplatform.common.audit.domain;
 
 import java.time.OffsetDateTime;
 import java.util.Map;
@@ -49,3 +49,4 @@ public record AuditLog(
                 details);
     }
 }
+

@@ -1,4 +1,4 @@
-package com.kinplatform.kin.health.audit.domain;
+package com.kinplatform.common.audit.domain;
 
 /**
  * Acciones de acceso a datos de salud registradas en la auditoría (ADR-035).
@@ -42,3 +42,4 @@ public enum AuditAction {
     /** Anulación de suministro MIPRES. */
     MIPRES_SUPPLY_ANULLED
 }
+

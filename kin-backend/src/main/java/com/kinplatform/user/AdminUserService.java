@@ -1,9 +1,9 @@
 package com.kinplatform.user;
 
 import com.kinplatform.auth.password.PasswordResetService;
-import com.kinplatform.kin.health.audit.api.AuditService;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.api.AuditService;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -142,3 +142,4 @@ public class AdminUserService {
         return passwordResetService.generateResetLink(userId);
     }
 }
+

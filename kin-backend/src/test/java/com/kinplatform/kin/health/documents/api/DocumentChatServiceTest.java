@@ -14,8 +14,8 @@ import static org.mockito.Mockito.when;
 
 import com.kinplatform.kin.ai.AIRequest;
 import com.kinplatform.kin.ai.AIResponder;
-import com.kinplatform.kin.health.audit.api.AuditService;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
+import com.kinplatform.common.audit.api.AuditService;
+import com.kinplatform.common.audit.domain.AuditAction;
 import com.kinplatform.kin.health.documents.config.DocumentProperties;
 import com.kinplatform.kin.health.documents.domain.ClinicalDocument;
 import com.kinplatform.kin.health.documents.domain.DocumentChatMessage;
@@ -142,3 +142,4 @@ class DocumentChatServiceTest {
         assertEquals(1, history.size());
     }
 }
+

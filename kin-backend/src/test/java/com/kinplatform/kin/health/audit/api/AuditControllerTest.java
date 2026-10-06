@@ -1,4 +1,4 @@
-package com.kinplatform.kin.health.audit.api;
+package com.kinplatform.common.audit.api;
 
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
@@ -7,9 +7,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.kinplatform.common.GlobalExceptionHandler;
-import com.kinplatform.kin.health.audit.InMemoryAuditLogRepository;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.InMemoryAuditLogRepository;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
@@ -53,7 +53,7 @@ class AuditControllerTest {
     @BeforeEach
     void setUp() {
         repository = new InMemoryAuditLogRepository();
-        repository.save(com.kinplatform.kin.health.audit.domain.AuditLog.of(
+        repository.save(com.kinplatform.common.audit.domain.AuditLog.of(
                 UUID.randomUUID(), UUID.randomUUID(), AuditAction.VIEW_HISTORY, AuditResourceType.PACIENTE,
                 PATIENT, PATIENT, OffsetDateTime.now(), "1.2.3.4", "test-agent", java.util.Map.of()));
 
@@ -105,3 +105,4 @@ class AuditControllerTest {
                 .andExpect(jsonPath("$.content[0].patientId").value(PATIENT.toString()));
     }
 }
+

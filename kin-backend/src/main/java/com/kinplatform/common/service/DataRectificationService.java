@@ -2,9 +2,9 @@ package com.kinplatform.common.service;
 
 import com.kinplatform.common.entity.DataRectificationRequest;
 import com.kinplatform.common.repository.DataRectificationRepository;
-import com.kinplatform.kin.health.audit.adapter.AuditLogJpaRepository;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.adapter.AuditLogJpaRepository;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import com.kinplatform.kin.health.hce.entity.PatientIdentification;
 import com.kinplatform.kin.health.hce.repository.PatientIdentificationRepository;
 import com.kinplatform.user.User;
@@ -109,7 +109,7 @@ public class DataRectificationService {
         request = rectificationRepository.save(request);
 
         // Audit
-        auditRepository.save(new com.kinplatform.kin.health.audit.adapter.AuditLogEntity(
+        auditRepository.save(new com.kinplatform.common.audit.adapter.AuditLogEntity(
             UUID.randomUUID(),
             adminId,
             AuditAction.UPDATE,
@@ -145,7 +145,7 @@ public class DataRectificationService {
         request = rectificationRepository.save(request);
 
         // Audit
-        auditRepository.save(new com.kinplatform.kin.health.audit.adapter.AuditLogEntity(
+        auditRepository.save(new com.kinplatform.common.audit.adapter.AuditLogEntity(
             UUID.randomUUID(),
             adminId,
             AuditAction.UPDATE,
@@ -185,7 +185,7 @@ public class DataRectificationService {
         request = rectificationRepository.save(request);
 
         // Audit
-        auditRepository.save(new com.kinplatform.kin.health.audit.adapter.AuditLogEntity(
+        auditRepository.save(new com.kinplatform.common.audit.adapter.AuditLogEntity(
             UUID.randomUUID(),
             request.getUserId(), // executed by system/user
             AuditAction.EXECUTE,
@@ -238,3 +238,4 @@ public class DataRectificationService {
         }
     }
 }
+

@@ -43,7 +43,7 @@ class FollowUpServiceTest {
     }
 
     private FollowUpService service(InMemoryPhysicianRepositories physicians, InMemoryFollowUpRepositories repos) {
-        var auditProps = new com.kinplatform.kin.health.audit.config.AuditProperties();
+        var auditProps = new com.kinplatform.common.audit.config.AuditProperties();
         auditProps.setEnabled(false);
         return new FollowUpService(
                 repos.planRepository(),
@@ -51,7 +51,7 @@ class FollowUpServiceTest {
                 repos.evolutionRepository(),
                 new RelationshipAccessValidator(physicians.patientRepository()),
                 properties,
-                new com.kinplatform.kin.health.audit.api.AuditService(null, null, null, auditProps),
+                new com.kinplatform.common.audit.api.AuditService(null, null, null, auditProps),
                 bus,
                 null);
     }
@@ -314,3 +314,4 @@ class FollowUpServiceTest {
         assertFalse(service.pendingTaskCountForPatient(PATIENT) > 0);
     }
 }
+

@@ -1,11 +1,11 @@
-package com.kinplatform.kin.health.audit.api;
+package com.kinplatform.common.audit.api;
 
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
-import com.kinplatform.kin.health.audit.config.AuditProperties;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
-import com.kinplatform.kin.health.audit.event.AuditLogEvent;
+import com.kinplatform.common.audit.config.AuditProperties;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.event.AuditLogEvent;
 import com.kinplatform.user.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
@@ -126,3 +126,5 @@ public class AuditService {
         return null;
     }
 }
+
+

@@ -1,8 +1,8 @@
 package com.kinplatform.kin.health.physician.api;
 
-import com.kinplatform.kin.health.audit.api.AuditService;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.api.AuditService;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.PhysicianVerificationStatus;
@@ -86,7 +86,7 @@ public class PhysicianApplicationService {
 
         auditService.logAccessFromPrincipal(
                 AuditAction.PHYSICIAN_APPLICATION_REQUESTED,
-                com.kinplatform.kin.health.audit.domain.AuditResourceType.USER,
+                com.kinplatform.common.audit.domain.AuditResourceType.USER,
                 user.getId(),
                 null,
                 new java.util.LinkedHashMap<>(java.util.Map.of(
@@ -143,3 +143,4 @@ public class PhysicianApplicationService {
             PhysicianVerificationStatus physicianVerificationStatus
     ) {}
 }
+

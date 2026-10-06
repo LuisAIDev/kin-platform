@@ -1,9 +1,9 @@
 package com.kinplatform.kin.health.automation.service;
 
 import com.kinplatform.auth.email.EmailSender;
-import com.kinplatform.kin.health.audit.api.AuditService;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.api.AuditService;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import com.kinplatform.kin.health.automation.config.AutomationProperties;
 import com.kinplatform.kin.health.automation.domain.*;
 import com.kinplatform.kin.health.automation.port.*;
@@ -365,3 +365,4 @@ public class AutomationService {
         }
     }
 }
+

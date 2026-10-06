@@ -1,4 +1,4 @@
-package com.kinplatform.kin.health.audit.config;
+package com.kinplatform.common.audit.config;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -9,3 +9,4 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableConfigurationProperties(AuditProperties.class)
 public class AuditConfig {}
+

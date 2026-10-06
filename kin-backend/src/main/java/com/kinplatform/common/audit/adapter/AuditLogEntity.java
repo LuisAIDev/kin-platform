@@ -1,7 +1,7 @@
-package com.kinplatform.kin.health.audit.adapter;
+package com.kinplatform.common.audit.adapter;
 
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -66,3 +66,5 @@ public class AuditLogEntity {
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 }
+
+

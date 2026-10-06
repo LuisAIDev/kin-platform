@@ -6,9 +6,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.kinplatform.common.entity.DataDeletionRequest;
 import com.kinplatform.common.repository.DataDeletionRepository;
-import com.kinplatform.kin.health.audit.adapter.AuditLogJpaRepository;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.adapter.AuditLogJpaRepository;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
 import com.kinplatform.user.User;
@@ -115,7 +115,7 @@ public class DataDeletionService {
         request.setReviewedAt(Instant.now());
         request = deletionRepository.save(request);
 
-        auditRepository.save(new com.kinplatform.kin.health.audit.adapter.AuditLogEntity(
+        auditRepository.save(new com.kinplatform.common.audit.adapter.AuditLogEntity(
             UUID.randomUUID(),
             adminId,
             AuditAction.UPDATE,
@@ -150,7 +150,7 @@ public class DataDeletionService {
         request.setReviewNotes(reason);
         request = deletionRepository.save(request);
 
-        auditRepository.save(new com.kinplatform.kin.health.audit.adapter.AuditLogEntity(
+        auditRepository.save(new com.kinplatform.common.audit.adapter.AuditLogEntity(
             UUID.randomUUID(),
             adminId,
             AuditAction.UPDATE,
@@ -208,7 +208,7 @@ public class DataDeletionService {
         request.setDeletedCount(deleted);
         request = deletionRepository.save(request);
 
-        auditRepository.save(new com.kinplatform.kin.health.audit.adapter.AuditLogEntity(
+        auditRepository.save(new com.kinplatform.common.audit.adapter.AuditLogEntity(
             UUID.randomUUID(),
             request.getUserId(),
             AuditAction.EXECUTE,
@@ -289,3 +289,4 @@ public class DataDeletionService {
         return hasHCE;
     }
 }
+

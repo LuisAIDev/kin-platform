@@ -1,8 +1,8 @@
-package com.kinplatform.kin.health.audit.api;
+package com.kinplatform.common.audit.api;
 
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditLog;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditLog;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -36,3 +36,5 @@ public record AuditLogResponse(
                 log.details());
     }
 }
+
+

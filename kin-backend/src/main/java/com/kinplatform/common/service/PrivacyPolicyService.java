@@ -2,9 +2,9 @@ package com.kinplatform.common.service;
 
 import com.kinplatform.common.entity.PrivacyPolicyVersion;
 import com.kinplatform.common.repository.PrivacyPolicyVersionRepository;
-import com.kinplatform.kin.health.audit.adapter.AuditLogJpaRepository;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.adapter.AuditLogJpaRepository;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -68,11 +68,11 @@ public class PrivacyPolicyService {
         PrivacyPolicyVersion saved = policyRepository.save(newVersion);
 
         // Audit
-        auditRepository.save(new com.kinplatform.kin.health.audit.adapter.AuditLogEntity(
+        auditRepository.save(new com.kinplatform.common.audit.adapter.AuditLogEntity(
             java.util.UUID.randomUUID(),
             adminId,
-            com.kinplatform.kin.health.audit.domain.AuditAction.UPDATE,
-            com.kinplatform.kin.health.audit.domain.AuditResourceType.USER,
+            com.kinplatform.common.audit.domain.AuditAction.UPDATE,
+            com.kinplatform.common.audit.domain.AuditResourceType.USER,
             saved.getId(),
             saved.getId(),
             Instant.now().atOffset(java.time.ZoneOffset.UTC),
@@ -93,3 +93,4 @@ public class PrivacyPolicyService {
         return policyRepository.findAllByOrderByEffectiveDateDesc();
     }
 }
+

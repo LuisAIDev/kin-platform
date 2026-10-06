@@ -30,14 +30,14 @@ class TelemedicineServiceTest {
 
     private static TelemedicineService service(
             boolean enabled, InMemoryPhysicianRepositories physicians, InMemoryTelemedicineRepositories repos) {
-        var auditProps = new com.kinplatform.kin.health.audit.config.AuditProperties();
+        var auditProps = new com.kinplatform.common.audit.config.AuditProperties();
         auditProps.setEnabled(false);
         return new TelemedicineService(
                 repos.messageRepository(),
                 repos.appointmentRepository(),
                 new RelationshipAccessValidator(physicians.patientRepository()),
                 properties(enabled),
-                new com.kinplatform.kin.health.audit.api.AuditService(null, null, null, auditProps));
+                new com.kinplatform.common.audit.api.AuditService(null, null, null, auditProps));
     }
 
     private static InMemoryPhysicianRepositories assignedPhysicians() {
@@ -205,3 +205,4 @@ class TelemedicineServiceTest {
                 () -> service.requestAppointment(PATIENT, PHYSICIAN, OffsetDateTime.now(), "x"));
     }
 }
+

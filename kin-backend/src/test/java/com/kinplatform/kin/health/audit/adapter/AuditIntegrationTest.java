@@ -1,4 +1,4 @@
-package com.kinplatform.kin.health.audit.adapter;
+package com.kinplatform.common.audit.adapter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -115,3 +115,4 @@ class AuditIntegrationTest extends PostgresTestSupport {
         return UUID.randomUUID().toString().substring(0, 8);
     }
 }
+

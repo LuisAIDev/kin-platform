@@ -2,9 +2,9 @@ package com.kinplatform.kin.health.physician.api;
 
 import com.kinplatform.kin.health.dashboard.domain.PatientProfile;
 import com.kinplatform.kin.health.dashboard.port.DashboardRepository;
-import com.kinplatform.kin.health.audit.api.AuditService;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.api.AuditService;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
 import com.kinplatform.kin.health.common.exception.QuotaExceededException;
 import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
@@ -282,3 +282,4 @@ public class PhysicianService {
         return userRepository.findById(patientId).map(User::getFullName).orElse("Paciente");
     }
 }
+

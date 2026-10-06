@@ -3,9 +3,9 @@ package com.kinplatform.kin.health.scheduling.api;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.DomainEventBus;
 import com.kinplatform.kin.eventbus.port.OutboxEventPublisher;
-import com.kinplatform.kin.health.audit.api.AuditService;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.api.AuditService;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
 import com.kinplatform.kin.health.scheduling.config.SchedulingProperties;
 import com.kinplatform.kin.health.scheduling.domain.PhysicianAvailability;
@@ -372,3 +372,4 @@ public class SchedulingService {
         }
     }
 }
+

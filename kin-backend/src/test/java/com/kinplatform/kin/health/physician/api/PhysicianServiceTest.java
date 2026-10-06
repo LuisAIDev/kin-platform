@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.kinplatform.kin.health.dashboard.InMemoryDashboardRepository;
-import com.kinplatform.kin.health.audit.api.AuditService;
-import com.kinplatform.kin.health.audit.config.AuditProperties;
+import com.kinplatform.common.audit.api.AuditService;
+import com.kinplatform.common.audit.config.AuditProperties;
 import com.kinplatform.kin.health.physician.InMemoryPhysicianRepositories;
 import com.kinplatform.kin.health.physician.access.RelationshipAccessValidator;
 import com.kinplatform.kin.health.physician.access.RelationshipNotActiveException;

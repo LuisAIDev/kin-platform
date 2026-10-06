@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.kinplatform.common.entity.DataDeletionRequest;
 import com.kinplatform.common.repository.DataDeletionRepository;
-import com.kinplatform.kin.health.audit.adapter.AuditLogJpaRepository;
+import com.kinplatform.common.audit.adapter.AuditLogJpaRepository;
 import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;

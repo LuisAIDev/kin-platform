@@ -8,7 +8,7 @@ import com.kinplatform.common.security.TenantContext;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import com.kinplatform.user.UserRole;
-import com.kinplatform.kin.health.audit.api.AuditService;
+import com.kinplatform.common.audit.api.AuditService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,9 +1,9 @@
-package com.kinplatform.kin.health.audit.event;
+package com.kinplatform.common.audit.event;
 
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.event.HasUserId;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import java.util.Map;
 import java.util.UUID;
 
@@ -42,3 +42,5 @@ public record AuditLogEvent(
         return userId;
     }
 }
+
+

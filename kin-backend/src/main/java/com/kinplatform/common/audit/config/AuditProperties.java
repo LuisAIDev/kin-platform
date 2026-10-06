@@ -1,4 +1,4 @@
-package com.kinplatform.kin.health.audit.config;
+package com.kinplatform.common.audit.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -21,3 +21,4 @@ public class AuditProperties {
     /** Retención de logs en días (purga automática opcional). */
     private int retentionDays = 365;
 }
+

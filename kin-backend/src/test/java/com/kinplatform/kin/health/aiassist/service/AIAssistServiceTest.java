@@ -49,7 +49,7 @@ class AIAssistServiceTest {
                 stubAIProvider,
                 properties,
                 new RelationshipAccessValidator(physicians.patientRepository()),
-                new com.kinplatform.kin.health.audit.api.AuditService(null, null, null,
+                new com.kinplatform.common.audit.api.AuditService(null, null, null,
                         disabledAuditProps()),
                 new InMemoryTriageConsultationRepository(),
                 new InMemoryFollowUpRepositories().planRepository(),
@@ -57,8 +57,8 @@ class AIAssistServiceTest {
                 new InMemoryClinicalDocumentRepository());
     }
 
-    private com.kinplatform.kin.health.audit.config.AuditProperties disabledAuditProps() {
-        var auditProps = new com.kinplatform.kin.health.audit.config.AuditProperties();
+    private com.kinplatform.common.audit.config.AuditProperties disabledAuditProps() {
+        var auditProps = new com.kinplatform.common.audit.config.AuditProperties();
         auditProps.setEnabled(false);
         return auditProps;
     }
@@ -143,3 +143,4 @@ class AIAssistServiceTest {
         }
     };
 }
+

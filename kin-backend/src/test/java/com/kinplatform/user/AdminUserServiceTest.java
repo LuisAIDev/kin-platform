@@ -13,9 +13,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.kinplatform.auth.password.PasswordResetService;
-import com.kinplatform.kin.health.audit.api.AuditService;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.api.AuditService;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.UserSubscription;
 import java.util.List;
@@ -194,3 +194,4 @@ class AdminUserServiceTest {
                 () -> service.setVerificationStatus(id, PhysicianVerificationStatus.APPROVED));
     }
 }
+

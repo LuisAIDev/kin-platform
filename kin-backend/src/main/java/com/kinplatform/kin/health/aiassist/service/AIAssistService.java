@@ -5,9 +5,9 @@ import com.kinplatform.kin.health.aiassist.domain.AIAssistRequest;
 import com.kinplatform.kin.health.aiassist.domain.AIAssistType;
 import com.kinplatform.kin.health.aiassist.port.AIAssistRepository;
 import com.kinplatform.kin.health.aiassist.port.AIProviderPort;
-import com.kinplatform.kin.health.audit.api.AuditService;
-import com.kinplatform.kin.health.audit.domain.AuditAction;
-import com.kinplatform.kin.health.audit.domain.AuditResourceType;
+import com.kinplatform.common.audit.api.AuditService;
+import com.kinplatform.common.audit.domain.AuditAction;
+import com.kinplatform.common.audit.domain.AuditResourceType;
 import com.kinplatform.kin.health.documents.domain.ClinicalDocument;
 import com.kinplatform.kin.health.documents.port.ClinicalDocumentRepository;
 import com.kinplatform.kin.health.followup.domain.FollowUpPlan;
@@ -354,3 +354,4 @@ public class AIAssistService {
                 .formatted(data);
     }
 }
+

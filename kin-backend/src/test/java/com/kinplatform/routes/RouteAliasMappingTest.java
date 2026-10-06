@@ -8,8 +8,8 @@ import com.kinplatform.kin.enterprise.web.EnterpriseDashboardController;
 import com.kinplatform.kin.enterprise.web.EnterpriseInformationController;
 import com.kinplatform.kin.enterprise.web.EnterpriseProgressController;
 import com.kinplatform.kin.health.aiassist.api.AIAssistController;
-import com.kinplatform.kin.health.audit.api.AuditAdminController;
-import com.kinplatform.kin.health.audit.api.AuditPatientController;
+import com.kinplatform.common.audit.api.AuditAdminController;
+import com.kinplatform.common.audit.api.AuditPatientController;
 import com.kinplatform.kin.health.automation.api.AutomationController;
 import com.kinplatform.kin.health.dashboard.api.DashboardController;
 import com.kinplatform.kin.health.differential.api.DifferentialController;
@@ -112,3 +112,4 @@ class RouteAliasMappingTest {
         }
     }
 }
+
