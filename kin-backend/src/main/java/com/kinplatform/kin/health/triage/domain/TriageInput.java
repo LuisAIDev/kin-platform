@@ -1,6 +1,6 @@
 package com.kinplatform.kin.health.triage.domain;
 
-import com.kinplatform.kin.engine.EngineInput;
+import com.kinplatform.common.engine.EngineInput;
 import java.util.List;
 
 /**
@@ -24,3 +24,4 @@ public record TriageInput(List<String> symptoms) implements EngineInput {
         return symptoms.isEmpty();
     }
 }
+

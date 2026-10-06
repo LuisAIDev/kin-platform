@@ -1,6 +1,6 @@
 package com.kinplatform.kin.health.differential.domain;
 
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 import java.util.List;
 
 /**
@@ -39,3 +39,4 @@ public record DifferentialResult(
         return items.isEmpty();
     }
 }
+

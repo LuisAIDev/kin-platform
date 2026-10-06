@@ -1,6 +1,6 @@
 package com.kinplatform.kin.health.differential.adapter;
 
-import com.kinplatform.kin.engine.DeterministicId;
+import com.kinplatform.common.engine.DeterministicId;
 import com.kinplatform.kin.health.differential.domain.CatalogUpdate;
 import com.kinplatform.kin.health.differential.domain.CatalogUpdateResult;
 import com.kinplatform.kin.health.differential.domain.DifferentialCatalog;
@@ -110,3 +110,4 @@ public class JpaDifferentialKnowledgeRepository implements DifferentialKnowledge
         return added;
     }
 }
+

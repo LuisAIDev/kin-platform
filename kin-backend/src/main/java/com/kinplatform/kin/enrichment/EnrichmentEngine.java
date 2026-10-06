@@ -1,9 +1,9 @@
 package com.kinplatform.kin.enrichment;
 
-import com.kinplatform.kin.engine.DomainEngine;
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.DomainEngine;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 
 import java.util.List;
 
@@ -63,3 +63,4 @@ public class EnrichmentEngine implements DomainEngine<EnrichmentInput, Enrichmen
             GENERATOR_NAME, ENGINE_VERSION);
     }
 }
+

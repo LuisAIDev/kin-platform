@@ -1,4 +1,4 @@
-package com.kinplatform.kin.engine;
+package com.kinplatform.common.engine;
 
 /**
  * Envoltorio inmutable de una ejecución de motor: el resultado producido,
@@ -15,3 +15,4 @@ public record EngineExecution<R extends EngineResult>(
     EngineMetadata metadata
 ) {
 }
+

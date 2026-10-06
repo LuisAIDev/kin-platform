@@ -1,6 +1,6 @@
 package com.kinplatform.kin.knowledge;
 
-import com.kinplatform.kin.engine.DeterministicId;
+import com.kinplatform.common.engine.DeterministicId;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -48,3 +48,4 @@ public record KnowledgeFact(
         return new KnowledgeFact(null, claim, sourceId, url, publishedAt, trust, category, null);
     }
 }
+

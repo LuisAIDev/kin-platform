@@ -35,9 +35,9 @@ import com.kinplatform.kin.conversation.ResponseFallback;
 import com.kinplatform.kin.conversation.history.HistoryWindow;
 import com.kinplatform.kin.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.kin.conversation.validation.ResponseGuard;
-import com.kinplatform.kin.engine.DomainEngine;
-import com.kinplatform.kin.engine.EngineExecutor;
-import com.kinplatform.kin.engine.EngineRegistry;
+import com.kinplatform.common.engine.DomainEngine;
+import com.kinplatform.common.engine.EngineExecutor;
+import com.kinplatform.common.engine.EngineRegistry;
 import com.kinplatform.kin.enrichment.EnrichmentEngine;
 import com.kinplatform.kin.enrichment.FactRanker;
 import com.kinplatform.kin.enrichment.stage.EnrichmentStage;
@@ -670,3 +670,4 @@ public class KinConfig {
                 historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository, enterpriseProjectTrigger);
     }
 }
+

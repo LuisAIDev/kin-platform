@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.health.triage.InMemoryTriageKnowledgeRepository;
 import com.kinplatform.kin.health.triage.domain.Condition;
 import com.kinplatform.kin.health.triage.domain.Severity;
@@ -173,3 +173,4 @@ class TriageEngineTest {
         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> new TriageEngine(null));
     }
 }
+

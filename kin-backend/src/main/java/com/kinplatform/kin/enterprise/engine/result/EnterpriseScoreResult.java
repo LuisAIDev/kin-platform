@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.engine.result;
 
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
 
 /**
@@ -33,3 +33,4 @@ public record EnterpriseScoreResult(
         return new EnterpriseScoreResult(null, 0.0, "", "", "");
     }
 }
+

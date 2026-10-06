@@ -1,6 +1,6 @@
 package com.kinplatform.kin.scoring;
 
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 
 import java.util.List;
 import java.util.Map;
@@ -46,3 +46,4 @@ public record ScoreResult(
         return totalScore == 0 && categoryScores.isEmpty();
     }
 }
+

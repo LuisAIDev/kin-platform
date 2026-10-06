@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.engine.DomainEngine;
+import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.kin.enterprise.engine.input.KpiInput;
 import com.kinplatform.kin.enterprise.engine.result.KpiResult;
 
@@ -20,3 +20,4 @@ import com.kinplatform.kin.enterprise.engine.result.KpiResult;
 public interface KpiEngine
         extends DomainEngine<KpiInput, KpiResult> {
 }
+

@@ -1,4 +1,4 @@
-package com.kinplatform.kin.engine;
+package com.kinplatform.common.engine;
 
 /**
  * Contrato común de los resultados producidos por los motores de dominio.
@@ -19,3 +19,4 @@ public interface EngineResult {
 
     boolean isEmpty();
 }
+

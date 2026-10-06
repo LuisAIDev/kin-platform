@@ -2,10 +2,10 @@ package com.kinplatform.kin.reporting;
 
 import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.CompletenessEvaluation;
-import com.kinplatform.kin.engine.DomainEngine;
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.DomainEngine;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.scoring.ScoreResult;
 
 import java.util.ArrayList;
@@ -391,3 +391,4 @@ public class RecommendationEngine implements DomainEngine<RecommendationInput, R
         }
     }
 }
+

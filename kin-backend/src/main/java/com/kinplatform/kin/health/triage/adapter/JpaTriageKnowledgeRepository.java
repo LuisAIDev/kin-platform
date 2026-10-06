@@ -1,6 +1,6 @@
 package com.kinplatform.kin.health.triage.adapter;
 
-import com.kinplatform.kin.engine.DeterministicId;
+import com.kinplatform.common.engine.DeterministicId;
 import com.kinplatform.kin.health.triage.domain.CatalogUpdate;
 import com.kinplatform.kin.health.triage.domain.CatalogUpdateResult;
 import com.kinplatform.kin.health.triage.domain.SymptomConditionRelation;
@@ -177,3 +177,4 @@ public class JpaTriageKnowledgeRepository implements TriageKnowledgeRepository {
         return index;
     }
 }
+

@@ -1,6 +1,6 @@
 package com.kinplatform.ai.knowledge.adapter;
 
-import com.kinplatform.kin.engine.EnginePhase;
+import com.kinplatform.common.engine.EnginePhase;
 import com.kinplatform.kin.knowledge.KnowledgeCandidate;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
 import com.kinplatform.kin.knowledge.KnowledgeInput;
@@ -332,3 +332,4 @@ class KnowledgeEngineAdapterIntegrationTest {
         assertEquals(EnginePhase.KNOWLEDGE, engine.metadata().phase());
     }
 }
+

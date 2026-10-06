@@ -2,7 +2,7 @@ package com.kinplatform.kin.scoring;
 
 import com.kinplatform.kin.context.CompletenessEvaluation;
 import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.engine.EngineInput;
+import com.kinplatform.common.engine.EngineInput;
 
 /**
  * Entrada tipada para el ScoringEngine. Solo consume la información producida
@@ -16,3 +16,4 @@ public record ScoringInput(
     CompletenessEvaluation evaluation
 ) implements EngineInput {
 }
+

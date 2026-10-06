@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.engine.input;
 
-import com.kinplatform.kin.engine.EngineInput;
+import com.kinplatform.common.engine.EngineInput;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
 import com.kinplatform.kin.enterprise.valueobjects.RiskMatrix;
 import com.kinplatform.kin.reporting.risk.RiskResult;
@@ -18,3 +18,4 @@ public record RiskPlanInput(
     FinancialPlan financialPlan
 ) implements EngineInput {
 }
+

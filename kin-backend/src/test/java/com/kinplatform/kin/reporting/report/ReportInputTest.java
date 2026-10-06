@@ -41,7 +41,7 @@ class ReportInputTest {
         assertSame(recommendation, input.recommendation());
         assertSame(risk, input.risk());
         assertSame(opportunity, input.opportunity());
-        assertTrue(input instanceof com.kinplatform.kin.engine.EngineInput);
+        assertTrue(input instanceof com.kinplatform.common.engine.EngineInput);
     }
 
     @Test
@@ -59,3 +59,4 @@ class ReportInputTest {
         assertEquals(AnalyzedDimension.PROJECT_NAME, AnalyzedDimension.PROJECT_NAME);
     }
 }
+

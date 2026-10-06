@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.assembler;
 
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 import com.kinplatform.kin.enterprise.engine.result.BusinessModelResult;
 import com.kinplatform.kin.enterprise.engine.result.FinancialPlanResult;
 import com.kinplatform.kin.enterprise.engine.result.InnovationResult;
@@ -209,3 +209,4 @@ public final class EnterpriseDocumentAssembler {
         return HASH_PREFIX + ":" + Integer.toUnsignedString(content.hashCode(), 16);
     }
 }
+

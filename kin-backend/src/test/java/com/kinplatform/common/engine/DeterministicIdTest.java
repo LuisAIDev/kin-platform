@@ -1,4 +1,4 @@
-package com.kinplatform.kin.engine;
+package com.kinplatform.common.engine;
 
 import org.junit.jupiter.api.Test;
 
@@ -28,3 +28,4 @@ class DeterministicIdTest {
             DeterministicId.from("TECHNICAL", "Riesgo", "Descripción"));
     }
 }
+

@@ -1,6 +1,6 @@
 package com.kinplatform.kin.interview;
 
-import com.kinplatform.kin.engine.EngineInput;
+import com.kinplatform.common.engine.EngineInput;
 
 /**
  * Entrada canonizada del motor de entrevista (ADR-015, ADR-005/009).
@@ -26,3 +26,4 @@ public record InterviewInput(
         return new InterviewInput(request, userMessage);
     }
 }
+

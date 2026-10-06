@@ -1,6 +1,6 @@
 package com.kinplatform.kin.knowledge;
 
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -63,3 +63,4 @@ public record KnowledgeResult(
         return facts.isEmpty();
     }
 }
+

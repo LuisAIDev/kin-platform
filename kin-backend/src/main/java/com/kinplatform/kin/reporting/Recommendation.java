@@ -1,7 +1,7 @@
 package com.kinplatform.kin.reporting;
 
 import com.kinplatform.kin.context.AnalyzedDimension;
-import com.kinplatform.kin.engine.DeterministicId;
+import com.kinplatform.common.engine.DeterministicId;
 
 import java.util.List;
 import java.util.UUID;
@@ -42,3 +42,4 @@ public record Recommendation(
             effortLevel, relatedDimension, actionableSteps, expectedOutcome, explanation);
     }
 }
+

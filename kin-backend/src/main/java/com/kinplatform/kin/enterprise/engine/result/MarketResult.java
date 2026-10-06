@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.engine.result;
 
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 import com.kinplatform.kin.enterprise.valueobjects.MarketPlan;
 
 /**
@@ -33,3 +33,4 @@ public record MarketResult(
         return new MarketResult(null, 0.0, "", "", "");
     }
 }
+

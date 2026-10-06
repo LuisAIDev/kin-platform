@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enterprise.engine.input;
 
 import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.engine.EngineInput;
+import com.kinplatform.common.engine.EngineInput;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
 import com.kinplatform.kin.enterprise.valueobjects.Roadmap;
 import com.kinplatform.kin.reporting.RecommendationResult;
@@ -19,3 +19,4 @@ public record RoadmapInput(
     FinancialPlan financialPlan
 ) implements EngineInput {
 }
+

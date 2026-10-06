@@ -1,4 +1,4 @@
-package com.kinplatform.kin.engine;
+package com.kinplatform.common.engine;
 
 import java.util.List;
 
@@ -33,3 +33,4 @@ public record EngineMetadata(
         return dependencies.contains(engineName);
     }
 }
+

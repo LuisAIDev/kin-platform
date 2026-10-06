@@ -1,9 +1,9 @@
 package com.kinplatform.kin.health.triage.engine;
 
-import com.kinplatform.kin.engine.DomainEngine;
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.DomainEngine;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.health.triage.domain.Condition;
 import com.kinplatform.kin.health.triage.domain.SymptomConditionRelation;
 import com.kinplatform.kin.health.triage.domain.TriageCatalog;
@@ -197,3 +197,4 @@ public class TriageEngine implements DomainEngine<TriageInput, TriageResult> {
 
     private record RawScore(UUID conditionId, double rawScore, List<String> matchedSymptoms) {}
 }
+

@@ -5,7 +5,7 @@ import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.kin.conversation.ResponseValidation;
 import com.kinplatform.kin.conversation.TurnDirective;
 import com.kinplatform.kin.decision.ConversationDecision;
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 import com.kinplatform.kin.enrichment.EnrichmentResult;
 import com.kinplatform.kin.event.DomainEvent;
 import com.kinplatform.kin.health.differential.domain.DifferentialResult;
@@ -320,3 +320,4 @@ public class PipelineContext {
         this.responseValidation = validation;
     }
 }
+

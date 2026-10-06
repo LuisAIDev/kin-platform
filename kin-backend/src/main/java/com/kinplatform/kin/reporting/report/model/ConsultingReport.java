@@ -1,6 +1,6 @@
 package com.kinplatform.kin.reporting.report.model;
 
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 import java.util.List;
 import java.util.UUID;
 
@@ -152,3 +152,4 @@ public record ConsultingReport(
                 ReportMetadata.empty());
     }
 }
+

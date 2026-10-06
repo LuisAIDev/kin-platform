@@ -104,8 +104,8 @@ class JpaTriageRepositoryIntegrationTest extends PostgresTestSupport {
     @Test
     @Transactional
     void applyUpdate_deberiaSerIdempotente() {
-        var symptomId = com.kinplatform.kin.engine.DeterministicId.from("triage-symptom", "síntoma idem", "X00");
-        var conditionId = com.kinplatform.kin.engine.DeterministicId.from("triage-condition", "Condición idem", "X99");
+        var symptomId = com.kinplatform.common.engine.DeterministicId.from("triage-symptom", "síntoma idem", "X00");
+        var conditionId = com.kinplatform.common.engine.DeterministicId.from("triage-condition", "Condición idem", "X99");
         var update = com.kinplatform.kin.health.triage.domain.CatalogUpdate.of(
                 "test-source",
                 List.of(com.kinplatform.kin.health.triage.domain.Symptom.of(symptomId, "síntoma idem", "desc", "X00")),
@@ -184,3 +184,4 @@ class JpaTriageRepositoryIntegrationTest extends PostgresTestSupport {
         assertTrue(consultationRepository.findByUserId(other).isEmpty());
     }
 }
+

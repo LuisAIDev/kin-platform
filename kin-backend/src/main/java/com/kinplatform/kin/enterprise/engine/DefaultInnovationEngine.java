@@ -1,8 +1,8 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.enterprise.engine.input.InnovationInput;
 import com.kinplatform.kin.enterprise.engine.result.InnovationResult;
 import com.kinplatform.kin.enterprise.valueobjects.InnovationLevel;
@@ -159,3 +159,4 @@ public class DefaultInnovationEngine implements InnovationEngine {
             + " oportunidades previas.";
     }
 }
+

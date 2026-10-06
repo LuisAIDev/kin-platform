@@ -1,4 +1,4 @@
-package com.kinplatform.kin.engine;
+package com.kinplatform.common.engine;
 
 /**
  * Tipo de motor según la naturaleza de su evaluación.
@@ -17,3 +17,4 @@ public enum EngineType {
         return description;
     }
 }
+

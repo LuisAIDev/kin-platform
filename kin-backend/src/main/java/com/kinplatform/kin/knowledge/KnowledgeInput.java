@@ -1,6 +1,6 @@
 package com.kinplatform.kin.knowledge;
 
-import com.kinplatform.kin.engine.EngineInput;
+import com.kinplatform.common.engine.EngineInput;
 
 /**
  * Entrada canonizada del motor de conocimiento (ADR-014, ADR-005/009).
@@ -21,3 +21,4 @@ public record KnowledgeInput(
         return new KnowledgeInput(request);
     }
 }
+

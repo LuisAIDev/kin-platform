@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.enterprise.engine.input.EnterpriseScoreInput;
 import com.kinplatform.kin.enterprise.engine.result.EnterpriseScoreResult;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
@@ -137,3 +137,4 @@ class DefaultEnterpriseScoreEngineTest {
             FinancialPlan.Scenario.of(1210.0, 60.0));
     }
 }
+

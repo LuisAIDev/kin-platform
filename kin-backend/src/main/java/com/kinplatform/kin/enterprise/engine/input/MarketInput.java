@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enterprise.engine.input;
 
 import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.engine.EngineInput;
+import com.kinplatform.common.engine.EngineInput;
 import com.kinplatform.kin.enterprise.valueobjects.MarketPlan;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.reporting.RecommendationResult;
@@ -23,3 +23,4 @@ public record MarketInput(
     KnowledgeResult knowledge
 ) implements EngineInput {
 }
+

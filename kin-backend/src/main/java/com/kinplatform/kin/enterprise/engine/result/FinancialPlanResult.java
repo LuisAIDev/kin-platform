@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.engine.result;
 
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
 
 /**
@@ -33,3 +33,4 @@ public record FinancialPlanResult(
         return new FinancialPlanResult(null, 0.0, "", "", "");
     }
 }
+

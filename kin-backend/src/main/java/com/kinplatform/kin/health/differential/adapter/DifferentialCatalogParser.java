@@ -2,7 +2,7 @@ package com.kinplatform.kin.health.differential.adapter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.engine.DeterministicId;
+import com.kinplatform.common.engine.DeterministicId;
 import com.kinplatform.kin.health.differential.domain.CatalogUpdate;
 import com.kinplatform.kin.health.differential.domain.RecommendedTest;
 import com.kinplatform.kin.health.differential.domain.RiskFactor;
@@ -89,3 +89,4 @@ public class DifferentialCatalogParser {
         return CatalogUpdate.of("health-differential", List.copyOf(risks), List.copyOf(tests));
     }
 }
+

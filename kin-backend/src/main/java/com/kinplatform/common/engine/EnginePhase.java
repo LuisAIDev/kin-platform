@@ -1,4 +1,4 @@
-package com.kinplatform.kin.engine;
+package com.kinplatform.common.engine;
 
 /**
  * Fase del pipeline en la que se ejecuta un engine.
@@ -35,3 +35,4 @@ public enum EnginePhase {
         return displayName;
     }
 }
+

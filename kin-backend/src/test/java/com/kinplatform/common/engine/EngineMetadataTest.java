@@ -1,4 +1,4 @@
-package com.kinplatform.kin.engine;
+package com.kinplatform.common.engine;
 
 import org.junit.jupiter.api.Test;
 
@@ -43,3 +43,4 @@ class EngineMetadataTest {
         assertEquals("Motor de dominio puro", EngineType.DOMAIN.description());
     }
 }
+

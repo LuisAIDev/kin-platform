@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.engine.DomainEngine;
+import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.kin.enterprise.engine.input.RoadmapInput;
 import com.kinplatform.kin.enterprise.engine.result.RoadmapResult;
 
@@ -21,3 +21,4 @@ import com.kinplatform.kin.enterprise.engine.result.RoadmapResult;
 public interface RoadmapEngine
         extends DomainEngine<RoadmapInput, RoadmapResult> {
 }
+

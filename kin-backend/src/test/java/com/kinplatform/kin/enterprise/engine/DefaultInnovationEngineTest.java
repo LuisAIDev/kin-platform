@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.enterprise.engine.input.InnovationInput;
 import com.kinplatform.kin.enterprise.engine.result.InnovationResult;
 import com.kinplatform.kin.enterprise.valueobjects.InnovationLevel;
@@ -129,3 +129,4 @@ class DefaultInnovationEngineTest {
             List.of("r1"), com.kinplatform.kin.context.AnalyzedDimension.SCALABILITY, "1.0.0");
     }
 }
+

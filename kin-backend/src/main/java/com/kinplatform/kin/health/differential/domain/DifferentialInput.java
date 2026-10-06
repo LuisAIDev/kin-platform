@@ -1,6 +1,6 @@
 package com.kinplatform.kin.health.differential.domain;
 
-import com.kinplatform.kin.engine.EngineInput;
+import com.kinplatform.common.engine.EngineInput;
 import com.kinplatform.kin.health.triage.domain.TriageConditionResult;
 import java.util.List;
 
@@ -35,3 +35,4 @@ public record DifferentialInput(
         return new DifferentialInput(symptoms, triageConditions, patientContext);
     }
 }
+

@@ -1,6 +1,6 @@
 package com.kinplatform.kin.knowledge.deduplication;
 
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
 
 import java.util.List;

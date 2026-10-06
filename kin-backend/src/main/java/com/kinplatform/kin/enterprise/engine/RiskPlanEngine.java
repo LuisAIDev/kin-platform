@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.engine.DomainEngine;
+import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.kin.enterprise.engine.input.RiskPlanInput;
 import com.kinplatform.kin.enterprise.engine.result.RiskPlanResult;
 
@@ -22,3 +22,4 @@ import com.kinplatform.kin.enterprise.engine.result.RiskPlanResult;
 public interface RiskPlanEngine
         extends DomainEngine<RiskPlanInput, RiskPlanResult> {
 }
+

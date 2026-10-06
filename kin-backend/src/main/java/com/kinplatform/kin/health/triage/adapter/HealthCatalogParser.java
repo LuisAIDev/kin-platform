@@ -2,7 +2,7 @@ package com.kinplatform.kin.health.triage.adapter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.engine.DeterministicId;
+import com.kinplatform.common.engine.DeterministicId;
 import com.kinplatform.kin.health.triage.domain.CatalogUpdate;
 import com.kinplatform.kin.health.triage.domain.Condition;
 import com.kinplatform.kin.health.triage.domain.Severity;
@@ -165,3 +165,4 @@ public class HealthCatalogParser {
         }
     }
 }
+

@@ -1,8 +1,8 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.enterprise.engine.input.RiskPlanInput;
 import com.kinplatform.kin.enterprise.engine.result.RiskPlanResult;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
@@ -148,3 +148,4 @@ public class DefaultRiskPlanEngine implements RiskPlanEngine {
         return sb.toString();
     }
 }
+

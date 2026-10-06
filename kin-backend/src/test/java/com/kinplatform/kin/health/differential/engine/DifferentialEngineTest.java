@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.health.differential.InMemoryDifferentialKnowledgeRepository;
 import com.kinplatform.kin.health.differential.domain.DifferentialCatalog;
 import com.kinplatform.kin.health.differential.domain.DifferentialInput;
@@ -170,3 +170,4 @@ class DifferentialEngineTest {
                 IllegalArgumentException.class, () -> new DifferentialEngine(null));
     }
 }
+

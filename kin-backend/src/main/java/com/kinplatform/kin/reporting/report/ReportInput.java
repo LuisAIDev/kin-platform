@@ -3,7 +3,7 @@ package com.kinplatform.kin.reporting.report;
 import com.kinplatform.kin.context.CompletenessEvaluation;
 import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.kin.decision.ConversationDecision;
-import com.kinplatform.kin.engine.EngineInput;
+import com.kinplatform.common.engine.EngineInput;
 import com.kinplatform.kin.enrichment.EnrichmentResult;
 import com.kinplatform.kin.reporting.RecommendationResult;
 import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
@@ -61,3 +61,4 @@ public record ReportInput(
             evaluation, decision, score, recommendation, risk, opportunity, enrichment);
     }
 }
+

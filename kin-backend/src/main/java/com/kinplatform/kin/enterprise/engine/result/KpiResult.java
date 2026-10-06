@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.engine.result;
 
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 import com.kinplatform.kin.enterprise.valueobjects.KpiSet;
 
 /**
@@ -32,3 +32,4 @@ public record KpiResult(
         return new KpiResult(null, 0.0, "", "", "");
     }
 }
+

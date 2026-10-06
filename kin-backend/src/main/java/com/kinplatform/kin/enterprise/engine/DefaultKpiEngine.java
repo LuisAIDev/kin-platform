@@ -1,8 +1,8 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.enterprise.engine.input.KpiInput;
 import com.kinplatform.kin.enterprise.engine.result.KpiResult;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
@@ -88,3 +88,4 @@ public class DefaultKpiEngine implements KpiEngine {
             "KpiEngine", ENGINE_VERSION);
     }
 }
+

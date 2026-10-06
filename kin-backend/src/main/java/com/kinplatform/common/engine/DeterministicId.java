@@ -1,4 +1,4 @@
-package com.kinplatform.kin.engine;
+package com.kinplatform.common.engine;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -18,3 +18,4 @@ public final class DeterministicId {
             .getBytes(StandardCharsets.UTF_8));
     }
 }
+

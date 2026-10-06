@@ -11,9 +11,9 @@ import com.kinplatform.kin.decision.ConversationDecision;
 import com.kinplatform.kin.enrichment.EnrichmentEngine;
 import com.kinplatform.kin.enrichment.EnrichmentResult;
 import com.kinplatform.kin.enrichment.FactRanker;
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.knowledge.KnowledgeCandidate;
 import com.kinplatform.kin.knowledge.KnowledgeQuery;
 import com.kinplatform.kin.knowledge.KnowledgeSource;
@@ -328,3 +328,4 @@ class EnrichmentStagePipelineTest {
         }
     }
 }
+

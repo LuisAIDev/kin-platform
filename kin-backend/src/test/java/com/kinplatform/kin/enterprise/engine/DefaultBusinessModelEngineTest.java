@@ -5,8 +5,8 @@ import com.kinplatform.kin.context.ProjectContext;
 import com.kinplatform.kin.enterprise.engine.input.BusinessModelInput;
 import com.kinplatform.kin.enterprise.engine.result.BusinessModelResult;
 import com.kinplatform.kin.enterprise.valueobjects.LeanCanvas;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -131,3 +131,4 @@ class DefaultBusinessModelEngineTest {
         assertEquals(3, result.canvas().customerSegments().size());
     }
 }
+

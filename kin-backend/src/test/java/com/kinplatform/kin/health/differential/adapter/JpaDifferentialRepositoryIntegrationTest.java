@@ -46,8 +46,8 @@ class JpaDifferentialRepositoryIntegrationTest extends PostgresTestSupport {
     void applyUpdate_deberiaAgregarElementosNuevosYSerIdempotente() {
         var conditionId = UUID.fromString("22220000-0000-0000-0000-000000010002");
         var riskId =
-                com.kinplatform.kin.engine.DeterministicId.from("risk-factor", conditionId.toString(), "test-factor");
-        var testId = com.kinplatform.kin.engine.DeterministicId.from(
+                com.kinplatform.common.engine.DeterministicId.from("risk-factor", conditionId.toString(), "test-factor");
+        var testId = com.kinplatform.common.engine.DeterministicId.from(
                 "recommended-test", conditionId.toString(), "test-prueba");
         var update = com.kinplatform.kin.health.differential.domain.CatalogUpdate.of(
                 "test-source",
@@ -65,3 +65,4 @@ class JpaDifferentialRepositoryIntegrationTest extends PostgresTestSupport {
         assertEquals(0, second.testsAdded());
     }
 }
+

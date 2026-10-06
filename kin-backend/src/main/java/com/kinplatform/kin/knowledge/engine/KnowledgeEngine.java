@@ -1,9 +1,9 @@
 package com.kinplatform.kin.knowledge.engine;
 
-import com.kinplatform.kin.engine.DomainEngine;
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.DomainEngine;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.knowledge.KnowledgeInput;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 
@@ -45,3 +45,4 @@ public class KnowledgeEngine implements DomainEngine<KnowledgeInput, KnowledgeRe
         return gateway.acquire(input.request());
     }
 }
+

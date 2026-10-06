@@ -1,9 +1,9 @@
 package com.kinplatform.kin.pipeline.stage;
 
-import com.kinplatform.kin.engine.DomainEngine;
-import com.kinplatform.kin.engine.EngineExecutor;
-import com.kinplatform.kin.engine.EngineInput;
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.DomainEngine;
+import com.kinplatform.common.engine.EngineExecutor;
+import com.kinplatform.common.engine.EngineInput;
+import com.kinplatform.common.engine.EngineResult;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
 
@@ -71,3 +71,4 @@ public class EngineStage<E extends EngineInput, R extends EngineResult> implemen
         return context;
     }
 }
+

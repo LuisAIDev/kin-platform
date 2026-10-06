@@ -1,8 +1,8 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.enterprise.engine.input.FinancialPlanInput;
 import com.kinplatform.kin.enterprise.engine.result.FinancialPlanResult;
 import com.kinplatform.kin.enterprise.valueobjects.FinancialPlan;
@@ -128,3 +128,4 @@ public class DefaultFinancialPlanEngine implements FinancialPlanEngine {
             + revenueYear1 + " con punto de equilibrio en el mes " + breakEvenMonth + ".";
     }
 }
+

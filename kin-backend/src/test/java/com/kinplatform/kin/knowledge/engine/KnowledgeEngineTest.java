@@ -1,7 +1,7 @@
 package com.kinplatform.kin.knowledge.engine;
 
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.knowledge.KnowledgeCandidate;
 import com.kinplatform.kin.knowledge.KnowledgeInput;
 import com.kinplatform.kin.knowledge.KnowledgeQuery;
@@ -127,3 +127,4 @@ class KnowledgeEngineTest {
         assertEquals(2, result.sourcesUsed().size());
     }
 }
+

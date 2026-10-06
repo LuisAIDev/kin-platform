@@ -1,4 +1,4 @@
-package com.kinplatform.kin.engine;
+package com.kinplatform.common.engine;
 
 /**
  * Contrato común de entrada de los motores de dominio.
@@ -17,3 +17,4 @@ package com.kinplatform.kin.engine;
  */
 public interface EngineInput {
 }
+

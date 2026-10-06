@@ -1,6 +1,6 @@
 package com.kinplatform.kin.knowledge.deduplication;
 
-import com.kinplatform.kin.engine.DomainEngine;
+import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.kin.pipeline.PipelineContext;
 import com.kinplatform.kin.pipeline.PipelineStage;
 import java.util.function.Predicate;
@@ -65,3 +65,4 @@ public class DeduplicationStage implements PipelineStage {
         return context;
     }
 }
+

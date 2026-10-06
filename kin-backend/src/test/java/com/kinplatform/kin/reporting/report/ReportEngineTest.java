@@ -1,7 +1,7 @@
 package com.kinplatform.kin.reporting.report;
 
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.reporting.report.assembler.ExecutiveSummaryAssembler;
 import com.kinplatform.kin.reporting.report.assembler.FinancialSectionAssembler;
 import com.kinplatform.kin.reporting.report.assembler.InnovationSectionAssembler;
@@ -111,3 +111,4 @@ class ReportEngineTest {
         assertEquals(ReportEngine.GENERATOR_NAME, ReportMetadataAssembler.GENERATOR_NAME);
     }
 }
+

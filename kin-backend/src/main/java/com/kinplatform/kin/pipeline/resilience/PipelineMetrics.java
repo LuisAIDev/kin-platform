@@ -1,6 +1,6 @@
 package com.kinplatform.kin.pipeline.resilience;
 
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 
 import java.util.List;
 import java.util.Optional;
@@ -97,3 +97,4 @@ public record PipelineMetrics(
         return stageStats.isEmpty();
     }
 }
+

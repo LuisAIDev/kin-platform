@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enrichment;
 
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 
 import java.util.List;
 import java.util.Optional;
@@ -56,3 +56,4 @@ public record EnrichmentResult(
         return totalEvidence() == 0;
     }
 }
+

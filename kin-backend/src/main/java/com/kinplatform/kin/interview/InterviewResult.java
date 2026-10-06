@@ -1,6 +1,6 @@
 package com.kinplatform.kin.interview;
 
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 
 /**
  * Resultado inmutable de la evaluación de la entrevista (ADR-015).
@@ -63,3 +63,4 @@ public record InterviewResult(
         return state == null;
     }
 }
+

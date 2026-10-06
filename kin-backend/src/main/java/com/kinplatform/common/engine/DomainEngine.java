@@ -1,4 +1,4 @@
-package com.kinplatform.kin.engine;
+package com.kinplatform.common.engine;
 
 /**
  * Contrato único de los motores de dominio de KIN.
@@ -22,3 +22,4 @@ public interface DomainEngine<E extends EngineInput, R extends EngineResult> {
 
     R evaluate(E input);
 }
+

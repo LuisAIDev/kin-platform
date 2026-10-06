@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.engine.DomainEngine;
+import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.kin.enterprise.engine.input.BusinessModelInput;
 import com.kinplatform.kin.enterprise.engine.result.BusinessModelResult;
 
@@ -20,3 +20,4 @@ import com.kinplatform.kin.enterprise.engine.result.BusinessModelResult;
 public interface BusinessModelEngine
         extends DomainEngine<BusinessModelInput, BusinessModelResult> {
 }
+

@@ -1,6 +1,6 @@
 package com.kinplatform.kin.knowledge;
 
-import com.kinplatform.kin.engine.DeterministicId;
+import com.kinplatform.common.engine.DeterministicId;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
@@ -65,3 +65,4 @@ class KnowledgeFactTest {
         assertEquals("", fact.category());
     }
 }
+

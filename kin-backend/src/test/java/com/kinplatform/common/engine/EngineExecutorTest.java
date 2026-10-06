@@ -1,4 +1,4 @@
-package com.kinplatform.kin.engine;
+package com.kinplatform.common.engine;
 
 import com.kinplatform.kin.context.CompletenessEvaluation;
 import com.kinplatform.kin.context.ProjectContext;
@@ -111,3 +111,4 @@ class EngineExecutorTest {
         assertEquals(List.of("b", "a"), results.stream().map(e -> e.result().value()).toList());
     }
 }
+

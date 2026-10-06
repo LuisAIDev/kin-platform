@@ -1,9 +1,9 @@
 package com.kinplatform.kin.reporting.risk;
 
-import com.kinplatform.kin.engine.DomainEngine;
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.DomainEngine;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -95,3 +95,4 @@ public class RiskEngine implements DomainEngine<RiskInput, RiskResult> {
         return risks.stream().filter(r -> r.category() == category).count();
     }
 }
+

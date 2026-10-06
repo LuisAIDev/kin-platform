@@ -1,9 +1,9 @@
 package com.kinplatform.kin.health.differential.engine;
 
-import com.kinplatform.kin.engine.DomainEngine;
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.DomainEngine;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.health.differential.domain.DifferentialCatalog;
 import com.kinplatform.kin.health.differential.domain.DifferentialInput;
 import com.kinplatform.kin.health.differential.domain.DifferentialItem;
@@ -159,3 +159,4 @@ public class DifferentialEngine implements DomainEngine<DifferentialInput, Diffe
         return total;
     }
 }
+

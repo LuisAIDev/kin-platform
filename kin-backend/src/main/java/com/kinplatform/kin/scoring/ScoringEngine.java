@@ -3,10 +3,10 @@ package com.kinplatform.kin.scoring;
 import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.CompletenessEvaluation;
 import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.engine.DomainEngine;
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.DomainEngine;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -131,3 +131,4 @@ public class ScoringEngine implements DomainEngine<ScoringInput, ScoreResult> {
         return weaknesses;
     }
 }
+

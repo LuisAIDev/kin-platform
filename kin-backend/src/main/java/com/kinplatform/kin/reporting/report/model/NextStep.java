@@ -1,6 +1,6 @@
 package com.kinplatform.kin.reporting.report.model;
 
-import com.kinplatform.kin.engine.DeterministicId;
+import com.kinplatform.common.engine.DeterministicId;
 
 import java.util.UUID;
 
@@ -33,3 +33,4 @@ public record NextStep(
         return new NextStep(null, source, title, priority, reason);
     }
 }
+

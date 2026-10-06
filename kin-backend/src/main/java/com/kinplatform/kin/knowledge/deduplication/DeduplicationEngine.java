@@ -1,9 +1,9 @@
 package com.kinplatform.kin.knowledge.deduplication;
 
-import com.kinplatform.kin.engine.DomainEngine;
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.DomainEngine;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -191,3 +191,4 @@ public class DeduplicationEngine implements DomainEngine<DeduplicationInput, Ded
         return true;
     }
 }
+

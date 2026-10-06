@@ -1,6 +1,6 @@
 package com.kinplatform.kin.reporting.report.model;
 
-import com.kinplatform.kin.engine.DeterministicId;
+import com.kinplatform.common.engine.DeterministicId;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -150,3 +150,4 @@ public final class ReportBuilder {
         return List.copyOf(names);
     }
 }
+

@@ -2,9 +2,9 @@ package com.kinplatform.kin.enterprise.engine;
 
 import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.enterprise.engine.input.MarketInput;
 import com.kinplatform.kin.enterprise.engine.result.MarketResult;
 import com.kinplatform.kin.enterprise.valueobjects.MarketPlan;
@@ -205,3 +205,4 @@ public class DefaultMarketEngine implements MarketEngine {
         return lines.isEmpty() ? List.of(UNDEFINED) : List.copyOf(lines);
     }
 }
+

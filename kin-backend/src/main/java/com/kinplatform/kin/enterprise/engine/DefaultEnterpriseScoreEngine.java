@@ -1,9 +1,9 @@
 package com.kinplatform.kin.enterprise.engine;
 
 import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.engine.EngineMetadata;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EngineMetadata;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.enterprise.engine.input.EnterpriseScoreInput;
 import com.kinplatform.kin.enterprise.engine.result.EnterpriseScoreResult;
 import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
@@ -207,3 +207,4 @@ public class DefaultEnterpriseScoreEngine implements EnterpriseScoreEngine {
                 + score.grade().name() + ") a partir de los planes del proyecto.";
     }
 }
+

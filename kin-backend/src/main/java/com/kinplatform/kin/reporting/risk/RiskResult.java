@@ -1,6 +1,6 @@
 package com.kinplatform.kin.reporting.risk;
 
-import com.kinplatform.kin.engine.EngineResult;
+import com.kinplatform.common.engine.EngineResult;
 
 import java.util.List;
 
@@ -55,3 +55,4 @@ public record RiskResult(
         );
     }
 }
+

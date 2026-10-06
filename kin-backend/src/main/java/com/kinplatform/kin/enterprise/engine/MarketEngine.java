@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.engine.DomainEngine;
+import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.kin.enterprise.engine.input.MarketInput;
 import com.kinplatform.kin.enterprise.engine.result.MarketResult;
 
@@ -22,3 +22,4 @@ import com.kinplatform.kin.enterprise.engine.result.MarketResult;
 public interface MarketEngine
         extends DomainEngine<MarketInput, MarketResult> {
 }
+

@@ -1,7 +1,7 @@
 package com.kinplatform.kin.enterprise.engine.input;
 
 import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.engine.EngineInput;
+import com.kinplatform.common.engine.EngineInput;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.reporting.opportunity.OpportunityResult;
 
@@ -19,3 +19,4 @@ public record InnovationInput(
     KnowledgeResult knowledge
 ) implements EngineInput {
 }
+

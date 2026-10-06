@@ -4,8 +4,8 @@ import com.kinplatform.kin.context.AnalysisResult;
 import com.kinplatform.kin.context.AnalyzedDimension;
 import com.kinplatform.kin.context.CompletenessEvaluation;
 import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import org.junit.jupiter.api.Test;
 
 import java.util.EnumMap;
@@ -112,3 +112,4 @@ class ScoringEngineTest {
             true, 12, AnalyzedDimension.values().length);
     }
 }
+

@@ -1,4 +1,4 @@
-package com.kinplatform.kin.engine;
+package com.kinplatform.common.engine;
 
 import com.kinplatform.kin.context.CompletenessEvaluation;
 import com.kinplatform.kin.context.ProjectContext;
@@ -102,3 +102,4 @@ class EngineRegistryTest {
         assertTrue(registry.after("NoExiste").isEmpty());
     }
 }
+

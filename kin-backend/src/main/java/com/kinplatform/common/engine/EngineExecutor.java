@@ -1,4 +1,4 @@
-package com.kinplatform.kin.engine;
+package com.kinplatform.common.engine;
 
 import java.util.Comparator;
 import java.util.List;
@@ -86,3 +86,4 @@ public class EngineExecutor {
         return executeAll(engines, inputFactory);
     }
 }
+

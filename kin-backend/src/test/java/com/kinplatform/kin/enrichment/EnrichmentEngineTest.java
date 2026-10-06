@@ -1,8 +1,8 @@
 package com.kinplatform.kin.enrichment;
 
 import com.kinplatform.kin.context.ProjectContext;
-import com.kinplatform.kin.engine.EnginePhase;
-import com.kinplatform.kin.engine.EngineType;
+import com.kinplatform.common.engine.EnginePhase;
+import com.kinplatform.common.engine.EngineType;
 import com.kinplatform.kin.knowledge.KnowledgeFact;
 import com.kinplatform.kin.knowledge.KnowledgeResult;
 import com.kinplatform.kin.knowledge.SourceTrust;
@@ -143,3 +143,4 @@ class EnrichmentEngineTest {
         assertFalse(result.rankFor(EvidenceCategory.MARKET).isPresent());
     }
 }
+

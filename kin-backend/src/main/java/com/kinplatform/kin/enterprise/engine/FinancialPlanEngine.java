@@ -1,6 +1,6 @@
 package com.kinplatform.kin.enterprise.engine;
 
-import com.kinplatform.kin.engine.DomainEngine;
+import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.kin.enterprise.engine.input.FinancialPlanInput;
 import com.kinplatform.kin.enterprise.engine.result.FinancialPlanResult;
 
@@ -21,3 +21,4 @@ import com.kinplatform.kin.enterprise.engine.result.FinancialPlanResult;
 public interface FinancialPlanEngine
         extends DomainEngine<FinancialPlanInput, FinancialPlanResult> {
 }
+
