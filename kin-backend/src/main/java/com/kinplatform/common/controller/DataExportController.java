@@ -1,7 +1,7 @@
 package com.kinplatform.common.controller;
 
 import com.kinplatform.common.entity.DataExportRequest;
-import com.kinplatform.common.service.DataExportService;
+import com.kinplatform.kin.health.export.DataExportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
