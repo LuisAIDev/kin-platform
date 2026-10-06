@@ -1,6 +1,6 @@
 package com.kinplatform.platform.enterprise.integration;
 
-import com.kinplatform.projectinfo.StructuredInfoSourceType;
+import com.kinplatform.platform.projectinfo.StructuredInfoSourceType;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -150,4 +150,5 @@ public final class SupplementalData {
         }
     }
 }
+
 

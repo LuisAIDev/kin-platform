@@ -1,7 +1,7 @@
 package com.kinplatform.platform.enterprise.integration;
 
 import com.kinplatform.common.context.AnalyzedDimension;
-import com.kinplatform.projectinfo.StructuredInfoSourceType;
+import com.kinplatform.platform.projectinfo.StructuredInfoSourceType;
 import java.util.List;
 
 /**
@@ -53,5 +53,6 @@ final class DimensionSourceMapping {
 
     record DimensionKey(String section, String key) {}
 }
+
 
 

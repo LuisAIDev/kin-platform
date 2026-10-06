@@ -19,8 +19,8 @@ import com.kinplatform.kin.usage.HeuristicCostEstimator;
 import com.kinplatform.kin.usage.UsagePeriod;
 import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.service.SubscriptionValidatorService;
-import com.kinplatform.project.Project;
-import com.kinplatform.project.ProjectRepository;
+import com.kinplatform.platform.project.Project;
+import com.kinplatform.platform.project.ProjectRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRole;
 import java.math.BigDecimal;
@@ -146,3 +146,4 @@ class AiBudgetEnterpriseGateTest {
         assertNull(reservationContext.current());
     }
 }
+

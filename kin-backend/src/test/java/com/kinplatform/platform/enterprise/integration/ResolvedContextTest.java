@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.ProjectContext;
-import com.kinplatform.projectinfo.StructuredInfoSourceType;
+import com.kinplatform.platform.projectinfo.StructuredInfoSourceType;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -99,5 +99,6 @@ class ResolvedContextTest {
         assertThat(resolved.conflicts()).isEmpty();
     }
 }
+
 
 

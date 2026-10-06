@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.kinplatform.kin.usage.UsagePeriod;
-import com.kinplatform.project.Project;
-import com.kinplatform.project.ProjectRepository;
-import com.kinplatform.project.ProjectStatus;
+import com.kinplatform.platform.project.Project;
+import com.kinplatform.platform.project.ProjectRepository;
+import com.kinplatform.platform.project.ProjectStatus;
 import com.kinplatform.test.PostgresTestSupport;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -129,3 +129,4 @@ class ProjectQuotaFreeRegressionTest extends PostgresTestSupport {
         assertTrue(quotaAdapter.tryIncrementCompleted(user.getId(), null));
     }
 }
+

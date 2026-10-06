@@ -1,8 +1,8 @@
 package com.kinplatform.ai.enterprise.adapter;
 
 import com.kinplatform.platform.enterprise.ports.EnterpriseProjectAccessControl;
-import com.kinplatform.project.Project;
-import com.kinplatform.project.ProjectRepository;
+import com.kinplatform.platform.project.Project;
+import com.kinplatform.platform.project.ProjectRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import org.springframework.stereotype.Component;
@@ -51,4 +51,5 @@ public class ProjectOwnerAccessControl implements EnterpriseProjectAccessControl
             && user.getId().equals(project.getUser().getId());
     }
 }
+
 

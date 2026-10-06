@@ -6,8 +6,8 @@ import com.kinplatform.platform.enterprise.integration.EnterpriseContextEnricher
 import com.kinplatform.platform.enterprise.integration.ResolvedContext;
 import com.kinplatform.platform.enterprise.integration.ResolvedValue;
 import com.kinplatform.platform.enterprise.integration.StructuredDatum;
-import com.kinplatform.projectinfo.ProjectStructuredInfo;
-import com.kinplatform.projectinfo.ProjectStructuredInfoRepository;
+import com.kinplatform.platform.projectinfo.ProjectStructuredInfo;
+import com.kinplatform.platform.projectinfo.ProjectStructuredInfoRepository;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
@@ -62,5 +62,6 @@ public class DefaultEnterpriseContextEnricher implements EnterpriseContextEnrich
         return new StructuredDatum(entity.getSection(), entity.getKey(), entity.getValue(), entity.getSourceType());
     }
 }
+
 
 

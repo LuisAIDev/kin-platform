@@ -6,9 +6,9 @@ import static org.mockito.Mockito.when;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.projectinfo.ProjectStructuredInfo;
-import com.kinplatform.projectinfo.ProjectStructuredInfoRepository;
-import com.kinplatform.projectinfo.StructuredInfoSourceType;
+import com.kinplatform.platform.projectinfo.ProjectStructuredInfo;
+import com.kinplatform.platform.projectinfo.ProjectStructuredInfoRepository;
+import com.kinplatform.platform.projectinfo.StructuredInfoSourceType;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -84,4 +84,5 @@ class DefaultEnterpriseContextEnricherTest {
         assertThat(enriched.isDimensionCovered(AnalyzedDimension.MVP)).isFalse();
     }
 }
+
 

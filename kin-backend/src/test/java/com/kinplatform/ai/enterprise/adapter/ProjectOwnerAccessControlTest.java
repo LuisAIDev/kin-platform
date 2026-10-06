@@ -1,7 +1,7 @@
 package com.kinplatform.ai.enterprise.adapter;
 
-import com.kinplatform.project.Project;
-import com.kinplatform.project.ProjectRepository;
+import com.kinplatform.platform.project.Project;
+import com.kinplatform.platform.project.ProjectRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -67,3 +67,4 @@ class ProjectOwnerAccessControlTest {
         assertFalse(accessControl.isOwner(project.getId(), null));
     }
 }
+

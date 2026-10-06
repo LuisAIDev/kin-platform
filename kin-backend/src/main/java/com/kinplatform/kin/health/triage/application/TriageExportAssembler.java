@@ -1,10 +1,10 @@
 package com.kinplatform.kin.health.triage.application;
 
-import com.kinplatform.kin.export.model.ExportBlock;
-import com.kinplatform.kin.export.model.ExportDocument;
-import com.kinplatform.kin.export.model.ExportFormat;
-import com.kinplatform.kin.export.model.ExportSection;
-import com.kinplatform.kin.export.renderer.ExportRendererFactory;
+import com.kinplatform.platform.export.model.ExportBlock;
+import com.kinplatform.platform.export.model.ExportDocument;
+import com.kinplatform.platform.export.model.ExportFormat;
+import com.kinplatform.platform.export.model.ExportSection;
+import com.kinplatform.platform.export.renderer.ExportRendererFactory;
 import jakarta.annotation.PostConstruct;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -95,3 +95,4 @@ public class TriageExportAssembler {
         return value != null && !value.isEmpty() ? value : "—";
     }
 }
+

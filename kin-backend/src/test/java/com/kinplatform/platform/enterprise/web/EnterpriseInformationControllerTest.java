@@ -13,7 +13,7 @@ import com.kinplatform.platform.enterprise.integration.EnterpriseIntegrationData
 import com.kinplatform.platform.enterprise.integration.ResolvedContext;
 import com.kinplatform.platform.enterprise.integration.StructuredDatum;
 import com.kinplatform.platform.enterprise.integration.SupplementalData;
-import com.kinplatform.projectinfo.StructuredInfoSourceType;
+import com.kinplatform.platform.projectinfo.StructuredInfoSourceType;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -75,6 +75,7 @@ class EnterpriseInformationControllerTest {
                         .value((String) null));
     }
 }
+
 
 
 

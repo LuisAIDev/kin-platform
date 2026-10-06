@@ -15,11 +15,11 @@ import com.kinplatform.kin.health.telemedicine.api.TelemedicineController;
 import com.kinplatform.kin.health.telemedicine.api.TelemedicineService;
 import com.kinplatform.kin.health.telemedicine.port.AppointmentRepository;
 import com.kinplatform.kin.health.telemedicine.port.MessageRepository;
-import com.kinplatform.project.CategoryController;
-import com.kinplatform.project.CategoryResponse;
-import com.kinplatform.project.CategoryService;
-import com.kinplatform.project.ProjectController;
-import com.kinplatform.project.ProjectService;
+import com.kinplatform.platform.project.CategoryController;
+import com.kinplatform.platform.project.CategoryResponse;
+import com.kinplatform.platform.project.CategoryService;
+import com.kinplatform.platform.project.ProjectController;
+import com.kinplatform.platform.project.ProjectService;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
 import java.util.List;
@@ -147,3 +147,4 @@ class RouteAliasMockMvcTest {
         assertSameResponse(mockMvc, "/health/documents/my", "/medical/documents/my");
     }
 }
+

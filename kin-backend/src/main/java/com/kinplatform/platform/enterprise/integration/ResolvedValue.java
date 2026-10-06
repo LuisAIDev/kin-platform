@@ -1,6 +1,6 @@
 package com.kinplatform.platform.enterprise.integration;
 
-import com.kinplatform.projectinfo.StructuredInfoSourceType;
+import com.kinplatform.platform.projectinfo.StructuredInfoSourceType;
 
 /**
  * Valor resuelto de un dato con su origen y estado explícito.
@@ -37,4 +37,5 @@ public record ResolvedValue(String value, StructuredInfoSourceType sourceType, D
         return new ResolvedValue(value, sourceType, state, origin);
     }
 }
+
 

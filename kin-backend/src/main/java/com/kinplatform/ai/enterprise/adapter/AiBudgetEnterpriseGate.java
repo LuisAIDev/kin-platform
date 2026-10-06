@@ -8,8 +8,8 @@ import com.kinplatform.kin.usage.AiReservation;
 import com.kinplatform.kin.usage.CostEstimator;
 import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.service.SubscriptionValidatorService;
-import com.kinplatform.project.Project;
-import com.kinplatform.project.ProjectRepository;
+import com.kinplatform.platform.project.Project;
+import com.kinplatform.platform.project.ProjectRepository;
 import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -88,4 +88,5 @@ public class AiBudgetEnterpriseGate implements EnterpriseAiBudgetGate {
         reservationContext.clear();
     }
 }
+
 

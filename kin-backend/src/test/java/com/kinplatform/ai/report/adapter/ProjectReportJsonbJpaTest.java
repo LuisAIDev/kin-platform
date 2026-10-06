@@ -20,8 +20,8 @@ import com.kinplatform.platform.reporting.report.model.ReportMetadata;
 import com.kinplatform.platform.reporting.report.model.RisksSection;
 import com.kinplatform.platform.reporting.report.model.ScoresSection;
 import com.kinplatform.platform.reporting.report.model.SourcesSection;
-import com.kinplatform.project.Project;
-import com.kinplatform.project.ProjectRepository;
+import com.kinplatform.platform.project.Project;
+import com.kinplatform.platform.project.ProjectRepository;
 import com.kinplatform.test.PostgresTestSupport;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -167,4 +167,5 @@ class ProjectReportJsonbJpaTest extends PostgresTestSupport {
         assertTrue(repository.findByProjectIdAndVersion(projectId, 2).isPresent());
     }
 }
+
 

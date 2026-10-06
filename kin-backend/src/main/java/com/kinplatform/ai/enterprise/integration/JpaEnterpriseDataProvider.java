@@ -8,11 +8,11 @@ import com.kinplatform.platform.enterprise.integration.EnterpriseIntegrationData
 import com.kinplatform.platform.enterprise.integration.ResolvedContext;
 import com.kinplatform.platform.enterprise.integration.StructuredDatum;
 import com.kinplatform.platform.enterprise.integration.SupplementalData;
-import com.kinplatform.projectdoc.ProjectDocument;
-import com.kinplatform.projectdoc.ProjectDocumentRepository;
-import com.kinplatform.projectdoc.ProjectDocumentStatus;
-import com.kinplatform.projectinfo.ProjectStructuredInfo;
-import com.kinplatform.projectinfo.ProjectStructuredInfoRepository;
+import com.kinplatform.platform.projectdoc.ProjectDocument;
+import com.kinplatform.platform.projectdoc.ProjectDocumentRepository;
+import com.kinplatform.platform.projectdoc.ProjectDocumentStatus;
+import com.kinplatform.platform.projectinfo.ProjectStructuredInfo;
+import com.kinplatform.platform.projectinfo.ProjectStructuredInfoRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -72,5 +72,6 @@ public class JpaEnterpriseDataProvider implements EnterpriseDataProvider {
                 relevant);
     }
 }
+
 
 

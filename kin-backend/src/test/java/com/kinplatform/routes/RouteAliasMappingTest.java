@@ -34,8 +34,8 @@ import com.kinplatform.kin.health.scheduling.api.SchedulingController;
 import com.kinplatform.kin.health.telemedicine.api.TelemedicineController;
 import com.kinplatform.kin.health.triage.api.TriageController;
 import com.kinplatform.kin.health.triage.api.TriageExportController;
-import com.kinplatform.project.CategoryController;
-import com.kinplatform.project.ProjectController;
+import com.kinplatform.platform.project.CategoryController;
+import com.kinplatform.platform.project.ProjectController;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -112,5 +112,6 @@ class RouteAliasMappingTest {
         }
     }
 }
+
 
 

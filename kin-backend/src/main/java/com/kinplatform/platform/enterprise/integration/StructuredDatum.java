@@ -1,6 +1,6 @@
 package com.kinplatform.platform.enterprise.integration;
 
-import com.kinplatform.projectinfo.StructuredInfoSourceType;
+import com.kinplatform.platform.projectinfo.StructuredInfoSourceType;
 
 /**
  * Entrada de información estructurada del proyecto en la capa de integración.
@@ -32,4 +32,5 @@ public record StructuredDatum(String section, String key, String value, Structur
         return !value.isBlank();
     }
 }
+
 

@@ -2,7 +2,7 @@ package com.kinplatform.platform.enterprise.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.kinplatform.projectinfo.StructuredInfoSourceType;
+import com.kinplatform.platform.projectinfo.StructuredInfoSourceType;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -62,4 +62,5 @@ class EnterpriseSupplementalInputTest {
         assertThat(input.units().value()).isEqualTo("12000");
     }
 }
+
 
