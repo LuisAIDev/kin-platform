@@ -1,4 +1,4 @@
-package com.kinplatform.common.entity;
+package com.kinplatform.common.legal;
 
 import jakarta.persistence.*;
 import lombok.*;

@@ -1,6 +1,6 @@
-package com.kinplatform.common.repository;
+package com.kinplatform.common.legal;
 
-import com.kinplatform.common.entity.PrivacyPolicyVersion;
+import com.kinplatform.common.legal.PrivacyPolicyVersion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,3 +17,4 @@ public interface PrivacyPolicyVersionRepository extends JpaRepository<PrivacyPol
 
     List<PrivacyPolicyVersion> findAllByOrderByEffectiveDateDesc();
 }
+

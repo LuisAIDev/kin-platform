@@ -1,7 +1,7 @@
-package com.kinplatform.common.service;
+package com.kinplatform.common.legal;
 
-import com.kinplatform.common.entity.PrivacyPolicyVersion;
-import com.kinplatform.common.repository.PrivacyPolicyVersionRepository;
+import com.kinplatform.common.legal.PrivacyPolicyVersion;
+import com.kinplatform.common.legal.PrivacyPolicyVersionRepository;
 import com.kinplatform.common.audit.adapter.AuditLogJpaRepository;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -188,3 +188,5 @@ class PrivacyPolicyServiceTest {
         assertThat(history).hasSize(2);
     }
 }
+
+

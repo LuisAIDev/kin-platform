@@ -1,7 +1,7 @@
-package com.kinplatform.common.controller;
+package com.kinplatform.common.legal;
 
-import com.kinplatform.common.entity.PrivacyPolicyVersion;
-import com.kinplatform.common.service.PrivacyPolicyService;
+import com.kinplatform.common.legal.PrivacyPolicyVersion;
+import com.kinplatform.common.legal.PrivacyPolicyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +29,7 @@ public class PrivacyPolicyController {
     }
 
     @GetMapping("/public/privacy-policy/versions")
-    public ResponseEntity<List<com.kinplatform.common.entity.PrivacyPolicyVersion>> getAllVersions() {
+    public ResponseEntity<List<com.kinplatform.common.legal.PrivacyPolicyVersion>> getAllVersions() {
         return ResponseEntity.ok(service.listAllVersions());
     }
 
@@ -43,18 +43,18 @@ public class PrivacyPolicyController {
     // ADMIN ENDPOINTS
     @PostMapping("/admin/privacy-policy")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<com.kinplatform.common.entity.PrivacyPolicyVersion> publishNewVersion(
+    public ResponseEntity<com.kinplatform.common.legal.PrivacyPolicyVersion> publishNewVersion(
             Authentication auth,
             @RequestBody PublishRequestDto dto) {
         UUID adminId = UUID.fromString(auth.getName());
-        com.kinplatform.common.entity.PrivacyPolicyVersion version = service.publishNewVersion(
+        com.kinplatform.common.legal.PrivacyPolicyVersion version = service.publishNewVersion(
             dto.version(), dto.title(), dto.contentMd(), dto.effectiveDate(), adminId);
         return ResponseEntity.status(201).body(version);
     }
 
     @PutMapping("/admin/privacy-policy/{id}/activate")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<com.kinplatform.common.entity.PrivacyPolicyVersion> activateVersion(
+    public ResponseEntity<com.kinplatform.common.legal.PrivacyPolicyVersion> activateVersion(
             @PathVariable UUID id,
             Authentication auth) {
         // For simplicity, this just re-activates an old version
@@ -69,3 +69,5 @@ public class PrivacyPolicyController {
         java.time.LocalDate effectiveDate
     ) {}
 }
+
+

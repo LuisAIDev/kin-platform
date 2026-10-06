@@ -1,11 +1,11 @@
 package com.kinplatform.common.controller;
 
 import com.kinplatform.common.config.SecurityConfig;
-import com.kinplatform.common.entity.PrivacyPolicyVersion;
+import com.kinplatform.common.legal.PrivacyPolicyVersion;
 import com.kinplatform.common.security.JwtAuthenticationFilter;
 import com.kinplatform.common.security.RateLimitingFilter;
 import com.kinplatform.common.security.SubscriptionAccessFilter;
-import com.kinplatform.common.service.PrivacyPolicyService;
+import com.kinplatform.common.legal.PrivacyPolicyService;
 import com.kinplatform.kin.health.hce.controller.EncounterController;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
@@ -30,20 +30,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Regresión del bug de doble prefijo con {@code server.servlet.context-path=/api/v1}.
+ * Regresi�n del bug de doble prefijo con {@code server.servlet.context-path=/api/v1}.
  *
  * <p>Spring Security y Spring MVC matchean contra el <b>servlet path</b> (sin
  * context-path). Por tanto los {@code @RequestMapping} y los matchers de
  * {@code SecurityConfig} NUNCA deben incluir {@code /api/v1}: el context-path
  * ya lo aporta. Si un controller lo incluye, la URL real se duplica
- * ({@code /api/v1/api/v1/...}) y en producción devuelve 404/403.</p>
+ * ({@code /api/v1/api/v1/...}) y en producci�n devuelve 404/403.</p>
  *
  * <p>Este test opera en un slice {@code @WebMvcTest} (sin context-path, sin BD),
  * que es exactamente donde el bug se vuelve visible: el mapping correcto es
  * {@code /public/privacy-policy} y el path duplicado {@code /api/v1/public/...}
- * no debe resolver. Mismo patrón que {@code BillingEndpointPathTest}.</p>
+ * no debe resolver. Mismo patr�n que {@code BillingEndpointPathTest}.</p>
  */
-@WebMvcTest(controllers = PrivacyPolicyController.class)
+@WebMvcTest(controllers = {com.kinplatform.common.legal.PrivacyPolicyController.class})
 @Import(SecurityConfig.class)
 class ContextPathRegressionTest {
 
@@ -67,7 +67,7 @@ class ContextPathRegressionTest {
         PrivacyPolicyVersion active = PrivacyPolicyVersion.builder()
                 .id(java.util.UUID.randomUUID())
                 .version("1.0")
-                .title("Política de Privacidad v1.0")
+                .title("Pol�tica de Privacidad v1.0")
                 .contentMd("# v1.0")
                 .active(true)
                 .build();

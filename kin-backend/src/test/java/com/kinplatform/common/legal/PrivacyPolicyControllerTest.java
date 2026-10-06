@@ -1,8 +1,8 @@
-package com.kinplatform.common.controller;
+package com.kinplatform.common.legal;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.common.entity.PrivacyPolicyVersion;
-import com.kinplatform.common.service.PrivacyPolicyService;
+import com.kinplatform.common.legal.PrivacyPolicyVersion;
+import com.kinplatform.common.legal.PrivacyPolicyService;
 import com.kinplatform.common.security.JwtAuthenticationFilter;
 import com.kinplatform.common.security.RateLimitingFilter;
 import com.kinplatform.common.security.SubscriptionAccessFilter;
@@ -73,7 +73,7 @@ class PrivacyPolicyControllerTest {
 
     @Test
     void getActivePolicy_noAuth_returns200() throws Exception {
-        com.kinplatform.common.entity.PrivacyPolicyVersion active = com.kinplatform.common.entity.PrivacyPolicyVersion.builder()
+        com.kinplatform.common.legal.PrivacyPolicyVersion active = com.kinplatform.common.legal.PrivacyPolicyVersion.builder()
             .id(UUID.randomUUID())
             .version("1.0")
             .title("Política de Privacidad v1.0")
@@ -100,9 +100,9 @@ class PrivacyPolicyControllerTest {
 
     @Test
     void getAllVersions_noAuth_returns200() throws Exception {
-        com.kinplatform.common.entity.PrivacyPolicyVersion v1 = com.kinplatform.common.entity.PrivacyPolicyVersion.builder()
+        com.kinplatform.common.legal.PrivacyPolicyVersion v1 = com.kinplatform.common.legal.PrivacyPolicyVersion.builder()
             .id(UUID.randomUUID()).version("1.0").title("v1.0").active(true).build();
-        com.kinplatform.common.entity.PrivacyPolicyVersion v2 = com.kinplatform.common.entity.PrivacyPolicyVersion.builder()
+        com.kinplatform.common.legal.PrivacyPolicyVersion v2 = com.kinplatform.common.legal.PrivacyPolicyVersion.builder()
             .id(UUID.randomUUID()).version("2.0").title("v2.0").active(true).build();
         when(service.listAllVersions()).thenReturn(List.of(v1, v2));
 
@@ -115,7 +115,7 @@ class PrivacyPolicyControllerTest {
 
     @Test
     void getPolicyByVersion_exists_returns200() throws Exception {
-        com.kinplatform.common.entity.PrivacyPolicyVersion version = com.kinplatform.common.entity.PrivacyPolicyVersion.builder()
+        com.kinplatform.common.legal.PrivacyPolicyVersion version = com.kinplatform.common.legal.PrivacyPolicyVersion.builder()
             .id(UUID.randomUUID())
             .version("1.0")
             .title("Política v1.0")
@@ -157,7 +157,7 @@ class PrivacyPolicyControllerTest {
     @Test
     @WithMockUser(username = "33333333-3333-3333-3333-333333333333", roles = "ADMIN")
     void publishNewVersion_admin_returns201() throws Exception {
-        com.kinplatform.common.entity.PrivacyPolicyVersion newVersion = com.kinplatform.common.entity.PrivacyPolicyVersion.builder()
+        com.kinplatform.common.legal.PrivacyPolicyVersion newVersion = com.kinplatform.common.legal.PrivacyPolicyVersion.builder()
             .id(UUID.randomUUID())
             .version("2.0")
             .title("Política v2.0")
@@ -175,3 +175,5 @@ class PrivacyPolicyControllerTest {
             .andExpect(jsonPath("$.version").value("2.0"));
     }
 }
+
+
