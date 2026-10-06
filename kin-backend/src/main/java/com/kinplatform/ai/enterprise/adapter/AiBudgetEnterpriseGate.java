@@ -2,7 +2,7 @@ package com.kinplatform.ai.enterprise.adapter;
 
 import com.kinplatform.ai.usage.AiBudgetControlService;
 import com.kinplatform.ai.usage.ReservationContext;
-import com.kinplatform.kin.enterprise.application.EnterpriseAiBudgetGate;
+import com.kinplatform.platform.enterprise.application.EnterpriseAiBudgetGate;
 import com.kinplatform.kin.usage.AiBudgetExceededException;
 import com.kinplatform.kin.usage.AiReservation;
 import com.kinplatform.kin.usage.CostEstimator;
@@ -88,3 +88,4 @@ public class AiBudgetEnterpriseGate implements EnterpriseAiBudgetGate {
         reservationContext.clear();
     }
 }
+

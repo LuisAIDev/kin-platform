@@ -1,8 +1,8 @@
 package com.kinplatform.ai.enterprise.adapter;
 
-import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
-import com.kinplatform.kin.enterprise.aggregate.GenerationStatus;
-import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
+import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
+import com.kinplatform.platform.enterprise.aggregate.GenerationStatus;
+import com.kinplatform.platform.enterprise.valueobjects.DocumentType;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
@@ -153,3 +153,4 @@ class EnterpriseProjectMapperTest {
         assertTrue(restored.documents().isEmpty());
     }
 }
+

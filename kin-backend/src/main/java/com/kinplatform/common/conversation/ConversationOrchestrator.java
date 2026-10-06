@@ -11,7 +11,7 @@ import com.kinplatform.common.conversation.history.HistoryWindow;
 import com.kinplatform.common.conversation.policy.TurnPolicy;
 import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
+import com.kinplatform.platform.enterprise.application.EnterpriseProjectTrigger;
 import com.kinplatform.common.event.DomainEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -319,6 +319,7 @@ public class ConversationOrchestrator {
         }
     }
 }
+
 
 
 

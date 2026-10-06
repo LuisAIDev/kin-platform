@@ -3,10 +3,10 @@ package com.kinplatform.routes;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.kinplatform.kin.enterprise.web.EnterpriseController;
-import com.kinplatform.kin.enterprise.web.EnterpriseDashboardController;
-import com.kinplatform.kin.enterprise.web.EnterpriseInformationController;
-import com.kinplatform.kin.enterprise.web.EnterpriseProgressController;
+import com.kinplatform.platform.enterprise.web.EnterpriseController;
+import com.kinplatform.platform.enterprise.web.EnterpriseDashboardController;
+import com.kinplatform.platform.enterprise.web.EnterpriseInformationController;
+import com.kinplatform.platform.enterprise.web.EnterpriseProgressController;
 import com.kinplatform.kin.health.aiassist.api.AIAssistController;
 import com.kinplatform.common.audit.api.AuditAdminController;
 import com.kinplatform.common.audit.api.AuditPatientController;
@@ -112,4 +112,5 @@ class RouteAliasMappingTest {
         }
     }
 }
+
 

@@ -3,7 +3,7 @@ package com.kinplatform.ai.enterprise.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.enterprise.integration.EnterpriseIntegrationData;
+import com.kinplatform.platform.enterprise.integration.EnterpriseIntegrationData;
 import com.kinplatform.projectdoc.ProjectDocument;
 import com.kinplatform.projectdoc.ProjectDocumentRepository;
 import com.kinplatform.projectdoc.ProjectDocumentStatus;
@@ -93,3 +93,4 @@ class JpaEnterpriseDataProviderTest {
         assertThat(data.documents().get(0).status()).isEqualTo("ERROR");
     }
 }
+

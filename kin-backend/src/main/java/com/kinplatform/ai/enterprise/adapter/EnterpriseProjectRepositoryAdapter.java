@@ -1,7 +1,7 @@
 package com.kinplatform.ai.enterprise.adapter;
 
-import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
-import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
+import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
+import com.kinplatform.platform.enterprise.ports.EnterpriseProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -97,3 +97,4 @@ public class EnterpriseProjectRepositoryAdapter implements EnterpriseProjectRepo
             .toList();
     }
 }
+

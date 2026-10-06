@@ -1,8 +1,8 @@
 package com.kinplatform.ai.enterprise.adapter;
 
-import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
-import com.kinplatform.kin.enterprise.aggregate.GenerationStatus;
-import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
+import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
+import com.kinplatform.platform.enterprise.aggregate.GenerationStatus;
+import com.kinplatform.platform.enterprise.valueobjects.EnterpriseScore;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
@@ -92,3 +92,4 @@ class EnterpriseProjectScorePersistenceTest {
         assertEquals(score, restored.score());
     }
 }
+

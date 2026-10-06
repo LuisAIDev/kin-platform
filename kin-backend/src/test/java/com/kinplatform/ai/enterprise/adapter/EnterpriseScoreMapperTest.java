@@ -1,6 +1,6 @@
 package com.kinplatform.ai.enterprise.adapter;
 
-import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
+import com.kinplatform.platform.enterprise.valueobjects.EnterpriseScore;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,3 +49,4 @@ class EnterpriseScoreMapperTest {
         assertEquals(80.0, entity.getSustainability());
     }
 }
+

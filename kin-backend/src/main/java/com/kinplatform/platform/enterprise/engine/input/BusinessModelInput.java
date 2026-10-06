@@ -1,0 +1,28 @@
+package com.kinplatform.platform.enterprise.engine.input;
+
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.engine.EngineInput;
+import com.kinplatform.common.knowledge.KnowledgeResult;
+import com.kinplatform.platform.reporting.RecommendationResult;
+import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
+
+/**
+ * Entrada tipada del {@code BusinessModelEngine} (Fase 10, Milestone 2D).
+ *
+ * <p>Porta los datos que el motor de modelo de negocio consume para construir
+ * el Lean Canvas: el contexto del proyecto y los resultados deterministas del
+ * pipeline (recomendaciones, oportunidades y conocimiento externo). El
+ * {@link KnowledgeResult} puede estar vacío (modo offline).</p>
+ */
+public record BusinessModelInput(
+    ProjectContext context,
+    RecommendationResult recommendations,
+    OpportunityResult opportunities,
+    KnowledgeResult knowledge
+) implements EngineInput {
+}
+
+
+
+
+

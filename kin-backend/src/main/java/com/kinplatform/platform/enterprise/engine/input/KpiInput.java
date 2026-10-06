@@ -1,0 +1,25 @@
+package com.kinplatform.platform.enterprise.engine.input;
+
+import com.kinplatform.common.context.ProjectContext;
+import com.kinplatform.common.engine.EngineInput;
+import com.kinplatform.platform.enterprise.valueobjects.FinancialPlan;
+import com.kinplatform.platform.enterprise.valueobjects.KpiSet;
+import com.kinplatform.platform.enterprise.valueobjects.MarketPlan;
+
+/**
+ * Entrada tipada del {@code KpiEngine} (Fase 10, Milestone 2D).
+ *
+ * <p>Porta los datos que el motor de KPIs consume para construir el
+ * {@link KpiSet}: el contexto del proyecto, el plan de mercado (objetivos de
+ * ingresos) y el plan financiero (márgenes y proyecciones).</p>
+ */
+public record KpiInput(
+    ProjectContext context,
+    MarketPlan marketPlan,
+    FinancialPlan financialPlan
+) implements EngineInput {
+}
+
+
+
+

@@ -1,0 +1,119 @@
+package com.kinplatform.platform.enterprise.application;
+
+import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
+import com.kinplatform.platform.enterprise.integration.EnterpriseSupplementalInput;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+/**
+ * Fachada de generación del proyecto empresarial (Fase 10, Milestone 2E).
+ *
+ * <p>Caso de uso de aplicación que orquesta la generación completa del
+ * proyecto empresarial: construcción de la entrada, ejecución de los motores
+ * deterministas, ensamblado de documentos, persistencia y eventos de dominio.
+ * Delega la lógica en {@link EnterpriseGenerationService}; esta clase es el
+ * punto de entrada público del flujo y la que consumirá el adapter REST del
+ * Milestone posterior.</p>
+ *
+ * <p>El Milestone 1 definió únicamente la firma {@link #generate(UUID)} sin
+ * lógica; a partir del Milestone 2E el flujo completo se expone mediante la
+ * solicitud tipada {@link EnterpriseGenerationRequest} (bloqueante y asíncrona)
+ * que porta los resultados del pipeline que consumen los ocho motores. La
+ * firma histórica se conserva por compatibilidad binaria y lanza
+ * {@link UnsupportedOperationException}: sin los datos del pipeline no puede
+ * ejecutar una generación.</p>
+ */
+public final class EnterpriseGenerationOrchestrator {
+
+    private final EnterpriseGenerationService service;
+
+    /**
+     * @param service servicio de generación al que delega el flujo (obligatorio)
+     */
+    public EnterpriseGenerationOrchestrator(EnterpriseGenerationService service) {
+        if (service == null) {
+            throw new IllegalArgumentException("El servicio de generación no puede ser null.");
+        }
+        this.service = service;
+    }
+
+    /**
+     * Genera el proyecto empresarial de forma bloqueante a partir de la
+     * solicitud tipada con los resultados del pipeline.
+     *
+     * @param request solicitud de generación (obligatoria)
+     * @return el aggregate persistido
+     */
+    public EnterpriseProject generate(EnterpriseGenerationRequest request) {
+        return service.generate(request);
+    }
+
+    /**
+     * Genera el proyecto empresarial de forma bloqueante incorporando los datos
+     * numéricos estructurados (FASE 10B). Con entrada vacía es idéntico a
+     * {@link #generate(EnterpriseGenerationRequest)}.
+     */
+    public EnterpriseProject generateWithSupplemental(
+            EnterpriseGenerationRequest request, EnterpriseSupplementalInput supplemental) {
+        return service.generateWithSupplemental(request, supplemental);
+    }
+
+    /**
+     * Genera el proyecto empresarial de forma asíncrona.
+     *
+     * @param request solicitud de generación (obligatoria)
+     * @return futuro que completa con el aggregate persistido
+     */
+    public CompletableFuture<EnterpriseProject> generateAsync(EnterpriseGenerationRequest request) {
+        return service.generateAsync(request);
+    }
+
+    /** Genera de forma asíncrona incorporando los datos numéricos estructurados (FASE 10B). */
+    public CompletableFuture<EnterpriseProject> generateAsyncWithSupplemental(
+            EnterpriseGenerationRequest request, EnterpriseSupplementalInput supplemental) {
+        return service.generateAsyncWithSupplemental(request, supplemental);
+    }
+
+    /**
+     * Genera una versión concreta del proyecto empresarial sin volver a
+     * publicar {@code EnterpriseProjectRequested} (Fase 10, Milestone 2F).
+     *
+     * <p>Punto de entrada del flujo integrado con el pipeline: el
+     * {@link EnterpriseProjectTrigger} publicó la solicitud con la versión
+     * resuelta y el {@code EnterpriseProjectRequestedListener} delega aquí de
+     * forma asíncrona tras capturar el evento.</p>
+     *
+     * @param request solicitud de generación (obligatoria)
+     * @param version versión solicitada (mayor o igual a 1)
+     * @return el aggregate persistido de la versión solicitada
+     */
+    public EnterpriseProject generateRequested(EnterpriseGenerationRequest request, int version) {
+        return service.generateRequested(request, version);
+    }
+
+    /** Genera una versión concreta incorporando los datos numéricos estructurados (FASE 10B). */
+    public EnterpriseProject generateRequestedWithSupplemental(
+            EnterpriseGenerationRequest request, int version, EnterpriseSupplementalInput supplemental) {
+        return service.generateRequestedWithSupplemental(request, version, supplemental);
+    }
+
+    /**
+     * Firma histórica del Milestone 1, conservada por compatibilidad binaria.
+     *
+     * <p>Sin la solicitud tipada (contexto y resultados del pipeline) no es
+     * posible ejecutar la generación: utilice
+     * {@link #generate(EnterpriseGenerationRequest)} o
+     * {@link #generateAsync(EnterpriseGenerationRequest)}.</p>
+     *
+     * @param projectId identificador del proyecto de KIN origen
+     * @return nunca devuelve (siempre lanza)
+     * @throws UnsupportedOperationException generación sin solicitud tipada
+     */
+    public EnterpriseProject generate(UUID projectId) {
+        throw new UnsupportedOperationException(
+                "La generación requiere una EnterpriseGenerationRequest con los resultados "
+                        + "del pipeline (Milestone 2E); utilice generate(EnterpriseGenerationRequest).");
+    }
+}
+
+

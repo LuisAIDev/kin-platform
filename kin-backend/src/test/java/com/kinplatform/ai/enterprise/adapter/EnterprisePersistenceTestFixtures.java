@@ -1,10 +1,10 @@
 package com.kinplatform.ai.enterprise.adapter;
 
-import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
-import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
-import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
-import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
-import com.kinplatform.kin.enterprise.valueobjects.RenderFormat;
+import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
+import com.kinplatform.platform.enterprise.valueobjects.DocumentArtifact;
+import com.kinplatform.platform.enterprise.valueobjects.DocumentType;
+import com.kinplatform.platform.enterprise.valueobjects.EnterpriseScore;
+import com.kinplatform.platform.enterprise.valueobjects.RenderFormat;
 
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -57,3 +57,4 @@ final class EnterprisePersistenceTestFixtures {
         return EnterpriseScore.calculate(70.0, 65.0, 80.0, 60.0, 50.0, 75.0, 68.0, 55.0, 0.82);
     }
 }
+

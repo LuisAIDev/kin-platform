@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
-import com.kinplatform.kin.enterprise.aggregate.GenerationStatus;
-import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
+import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
+import com.kinplatform.platform.enterprise.aggregate.GenerationStatus;
+import com.kinplatform.platform.enterprise.valueobjects.DocumentType;
 import com.kinplatform.test.PostgresTestSupport;
 import jakarta.persistence.EntityManager;
 import java.time.OffsetDateTime;
@@ -237,3 +237,4 @@ class EnterpriseProjectJpaIntegrationTest extends PostgresTestSupport {
         assertTrue(nanos < 2_000, "Los instantes difieren en " + nanos + " ns");
     }
 }
+

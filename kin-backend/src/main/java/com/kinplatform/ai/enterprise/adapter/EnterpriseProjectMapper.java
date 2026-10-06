@@ -1,8 +1,8 @@
 package com.kinplatform.ai.enterprise.adapter;
 
-import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
-import com.kinplatform.kin.enterprise.aggregate.GenerationStatus;
-import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
+import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
+import com.kinplatform.platform.enterprise.aggregate.GenerationStatus;
+import com.kinplatform.platform.enterprise.valueobjects.DocumentArtifact;
 
 import java.util.List;
 /**
@@ -101,3 +101,4 @@ public final class EnterpriseProjectMapper {
         };
     }
 }
+

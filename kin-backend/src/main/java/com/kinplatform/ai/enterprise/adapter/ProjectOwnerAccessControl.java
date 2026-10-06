@@ -1,6 +1,6 @@
 package com.kinplatform.ai.enterprise.adapter;
 
-import com.kinplatform.kin.enterprise.ports.EnterpriseProjectAccessControl;
+import com.kinplatform.platform.enterprise.ports.EnterpriseProjectAccessControl;
 import com.kinplatform.project.Project;
 import com.kinplatform.project.ProjectRepository;
 import com.kinplatform.user.User;
@@ -51,3 +51,4 @@ public class ProjectOwnerAccessControl implements EnterpriseProjectAccessControl
             && user.getId().equals(project.getUser().getId());
     }
 }
+

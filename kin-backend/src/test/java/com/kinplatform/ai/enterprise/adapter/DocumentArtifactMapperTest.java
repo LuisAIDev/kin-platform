@@ -1,8 +1,8 @@
 package com.kinplatform.ai.enterprise.adapter;
 
-import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
-import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
-import com.kinplatform.kin.enterprise.valueobjects.RenderFormat;
+import com.kinplatform.platform.enterprise.valueobjects.DocumentArtifact;
+import com.kinplatform.platform.enterprise.valueobjects.DocumentType;
+import com.kinplatform.platform.enterprise.valueobjects.RenderFormat;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -128,3 +128,4 @@ class DocumentArtifactMapperTest {
             () -> mapperConError.toEntity(doc, new EnterpriseProjectEntity()));
     }
 }
+

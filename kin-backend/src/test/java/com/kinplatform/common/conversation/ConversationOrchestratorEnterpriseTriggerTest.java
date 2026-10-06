@@ -11,26 +11,26 @@ import com.kinplatform.common.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.common.conversation.policy.TurnPolicy;
 import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.enterprise.application.DefaultEnterpriseProjectTrigger;
-import com.kinplatform.kin.enterprise.application.EnterpriseGenerationOrchestrator;
-import com.kinplatform.kin.enterprise.application.EnterpriseGenerationService;
-import com.kinplatform.kin.enterprise.application.EnterpriseProjectRequestedListener;
-import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
-import com.kinplatform.kin.enterprise.application.InMemoryEnterpriseProjectRepository;
-import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
-import com.kinplatform.kin.enterprise.assembler.EnterpriseDocumentAssembler;
-import com.kinplatform.kin.enterprise.engine.DefaultBusinessModelEngine;
-import com.kinplatform.kin.enterprise.engine.DefaultEnterpriseScoreEngine;
-import com.kinplatform.kin.enterprise.engine.DefaultFinancialPlanEngine;
-import com.kinplatform.kin.enterprise.engine.DefaultInnovationEngine;
-import com.kinplatform.kin.enterprise.engine.DefaultKpiEngine;
-import com.kinplatform.kin.enterprise.engine.DefaultMarketEngine;
-import com.kinplatform.kin.enterprise.engine.DefaultRiskPlanEngine;
-import com.kinplatform.kin.enterprise.engine.DefaultRoadmapEngine;
-import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
-import com.kinplatform.kin.enterprise.events.EnterpriseProjectGenerated;
-import com.kinplatform.kin.enterprise.events.EnterpriseProjectRequested;
-import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
+import com.kinplatform.platform.enterprise.application.DefaultEnterpriseProjectTrigger;
+import com.kinplatform.platform.enterprise.application.EnterpriseGenerationOrchestrator;
+import com.kinplatform.platform.enterprise.application.EnterpriseGenerationService;
+import com.kinplatform.platform.enterprise.application.EnterpriseProjectRequestedListener;
+import com.kinplatform.platform.enterprise.application.EnterpriseProjectTrigger;
+import com.kinplatform.platform.enterprise.application.InMemoryEnterpriseProjectRepository;
+import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
+import com.kinplatform.platform.enterprise.assembler.EnterpriseDocumentAssembler;
+import com.kinplatform.platform.enterprise.engine.DefaultBusinessModelEngine;
+import com.kinplatform.platform.enterprise.engine.DefaultEnterpriseScoreEngine;
+import com.kinplatform.platform.enterprise.engine.DefaultFinancialPlanEngine;
+import com.kinplatform.platform.enterprise.engine.DefaultInnovationEngine;
+import com.kinplatform.platform.enterprise.engine.DefaultKpiEngine;
+import com.kinplatform.platform.enterprise.engine.DefaultMarketEngine;
+import com.kinplatform.platform.enterprise.engine.DefaultRiskPlanEngine;
+import com.kinplatform.platform.enterprise.engine.DefaultRoadmapEngine;
+import com.kinplatform.platform.enterprise.engine.EngineTestFixtures;
+import com.kinplatform.platform.enterprise.events.EnterpriseProjectGenerated;
+import com.kinplatform.platform.enterprise.events.EnterpriseProjectRequested;
+import com.kinplatform.platform.enterprise.valueobjects.DocumentType;
 import com.kinplatform.common.event.InMemoryDomainEventBus;
 import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import org.junit.jupiter.api.Test;
@@ -163,7 +163,7 @@ class ConversationOrchestratorEnterpriseTriggerTest {
     // ------------------------------------------------------------------
 
     private void stubCadenaCompleta(EnterpriseProjectTrigger trigger,
-                                    com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository enterpriseRepository,
+                                    com.kinplatform.platform.enterprise.ports.EnterpriseProjectRepository enterpriseRepository,
                                     InMemoryDomainEventBus bus,
                                     ContextRepository durableContext,
                                     ProjectContext enterpriseContext) {
@@ -264,6 +264,8 @@ class ConversationOrchestratorEnterpriseTriggerTest {
             .noneMatch(e -> e instanceof EnterpriseProjectRequested));
     }
 }
+
+
 
 
 

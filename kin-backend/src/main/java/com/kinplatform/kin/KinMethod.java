@@ -6,8 +6,8 @@ import com.kinplatform.common.conversation.ResponseFallback;
 import com.kinplatform.common.conversation.ResponseValidation;
 import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.enterprise.application.EnterprisePipelineResultStore;
-import com.kinplatform.kin.enterprise.application.EnterpriseTurnResults;
+import com.kinplatform.platform.enterprise.application.EnterprisePipelineResultStore;
+import com.kinplatform.platform.enterprise.application.EnterpriseTurnResults;
 import com.kinplatform.common.pipeline.Pipeline;
 import com.kinplatform.common.pipeline.PipelineContext;
 import java.util.List;
@@ -252,6 +252,7 @@ public class KinMethod {
                 result.riskResult()));
     }
 }
+
 
 
 

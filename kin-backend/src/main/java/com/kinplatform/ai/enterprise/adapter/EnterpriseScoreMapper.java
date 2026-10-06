@@ -1,6 +1,6 @@
 package com.kinplatform.ai.enterprise.adapter;
 
-import com.kinplatform.kin.enterprise.valueobjects.EnterpriseScore;
+import com.kinplatform.platform.enterprise.valueobjects.EnterpriseScore;
 
 /**
  * Mapeador del Enterprise Score (Fase 10, Milestone 2G).
@@ -59,3 +59,4 @@ public final class EnterpriseScoreMapper {
             entity.getTeam(), entity.getSustainability(), entity.getConfidence());
     }
 }
+

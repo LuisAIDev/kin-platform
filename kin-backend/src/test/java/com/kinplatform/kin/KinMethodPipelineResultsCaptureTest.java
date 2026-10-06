@@ -10,9 +10,9 @@ import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.conversation.ResponseFallback;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.enterprise.application.EnterprisePipelineResultStore;
-import com.kinplatform.kin.enterprise.application.InMemoryEnterprisePipelineResultStore;
-import com.kinplatform.kin.enterprise.engine.EngineTestFixtures;
+import com.kinplatform.platform.enterprise.application.EnterprisePipelineResultStore;
+import com.kinplatform.platform.enterprise.application.InMemoryEnterprisePipelineResultStore;
+import com.kinplatform.platform.enterprise.engine.EngineTestFixtures;
 import com.kinplatform.common.pipeline.Pipeline;
 import com.kinplatform.common.pipeline.PipelineContext;
 import com.kinplatform.common.pipeline.PipelineStage;
@@ -185,6 +185,7 @@ class KinMethodPipelineResultsCaptureTest {
                 PROJECT_ID, USER_ID, message, List.of(), "Proyecto Test", "Descripción", "Software");
     }
 }
+
 
 
 

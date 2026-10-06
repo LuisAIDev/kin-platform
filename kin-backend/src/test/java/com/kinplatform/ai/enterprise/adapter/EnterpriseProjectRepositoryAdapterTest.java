@@ -1,7 +1,7 @@
 package com.kinplatform.ai.enterprise.adapter;
 
-import com.kinplatform.kin.enterprise.aggregate.EnterpriseProject;
-import com.kinplatform.kin.enterprise.ports.EnterpriseProjectRepository;
+import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
+import com.kinplatform.platform.enterprise.ports.EnterpriseProjectRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -171,3 +171,4 @@ class EnterpriseProjectRepositoryAdapterTest {
         assertFalse(EnterpriseProjectRepositoryAdapter.class.isInterface());
     }
 }
+

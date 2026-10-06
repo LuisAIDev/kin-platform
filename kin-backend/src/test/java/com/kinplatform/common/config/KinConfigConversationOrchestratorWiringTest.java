@@ -11,7 +11,7 @@ import com.kinplatform.common.conversation.history.HistoryWindow;
 import com.kinplatform.common.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.kin.enterprise.application.EnterpriseProjectTrigger;
+import com.kinplatform.platform.enterprise.application.EnterpriseProjectTrigger;
 import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,6 +80,7 @@ class KinConfigConversationOrchestratorWiringTest {
             "Proyecto Test", "Descripción", "Software");
     }
 }
+
 
 
 

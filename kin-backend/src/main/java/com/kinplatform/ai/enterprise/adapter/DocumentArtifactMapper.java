@@ -2,9 +2,9 @@ package com.kinplatform.ai.enterprise.adapter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.kin.enterprise.valueobjects.DocumentArtifact;
-import com.kinplatform.kin.enterprise.valueobjects.DocumentType;
-import com.kinplatform.kin.enterprise.valueobjects.RenderFormat;
+import com.kinplatform.platform.enterprise.valueobjects.DocumentArtifact;
+import com.kinplatform.platform.enterprise.valueobjects.DocumentType;
+import com.kinplatform.platform.enterprise.valueobjects.RenderFormat;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -119,3 +119,4 @@ public final class DocumentArtifactMapper {
         }
     }
 }
+
