@@ -125,36 +125,6 @@ import org.springframework.context.annotation.Configuration;
 public class KinConfig {
 
     @Bean
-    public EvaluationPolicies evaluationPolicies() {
-        return EvaluationPolicies.defaults();
-    }
-
-    @Bean
-    public ExplorationPriority explorationPriority() {
-        return ExplorationPriority.defaultPriorities();
-    }
-
-    @Bean
-    public DefaultExplorationStrategy defaultExplorationStrategy(ExplorationPriority priority) {
-        return new DefaultExplorationStrategy(priority);
-    }
-
-    @Bean
-    public ConversationStrategist conversationStrategist(DefaultExplorationStrategy defaultStrategy) {
-        return new ConversationStrategist(defaultStrategy);
-    }
-
-    @Bean
-    public CompletenessEvaluator completenessEvaluator(EvaluationPolicies policies) {
-        return new CompletenessEvaluator(policies);
-    }
-
-    @Bean
-    public DomainEventBus domainEventBus() {
-        return new InMemoryDomainEventBus();
-    }
-
-    @Bean
     public ScoringModel scoringModel() {
         return ScoringModel.defaultModel();
     }
@@ -162,27 +132,6 @@ public class KinConfig {
     @Bean
     public ScoringEngine scoringEngine(ScoringModel scoringModel) {
         return new ScoringEngine(scoringModel);
-    }
-
-    @Bean
-    public ProviderRouter providerRouter(List<AIProvider> aiProviders) {
-        return new ProviderRouter(aiProviders);
-    }
-
-    @Bean
-    public ConversationPromptBuilder conversationPromptBuilder() {
-        return new ConversationPromptBuilder();
-    }
-
-    @Bean
-    public ReportPromptBuilder reportPromptBuilder(List<SectionFormatter<?>> sectionFormatters) {
-        return new ReportPromptBuilder(sectionFormatters);
-    }
-
-    @Bean
-    public PromptAssembler promptAssembler(
-            ConversationPromptBuilder conversationBuilder, ReportPromptBuilder reportBuilder) {
-        return new PromptAssembler(conversationBuilder, reportBuilder);
     }
 
     @Bean
@@ -461,34 +410,7 @@ public class KinConfig {
         return new ReportStage(reportEngine);
     }
 
-    @Bean
-    public EventStage eventStage() {
-        return new EventStage();
-    }
-
-    @Bean
-    public EngineExecutor engineExecutor() {
-        return new EngineExecutor();
-    }
-
-    @Bean
-    public EngineRegistry engineRegistry(List<DomainEngine<?, ?>> domainEngines) {
-        return new EngineRegistry(domainEngines);
-    }
-
-    @Bean
-    public SourceValidator sourceValidator(KinKnowledgeProperties kinKnowledgeProperties) {
-        if (kinKnowledgeProperties.getAllowedDomains() == null
-                || kinKnowledgeProperties.getAllowedDomains().isEmpty()) {
-            return SourceValidator.strict();
-        }
-        return new SourceValidator(Set.copyOf(kinKnowledgeProperties.getAllowedDomains()), null, Set.of());
-    }
-
-    @Bean
-    public SourceRegistry sourceRegistry(List<KnowledgeSource> knowledgeSources) {
-        return new SourceRegistry(knowledgeSources);
-    }
+    
 
     @Bean
     public KnowledgeGateway knowledgeGateway(
@@ -508,16 +430,6 @@ public class KinConfig {
     public KnowledgeStage knowledgeStage(
             KnowledgeEngine knowledgeEngine, KinKnowledgeProperties kinKnowledgeProperties) {
         return new KnowledgeStage(knowledgeEngine, kinKnowledgeProperties.isShadowEnabled());
-    }
-
-    @Bean
-    public FactRanker factRanker() {
-        return new FactRanker();
-    }
-
-    @Bean
-    public EnrichmentEngine enrichmentEngine(FactRanker factRanker) {
-        return new EnrichmentEngine(factRanker);
     }
 
     @Bean
@@ -641,21 +553,6 @@ public class KinConfig {
                 new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
                 projectContextSyncPort,
                 enterprisePipelineResultStore);
-    }
-
-    @Bean
-    public DefaultTurnPolicy defaultTurnPolicy() {
-        return new DefaultTurnPolicy();
-    }
-
-    @Bean
-    public ResponseGuard responseGuard() {
-        return new ResponseGuard();
-    }
-
-    @Bean
-    public HistoryWindow historyWindow() {
-        return new HistoryWindow();
     }
 
     @Bean
