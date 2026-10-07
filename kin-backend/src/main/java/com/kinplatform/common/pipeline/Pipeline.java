@@ -215,9 +215,43 @@ public class Pipeline {
         return (System.nanoTime() - startNanos) / 1_000_000L;
     }
 
+    /**
+     * Crea un nuevo Pipeline prependiendo los stages dados al principio.
+     * Útil para composición de pipelines (ej: healthPipeline prepend a commonPipeline).
+     */
+    public Pipeline withPrependedStages(PipelineStage... stagesToPrepend) {
+        if (stagesToPrepend == null || stagesToPrepend.length == 0) {
+            return this;
+        }
+        List<PipelineStage> newStages = new ArrayList<>(stagesToPrepend.length + this.stages.size());
+        for (PipelineStage stage : stagesToPrepend) {
+            if (stage != null) {
+                newStages.add(stage);
+            }
+        }
+        newStages.addAll(this.stages);
+        return new Pipeline(newStages, new ArrayList<>(this.policies.values()), this.retryPolicy, this.timeoutConfig);
+    }
+
+    /**
+     * Crea un nuevo Pipeline añadiendo los stages dados al final.
+     * Útil para composición de pipelines (ej: platformPipeline append a healthPipeline).
+     */
+    public Pipeline withAppendedStages(PipelineStage... stagesToAppend) {
+        if (stagesToAppend == null || stagesToAppend.length == 0) {
+            return this;
+        }
+        List<PipelineStage> newStages = new ArrayList<>(this.stages.size() + stagesToAppend.length);
+        newStages.addAll(this.stages);
+        for (PipelineStage stage : stagesToAppend) {
+            if (stage != null) {
+                newStages.add(stage);
+            }
+        }
+        return new Pipeline(newStages, new ArrayList<>(this.policies.values()), this.retryPolicy, this.timeoutConfig);
+    }
+
     private record StageRun(StageExecutionStats stats, PipelineContext context,
                             PipelineExecutionException failure) {
     }
 }
-
-
