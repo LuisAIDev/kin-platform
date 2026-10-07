@@ -4,7 +4,7 @@ import com.kinplatform.common.ai.interview.adapter.JpaInterviewRepository;
 import com.kinplatform.common.ai.knowledge.adapter.KinKnowledgeProperties;
 import com.kinplatform.common.ai.provider.AIProvider;
 import com.kinplatform.common.ai.provider.ProviderRouter;
-import com.kinplatform.platform.method.KinMethod;
+import com.kinplatform.common.method.KinMethod;
 import com.kinplatform.common.ai.AIResponder;
 import com.kinplatform.common.ai.PromptAssembler;
 import com.kinplatform.common.ai.prompt.ConversationPromptBuilder;
@@ -38,9 +38,9 @@ import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.common.engine.EngineExecutor;
 import com.kinplatform.common.engine.EngineRegistry;
-import com.kinplatform.platform.enrichment.EnrichmentEngine;
-import com.kinplatform.platform.enrichment.FactRanker;
-import com.kinplatform.platform.enrichment.stage.EnrichmentStage;
+import com.kinplatform.common.enrichment.EnrichmentEngine;
+import com.kinplatform.common.enrichment.FactRanker;
+import com.kinplatform.common.enrichment.stage.EnrichmentStage;
 import com.kinplatform.platform.enterprise.application.EnterprisePipelineResultStore;
 import com.kinplatform.platform.enterprise.application.EnterpriseProjectTrigger;
 import com.kinplatform.common.event.DomainEventBus;
@@ -670,6 +670,7 @@ public class KinConfig {
                 historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository, enterpriseProjectTrigger);
     }
 }
+
 
 
 

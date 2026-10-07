@@ -1,8 +1,8 @@
 package com.kinplatform.common.config;
 
-import com.kinplatform.platform.method.KinMethod;
-import com.kinplatform.platform.method.KinMethodCommand;
-import com.kinplatform.platform.method.KinMethodResult;
+import com.kinplatform.common.method.KinMethod;
+import com.kinplatform.common.method.KinMethodCommand;
+import com.kinplatform.common.method.KinMethodResult;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.conversation.ConversationOrchestrator;
@@ -80,6 +80,7 @@ class KinConfigConversationOrchestratorWiringTest {
             "Proyecto Test", "Descripción", "Software");
     }
 }
+
 
 
 

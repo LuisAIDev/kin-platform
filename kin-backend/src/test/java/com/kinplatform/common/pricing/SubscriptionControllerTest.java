@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.kinplatform.common.ai.usage.AiUsageSummary;
 import com.kinplatform.common.GlobalExceptionHandler;
-import com.kinplatform.platform.usage.UsagePeriod;
+import com.kinplatform.common.usage.UsagePeriod;
 import com.kinplatform.common.pricing.dto.SubscriptionResponse;
 import com.kinplatform.common.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.common.user.User;
@@ -202,6 +202,7 @@ class SubscriptionControllerTest {
         mockMvc.perform(post("/subscriptions/trial").principal(principal())).andExpect(status().isNotFound());
     }
 }
+
 
 
 

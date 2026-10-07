@@ -1,8 +1,8 @@
 package com.kinplatform.common.conversation;
 
-import com.kinplatform.platform.method.KinMethod;
-import com.kinplatform.platform.method.KinMethodCommand;
-import com.kinplatform.platform.method.KinMethodResult;
+import com.kinplatform.common.method.KinMethod;
+import com.kinplatform.common.method.KinMethodCommand;
+import com.kinplatform.common.method.KinMethodResult;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.ProjectContext;
@@ -157,6 +157,7 @@ class ConversationOrchestratorFallbackTest {
         verify(kinMethod, times(2)).execute(any(KinMethodCommand.class));
     }
 }
+
 
 
 

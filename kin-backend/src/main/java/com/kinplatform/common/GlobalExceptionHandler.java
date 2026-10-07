@@ -6,6 +6,7 @@ import com.kinplatform.common.auth.PhysicianPendingReviewException;
 import com.kinplatform.common.pricing.PlanNotFoundException;
 import com.kinplatform.platform.project.ProjectLimitExceededException;
 import com.kinplatform.platform.project.ReportNotFoundException;
+import com.kinplatform.common.usage.AiBudgetExceededException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.time.Instant;
@@ -140,9 +141,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
     }
 
-    @ExceptionHandler(com.kinplatform.platform.usage.AiBudgetExceededException.class)
+    @ExceptionHandler(AiBudgetExceededException.class)
     public ResponseEntity<Map<String, String>> handleAiBudgetExceeded(
-            com.kinplatform.platform.usage.AiBudgetExceededException ex) {
+            AiBudgetExceededException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
     }
 

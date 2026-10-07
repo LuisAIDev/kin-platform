@@ -7,11 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.common.context.ProjectContext;
-import com.kinplatform.platform.enrichment.EnrichmentEngine;
-import com.kinplatform.platform.enrichment.EnrichmentInput;
-import com.kinplatform.platform.enrichment.EnrichmentResult;
-import com.kinplatform.platform.enrichment.EvidenceCategory;
-import com.kinplatform.platform.enrichment.FactRanker;
+import com.kinplatform.common.enrichment.EnrichmentEngine;
+import com.kinplatform.common.enrichment.EnrichmentInput;
+import com.kinplatform.common.enrichment.EnrichmentResult;
+import com.kinplatform.common.enrichment.EvidenceCategory;
+import com.kinplatform.common.enrichment.FactRanker;
 import com.kinplatform.common.knowledge.KnowledgeInput;
 import com.kinplatform.common.knowledge.KnowledgeRequest;
 import com.kinplatform.common.knowledge.KnowledgeResult;
@@ -165,6 +165,7 @@ class KnowledgeHttpEndToEndTest {
         assertTrue(knowledge.isEmpty());
     }
 }
+
 
 
 

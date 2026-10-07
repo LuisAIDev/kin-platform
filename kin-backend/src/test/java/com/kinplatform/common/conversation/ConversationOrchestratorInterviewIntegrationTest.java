@@ -9,7 +9,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.platform.method.KinMethod;
+import com.kinplatform.common.method.KinMethod;
 import com.kinplatform.common.ai.AIRequest;
 import com.kinplatform.common.ai.AIResponder;
 import com.kinplatform.common.ai.PromptAssembler;
@@ -314,6 +314,7 @@ class ConversationOrchestratorInterviewIntegrationTest {
         assertEquals("q-revenue", persisted.current());
     }
 }
+
 
 
 

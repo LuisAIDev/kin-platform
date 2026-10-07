@@ -17,9 +17,9 @@ import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.platform.enrichment.EnrichmentEngine;
-import com.kinplatform.platform.enrichment.FactRanker;
-import com.kinplatform.platform.enrichment.stage.EnrichmentStage;
+import com.kinplatform.common.enrichment.EnrichmentEngine;
+import com.kinplatform.common.enrichment.FactRanker;
+import com.kinplatform.common.enrichment.stage.EnrichmentStage;
 import com.kinplatform.common.knowledge.KnowledgeFact;
 import com.kinplatform.common.knowledge.KnowledgeResult;
 import com.kinplatform.common.knowledge.SourceTrust;
@@ -149,6 +149,7 @@ class ReportPromptSourcesIntegrationTest {
             new SourcesSectionFormatter()));
     }
 }
+
 
 
 
