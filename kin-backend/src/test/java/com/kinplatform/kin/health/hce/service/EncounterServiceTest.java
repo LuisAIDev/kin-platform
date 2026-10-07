@@ -18,8 +18,8 @@ import com.kinplatform.kin.health.hce.mapper.EncounterMapper;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
 import com.kinplatform.kin.health.hce.repository.DiagnosesRepository;
 import com.kinplatform.kin.health.hce.repository.TreatmentPlanRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,8 +69,8 @@ class EncounterServiceTest {
     private UUID patientId;
     private UUID physicianId;
     private UUID organizationId;
-    private com.kinplatform.user.User patient;
-    private com.kinplatform.user.User physician;
+    private com.kinplatform.common.user.User patient;
+    private com.kinplatform.common.user.User physician;
 
     @BeforeEach
     void setUp() {
@@ -78,23 +78,23 @@ class EncounterServiceTest {
         physicianId = UUID.randomUUID();
         organizationId = UUID.randomUUID();
 
-        patient = com.kinplatform.user.User.builder()
+        patient = com.kinplatform.common.user.User.builder()
                 .id(patientId)
                 .email("patient@test.com")
                 .fullName("Test Patient")
-                .role(com.kinplatform.user.UserRole.PATIENT)
+                .role(com.kinplatform.common.user.UserRole.PATIENT)
                 .organizationId(organizationId)
                 .build();
 
-        physician = com.kinplatform.user.User.builder()
+        physician = com.kinplatform.common.user.User.builder()
                 .id(physicianId)
                 .email("physician@test.com")
                 .fullName("Dr. Test")
-                .role(com.kinplatform.user.UserRole.PHYSICIAN)
+                .role(com.kinplatform.common.user.UserRole.PHYSICIAN)
                 .build();
     }
 
-    private void setupSecurityContext(com.kinplatform.user.User user) {
+    private void setupSecurityContext(com.kinplatform.common.user.User user) {
         var auth = new UsernamePasswordAuthenticationToken(
                 user.getEmail(),
                 null,
@@ -109,11 +109,11 @@ class EncounterServiceTest {
 
     @Test
     void createEncounter_happyPath() {
-        var patient = com.kinplatform.user.User.builder()
+        var patient = com.kinplatform.common.user.User.builder()
                 .id(patientId)
                 .email("patient@test.com")
                 .fullName("Test Patient")
-                .role(com.kinplatform.user.UserRole.PATIENT)
+                .role(com.kinplatform.common.user.UserRole.PATIENT)
                 .organizationId(organizationId)
                 .build();
 
@@ -147,11 +147,11 @@ class EncounterServiceTest {
     @Test
     void createEncounter_patientWithoutOrg_usesPhysicianContextOrg() {
         UUID physicianOrg = UUID.randomUUID();
-        var patientNoOrg = com.kinplatform.user.User.builder()
+        var patientNoOrg = com.kinplatform.common.user.User.builder()
                 .id(patientId)
                 .email("patient@test.com")
                 .fullName("Test Patient")
-                .role(com.kinplatform.user.UserRole.PATIENT)
+                .role(com.kinplatform.common.user.UserRole.PATIENT)
                 .organizationId(null)
                 .build();
         when(userRepository.findById(any())).thenReturn(java.util.Optional.of(patientNoOrg));
@@ -209,11 +209,11 @@ class EncounterServiceTest {
 
     @Test
     void createEncounter_patientIsPhysician_throwsException() {
-        var self = com.kinplatform.user.User.builder()
+        var self = com.kinplatform.common.user.User.builder()
                 .id(physicianId)
                 .email("physician@test.com")
                 .fullName("Dr. Test")
-                .role(com.kinplatform.user.UserRole.PHYSICIAN)
+                .role(com.kinplatform.common.user.UserRole.PHYSICIAN)
                 .build();
         when(userRepository.findById(any())).thenReturn(java.util.Optional.of(self));
 
@@ -432,7 +432,7 @@ class EncounterServiceTest {
 
         when(encounterRepository.findById(any())).thenReturn(java.util.Optional.of(encounter));
 
-        var otherPhysician = com.kinplatform.user.User.builder()
+        var otherPhysician = com.kinplatform.common.user.User.builder()
                 .id(UUID.randomUUID()) // Different physician
                 .email("other@test.com")
                 .build();
@@ -455,3 +455,4 @@ class EncounterServiceTest {
         }
     }
 }
+

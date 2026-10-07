@@ -1,9 +1,9 @@
 package com.kinplatform.kin.health.pilot;
 
 import com.kinplatform.kin.health.physician.api.PhysicianService;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -130,3 +130,4 @@ public class PilotOnboardingService {
     /** Par de asignación paciente → médico. */
     public record Assignment(String patientEmail, String physicianEmail) {}
 }
+

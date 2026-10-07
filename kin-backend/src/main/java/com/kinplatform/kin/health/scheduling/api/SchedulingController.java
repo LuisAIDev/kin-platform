@@ -4,9 +4,9 @@ import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.scheduling.domain.PhysicianAvailability;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment.AppointmentStatus;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.time.DayOfWeek;
@@ -257,3 +257,4 @@ public class SchedulingController {
         }
     }
 }
+

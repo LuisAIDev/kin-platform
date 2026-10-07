@@ -15,9 +15,9 @@ import com.kinplatform.kin.health.physician.port.PhysicianPatientRepository;
 import com.kinplatform.kin.health.telemedicine.config.TelemedicineProperties;
 import com.kinplatform.kin.health.telemedicine.port.AppointmentRepository;
 import com.kinplatform.kin.health.telemedicine.port.MessageRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -181,3 +181,4 @@ class NotificationCountsServiceTest {
         assertEquals(18, counts.total());
     }
 }
+

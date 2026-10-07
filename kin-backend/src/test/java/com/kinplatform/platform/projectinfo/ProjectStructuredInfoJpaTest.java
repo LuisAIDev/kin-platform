@@ -5,9 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.kinplatform.platform.project.Project;
 import com.kinplatform.platform.project.ProjectRepository;
 import com.kinplatform.test.PostgresTestSupport;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,5 +103,6 @@ class ProjectStructuredInfoJpaTest extends PostgresTestSupport {
         assertThat(found.get(0).getConfirmedAt()).isNotNull();
     }
 }
+
 
 

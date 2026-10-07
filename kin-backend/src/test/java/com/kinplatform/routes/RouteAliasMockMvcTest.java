@@ -20,8 +20,8 @@ import com.kinplatform.platform.project.CategoryResponse;
 import com.kinplatform.platform.project.CategoryService;
 import com.kinplatform.platform.project.ProjectController;
 import com.kinplatform.platform.project.ProjectService;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -147,4 +147,5 @@ class RouteAliasMockMvcTest {
         assertSameResponse(mockMvc, "/health/documents/my", "/medical/documents/my");
     }
 }
+
 

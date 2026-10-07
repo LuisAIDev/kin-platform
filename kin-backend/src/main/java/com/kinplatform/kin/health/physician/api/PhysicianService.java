@@ -18,8 +18,8 @@ import com.kinplatform.kin.health.physician.port.PhysicianPatientRepository;
 import com.kinplatform.kin.health.triage.domain.TriageConditionResult;
 import com.kinplatform.kin.health.triage.domain.TriageConsultation;
 import com.kinplatform.kin.health.triage.port.TriageConsultationRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -282,4 +282,5 @@ public class PhysicianService {
         return userRepository.findById(patientId).map(User::getFullName).orElse("Paciente");
     }
 }
+
 

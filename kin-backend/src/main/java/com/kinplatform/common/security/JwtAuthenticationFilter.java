@@ -1,8 +1,8 @@
 package com.kinplatform.common.security;
 
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -119,3 +119,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 }
+

@@ -15,10 +15,10 @@ import static org.mockito.Mockito.when;
 import com.kinplatform.common.audit.api.AuditService;
 import com.kinplatform.common.audit.domain.AuditAction;
 import com.kinplatform.common.audit.domain.AuditResourceType;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
-import com.kinplatform.user.PhysicianVerificationStatus;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
+import com.kinplatform.common.user.PhysicianVerificationStatus;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -170,7 +170,7 @@ class PhysicianApplicationServiceTest {
     void getApplicationStatus_sinSolicitud_deberiaDevolverNotFound() {
         UUID id = UUID.randomUUID();
         when(userRepository.findById(any())).thenReturn(Optional.of(
-                User.builder().id(UUID.randomUUID()).email("a@kin.com").physicianVerificationStatus(null).role(com.kinplatform.user.UserRole.FREE).build()));
+                User.builder().id(UUID.randomUUID()).email("a@kin.com").physicianVerificationStatus(null).role(com.kinplatform.common.user.UserRole.FREE).build()));
 
         var response = service.getApplicationStatus(UUID.randomUUID());
 
@@ -181,7 +181,7 @@ class PhysicianApplicationServiceTest {
     void getApplicationStatus_pendiente_deberiaDevolverPENDING() {
         UUID id = UUID.randomUUID();
         when(userRepository.findById(any())).thenReturn(Optional.of(
-                User.builder().id(UUID.randomUUID()).email("a@kin.com").physicianVerificationStatus(PhysicianVerificationStatus.PENDING).role(com.kinplatform.user.UserRole.FREE).build()));
+                User.builder().id(UUID.randomUUID()).email("a@kin.com").physicianVerificationStatus(PhysicianVerificationStatus.PENDING).role(com.kinplatform.common.user.UserRole.FREE).build()));
 
         var response = service.getApplicationStatus(UUID.randomUUID());
 
@@ -193,7 +193,7 @@ class PhysicianApplicationServiceTest {
     void getApplicationStatus_aprobado_deberiaDevolverAPPROVED() {
         UUID id = UUID.randomUUID();
         when(userRepository.findById(any())).thenReturn(Optional.of(
-                User.builder().id(UUID.randomUUID()).email("a@kin.com").physicianVerificationStatus(PhysicianVerificationStatus.APPROVED).role(com.kinplatform.user.UserRole.PHYSICIAN).build()));
+                User.builder().id(UUID.randomUUID()).email("a@kin.com").physicianVerificationStatus(PhysicianVerificationStatus.APPROVED).role(com.kinplatform.common.user.UserRole.PHYSICIAN).build()));
 
         var response = service.getApplicationStatus(UUID.randomUUID());
 
@@ -205,7 +205,7 @@ class PhysicianApplicationServiceTest {
     void getApplicationStatus_rechazado_deberiaDevolverREJECTED() {
         UUID id = UUID.randomUUID();
         when(userRepository.findById(any())).thenReturn(Optional.of(
-                User.builder().id(UUID.randomUUID()).email("a@kin.com").physicianVerificationStatus(PhysicianVerificationStatus.REJECTED).role(com.kinplatform.user.UserRole.FREE).build()));
+                User.builder().id(UUID.randomUUID()).email("a@kin.com").physicianVerificationStatus(PhysicianVerificationStatus.REJECTED).role(com.kinplatform.common.user.UserRole.FREE).build()));
 
         var response = service.getApplicationStatus(UUID.randomUUID());
 
@@ -221,3 +221,5 @@ class PhysicianApplicationServiceTest {
                 () -> service.getApplicationStatus(UUID.randomUUID()));
     }
 }
+
+

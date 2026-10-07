@@ -1,7 +1,7 @@
 package com.kinplatform.kin.health.notifications;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,3 +41,4 @@ public class NotificationCountsController {
         return ResponseEntity.ok(counts);
     }
 }
+

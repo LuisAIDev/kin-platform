@@ -3,9 +3,9 @@ package com.kinplatform.common.legal;
 import com.kinplatform.common.legal.PrivacyPolicyVersion;
 import com.kinplatform.common.legal.PrivacyPolicyVersionRepository;
 import com.kinplatform.common.audit.adapter.AuditLogJpaRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,7 +58,7 @@ class PrivacyPolicyServiceTest {
             .email("admin@example.com")
             .fullName("Admin User")
             .passwordHash("hash")
-            .role(com.kinplatform.user.UserRole.ADMIN)
+            .role(com.kinplatform.common.user.UserRole.ADMIN)
             .build();
 
         activePolicy = PrivacyPolicyVersion.builder()
@@ -188,5 +188,7 @@ class PrivacyPolicyServiceTest {
         assertThat(history).hasSize(2);
     }
 }
+
+
 
 

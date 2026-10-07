@@ -10,9 +10,9 @@ import com.kinplatform.common.GlobalExceptionHandler;
 import com.kinplatform.common.audit.InMemoryAuditLogRepository;
 import com.kinplatform.common.audit.domain.AuditAction;
 import com.kinplatform.common.audit.domain.AuditResourceType;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -105,4 +105,5 @@ class AuditControllerTest {
                 .andExpect(jsonPath("$.content[0].patientId").value(PATIENT.toString()));
     }
 }
+
 

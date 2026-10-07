@@ -5,9 +5,9 @@ import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.physician.domain.PhysicianPatientAssignment;
 import com.kinplatform.kin.health.physician.domain.RelationshipStatus;
 import com.kinplatform.kin.health.triage.api.TriageHistoryResponse;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.PhysicianVerificationStatus;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.PhysicianVerificationStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -76,10 +76,10 @@ public class PhysicianController {
     }
 
     @PostMapping("/application")
-    public ResponseEntity<com.kinplatform.user.PhysicianVerificationStatus> requestApplication(
+    public ResponseEntity<com.kinplatform.common.user.PhysicianVerificationStatus> requestApplication(
             Authentication authentication, @Valid @RequestBody PhysicianApplicationRequest request) {
         UUID userId = AuthenticatedUsers.require(userRepository, authentication).getId();
-        com.kinplatform.user.PhysicianVerificationStatus status =
+        com.kinplatform.common.user.PhysicianVerificationStatus status =
                 applicationService.requestApplication(userId, request);
         log.info("=== PHYSICIAN APPLICATION REQUEST === userId={}, status={}", userId, status);
         return ResponseEntity.ok(status);
@@ -241,3 +241,5 @@ public class PhysicianController {
         }
     }
 }
+
+

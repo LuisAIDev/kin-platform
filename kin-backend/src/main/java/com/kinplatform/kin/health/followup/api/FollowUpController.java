@@ -8,9 +8,9 @@ import com.kinplatform.kin.health.followup.domain.FollowUpStatus;
 import com.kinplatform.kin.health.followup.domain.FollowUpTask;
 import com.kinplatform.kin.health.followup.domain.FollowUpTaskStatus;
 import com.kinplatform.kin.health.followup.domain.PatientEvolution;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -268,3 +268,4 @@ public class FollowUpController {
         }
     }
 }
+

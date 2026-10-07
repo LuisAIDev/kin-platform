@@ -3,7 +3,7 @@ package com.kinplatform.common.audit.api;
 import com.kinplatform.common.dto.PageResponse;
 import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.common.audit.port.AuditLogRepository;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
@@ -51,5 +51,6 @@ public class AuditPatientController {
         return ResponseEntity.ok(PageResponse.from(page));
     }
 }
+
 
 

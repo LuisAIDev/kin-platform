@@ -6,9 +6,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.pricing.service.SubscriptionValidatorService;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.pricing.service.SubscriptionValidatorService;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -188,3 +188,4 @@ class SubscriptionAccessFilterTest {
         verify(filterChain, never()).doFilter(request, response);
     }
 }
+

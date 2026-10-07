@@ -10,7 +10,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.auth.email.EmailSender;
+import com.kinplatform.common.auth.email.EmailSender;
 import com.kinplatform.common.audit.api.AuditService;
 import com.kinplatform.kin.health.automation.config.AutomationProperties;
 import com.kinplatform.kin.health.automation.domain.ActionType;
@@ -19,9 +19,9 @@ import com.kinplatform.kin.health.automation.domain.TriggerEvent;
 import com.kinplatform.kin.health.automation.port.AutomationRuleRepository;
 import com.kinplatform.kin.health.automation.port.RuleExecutionLogRepository;
 import com.kinplatform.kin.health.followup.api.FollowUpService;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -251,4 +251,5 @@ class AutomationServiceTest {
         assertTrue(!service.listRules(user(PHYSICIAN_A, UserRole.PHYSICIAN), null).isEmpty());
     }
 }
+
 

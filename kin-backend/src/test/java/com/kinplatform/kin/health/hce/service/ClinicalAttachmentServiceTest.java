@@ -9,8 +9,8 @@ import com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus;
 import com.kinplatform.kin.health.hce.entity.Encounter.EncounterType;
 import com.kinplatform.kin.health.hce.repository.ClinicalAttachmentRepository;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,7 +74,7 @@ class ClinicalAttachmentServiceTest {
                 .id(physicianId)
                 .email("physician@test.com")
                 .fullName("Dr. Test")
-                .role(com.kinplatform.user.UserRole.PHYSICIAN)
+                .role(com.kinplatform.common.user.UserRole.PHYSICIAN)
                 .build();
     }
 
@@ -339,3 +339,4 @@ class ClinicalAttachmentServiceTest {
                         com.kinplatform.kin.health.hce.entity.ClinicalAttachment.AttachmentType.IMAGING);
     }
 }
+

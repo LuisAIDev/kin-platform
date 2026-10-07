@@ -15,11 +15,11 @@ import com.kinplatform.kin.health.triage.domain.TriageConditionResult;
 import com.kinplatform.kin.health.triage.domain.TriageConsultation;
 import com.kinplatform.kin.health.triage.domain.Urgency;
 import com.kinplatform.kin.health.triage.share.InMemoryTriageShareLinkRepository;
-import com.kinplatform.pricing.ProductVertical;
-import com.kinplatform.pricing.SubscriptionStatus;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.pricing.ProductVertical;
+import com.kinplatform.common.pricing.SubscriptionStatus;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -169,3 +169,4 @@ class TriageShareServiceTest {
         assertNull(service.resolvePublicContent("no-existe"));
     }
 }
+

@@ -2,9 +2,9 @@ package com.kinplatform.kin.health.hce.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.test.PostgresTestSupport;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;

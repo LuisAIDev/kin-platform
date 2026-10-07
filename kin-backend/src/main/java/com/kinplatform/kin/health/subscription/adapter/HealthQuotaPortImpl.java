@@ -1,16 +1,16 @@
 package com.kinplatform.kin.health.subscription.adapter;
 
-import com.kinplatform.pricing.PricingPlan;
-import com.kinplatform.pricing.PricingPlanRepository;
-import com.kinplatform.pricing.ProductVertical;
-import com.kinplatform.pricing.SubscriptionStatus;
-import com.kinplatform.pricing.UserSubscription;
-import com.kinplatform.pricing.UserSubscriptionRepository;
+import com.kinplatform.common.pricing.PricingPlan;
+import com.kinplatform.common.pricing.PricingPlanRepository;
+import com.kinplatform.common.pricing.ProductVertical;
+import com.kinplatform.common.pricing.SubscriptionStatus;
+import com.kinplatform.common.pricing.UserSubscription;
+import com.kinplatform.common.pricing.UserSubscriptionRepository;
 import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
 import com.kinplatform.kin.health.triage.port.TriageConsultationRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -129,3 +129,4 @@ public class HealthQuotaPortImpl implements HealthQuotaPort {
         return ProductVertical.EMPRESAS;
     }
 }
+

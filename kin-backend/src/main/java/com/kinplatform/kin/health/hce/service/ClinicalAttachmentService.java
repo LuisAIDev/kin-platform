@@ -7,8 +7,8 @@ import com.kinplatform.kin.health.hce.entity.ClinicalAttachment;
 import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.repository.ClinicalAttachmentRepository;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -149,3 +149,4 @@ public class ClinicalAttachmentService {
                 .build();
     }
 }
+

@@ -7,10 +7,10 @@ import com.kinplatform.kin.health.triage.port.TriageConsultationRepository;
 import com.kinplatform.kin.health.triage.share.api.SharedTriageContent;
 import com.kinplatform.kin.health.triage.share.domain.TriageShareLink;
 import com.kinplatform.kin.health.triage.share.port.TriageShareLinkRepository;
-import com.kinplatform.pricing.ProductVertical;
-import com.kinplatform.pricing.SubscriptionStatus;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.pricing.ProductVertical;
+import com.kinplatform.common.pricing.SubscriptionStatus;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -143,3 +143,4 @@ public class TriageShareService {
         return user != null ? user.getFullName() : "Paciente";
     }
 }
+

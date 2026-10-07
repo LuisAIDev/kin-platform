@@ -9,9 +9,9 @@ import com.kinplatform.common.audit.adapter.AuditLogJpaRepository;
 import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -330,4 +330,5 @@ class DataDeletionServiceTest {
         assertThat(result.getDeletedCount()).isGreaterThanOrEqualTo(0);
     }
 }
+
 

@@ -8,8 +8,8 @@ import com.kinplatform.kin.health.hce.entity.PatientIdentification.DocumentType;
 import com.kinplatform.kin.health.hce.entity.PatientIdentification.Regimen;
 import com.kinplatform.kin.health.hce.mapper.PatientIdentificationMapper;
 import com.kinplatform.kin.health.hce.repository.PatientIdentificationRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -126,3 +126,4 @@ public class PatientIdentificationService {
                 .toList();
     }
 }
+

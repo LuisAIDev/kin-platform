@@ -1,0 +1,85 @@
+package com.kinplatform.common.pricing.dto;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kinplatform.common.pricing.PricingPlan;
+import com.kinplatform.common.pricing.ProductVertical;
+import com.kinplatform.common.pricing.SupportLevel;
+import com.kinplatform.common.pricing.ViabilityScoringDetail;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class PricingPlanResponse {
+
+    private UUID id;
+    private String code;
+    private String name;
+    private String description;
+    private BigDecimal price;
+    private BigDecimal priceCop;
+    private List<String> features;
+    private Integer maxProjects;
+    private Integer messagesPerMonth;
+    private BigDecimal aiBudgetUsd;
+    private Boolean advancedAI;
+    private Boolean pdfExport;
+    private SupportLevel supportLevel;
+    private ViabilityScoringDetail viabilityScoringDetail;
+    private Boolean isActive;
+    private OffsetDateTime createdAt;
+    private OffsetDateTime updatedAt;
+    private ProductVertical vertical;
+    private Integer maxTriagesPerMonth;
+    private Integer trialDays;
+    private Integer maxPatients;
+    private Boolean triageSharing;
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    public static PricingPlanResponse fromEntity(PricingPlan plan) {
+        List<String> featureList;
+        try {
+            featureList = MAPPER.readValue(plan.getFeatures(), new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            featureList = Collections.emptyList();
+        }
+
+        return PricingPlanResponse.builder()
+                .id(plan.getId())
+                .code(plan.getCode())
+                .name(plan.getName())
+                .description(plan.getDescription())
+                .price(plan.getPrice())
+                .priceCop(plan.getPriceCop())
+                .features(featureList)
+                .maxProjects(plan.getMaxProjects())
+                .messagesPerMonth(plan.getMessagesPerMonth())
+                .aiBudgetUsd(plan.getAiBudgetUsd())
+                .advancedAI(plan.getAdvancedAI())
+                .pdfExport(plan.getPdfExport())
+                .supportLevel(plan.getSupportLevel())
+                .viabilityScoringDetail(plan.getViabilityScoringDetail())
+                .isActive(plan.getIsActive())
+                .createdAt(plan.getCreatedAt())
+                .updatedAt(plan.getUpdatedAt())
+                .vertical(plan.getVertical())
+                .maxTriagesPerMonth(plan.getMaxTriagesPerMonth())
+                .trialDays(plan.getTrialDays())
+                .maxPatients(plan.getMaxPatients())
+                .triageSharing(plan.getTriageSharing())
+                .build();
+    }
+}
+
+

@@ -16,8 +16,8 @@ import com.kinplatform.platform.export.application.ExportResult;
 import com.kinplatform.platform.export.application.ProjectExportService;
 import com.kinplatform.platform.export.model.ExportFormat;
 import com.kinplatform.platform.export.model.ExportMode;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
@@ -176,5 +176,6 @@ class ProjectExportControllerTest {
                 .andExpect(status().isBadRequest());
     }
 }
+
 
 

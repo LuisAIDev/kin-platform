@@ -4,7 +4,7 @@ import com.kinplatform.platform.projectinfo.ProjectStructuredInfoService;
 import com.kinplatform.platform.projectinfo.dto.ConfirmInfoRequest;
 import com.kinplatform.platform.projectinfo.dto.StructuredInfoRequest;
 import com.kinplatform.platform.projectinfo.dto.StructuredInfoResponse;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -62,5 +62,6 @@ public class ProjectStructuredInfoController {
                 .getId();
     }
 }
+
 
 

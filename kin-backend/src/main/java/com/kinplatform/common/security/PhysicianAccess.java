@@ -1,8 +1,8 @@
 package com.kinplatform.common.security;
 
-import com.kinplatform.user.PhysicianVerificationStatus;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.PhysicianVerificationStatus;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRole;
 
 /**
  * Predicado central y ÚNICA fuente de verdad para decidir si un {@link User}
@@ -58,3 +58,4 @@ public final class PhysicianAccess {
         return status == PhysicianVerificationStatus.APPROVED;
     }
 }
+

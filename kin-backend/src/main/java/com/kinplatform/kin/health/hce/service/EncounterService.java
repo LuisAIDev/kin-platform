@@ -13,8 +13,8 @@ import com.kinplatform.kin.health.hce.mapper.EncounterMapper;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
 import com.kinplatform.kin.health.hce.repository.DiagnosesRepository;
 import com.kinplatform.kin.health.hce.repository.TreatmentPlanRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -157,3 +157,4 @@ public class EncounterService {
         }
     }
 }
+

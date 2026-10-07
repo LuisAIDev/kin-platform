@@ -15,9 +15,9 @@ import com.kinplatform.platform.reporting.report.model.ReportMetadata;
 import com.kinplatform.platform.reporting.report.model.RisksSection;
 import com.kinplatform.platform.reporting.report.model.ScoresSection;
 import com.kinplatform.platform.reporting.report.model.SourcesSection;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -207,5 +207,6 @@ class ProjectReportControllerTest {
                 .findById(eq(PROJECT_ID));
     }
 }
+
 
 

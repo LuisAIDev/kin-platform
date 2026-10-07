@@ -1,8 +1,8 @@
 package com.kinplatform.common.security;
 
-import com.kinplatform.pricing.service.SubscriptionValidatorService;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.pricing.service.SubscriptionValidatorService;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -105,3 +105,4 @@ public class SubscriptionAccessFilter extends OncePerRequestFilter {
                  || path.matches(".*/projects/[^/]+/chat/stream/?$"));
     }
 }
+

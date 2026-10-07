@@ -1,7 +1,7 @@
 package com.kinplatform.kin.health.differential.api;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.validation.Valid;
 import java.util.HashSet;
 import java.util.List;
@@ -74,3 +74,4 @@ public class DifferentialController {
         return ResponseEntity.ok(response);
     }
 }
+

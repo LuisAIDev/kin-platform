@@ -5,9 +5,9 @@ import com.kinplatform.common.repository.DataRectificationRepository;
 import com.kinplatform.common.audit.adapter.AuditLogJpaRepository;
 import com.kinplatform.kin.health.hce.entity.PatientIdentification;
 import com.kinplatform.kin.health.hce.repository.PatientIdentificationRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -311,4 +311,5 @@ class DataRectificationServiceTest {
         verify(patientIdentificationRepository).save(argThat(pi -> "987654321".equals(pi.getDocumentNumber())));
     }
 }
+
 

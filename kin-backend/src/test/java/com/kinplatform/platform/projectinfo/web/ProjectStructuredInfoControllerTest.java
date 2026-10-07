@@ -12,8 +12,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.kinplatform.platform.projectinfo.ProjectStructuredInfoService;
 import com.kinplatform.platform.projectinfo.StructuredInfoSourceType;
 import com.kinplatform.platform.projectinfo.dto.StructuredInfoResponse;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -112,5 +112,6 @@ class ProjectStructuredInfoControllerTest {
                 .andExpect(jsonPath("$.sourceDocument").value("documento.pdf"));
     }
 }
+
 
 

@@ -30,7 +30,7 @@ public class HistoryController {
 
     private final PatientHistoryService patientHistoryService;
     private final HistoryMapper historyMapper;
-    private final com.kinplatform.user.UserRepository userRepository;
+    private final com.kinplatform.common.user.UserRepository userRepository;
 
     private static final Set<String> VALID_HISTORY_TYPES = Set.of(
             "ALLERGY",
@@ -48,7 +48,7 @@ public class HistoryController {
             @PathVariable UUID patientId,
             Authentication authentication) {
 
-        com.kinplatform.user.User user = AuthenticatedUsers.require(userRepository, authentication);
+        com.kinplatform.common.user.User user = AuthenticatedUsers.require(userRepository, authentication);
         patientHistoryService.validatePatientAccess(patientId, user);
 
         List<PatientHistoryResponse> responses = patientHistoryService.getAllByPatient(patientId);
@@ -72,7 +72,7 @@ public class HistoryController {
                     .body(Map.of("error", "Tipo de historia inválido: " + type));
         }
 
-        com.kinplatform.user.User user = AuthenticatedUsers.require(userRepository, authentication);
+        com.kinplatform.common.user.User user = AuthenticatedUsers.require(userRepository, authentication);
         patientHistoryService.validatePatientAccess(patientId, user);
 
         UUID recordedBy = user.getId();
@@ -105,7 +105,7 @@ public class HistoryController {
         }
         var existingResponse = existingOpt.get();
 
-        com.kinplatform.user.User user = AuthenticatedUsers.require(userRepository, authentication);
+        com.kinplatform.common.user.User user = AuthenticatedUsers.require(userRepository, authentication);
         patientHistoryService.validatePatientAccess(existingResponse.getPatientId(), user);
 
         UUID recordedBy = user.getId();
@@ -141,7 +141,7 @@ public class HistoryController {
         }
         var existingResponse = existingOpt.get();
 
-        com.kinplatform.user.User user = AuthenticatedUsers.require(userRepository, authentication);
+        com.kinplatform.common.user.User user = AuthenticatedUsers.require(userRepository, authentication);
         patientHistoryService.validatePatientAccess(existingResponse.getPatientId(), user);
 
         patientHistoryService.deleteById(historyId);

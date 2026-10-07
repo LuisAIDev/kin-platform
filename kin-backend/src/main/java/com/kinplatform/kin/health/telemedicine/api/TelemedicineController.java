@@ -7,9 +7,9 @@ import com.kinplatform.kin.health.telemedicine.domain.Appointment.AppointmentSta
 import com.kinplatform.kin.health.telemedicine.domain.Message;
 import com.kinplatform.kin.health.telemedicine.port.AppointmentRepository;
 import com.kinplatform.kin.health.telemedicine.port.MessageRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -239,7 +239,7 @@ public class TelemedicineController {
                 UUID otherId = message.senderId().equals(userId) ? message.receiverId() : message.senderId();
                 String otherName = userRepository
                         .findById(otherId)
-                        .map(com.kinplatform.user.User::getFullName)
+                        .map(com.kinplatform.common.user.User::getFullName)
                         .orElse("Usuario");
                 out.add(new ConversationResponse(
                         otherId, otherName, message.content(), message.createdAt(), unreadTotal));
@@ -250,3 +250,5 @@ public class TelemedicineController {
         }
     }
 }
+
+

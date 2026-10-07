@@ -3,9 +3,9 @@ package com.kinplatform.kin.health.physician.api;
 import com.kinplatform.common.audit.api.AuditService;
 import com.kinplatform.common.audit.domain.AuditAction;
 import com.kinplatform.common.audit.domain.AuditResourceType;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.PhysicianVerificationStatus;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.PhysicianVerificationStatus;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -143,4 +143,5 @@ public class PhysicianApplicationService {
             PhysicianVerificationStatus physicianVerificationStatus
     ) {}
 }
+
 

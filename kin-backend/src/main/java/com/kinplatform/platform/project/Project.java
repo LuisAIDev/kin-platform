@@ -1,6 +1,6 @@
 package com.kinplatform.platform.project;
 
-import com.kinplatform.user.User;
+import com.kinplatform.common.user.User;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -70,4 +70,5 @@ public class Project {
         updatedAt = OffsetDateTime.now();
     }
 }
+
 

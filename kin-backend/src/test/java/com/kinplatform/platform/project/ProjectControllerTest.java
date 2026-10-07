@@ -15,8 +15,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.common.dto.PageResponse;
 import com.kinplatform.platform.project.dto.CreateProjectRequest;
 import com.kinplatform.platform.project.dto.ProjectResponse;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -129,5 +129,6 @@ class ProjectControllerTest {
         verify(projectService).delete(USER_ID, PROJECT_ID);
     }
 }
+
 
 

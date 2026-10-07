@@ -4,9 +4,9 @@ import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.common.security.PatientAccess;
 import com.kinplatform.kin.health.documents.domain.ClinicalDocument;
 import com.kinplatform.kin.health.documents.domain.DocumentStatus;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.constraints.NotNull;
@@ -218,3 +218,4 @@ public class DocumentController {
         }
     }
 }
+

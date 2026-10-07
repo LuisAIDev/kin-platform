@@ -7,8 +7,8 @@ import com.kinplatform.kin.health.hce.entity.DischargeSummary;
 import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.repository.DischargeSummaryRepository;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -170,3 +170,4 @@ public class DischargeSummaryService {
                 .build();
     }
 }
+

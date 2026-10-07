@@ -8,8 +8,8 @@ import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.entity.Referral;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
 import com.kinplatform.kin.health.hce.repository.ReferralRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,7 +61,7 @@ class ReferralServiceTest {
                 .id(patientId)
                 .email("patient@test.com")
                 .fullName("Test Patient")
-                .role(com.kinplatform.user.UserRole.PATIENT)
+                .role(com.kinplatform.common.user.UserRole.PATIENT)
                 .organizationId(UUID.randomUUID())
                 .build();
 
@@ -69,7 +69,7 @@ class ReferralServiceTest {
                 .id(physicianId)
                 .email("physician@test.com")
                 .fullName("Dr. Test")
-                .role(com.kinplatform.user.UserRole.PHYSICIAN)
+                .role(com.kinplatform.common.user.UserRole.PHYSICIAN)
                 .build();
     }
 
@@ -542,3 +542,4 @@ class ReferralServiceTest {
                 .hasMessageContaining("Patient not found");
     }
 }
+

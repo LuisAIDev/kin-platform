@@ -16,9 +16,9 @@ import com.kinplatform.kin.health.differential.domain.RecommendedTest;
 import com.kinplatform.kin.health.differential.domain.RiskFactor;
 import com.kinplatform.kin.health.triage.domain.Severity;
 import com.kinplatform.kin.health.triage.domain.Urgency;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -143,3 +143,4 @@ class DifferentialControllerTest {
                 .andExpect(jsonPath("$.disclaimer").isNotEmpty());
     }
 }
+

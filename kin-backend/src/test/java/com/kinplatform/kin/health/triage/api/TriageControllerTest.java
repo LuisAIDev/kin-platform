@@ -15,9 +15,9 @@ import com.kinplatform.kin.health.triage.domain.TriageConditionResult;
 import com.kinplatform.kin.health.triage.domain.TriageConsultation;
 import com.kinplatform.kin.health.triage.domain.TriageResult;
 import com.kinplatform.kin.health.triage.domain.Urgency;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -147,3 +147,4 @@ class TriageControllerTest {
                 .andExpect(jsonPath("$[0].symptoms[0]").value("fiebre"));
     }
 }
+

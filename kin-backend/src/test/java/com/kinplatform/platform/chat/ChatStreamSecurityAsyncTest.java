@@ -7,16 +7,16 @@ import static org.mockito.Mockito.when;
 import com.kinplatform.common.security.JwtService;
 import com.kinplatform.common.conversation.ConversationOrchestrator;
 import com.kinplatform.common.conversation.StreamingTurnOutcome;
-import com.kinplatform.pricing.PricingPlan;
-import com.kinplatform.pricing.PricingPlanRepository;
-import com.kinplatform.pricing.SupportLevel;
-import com.kinplatform.pricing.ViabilityScoringDetail;
+import com.kinplatform.common.pricing.PricingPlan;
+import com.kinplatform.common.pricing.PricingPlanRepository;
+import com.kinplatform.common.pricing.SupportLevel;
+import com.kinplatform.common.pricing.ViabilityScoringDetail;
 import com.kinplatform.platform.project.Project;
 import com.kinplatform.platform.project.ProjectRepository;
 import com.kinplatform.test.PostgresTestSupport;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -168,6 +168,7 @@ class ChatStreamSecurityAsyncTest extends PostgresTestSupport {
 
     private record StreamResult(int statusCode, String body) {}
 }
+
 
 
 

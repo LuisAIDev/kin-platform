@@ -1,9 +1,9 @@
 package com.kinplatform.platform.chat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.ai.guardrails.PromptGuardrail;
-import com.kinplatform.ai.usage.AiBudgetControlService;
-import com.kinplatform.ai.usage.ReservationContext;
+import com.kinplatform.common.ai.guardrails.PromptGuardrail;
+import com.kinplatform.common.ai.usage.AiBudgetControlService;
+import com.kinplatform.common.ai.usage.ReservationContext;
 import com.kinplatform.platform.chat.dto.ChatMessageResponse;
 import com.kinplatform.platform.chat.dto.ChatRequest;
 import com.kinplatform.platform.chat.dto.ChatResponse;
@@ -20,7 +20,7 @@ import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import com.kinplatform.platform.usage.AiBudgetExceededException;
 import com.kinplatform.platform.usage.AiReservation;
-import com.kinplatform.pricing.service.SubscriptionValidatorService;
+import com.kinplatform.common.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.platform.project.ProjectRepository;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -860,6 +860,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         return messages;
     }
 }
+
 
 
 

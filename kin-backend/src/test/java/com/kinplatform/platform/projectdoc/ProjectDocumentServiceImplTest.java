@@ -14,7 +14,7 @@ import com.kinplatform.platform.project.ProjectRepository;
 import com.kinplatform.platform.projectdoc.dto.DocumentResponse;
 import com.kinplatform.platform.projectdoc.extract.DocumentExtractionService;
 import com.kinplatform.platform.projectdoc.extract.TextExtractionException;
-import com.kinplatform.user.User;
+import com.kinplatform.common.user.User;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.UUID;
@@ -134,5 +134,6 @@ class ProjectDocumentServiceImplTest {
         verify(repository, never()).findByProjectIdOrderByCreatedAtDesc(any());
     }
 }
+
 
 

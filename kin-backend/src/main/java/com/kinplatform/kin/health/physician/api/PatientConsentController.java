@@ -2,7 +2,7 @@ package com.kinplatform.kin.health.physician.api;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.physician.domain.PhysicianPatientAssignment;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
@@ -61,3 +61,4 @@ public class PatientConsentController {
     public record ConsentAcceptRequest(
             @NotNull(message = "physicianId es obligatorio") UUID physicianId) {}
 }
+

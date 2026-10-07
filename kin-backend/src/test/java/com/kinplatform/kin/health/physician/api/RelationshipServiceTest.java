@@ -17,11 +17,11 @@ import com.kinplatform.kin.health.physician.domain.RelationshipStatus;
 import com.kinplatform.kin.health.physician.event.PatientInvitedEvent;
 import com.kinplatform.kin.health.physician.event.RelationshipAcceptedEvent;
 import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
-import com.kinplatform.pricing.ProductVertical;
-import com.kinplatform.pricing.SubscriptionStatus;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.pricing.ProductVertical;
+import com.kinplatform.common.pricing.SubscriptionStatus;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -494,4 +494,5 @@ class RelationshipServiceTest {
         assertEquals(RelationshipStatus.PENDING, invitation.status());
     }
 }
+
 

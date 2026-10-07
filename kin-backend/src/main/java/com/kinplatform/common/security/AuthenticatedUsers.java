@@ -1,7 +1,7 @@
 package com.kinplatform.common.security;
 
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import org.springframework.security.core.Authentication;
 
 /**
@@ -22,3 +22,4 @@ public final class AuthenticatedUsers {
                 .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found"));
     }
 }
+

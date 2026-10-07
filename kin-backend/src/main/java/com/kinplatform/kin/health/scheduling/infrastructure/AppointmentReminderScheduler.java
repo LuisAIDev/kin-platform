@@ -1,13 +1,13 @@
 package com.kinplatform.kin.health.scheduling.infrastructure;
 
-import com.kinplatform.auth.email.EmailSender;
+import com.kinplatform.common.auth.email.EmailSender;
 import com.kinplatform.kin.health.dashboard.domain.Reminder;
 import com.kinplatform.kin.health.dashboard.port.DashboardRepository;
 import com.kinplatform.kin.health.scheduling.config.SchedulingProperties;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment;
 import com.kinplatform.kin.health.telemedicine.port.AppointmentRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -144,3 +144,4 @@ public class AppointmentReminderScheduler {
         return id.toString().substring(0, 8);
     }
 }
+

@@ -4,8 +4,8 @@ import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.aiassist.domain.AIAssistRequest;
 import com.kinplatform.kin.health.aiassist.service.AIAssistService;
 import com.kinplatform.kin.health.triage.domain.TriageResult;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -90,3 +90,4 @@ public class AIAssistController {
 
     public record ExplainRequest(TriageResult differentialResult) {}
 }
+

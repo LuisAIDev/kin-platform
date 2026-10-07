@@ -7,8 +7,8 @@ import com.kinplatform.kin.health.hce.dto.MedicalOrderResponse;
 import com.kinplatform.kin.health.hce.entity.MedicalOrder;
 import com.kinplatform.kin.health.hce.service.MedicalOrderService;
 import com.kinplatform.common.GlobalExceptionHandler;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -201,3 +201,4 @@ class MedicalOrderControllerTest {
                 .andExpect(jsonPath("$[0].id").value(orderId.toString()));
     }
 }
+

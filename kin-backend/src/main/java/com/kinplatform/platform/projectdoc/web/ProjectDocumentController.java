@@ -2,7 +2,7 @@ package com.kinplatform.platform.projectdoc.web;
 
 import com.kinplatform.platform.projectdoc.ProjectDocumentService;
 import com.kinplatform.platform.projectdoc.dto.DocumentResponse;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -47,5 +47,6 @@ public class ProjectDocumentController {
                 .getId();
     }
 }
+
 
 

@@ -15,9 +15,9 @@ import com.kinplatform.common.GlobalExceptionHandler;
 import com.kinplatform.kin.health.scheduling.domain.PhysicianAvailability;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment.AppointmentStatus;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -189,3 +189,4 @@ class SchedulingControllerTest {
                 .andExpect(jsonPath("$[0].status").value("PENDIENTE"));
     }
 }
+

@@ -24,8 +24,8 @@ import com.kinplatform.kin.health.hce.repository.MedicalOrderRepository;
 import com.kinplatform.kin.health.hce.repository.PhysicalExamRepository;
 import com.kinplatform.kin.health.hce.repository.TreatmentPlanRepository;
 import com.kinplatform.kin.health.telemedicine.adapter.MessageJpaRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -597,4 +597,5 @@ public class DataExportService {
         }
     }
 }
+
 

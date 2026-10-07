@@ -6,11 +6,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.kinplatform.platform.chat.ChatMessageRepository;
-import com.kinplatform.pricing.service.SubscriptionValidatorService;
+import com.kinplatform.common.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.platform.project.dto.CreateProjectRequest;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -95,5 +95,6 @@ class ProjectServiceCategoryTest {
         verify(subscriptionValidatorService).evictProjectLimitCache(USER_ID);
     }
 }
+
 
 

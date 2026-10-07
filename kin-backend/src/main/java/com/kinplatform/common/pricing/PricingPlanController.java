@@ -1,0 +1,71 @@
+package com.kinplatform.common.pricing;
+
+import com.kinplatform.common.pricing.ProductVertical;
+import com.kinplatform.common.pricing.dto.CreatePricingPlanRequest;
+import com.kinplatform.common.pricing.dto.PricingPlanResponse;
+import com.kinplatform.common.pricing.dto.UpdatePricingPlanRequest;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
+import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequiredArgsConstructor
+public class PricingPlanController {
+
+    private final PricingPlanService pricingPlanService;
+    private final UserRepository userRepository;
+
+    @GetMapping("/pricing-plans")
+    public ResponseEntity<List<PricingPlanResponse>> getAll() {
+        return ResponseEntity.ok(pricingPlanService.getAllActive());
+    }
+
+    @GetMapping("/pricing-plans/vertical/{vertical}")
+    public ResponseEntity<List<PricingPlanResponse>> getByVertical(@PathVariable ProductVertical vertical) {
+        return ResponseEntity.ok(pricingPlanService.getByVertical(vertical));
+    }
+
+    @GetMapping("/pricing-plans/{id}")
+    public ResponseEntity<PricingPlanResponse> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(pricingPlanService.getById(id));
+    }
+
+    @PostMapping("/admin/pricing-plans")
+    public ResponseEntity<PricingPlanResponse> create(
+            Authentication auth, @Valid @RequestBody CreatePricingPlanRequest request) {
+        requireAdmin(auth);
+        var response = pricingPlanService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PutMapping("/admin/pricing-plans/{id}")
+    public ResponseEntity<PricingPlanResponse> update(
+            Authentication auth, @PathVariable UUID id, @Valid @RequestBody UpdatePricingPlanRequest request) {
+        requireAdmin(auth);
+        return ResponseEntity.ok(pricingPlanService.update(id, request));
+    }
+
+    @DeleteMapping("/admin/pricing-plans/{id}")
+    public ResponseEntity<Void> deactivate(Authentication auth, @PathVariable UUID id) {
+        requireAdmin(auth);
+        pricingPlanService.deactivate(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    private void requireAdmin(Authentication auth) {
+        var user = com.kinplatform.common.security.AuthenticatedUsers.require(userRepository, auth);
+
+        if (user.getRole() != UserRole.ADMIN) {
+            throw new AccessDeniedException("Only administrators can manage pricing plans");
+        }
+    }
+}
+

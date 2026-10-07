@@ -5,7 +5,7 @@ import com.kinplatform.kin.health.hce.dto.CreateObstetricHistoryRequest;
 import com.kinplatform.kin.health.hce.dto.ObstetricHistoryResponse;
 import com.kinplatform.kin.health.hce.service.ObstetricHistoryService;
 import com.kinplatform.common.GlobalExceptionHandler;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

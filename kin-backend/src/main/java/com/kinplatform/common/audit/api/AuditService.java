@@ -6,7 +6,7 @@ import com.kinplatform.common.audit.config.AuditProperties;
 import com.kinplatform.common.audit.domain.AuditAction;
 import com.kinplatform.common.audit.domain.AuditResourceType;
 import com.kinplatform.common.audit.event.AuditLogEvent;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.UUID;
@@ -126,6 +126,7 @@ public class AuditService {
         return null;
     }
 }
+
 
 
 

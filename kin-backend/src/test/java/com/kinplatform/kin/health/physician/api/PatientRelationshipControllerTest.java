@@ -9,9 +9,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.kin.health.physician.domain.PhysicianPatientAssignment;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -174,3 +174,4 @@ class PatientRelationshipControllerTest {
         mockMvc.perform(get("/health/patient/relationships/pending")).andExpect(status().isOk());
     }
 }
+

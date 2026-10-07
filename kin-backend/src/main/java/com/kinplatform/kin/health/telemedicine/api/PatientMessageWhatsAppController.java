@@ -1,8 +1,8 @@
 package com.kinplatform.kin.health.telemedicine.api;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import com.kinplatform.kin.health.telemedicine.domain.Message;
 import com.kinplatform.kin.health.telemedicine.port.MessageRepository;
 import lombok.extern.slf4j.Slf4j;

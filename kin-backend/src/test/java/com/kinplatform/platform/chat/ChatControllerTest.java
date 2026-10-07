@@ -11,8 +11,8 @@ import com.kinplatform.platform.chat.dto.ChatMessageResponse;
 import com.kinplatform.platform.chat.dto.ChatRequest;
 import com.kinplatform.platform.chat.dto.ChatResponse;
 import com.kinplatform.platform.chat.dto.SaveMessageRequest;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -138,5 +138,6 @@ class ChatControllerTest {
         assertThrows(IllegalArgumentException.class, () -> controller.chat(authentication, PROJECT_ID, request()));
     }
 }
+
 
 

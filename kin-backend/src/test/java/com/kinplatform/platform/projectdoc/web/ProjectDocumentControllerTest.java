@@ -11,8 +11,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.kinplatform.platform.projectdoc.ProjectDocumentService;
 import com.kinplatform.platform.projectdoc.ProjectDocumentStatus;
 import com.kinplatform.platform.projectdoc.dto.DocumentResponse;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -78,5 +78,6 @@ class ProjectDocumentControllerTest {
                 .andExpect(jsonPath("$").isArray());
     }
 }
+
 
 

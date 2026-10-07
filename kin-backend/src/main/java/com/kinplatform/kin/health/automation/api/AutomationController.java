@@ -3,9 +3,9 @@ package com.kinplatform.kin.health.automation.api;
 import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.automation.domain.*;
 import com.kinplatform.kin.health.automation.service.AutomationService;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import jakarta.validation.Valid;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -149,3 +149,4 @@ public class AutomationController {
             String error,
             String details) {}
 }
+

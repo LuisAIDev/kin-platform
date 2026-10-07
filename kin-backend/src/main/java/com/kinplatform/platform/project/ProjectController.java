@@ -4,7 +4,7 @@ import com.kinplatform.common.dto.PageResponse;
 import com.kinplatform.platform.project.dto.CreateProjectRequest;
 import com.kinplatform.platform.project.dto.ProjectResponse;
 import com.kinplatform.platform.project.dto.UpdateProjectRequest;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -71,5 +71,6 @@ public class ProjectController {
                 .getId();
     }
 }
+
 
 

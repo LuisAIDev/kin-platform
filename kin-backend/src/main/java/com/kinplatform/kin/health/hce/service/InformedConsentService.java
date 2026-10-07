@@ -7,8 +7,8 @@ import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.entity.InformedConsent;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
 import com.kinplatform.kin.health.hce.repository.InformedConsentRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -109,7 +109,7 @@ public class InformedConsentService {
         User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_IPS_ADMIN") || a.getAuthority().equals("ROLE_ADMIN"));
-        boolean isPhysician = currentUser.getRole().equals(com.kinplatform.user.UserRole.PHYSICIAN);
+        boolean isPhysician = currentUser.getRole().equals(com.kinplatform.common.user.UserRole.PHYSICIAN);
 
         if (!isAdmin && !isPhysician) {
             throw new AccessDeniedException("Only physicians or admins can access patient consents");
@@ -155,3 +155,5 @@ public class InformedConsentService {
                 .build();
     }
 }
+
+

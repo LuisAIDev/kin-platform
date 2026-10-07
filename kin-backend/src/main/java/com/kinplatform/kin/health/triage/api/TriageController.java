@@ -1,7 +1,7 @@
 package com.kinplatform.kin.health.triage.api;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -82,3 +82,4 @@ public class TriageController {
         return ResponseEntity.noContent().build();
     }
 }
+

@@ -11,9 +11,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.ai.guardrails.PromptGuardrail;
-import com.kinplatform.ai.usage.AiBudgetControlService;
-import com.kinplatform.ai.usage.ReservationContext;
+import com.kinplatform.common.ai.guardrails.PromptGuardrail;
+import com.kinplatform.common.ai.usage.AiBudgetControlService;
+import com.kinplatform.common.ai.usage.ReservationContext;
 import com.kinplatform.platform.chat.dto.ChatMessageResponse;
 import com.kinplatform.platform.chat.dto.ChatRequest;
 import com.kinplatform.platform.chat.dto.ChatResponse;
@@ -29,13 +29,13 @@ import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.platform.usage.AiBudgetExceededException;
 import com.kinplatform.platform.usage.AiReservation;
 import com.kinplatform.platform.usage.UsagePeriod;
-import com.kinplatform.pricing.PricingPlan;
-import com.kinplatform.pricing.service.SubscriptionValidatorService;
+import com.kinplatform.common.pricing.PricingPlan;
+import com.kinplatform.common.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.platform.project.Project;
 import com.kinplatform.platform.project.ProjectRepository;
 import com.kinplatform.platform.project.ProjectStatus;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRole;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -218,6 +218,7 @@ class ChatOrchestratorBudgetGateTest {
         return new TurnResult(ctx, decision, directive, "¿pregunta?", ResponseValidation.ok(), null, List.of());
     }
 }
+
 
 
 

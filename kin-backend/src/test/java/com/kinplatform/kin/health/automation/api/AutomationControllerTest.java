@@ -16,9 +16,9 @@ import com.kinplatform.kin.health.automation.domain.ActionType;
 import com.kinplatform.kin.health.automation.domain.AutomationRule;
 import com.kinplatform.kin.health.automation.domain.TriggerEvent;
 import com.kinplatform.kin.health.automation.service.AutomationService;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -178,3 +178,4 @@ class AutomationControllerTest {
                 .andExpect(status().isForbidden());
     }
 }
+

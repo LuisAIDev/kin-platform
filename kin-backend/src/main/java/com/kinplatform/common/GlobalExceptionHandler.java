@@ -1,9 +1,9 @@
 package com.kinplatform.common;
 
 import com.kinplatform.kin.health.common.exception.QuotaExceededException;
-import com.kinplatform.auth.EmailVerificationRequiredException;
-import com.kinplatform.auth.PhysicianPendingReviewException;
-import com.kinplatform.pricing.PlanNotFoundException;
+import com.kinplatform.common.auth.EmailVerificationRequiredException;
+import com.kinplatform.common.auth.PhysicianPendingReviewException;
+import com.kinplatform.common.pricing.PlanNotFoundException;
 import com.kinplatform.platform.project.ProjectLimitExceededException;
 import com.kinplatform.platform.project.ReportNotFoundException;
 import java.util.LinkedHashMap;
@@ -174,5 +174,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 }
+
 
 

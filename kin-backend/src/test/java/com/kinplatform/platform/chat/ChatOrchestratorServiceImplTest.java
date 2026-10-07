@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.ai.guardrails.PromptGuardrail;
+import com.kinplatform.common.ai.guardrails.PromptGuardrail;
 import com.kinplatform.platform.chat.dto.ChatMessageResponse;
 import com.kinplatform.platform.chat.dto.ChatRequest;
 import com.kinplatform.platform.chat.dto.SaveMessageRequest;
@@ -27,8 +27,8 @@ import com.kinplatform.platform.project.Category;
 import com.kinplatform.platform.project.Project;
 import com.kinplatform.platform.project.ProjectRepository;
 import com.kinplatform.platform.project.ProjectStatus;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRole;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -426,6 +426,7 @@ class ChatOrchestratorServiceImplTest {
         verify(reportRepository).save(PROJECT_ID, report);
     }
 }
+
 
 
 

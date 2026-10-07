@@ -1,0 +1,233 @@
+package com.kinplatform.common.auth;
+
+import com.kinplatform.common.auth.dto.AuthResponse;
+import com.kinplatform.common.auth.dto.ForgotPasswordRequest;
+import com.kinplatform.common.auth.dto.LoginRequest;
+import com.kinplatform.common.auth.dto.PatientRegisterRequest;
+import com.kinplatform.common.auth.dto.PhysicianRegisterRequest;
+import com.kinplatform.common.auth.dto.RefreshTokenRequest;
+import com.kinplatform.common.auth.dto.RegisterRequest;
+import com.kinplatform.common.auth.dto.ResetPasswordRequest;
+import com.kinplatform.common.auth.dto.UserDTO;
+import com.kinplatform.common.auth.password.PasswordResetService;
+import com.kinplatform.common.auth.verification.VerifyEmailOutcome;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@Slf4j
+@RestController
+@RequestMapping("/auth")
+@RequiredArgsConstructor
+public class AuthController {
+
+    private static final String TOKEN_COOKIE = "kin_token_v2";
+
+    private final AuthService authService;
+    private final PasswordResetService passwordResetService;
+
+    @Value("${app.session.cookie-secure:true}")
+    private boolean cookieSecure;
+
+    @Value("${app.session.cookie-same-site:None}")
+    private String cookieSameSite;
+
+    @PostMapping("/register")
+    public ResponseEntity<AuthResponse> register(
+            @Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
+        var authResponse = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
+    }
+
+    @PostMapping("/register/patient")
+    public ResponseEntity<AuthResponse> registerPatient(
+            @Valid @RequestBody PatientRegisterRequest request, HttpServletResponse response) {
+        var authResponse = authService.registerPatient(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
+    }
+
+    @PostMapping("/register/physician")
+    public ResponseEntity<AuthResponse> registerPhysician(
+            @Valid @RequestBody PhysicianRegisterRequest request, HttpServletResponse response) {
+        var authResponse = authService.registerPhysician(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
+        var authResponse = authService.login(request);
+        setTokenCookie(response, authResponse.getToken());
+        return ResponseEntity.ok(authResponse);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> me(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @CookieValue(value = TOKEN_COOKIE, required = false) String cookieToken) {
+        String token = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        } else if (cookieToken != null && !cookieToken.isBlank()) {
+            token = cookieToken;
+        }
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        var user = authService.getCurrentUser(token);
+        return ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<Map<String, String>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        var newToken = authService.refreshAccessToken(request.refreshToken());
+        if (newToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Refresh token inválido o expirado"));
+        }
+        return ResponseEntity.ok(Map.of("token", newToken));
+    }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<Map<String, String>> verifyEmailGet(
+            @RequestParam(value = "token", required = false) String token,
+            HttpServletRequest request) {
+        
+        String referer = request.getHeader("Referer");
+        String queryString = request.getQueryString();
+        
+        if (token == null || token.isBlank()) {
+            log.warn("GET /auth/verify-email SIN token — referer: {}, query: {}", referer, queryString);
+            return ResponseEntity.badRequest().body(Map.of("error", "Token requerido"));
+        }
+        
+        log.info("GET /auth/verify-email CON token — referer: {}", referer);
+        
+        var outcome = authService.validateOnly(token);  // NO consume el token
+        if (outcome == VerifyEmailOutcome.SUCCESS) {
+            return ResponseEntity.ok(Map.of("valid", "true"));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "error", messageFor(outcome),
+                        "code", outcome.name()));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<Map<String, String>> verifyEmailPost(@RequestBody Map<String, String> body) {
+        String token = body.get("token");
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Token requerido"));
+        }
+        var outcome = authService.verifyEmail(token);
+        return switch (outcome) {
+            case SUCCESS -> ResponseEntity.ok(Map.of("success", "true"));
+            case ALREADY_USED -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "El enlace ya fue utilizado"));
+            case EXPIRED -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "El enlace ha expirado"));
+            case INVALID -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Token inválido"));
+        };
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Map<String, String>> resendVerification(@RequestBody Map<String, String> body) {
+        ResendVerificationStatus status =
+                authService.resendVerification(body == null ? null : body.get("email"));
+        String message = switch (status) {
+            case SENT -> "Te hemos enviado un nuevo correo de verificación. Revisa tu bandeja de entrada.";
+            case ALREADY_VERIFIED -> "Tu cuenta ya está verificada. Inicia sesión.";
+            case COOLDOWN -> "Ya has solicitado un reenvío recientemente. Intenta de nuevo en unos segundos.";
+            case NO_ACCOUNT -> "Si existe una cuenta asociada a este correo y necesita verificación, "
+                    + "recibirás un nuevo mensaje.";
+        };
+        return ResponseEntity.ok(Map.of("message", message, "status", status.name()));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestReset(request.getEmail());
+        return ResponseEntity.ok(Map.of(
+                "message",
+                "Si existe una cuenta asociada a este correo, recibirás un enlace "
+                        + "para restablecer tu contraseña."));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        boolean applied = passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+        if (applied) {
+            return ResponseEntity.ok(Map.of("message", "Tu contraseña fue actualizada. Ya puedes iniciar sesión."));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "El enlace de recuperación no es válido o ya fue utilizado."));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @CookieValue(value = TOKEN_COOKIE, required = false) String cookieToken,
+            HttpServletResponse response) {
+        String token = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        } else if (cookieToken != null && !cookieToken.isBlank()) {
+            token = cookieToken;
+        }
+        authService.logout(token);
+        clearTokenCookie(response);
+        return ResponseEntity.ok().build();
+    }
+
+    private static String messageFor(VerifyEmailOutcome outcome) {
+        return switch (outcome) {
+            case EXPIRED -> "El enlace de verificación ha expirado. Solicita uno nuevo.";
+            case ALREADY_USED -> "El enlace de verificación ya fue utilizado.";
+            default -> "El enlace de verificación no es válido.";
+        };
+    }
+
+    private void setTokenCookie(HttpServletResponse response, String token) {
+        log.info("COOKIE DEBUG: secure={}, sameSite={}, springProfiles={}", 
+            cookieSecure, cookieSameSite, 
+            System.getProperty("spring.profiles.active", "desconocido"));
+        
+        var cookie = ResponseCookie.from(TOKEN_COOKIE, token)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(86_400)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private void clearTokenCookie(HttpServletResponse response) {
+        var cookie = ResponseCookie.from(TOKEN_COOKIE, "")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .path("/")
+                .maxAge(0)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+}
+
+

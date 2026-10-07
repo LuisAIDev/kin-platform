@@ -19,7 +19,7 @@ import com.kinplatform.platform.projectdoc.ProjectDocumentStatus;
 import com.kinplatform.platform.projectinfo.ProjectStructuredInfo;
 import com.kinplatform.platform.projectinfo.ProjectStructuredInfoRepository;
 import com.kinplatform.platform.projectinfo.StructuredInfoSourceType;
-import com.kinplatform.user.User;
+import com.kinplatform.common.user.User;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
@@ -262,6 +262,7 @@ class ProjectExportServiceImplTest {
         assertEquals(404, ex.getStatusCode().value());
     }
 }
+
 
 
 

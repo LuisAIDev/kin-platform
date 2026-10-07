@@ -3,8 +3,8 @@ package com.kinplatform.common.security;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRole;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -77,3 +77,4 @@ class PatientAccessTest {
         assertFalse(PatientAccess.isPatient(null));
     }
 }
+

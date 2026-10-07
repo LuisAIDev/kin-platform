@@ -1,8 +1,8 @@
 package com.kinplatform.kin.health.physician.api;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

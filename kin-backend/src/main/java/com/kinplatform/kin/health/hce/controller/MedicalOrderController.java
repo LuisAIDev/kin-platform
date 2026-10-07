@@ -5,7 +5,7 @@ import com.kinplatform.kin.health.hce.dto.CancelOrderRequest;
 import com.kinplatform.kin.health.hce.dto.CreateMedicalOrderRequest;
 import com.kinplatform.kin.health.hce.dto.MedicalOrderResponse;
 import com.kinplatform.kin.health.hce.service.MedicalOrderService;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -84,3 +84,4 @@ public class MedicalOrderController {
         return ResponseEntity.noContent().build();
     }
 }
+

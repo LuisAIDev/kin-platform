@@ -19,9 +19,9 @@ import com.kinplatform.kin.health.scheduling.event.AppointmentRescheduledEvent;
 import com.kinplatform.kin.health.scheduling.event.AvailabilityUpdatedEvent;
 import com.kinplatform.kin.health.telemedicine.InMemoryTelemedicineRepositories;
 import com.kinplatform.kin.health.telemedicine.domain.Appointment.AppointmentStatus;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -314,5 +314,6 @@ class SchedulingServiceTest {
         return TEST_MONDAY;
     }
 }
+
 
 

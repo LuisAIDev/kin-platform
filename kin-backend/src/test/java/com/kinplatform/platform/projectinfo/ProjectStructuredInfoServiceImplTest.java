@@ -9,7 +9,7 @@ import com.kinplatform.platform.project.Project;
 import com.kinplatform.platform.project.ProjectRepository;
 import com.kinplatform.platform.projectinfo.dto.StructuredInfoEntry;
 import com.kinplatform.platform.projectinfo.dto.StructuredInfoResponse;
-import com.kinplatform.user.User;
+import com.kinplatform.common.user.User;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -175,5 +175,6 @@ class ProjectStructuredInfoServiceImplTest {
                 .hasMessageContaining("Project not found");
     }
 }
+
 
 

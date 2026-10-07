@@ -5,8 +5,8 @@ import com.kinplatform.kin.health.hce.dto.CreateSurgicalHistoryRequest;
 import com.kinplatform.kin.health.hce.dto.SurgicalHistoryResponse;
 import com.kinplatform.kin.health.hce.entity.SurgicalHistory;
 import com.kinplatform.kin.health.hce.repository.SurgicalHistoryRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -28,7 +28,7 @@ public class SurgicalHistoryService {
 
     @Transactional
     public SurgicalHistoryResponse addSurgery(CreateSurgicalHistoryRequest request) {
-        com.kinplatform.user.User patient = userRepository.findById(request.getPatientId())
+        com.kinplatform.common.user.User patient = userRepository.findById(request.getPatientId())
                 .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
 
         checkPatientAccess(patient);
@@ -75,7 +75,7 @@ public class SurgicalHistoryService {
 
     @Transactional(readOnly = true)
     public List<SurgicalHistoryResponse> getByPatient(UUID patientId) {
-        com.kinplatform.user.User patient = userRepository.findById(patientId)
+        com.kinplatform.common.user.User patient = userRepository.findById(patientId)
                 .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
 
         checkPatientAccess(patient);
@@ -94,11 +94,11 @@ public class SurgicalHistoryService {
                 .toList();
     }
 
-    private void checkPatientAccess(com.kinplatform.user.User patient) {
+    private void checkPatientAccess(com.kinplatform.common.user.User patient) {
         User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_IPS_ADMIN") || a.getAuthority().equals("ROLE_ADMIN"));
-        boolean isPhysician = currentUser.getRole().equals(com.kinplatform.user.UserRole.PHYSICIAN);
+        boolean isPhysician = currentUser.getRole().equals(com.kinplatform.common.user.UserRole.PHYSICIAN);
 
         if (!isAdmin && !isPhysician) {
             throw new AccessDeniedException("Only physicians or admins can access patient surgical history");
@@ -132,3 +132,5 @@ public class SurgicalHistoryService {
                 .build();
     }
 }
+
+

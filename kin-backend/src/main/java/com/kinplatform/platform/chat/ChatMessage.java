@@ -1,7 +1,7 @@
 package com.kinplatform.platform.chat;
 
 import com.kinplatform.platform.project.Project;
-import com.kinplatform.user.User;
+import com.kinplatform.common.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -60,4 +60,5 @@ public class ChatMessage {
         createdAt = OffsetDateTime.now();
     }
 }
+
 

@@ -12,12 +12,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.auth.email.EmailSender;
+import com.kinplatform.common.auth.email.EmailSender;
 import com.kinplatform.common.event.InMemoryDomainEventBus;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -332,4 +332,5 @@ class PatientInvitedEventListenerTest {
                         anyString(), anyString(), anyString(), any(), anyString(), anyString(), anyBoolean());
     }
 }
+
 

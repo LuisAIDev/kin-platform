@@ -5,7 +5,7 @@ import com.kinplatform.kin.health.hce.dto.ClinicalAttachmentResponse;
 import com.kinplatform.kin.health.hce.dto.CreateClinicalAttachmentRequest;
 import com.kinplatform.kin.health.hce.entity.ClinicalAttachment;
 import com.kinplatform.kin.health.hce.service.ClinicalAttachmentService;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -4,7 +4,7 @@ import com.kinplatform.common.dto.PageResponse;
 import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.kin.health.triage.api.TriageHistoryResponse;
 import com.kinplatform.kin.health.triage.domain.TriageConsultation;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -134,3 +134,4 @@ public class DashboardController {
         }
     }
 }
+

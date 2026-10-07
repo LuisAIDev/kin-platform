@@ -3,11 +3,11 @@ package com.kinplatform.platform.project;
 import com.kinplatform.platform.chat.ChatMessageRepository;
 import com.kinplatform.platform.chat.MessageRole;
 import com.kinplatform.common.dto.PageResponse;
-import com.kinplatform.pricing.service.SubscriptionValidatorService;
+import com.kinplatform.common.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.platform.project.dto.CreateProjectRequest;
 import com.kinplatform.platform.project.dto.ProjectResponse;
 import com.kinplatform.platform.project.dto.UpdateProjectRequest;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -177,5 +177,6 @@ public class ProjectServiceImpl implements ProjectService {
         return progress;
     }
 }
+
 
 

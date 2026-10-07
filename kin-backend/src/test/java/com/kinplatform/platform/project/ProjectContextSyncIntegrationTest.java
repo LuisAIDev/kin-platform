@@ -7,10 +7,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.ai.context.adapter.HeuristicContextAnalyzerAdapter;
-import com.kinplatform.ai.context.adapter.JpaContextRepository;
-import com.kinplatform.ai.context.adapter.ProjectContextEntity;
-import com.kinplatform.ai.context.adapter.ProjectContextJpaRepository;
+import com.kinplatform.common.ai.context.adapter.HeuristicContextAnalyzerAdapter;
+import com.kinplatform.common.ai.context.adapter.JpaContextRepository;
+import com.kinplatform.common.ai.context.adapter.ProjectContextEntity;
+import com.kinplatform.common.ai.context.adapter.ProjectContextJpaRepository;
 import com.kinplatform.platform.chat.ChatMessageRepository;
 import com.kinplatform.platform.method.KinMethod;
 import com.kinplatform.common.context.AnalyzedDimension;
@@ -32,9 +32,9 @@ import com.kinplatform.common.pipeline.stage.AnalyzerStage;
 import com.kinplatform.common.pipeline.stage.EvaluatorStage;
 import com.kinplatform.common.pipeline.stage.EventStage;
 import com.kinplatform.common.pipeline.stage.StrategistStage;
-import com.kinplatform.pricing.service.SubscriptionValidatorService;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.pricing.service.SubscriptionValidatorService;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
@@ -184,6 +184,7 @@ class ProjectContextSyncIntegrationTest {
         assertEquals("Título Existente", project.getTitle());
     }
 }
+
 
 
 

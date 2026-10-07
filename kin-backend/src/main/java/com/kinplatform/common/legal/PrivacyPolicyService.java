@@ -5,8 +5,8 @@ import com.kinplatform.common.legal.PrivacyPolicyVersionRepository;
 import com.kinplatform.common.audit.adapter.AuditLogJpaRepository;
 import com.kinplatform.common.audit.domain.AuditAction;
 import com.kinplatform.common.audit.domain.AuditResourceType;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -93,6 +93,7 @@ public class PrivacyPolicyService {
         return policyRepository.findAllByOrderByEffectiveDateDesc();
     }
 }
+
 
 
 

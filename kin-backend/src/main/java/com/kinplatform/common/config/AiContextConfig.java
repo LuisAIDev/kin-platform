@@ -1,6 +1,6 @@
 package com.kinplatform.common.config;
 
-import com.kinplatform.ai.context.adapter.HeuristicContextAnalyzerAdapter;
+import com.kinplatform.common.ai.context.adapter.HeuristicContextAnalyzerAdapter;
 import com.kinplatform.common.context.ContextAnalyzerPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,4 +13,5 @@ public class AiContextConfig {
         return new HeuristicContextAnalyzerAdapter();
     }
 }
+
 

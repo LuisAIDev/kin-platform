@@ -11,8 +11,8 @@ import com.kinplatform.kin.health.triage.domain.TriageResult;
 import com.kinplatform.kin.health.triage.engine.TriageEngine;
 import com.kinplatform.kin.health.triage.port.TriageConsultationRepository;
 import com.kinplatform.kin.health.triage.port.TriageKnowledgeRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -164,3 +164,4 @@ public class TriageService {
         consultationRepository.hideConsultation(consultationId, userId);
     }
 }
+

@@ -1,7 +1,7 @@
 package com.kinplatform.kin.health.subscription.port;
 
-import com.kinplatform.pricing.ProductVertical;
-import com.kinplatform.pricing.SubscriptionStatus;
+import com.kinplatform.common.pricing.ProductVertical;
+import com.kinplatform.common.pricing.SubscriptionStatus;
 import java.util.UUID;
 
 /**
@@ -9,7 +9,7 @@ import java.util.UUID;
  *
  * <p>Consulta los límites de la suscripción activa del usuario
  * (maxTriagesPerMonth, maxPatients, trialDays) resolviendo el
- * plan {@link com.kinplatform.pricing.PricingPlan} asociado.</p>
+ * plan {@link com.kinplatform.common.pricing.PricingPlan} asociado.</p>
  */
 public interface HealthQuotaPort {
 
@@ -37,3 +37,4 @@ public interface HealthQuotaPort {
         return false;
     }
 }
+

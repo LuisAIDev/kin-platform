@@ -4,7 +4,7 @@ import com.kinplatform.kin.health.hce.dto.CreateDischargeSummaryRequest;
 import com.kinplatform.kin.health.hce.dto.DischargeSummaryResponse;
 import com.kinplatform.kin.health.hce.service.DischargeSummaryService;
 import com.kinplatform.common.security.AuthenticatedUsers;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;

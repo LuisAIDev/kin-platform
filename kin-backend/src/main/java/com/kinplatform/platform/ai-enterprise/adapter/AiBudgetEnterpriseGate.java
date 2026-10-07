@@ -1,13 +1,13 @@
 package com.kinplatform.platform.ai_enterprise.adapter;
 
-import com.kinplatform.ai.usage.AiBudgetControlService;
-import com.kinplatform.ai.usage.ReservationContext;
+import com.kinplatform.common.ai.usage.AiBudgetControlService;
+import com.kinplatform.common.ai.usage.ReservationContext;
 import com.kinplatform.platform.enterprise.application.EnterpriseAiBudgetGate;
 import com.kinplatform.platform.usage.AiBudgetExceededException;
 import com.kinplatform.platform.usage.AiReservation;
 import com.kinplatform.platform.usage.CostEstimator;
-import com.kinplatform.pricing.PricingPlan;
-import com.kinplatform.pricing.service.SubscriptionValidatorService;
+import com.kinplatform.common.pricing.PricingPlan;
+import com.kinplatform.common.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.platform.project.Project;
 import com.kinplatform.platform.project.ProjectRepository;
 import java.math.BigDecimal;
@@ -88,6 +88,7 @@ public class AiBudgetEnterpriseGate implements EnterpriseAiBudgetGate {
         reservationContext.clear();
     }
 }
+
 
 
 

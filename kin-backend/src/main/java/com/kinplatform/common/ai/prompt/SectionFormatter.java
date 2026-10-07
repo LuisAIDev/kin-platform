@@ -28,3 +28,4 @@ public interface SectionFormatter<T extends ReportSection> {
     ReportSectionKind kind();
 }
 
+

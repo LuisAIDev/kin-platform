@@ -6,7 +6,7 @@ import com.kinplatform.kin.health.common.dto.RevokeConsentRequest;
 import com.kinplatform.kin.health.common.dto.UserConsentResponse;
 import com.kinplatform.kin.health.common.service.ConsentService;
 import com.kinplatform.common.GlobalExceptionHandler;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,6 +1,6 @@
 package com.kinplatform.kin.health.automation.service;
 
-import com.kinplatform.auth.email.EmailSender;
+import com.kinplatform.common.auth.email.EmailSender;
 import com.kinplatform.common.audit.api.AuditService;
 import com.kinplatform.common.audit.domain.AuditAction;
 import com.kinplatform.common.audit.domain.AuditResourceType;
@@ -8,8 +8,8 @@ import com.kinplatform.kin.health.automation.config.AutomationProperties;
 import com.kinplatform.kin.health.automation.domain.*;
 import com.kinplatform.kin.health.automation.port.*;
 import com.kinplatform.kin.health.followup.api.FollowUpService;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
@@ -351,7 +351,7 @@ public class AutomationService {
     // --- Utilidades ---
 
     private boolean isAdmin(User actor) {
-        return actor != null && actor.getRole() == com.kinplatform.user.UserRole.ADMIN;
+        return actor != null && actor.getRole() == com.kinplatform.common.user.UserRole.ADMIN;
     }
 
     private void auditLog(
@@ -365,4 +365,6 @@ public class AutomationService {
         }
     }
 }
+
+
 

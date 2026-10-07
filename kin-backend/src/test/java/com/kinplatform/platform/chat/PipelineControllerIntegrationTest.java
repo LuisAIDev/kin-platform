@@ -24,9 +24,9 @@ import com.kinplatform.common.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.platform.project.Project;
 import com.kinplatform.platform.project.ProjectRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -114,6 +114,7 @@ class PipelineControllerIntegrationTest {
         verify(contextRepository).save(any(UUID.class), any(ProjectContext.class));
     }
 }
+
 
 
 

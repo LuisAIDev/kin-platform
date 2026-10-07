@@ -7,3 +7,4 @@ public enum PromptType {
     CONVERSATION,
     REPORT
 }
+

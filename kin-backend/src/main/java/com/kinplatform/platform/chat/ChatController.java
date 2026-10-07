@@ -4,7 +4,7 @@ import com.kinplatform.platform.chat.dto.ChatMessageResponse;
 import com.kinplatform.platform.chat.dto.ChatRequest;
 import com.kinplatform.platform.chat.dto.ChatResponse;
 import com.kinplatform.platform.chat.dto.SaveMessageRequest;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -76,5 +76,6 @@ public class ChatController {
                 .getId();
     }
 }
+
 
 

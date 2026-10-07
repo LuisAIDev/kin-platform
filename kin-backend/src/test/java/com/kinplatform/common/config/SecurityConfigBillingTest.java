@@ -1,11 +1,11 @@
 package com.kinplatform.common.config;
 
-import com.kinplatform.billing.contract.ContractController;
-import com.kinplatform.billing.contract.ContractService;
-import com.kinplatform.billing.contract.EpsContract;
-import com.kinplatform.billing.fev.FevRipsController;
-import com.kinplatform.billing.fev.FevRipsInvoice;
-import com.kinplatform.billing.fev.FevRipsService;
+import com.kinplatform.kin.medical.billing.contract.ContractController;
+import com.kinplatform.kin.medical.billing.contract.ContractService;
+import com.kinplatform.kin.medical.billing.contract.EpsContract;
+import com.kinplatform.kin.medical.billing.fev.FevRipsController;
+import com.kinplatform.kin.medical.billing.fev.FevRipsInvoice;
+import com.kinplatform.kin.medical.billing.fev.FevRipsService;
 import com.kinplatform.common.security.JwtAuthenticationFilter;
 import com.kinplatform.common.security.RateLimitingFilter;
 import com.kinplatform.common.security.SubscriptionAccessFilter;
@@ -171,3 +171,4 @@ class SecurityConfigBillingTest {
                 .andExpect(status().isOk());
     }
 }
+

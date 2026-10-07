@@ -9,9 +9,9 @@ import com.kinplatform.common.security.JwtService;
 import com.kinplatform.kin.health.physician.domain.PhysicianPatientAssignment;
 import com.kinplatform.kin.health.physician.port.PhysicianPatientRepository;
 import com.kinplatform.test.PostgresTestSupport;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -165,3 +165,4 @@ class SchedulingIntegrationTest extends PostgresTestSupport {
         return UUID.randomUUID().toString().substring(0, 8);
     }
 }
+

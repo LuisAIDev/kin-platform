@@ -3,7 +3,7 @@ package com.kinplatform.platform.chat;
 import com.kinplatform.platform.chat.dto.ChatMessageResponse;
 import com.kinplatform.platform.chat.dto.SaveMessageRequest;
 import com.kinplatform.platform.project.ProjectRepository;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,5 +89,6 @@ public class ChatServiceImpl implements ChatService {
                 .build();
     }
 }
+
 
 

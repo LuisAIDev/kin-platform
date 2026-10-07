@@ -7,8 +7,8 @@ import com.kinplatform.kin.health.hce.entity.SurgicalHistory;
 import com.kinplatform.kin.health.hce.entity.SurgicalHistory.AnesthesiaType;
 import com.kinplatform.kin.health.hce.entity.SurgicalHistory.SurgeryType;
 import com.kinplatform.kin.health.hce.repository.SurgicalHistoryRepository;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,31 +45,31 @@ class SurgicalHistoryServiceTest {
 
     private UUID patientId;
     private UUID physicianId;
-    private com.kinplatform.user.User patient;
-    private com.kinplatform.user.User physician;
+    private com.kinplatform.common.user.User patient;
+    private com.kinplatform.common.user.User physician;
 
     @BeforeEach
     void setUp() {
         patientId = UUID.randomUUID();
         physicianId = UUID.randomUUID();
 
-        patient = com.kinplatform.user.User.builder()
+        patient = com.kinplatform.common.user.User.builder()
                 .id(patientId)
                 .email("patient@test.com")
                 .fullName("Test Patient")
-                .role(com.kinplatform.user.UserRole.PATIENT)
+                .role(com.kinplatform.common.user.UserRole.PATIENT)
                 .organizationId(UUID.randomUUID())
                 .build();
 
-        physician = com.kinplatform.user.User.builder()
+        physician = com.kinplatform.common.user.User.builder()
                 .id(physicianId)
                 .email("physician@test.com")
                 .fullName("Dr. Test")
-                .role(com.kinplatform.user.UserRole.PHYSICIAN)
+                .role(com.kinplatform.common.user.UserRole.PHYSICIAN)
                 .build();
     }
 
-    private void setupSecurityContext(com.kinplatform.user.User user) {
+    private void setupSecurityContext(com.kinplatform.common.user.User user) {
         var auth = new UsernamePasswordAuthenticationToken(
                 user.getEmail(),
                 null,
@@ -332,3 +332,4 @@ class SurgicalHistoryServiceTest {
         }
     }
 }
+

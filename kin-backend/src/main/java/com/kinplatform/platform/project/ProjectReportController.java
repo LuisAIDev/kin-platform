@@ -4,7 +4,7 @@ import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.platform.project.dto.ReportResponse;
 import com.kinplatform.platform.project.dto.ReportVersionResponse;
-import com.kinplatform.user.UserRepository;
+import com.kinplatform.common.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -93,6 +93,7 @@ public class ProjectReportController {
         return AuthenticatedUsers.require(userRepository, auth).getId();
     }
 }
+
 
 
 

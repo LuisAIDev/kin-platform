@@ -9,9 +9,9 @@ import com.kinplatform.kin.health.physician.InMemoryPhysicianRepositories;
 import com.kinplatform.kin.health.physician.api.PhysicianService;
 import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
 import com.kinplatform.kin.health.physician.config.PhysicianProperties;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -150,4 +150,5 @@ class PilotOnboardingServiceTest {
         assertEquals(2, result.usersCreated());
     }
 }
+
 

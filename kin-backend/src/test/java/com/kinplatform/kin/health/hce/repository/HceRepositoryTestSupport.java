@@ -2,9 +2,9 @@ package com.kinplatform.kin.health.hce.repository;
 
 import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.test.PostgresTestSupport;
-import com.kinplatform.user.User;
-import com.kinplatform.user.UserRepository;
-import com.kinplatform.user.UserRole;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
