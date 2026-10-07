@@ -323,3 +323,37 @@ Cuándo: Antes del primer deploy On-Premise.
 *Next Review: Sprint Planning*
 
 ---
+
+## TD-INFRA-1 — OutboxRelayIntegrationTest con 4 fallos preexistentes
+
+**Severidad:** Media
+**Descubierto:** 2026-10-06 (verificado con git checkout 0dbb6d3)
+**Ubicación:** kin-backend/src/test/java/com/kinplatform/kin/infrastructure/outbox/OutboxRelayIntegrationTest.java
+
+**Descripción:**
+4 de 5 tests fallan consistentemente (verificado antes y después del refactor 2m):
+1. publishAndProcess_eventIsPublishedAndMarked → Mock no invocado
+2. concurrency_twoRelaysDoNotProcessSameRecord → expected PUBLISHED but was PENDING
+3. failedEvent_retriesAndThenDeadLetter → expected DEAD_LETTER but was PENDING
+4. metrics_areUpdatedCorrectly → NullPointerException en metrics
+
+**Verificación:**
+- En commit 0dbb6d3 (antes de Fase 2m): Tests run: 5, Failures: 3, Errors: 1
+- En commit main (después de Fase 2m): Failures: 4, Errors: 1
+- CONFIRMADO: preexistente, no causado por el refactor modular.
+
+**Impacto:**
+- No bloquea el refactor.
+- Sí indica un bug real en OutboxRelay (concurrencia / estado PENDING).
+- Riesgo: si Outbox falla en producción, eventos no se procesan.
+
+**Solución sugerida (no implementada):**
+Investigar OutboxRelay.processPending() y OutboxRelay.relay() — probable race condition en update de estado.
+
+**Cuándo:** Sesión dedicada post-refactor o antes de deploy a IPS.
+
+**Referencias:**
+- Archivo: kin-backend/src/main/java/com/kinplatform/kin/infrastructure/outbox/OutboxRelay.java
+- Commit de verificación: 0dbb6d3
+
+---
