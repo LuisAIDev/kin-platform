@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  KIN Backend - módulo hijo
+  - Hereda de com.kinplatform:kin-platform (../pom.xml)
+  - NO declara properties, dependencyManagement ni versiones de deps
+  - Conserva <build><plugins> con EXECUTIONS
+  - Conserva recursos de calidad (kin-checkstyle.xml, kin-pmd.xml, spotbugs-exclude.xml)
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
@@ -6,47 +13,17 @@
 
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- Parent del reactor -->
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.5</version>
-        <relativePath/>
+        <groupId>com.kinplatform</groupId>
+        <artifactId>kin-platform</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <groupId>com.kinplatform</groupId>
     <artifactId>kin-backend</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <name>kin-backend</name>
-    <description>KIN Platform — Knowledge, Innovation &amp; Navigation API</description>
-
-    <licenses>
-        <license>
-            <name>Proprietary</name>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-    <properties>
-        <java.version>17</java.version>
-        <flyway.version>11.20.3</flyway.version>
-        <testcontainers.version>1.21.4</testcontainers.version>
-        <jjwt.version>0.12.5</jjwt.version>
-        <spring-ai.version>1.1.7</spring-ai.version>
-        <opennlp.version>2.3.1</opennlp.version>
-        <lombok.version>1.18.34</lombok.version>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.ai</groupId>
-                <artifactId>spring-ai-bom</artifactId>
-                <version>${spring-ai.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+    <description>KIN Platform - Knowledge, Innovation &amp; Navigation API</description>
 
     <dependencies>
         <!-- Web -->
@@ -68,15 +45,13 @@
         </dependency>
 
         <!-- OpenNLP - NLP para el SymptomExtractor del triaje (ADR-028).
-             El NLP solo extrae síntomas; el TriageEngine sigue siendo 100 % determinista.
-             WhitespaceTokenizer/DictionaryNameFinder no requieren descarga de modelos. -->
+             El NLP solo extrae síntomas; el TriageEngine sigue siendo 100% determinista. -->
         <dependency>
             <groupId>org.apache.opennlp</groupId>
             <artifactId>opennlp-tools</artifactId>
-            <version>${opennlp.version}</version>
         </dependency>
 
-        <!-- Mail — envío de correos (verificación de email, SMTP configurable por perfil) -->
+        <!-- Mail -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
@@ -98,60 +73,50 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
 
-        <!-- Lombok MapStruct binding para ayudar con el procesamiento de anotaciones -->
+        <!-- Lombok MapStruct binding -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok-mapstruct-binding</artifactId>
-            <version>0.2.0</version>
         </dependency>
 
         <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>${jjwt.version}</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
-            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Actuator — health check, metrics -->
+        <!-- Actuator -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- Prometheus — endpoint /actuator/prometheus para scraping (Fase 7 observabilidad) -->
+        <!-- Prometheus -->
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
 
-        <!-- Logs JSON estructurados con correlationId/traceId (Fase 8 observabilidad, G6) -->
+        <!-- Logs JSON estructurados -->
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
-            <version>7.4</version>
         </dependency>
 
-        <!-- OpenTelemetry tracing distribuido (ADR-022): Micrometer Tracing con
-             bridge OTel. Deshabilitado por defecto (management.tracing.enabled=false,
-             sampling.probability=0). El exporter OTLP es opcional y se configura por
-             variable de entorno (OTEL_EXPORTER_OTLP_ENDPOINT); sin endpoint no hay
-             exportación, por lo que KIN no exige un collector externo. -->
+        <!-- OpenTelemetry tracing (ADR-022) -->
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-tracing-bridge-otel</artifactId>
@@ -161,66 +126,48 @@
             <artifactId>opentelemetry-exporter-otlp</artifactId>
         </dependency>
 
-        <!-- SpotBugs annotations (@SuppressFBWarnings) para supresiones justificadas (FASE 9) -->
+        <!-- SpotBugs annotations -->
         <dependency>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-annotations</artifactId>
-            <version>4.8.3</version>
             <scope>provided</scope>
         </dependency>
 
-        <!-- Redis — caché distribuida opcional (Fase 13, adapter detrás de KnowledgeRepository).
-             Solo se activa con kin.cache.redis.enabled=true; sin servidor no conecta en arranque. -->
+        <!-- Redis (caché distribuida opcional) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
-        <!-- OpenAPI / Swagger — documentación de la API REST del módulo Enterprise (M2I) -->
+        <!-- OpenAPI / Swagger -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.5.0</version>
         </dependency>
 
-        <!-- Documentos del proyecto — extracción de texto (PDF y DOCX/XLSX).
-             PDFBox 2.0.32 (línea 2.x estable, Java 8+): PDF. Apache POI
-             5.3.0 (poi-ooxml, Java 8+): DOCX y XLSX. TXT/CSV se procesan de
-             forma nativa (sin dependencia). Versiones estables y compatibles
-             con Java 17 / Spring Boot 3.2.5. -->
+        <!-- Documentos PDF / DOCX / XLSX -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
-            <version>2.0.32</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>5.3.0</version>
         </dependency>
 
-        <!-- OpenCSV — parsing CSV para importación de datos estructurados (documentos clínicos) -->
+        <!-- OpenCSV -->
         <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
-            <version>5.9</version>
         </dependency>
 
-        <!-- Exportación de proyectos — generación de PDF profesional (módulo
-             kin.export). OpenPDF 1.3.39 (LGPL, fork mantenido de iText 2, puro
-             Java): PDF multipágina con títulos, tablas y pie de página. -->
+        <!-- OpenPDF - exportación de proyectos -->
         <dependency>
             <groupId>com.github.librepdf</groupId>
             <artifactId>openpdf</artifactId>
-            <version>1.3.39</version>
         </dependency>
 
-        <!-- Spring AI — proveedor DeepSeek (modelo OpenAI-compatible) sin los
-             autoconfigs de OpenAI que exigen OPENAI_API_KEY en el arranque (C2).
-             'spring-ai-openai' aporta las clases del modelo (DeepSeekConfig);
-             DeepSeek es el único proveedor (sin fallback a OpenAI). Los
-             autoconfigs OpenAI (chat/audio/imagen/emb) se excluyen al no
-             incluir 'spring-ai-starter-model-openai'. -->
+        <!-- Spring AI - DeepSeek -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-openai</artifactId>
@@ -234,50 +181,38 @@
             <artifactId>spring-ai-retry</artifactId>
         </dependency>
 
-        <!-- Conector HTTP reactivo de WebClient (Reactor Netty). Spring AI usa
-             WebClient para el streaming SSE de DeepSeek; sin reactor-netty el
-             conector cae al JDK HttpClient, que bufferiza el body SSE y no
-             emite los chunks de forma incremental (cero tokens + timeout).
-             Con reactor-netty, WebClient.builder() selecciona
-             ReactorClientHttpConnector y el streaming llega por chunks. -->
+        <!-- WebClient reactivo (streaming SSE) -->
         <dependency>
             <groupId>io.projectreactor.netty</groupId>
             <artifactId>reactor-netty-http</artifactId>
         </dependency>
 
-        <!-- Stripe — Payment processing -->
+        <!-- Stripe -->
         <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
-            <version>24.0.0</version>
         </dependency>
 
-        <!-- Google Cloud Vision — OCR para imágenes de documentos clínicos -->
+        <!-- Google Cloud Vision - OCR -->
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-vision</artifactId>
-            <version>3.45.0</version>
         </dependency>
 
-        <!-- Flyway — migraciones gestionadas (PostgreSQL vía flyway-database-postgresql,
-             módulo separado desde Flyway 10). Versión 11.x explícita (desde Flyway 11,
-             el group de OSS sigue siendo org.flywaydb; Spring Boot 3.2.5 solo gestiona 9.22.3). -->
+        <!-- Flyway -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
-            <version>${flyway.version}</version>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
-            <version>${flyway.version}</version>
         </dependency>
 
-        <!-- dotenv — carga .env automáticamente en desarrollo -->
+        <!-- dotenv -->
         <dependency>
             <groupId>me.paulschwarz</groupId>
             <artifactId>springboot3-dotenv</artifactId>
-            <version>5.1.0</version>
         </dependency>
 
         <!-- Test -->
@@ -297,9 +232,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Testcontainers — PostgreSQL 18 real para tests de integración (H2-1).
-             Versión gestionada por Spring Boot 3.2.5 (1.19.7). H2 permanece en el
-             classpath temporalmente porque el entorno DEV todavía lo utiliza. -->
+        <!-- Testcontainers -->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -311,57 +244,27 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- H2 para tests de integración @DataJpaTest sin Docker -->
+        <!-- H2 para @DataJpaTest -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
 
-        <!-- Awaitility para tests de integración asíncronos (OutboxRelay) -->
+        <!-- Awaitility -->
         <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
-            <version>4.2.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <!-- Compiler con Lombok annotation processor para Java 17 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
-                    <source>17</source>
-                    <target>17</target>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>1.18.34</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
-            <!-- FASE 9 · Calidad: formateo (Spotless), estilo (Checkstyle),
-                 análisis estático (SpotBugs, PMD) y escaneo de dependencias
-                 (OWASP Dependency-Check vía perfil -Powasp). -->
+            <!-- Spotless: execution check en verify -->
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>2.43.0</version>
-                <configuration>
-                    <ratchetFrom>origin/main</ratchetFrom>
-                    <java>
-                        <palantirJavaFormat>
-                            <version>2.39.0</version>
-                        </palantirJavaFormat>
-                        <removeUnusedImports/>
-                    </java>
-                </configuration>
                 <executions>
                     <execution>
                         <id>spotless-check</id>
@@ -372,17 +275,11 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Checkstyle: execution check en verify -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.3.1</version>
-                <configuration>
-                    <configLocation>kin-checkstyle.xml</configLocation>
-                    <consoleOutput>true</consoleOutput>
-                    <failOnViolation>true</failOnViolation>
-                    <violationSeverity>error</violationSeverity>
-                    <includeTestSourceDirectory>false</includeTestSourceDirectory>
-                </configuration>
                 <executions>
                     <execution>
                         <id>checkstyle-check</id>
@@ -393,17 +290,11 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- PMD: execution check en verify -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.21.2</version>
-                <configuration>
-                    <failOnViolation>true</failOnViolation>
-                    <rulesets>
-                        <ruleset>kin-pmd.xml</ruleset>
-                    </rulesets>
-                    <printFailingErrors>true</printFailingErrors>
-                </configuration>
                 <executions>
                     <execution>
                         <id>pmd-check</id>
@@ -414,16 +305,11 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- SpotBugs: execution check en verify -->
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.8.5.0</version>
-                <configuration>
-                    <effort>Max</effort>
-                    <threshold>Medium</threshold>
-                    <failOnError>true</failOnError>
-                    <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
-                </configuration>
                 <executions>
                     <execution>
                         <id>spotbugs-check</id>
@@ -434,22 +320,17 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Spring Boot: repackage (config heredada de pluginManagement) -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
-                </configuration>
             </plugin>
+
+            <!-- JaCoCo: execuciones + reglas por paquete específicas -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.12</version>
                 <executions>
                     <execution>
                         <goals>
@@ -494,34 +375,17 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Flyway Maven Plugin (config heredada) -->
             <plugin>
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-maven-plugin</artifactId>
-                <version>${flyway.version}</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.flywaydb</groupId>
-                        <artifactId>flyway-database-postgresql</artifactId>
-                        <version>${flyway.version}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
-            <!-- Tests herméticos: no cargar el .env del desarrollador (springboot3-dotenv).
-                 Los valores de test viven en application-test.yml. -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <systemPropertyVariables>
-                        <springdotenv.enabled>false</springdotenv.enabled>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-            <!-- Observabilidad: expone el commit desplegado en /actuator/info -->
+
+            <!-- Git Commit ID: execution revision -->
             <plugin>
                 <groupId>io.github.git-commit-id</groupId>
                 <artifactId>git-commit-id-maven-plugin</artifactId>
-                <version>8.0.0</version>
                 <executions>
                     <execution>
                         <goals>
@@ -529,46 +393,8 @@
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <failOnNoGitDirectory>false</failOnNoGitDirectory>
-                    <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
-                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
-                    <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
-                </configuration>
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <!-- FASE 9 · OWASP Dependency-Check (opt-in: requiere acceso a la API NVD,
-             es lento y no debe correr en cada verify). Uso: mvn -Powasp verify -->
-        <profile>
-            <id>owasp</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.owasp</groupId>
-                        <artifactId>dependency-check-maven</artifactId>
-                        <version>9.1.0</version>
-                        <configuration>
-                            <failBuildOnCVSS>7</failBuildOnCVSS>
-                            <formats>
-                                <format>HTML</format>
-                                <format>JSON</format>
-                            </formats>
-                            <suppressionFiles>dependency-check-suppressions.xml</suppressionFiles>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
 </project>

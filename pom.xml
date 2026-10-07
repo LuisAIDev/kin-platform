@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  KIN Platform - Parent POM
+  - packaging=pom (agregador)
+  - Hereda de spring-boot-starter-parent 3.2.5
+  - Centraliza: properties, dependencyManagement, pluginManagement, profiles
+  - Único módulo: kin-backend (cero movimiento de código)
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Herencia de Spring Boot: gestiona versiones de starters y del ciclo de vida -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
+    </parent>
+
+    <!-- Coordenadas del proyecto padre -->
+    <groupId>com.kinplatform</groupId>
+    <artifactId>kin-platform</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>kin-platform</name>
+    <description>KIN Platform - Knowledge, Innovation &amp; Navigation API (Parent)</description>
+
+    <licenses>
+        <license>
+            <name>Proprietary</name>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <!-- Módulos del reactor: solo kin-backend -->
+    <modules>
+        <module>kin-backend</module>
+    </modules>
+
+    <!-- ================= PROPIEDADES CENTRALIZADAS ================= -->
+    <properties>
+        <!-- Núcleo -->
+        <java.version>17</java.version>
+
+        <!-- Herramientas / BOMs -->
+        <flyway.version>11.20.3</flyway.version>
+        <testcontainers.version>1.21.4</testcontainers.version>
+        <jjwt.version>0.12.5</jjwt.version>
+        <spring-ai.version>1.1.7</spring-ai.version>
+        <opennlp.version>2.3.1</opennlp.version>
+        <lombok.version>1.18.34</lombok.version>
+
+        <!-- Dependencias con versión fija (antes hardcodeadas en kin-backend) -->
+        <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
+        <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
+        <spotbugs-annotations.version>4.8.3</spotbugs-annotations.version>
+        <springdoc.version>2.5.0</springdoc.version>
+        <pdfbox.version>2.0.32</pdfbox.version>
+        <poi.version>5.3.0</poi.version>
+        <opencsv.version>5.9</opencsv.version>
+        <openpdf.version>1.3.39</openpdf.version>
+        <stripe.version>24.0.0</stripe.version>
+        <google-cloud-vision.version>3.45.0</google-cloud-vision.version>
+        <dotenv.version>5.1.0</dotenv.version>
+        <awaitility.version>4.2.1</awaitility.version>
+
+        <!-- Plugins -->
+        <compiler-plugin.version>3.11.0</compiler-plugin.version>
+        <spotless.version>2.43.0</spotless.version>
+        <palantir-format.version>2.39.0</palantir-format.version>
+        <checkstyle-plugin.version>3.3.1</checkstyle-plugin.version>
+        <pmd-plugin.version>3.21.2</pmd-plugin.version>
+        <spotbugs-plugin.version>4.8.5.0</spotbugs-plugin.version>
+        <jacoco.version>0.8.12</jacoco.version>
+        <git-commit-id.version>8.0.0</git-commit-id.version>
+        <owasp.version>9.1.0</owasp.version>
+    </properties>
+
+    <!-- ================= GESTIÓN DE DEPENDENCIAS ================= -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- BOM de Spring AI (define versiones de spring-ai-*) -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Dependencias con gestión propia (no cubiertas por Spring Boot parent) -->
+            <dependency>
+                <groupId>org.apache.opennlp</groupId>
+                <artifactId>opennlp-tools</artifactId>
+                <version>${opennlp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-mapstruct-binding</artifactId>
+                <version>${lombok-mapstruct-binding.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.logstash.logback</groupId>
+                <artifactId>logstash-logback-encoder</artifactId>
+                <version>${logstash-logback-encoder.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-annotations</artifactId>
+                <version>${spotbugs-annotations.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.opencsv</groupId>
+                <artifactId>opencsv</artifactId>
+                <version>${opencsv.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.librepdf</groupId>
+                <artifactId>openpdf</artifactId>
+                <version>${openpdf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.stripe</groupId>
+                <artifactId>stripe-java</artifactId>
+                <version>${stripe.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.cloud</groupId>
+                <artifactId>google-cloud-vision</artifactId>
+                <version>${google-cloud-vision.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-core</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-database-postgresql</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>me.paulschwarz</groupId>
+                <artifactId>springboot3-dotenv</artifactId>
+                <version>${dotenv.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.awaitility</groupId>
+                <artifactId>awaitility</artifactId>
+                <version>${awaitility.version}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- ================= GESTIÓN DE PLUGINS (SIN EXECUTIONS) ================= -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- 1) Compilador Java 17 + procesador de anotaciones Lombok -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${compiler-plugin.version}</version>
+                    <configuration>
+                        <source>17</source>
+                        <target>17</target>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+
+                <!-- 2) Spotless: formato Palantir -->
+                <plugin>
+                    <groupId>com.diffplug.spotless</groupId>
+                    <artifactId>spotless-maven-plugin</artifactId>
+                    <version>${spotless.version}</version>
+                    <configuration>
+                        <ratchetFrom>origin/main</ratchetFrom>
+                        <java>
+                            <palantirJavaFormat>
+                                <version>${palantir-format.version}</version>
+                            </palantirJavaFormat>
+                            <removeUnusedImports/>
+                        </java>
+                    </configuration>
+                </plugin>
+
+                <!-- 3) Checkstyle -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>${checkstyle-plugin.version}</version>
+                    <configuration>
+                        <configLocation>kin-checkstyle.xml</configLocation>
+                        <consoleOutput>true</consoleOutput>
+                        <failOnViolation>true</failOnViolation>
+                        <violationSeverity>error</violationSeverity>
+                        <includeTestSourceDirectory>false</includeTestSourceDirectory>
+                    </configuration>
+                </plugin>
+
+                <!-- 4) PMD -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>${pmd-plugin.version}</version>
+                    <configuration>
+                        <failOnViolation>true</failOnViolation>
+                        <rulesets>
+                            <ruleset>kin-pmd.xml</ruleset>
+                        </rulesets>
+                        <printFailingErrors>true</printFailingErrors>
+                    </configuration>
+                </plugin>
+
+                <!-- 5) SpotBugs -->
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>${spotbugs-plugin.version}</version>
+                    <configuration>
+                        <effort>Max</effort>
+                        <threshold>Medium</threshold>
+                        <failOnError>true</failOnError>
+                        <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
+                    </configuration>
+                </plugin>
+
+                <!-- 6) Spring Boot: excluye Lombok del fat jar -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+
+                <!-- 7) JaCoCo: versión base (reglas por paquete viven en el hijo) -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                </plugin>
+
+                <!-- 8) Flyway Maven Plugin (incluye driver PostgreSQL) -->
+                <plugin>
+                    <groupId>org.flywaydb</groupId>
+                    <artifactId>flyway-maven-plugin</artifactId>
+                    <version>${flyway.version}</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.flywaydb</groupId>
+                            <artifactId>flyway-database-postgresql</artifactId>
+                            <version>${flyway.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+
+                <!-- 9) Surefire: tests herméticos (sin dotenv) -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                        <systemPropertyVariables>
+                            <springdotenv.enabled>false</springdotenv.enabled>
+                        </systemPropertyVariables>
+                    </configuration>
+                </plugin>
+
+                <!-- 10) Git Commit ID: git.properties para /actuator/info -->
+                <plugin>
+                    <groupId>io.github.git-commit-id</groupId>
+                    <artifactId>git-commit-id-maven-plugin</artifactId>
+                    <version>${git-commit-id.version}</version>
+                    <configuration>
+                        <failOnNoGitDirectory>false</failOnNoGitDirectory>
+                        <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
+                        <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                        <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+                    </configuration>
+                </plugin>
+
+                <!-- 11) OWASP Dependency-Check (solo se ejecuta con -Powasp).
+                     suppressionFiles se resuelve relativo al basedir del módulo
+                     que ejecuta el plugin (kin-backend), donde vive el XML. -->
+                <plugin>
+                    <groupId>org.owasp</groupId>
+                    <artifactId>dependency-check-maven</artifactId>
+                    <version>${owasp.version}</version>
+                    <configuration>
+                        <failBuildOnCVSS>7</failBuildOnCVSS>
+                        <formats>
+                            <format>HTML</format>
+                            <format>JSON</format>
+                        </formats>
+                        <suppressionFiles>
+                            dependency-check-suppressions.xml
+                        </suppressionFiles>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <!-- ================= PERFILES ================= -->
+    <profiles>
+        <!-- OWASP opt-in: mvn -Powasp verify -->
+        <profile>
+            <id>owasp</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>
