@@ -5,7 +5,7 @@ import com.kinplatform.common.event.HasUserId;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
-import com.kinplatform.kin.infrastructure.outbox.TransactionalOutboxEventPublisher;
+import com.kinplatform.platform.infrastructure.outbox.TransactionalOutboxEventPublisher;
 import com.kinplatform.common.event.ReportGeneratedEvent;
 import com.kinplatform.common.eventbus.EventSerializationException;
 import org.junit.jupiter.api.BeforeEach;
@@ -182,5 +182,6 @@ class TransactionalOutboxEventPublisherTest {
         }
     }
 }
+
 
 

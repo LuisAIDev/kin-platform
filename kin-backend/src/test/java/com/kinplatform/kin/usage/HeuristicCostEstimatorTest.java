@@ -1,4 +1,4 @@
-package com.kinplatform.kin.usage;
+package com.kinplatform.platform.usage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -53,3 +53,4 @@ class HeuristicCostEstimatorTest {
         assertEquals(0, estimator.estimate("abc", List.of()).compareTo(BigDecimal.ZERO));
     }
 }
+

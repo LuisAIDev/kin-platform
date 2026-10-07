@@ -4,7 +4,7 @@ import com.kinplatform.ai.interview.adapter.JpaInterviewRepository;
 import com.kinplatform.ai.knowledge.adapter.KinKnowledgeProperties;
 import com.kinplatform.ai.provider.AIProvider;
 import com.kinplatform.ai.provider.ProviderRouter;
-import com.kinplatform.kin.KinMethod;
+import com.kinplatform.platform.method.KinMethod;
 import com.kinplatform.common.ai.AIResponder;
 import com.kinplatform.common.ai.PromptAssembler;
 import com.kinplatform.common.ai.prompt.ConversationPromptBuilder;
@@ -670,6 +670,7 @@ public class KinConfig {
                 historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository, enterpriseProjectTrigger);
     }
 }
+
 
 
 

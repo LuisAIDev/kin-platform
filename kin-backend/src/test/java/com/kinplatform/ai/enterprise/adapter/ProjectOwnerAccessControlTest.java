@@ -1,4 +1,4 @@
-package com.kinplatform.ai.enterprise.adapter;
+package com.kinplatform.platform.ai_enterprise.adapter;
 
 import com.kinplatform.platform.project.Project;
 import com.kinplatform.platform.project.ProjectRepository;
@@ -67,4 +67,5 @@ class ProjectOwnerAccessControlTest {
         assertFalse(accessControl.isOwner(project.getId(), null));
     }
 }
+
 

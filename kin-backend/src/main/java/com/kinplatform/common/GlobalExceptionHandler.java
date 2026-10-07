@@ -140,9 +140,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
     }
 
-    @ExceptionHandler(com.kinplatform.kin.usage.AiBudgetExceededException.class)
+    @ExceptionHandler(com.kinplatform.platform.usage.AiBudgetExceededException.class)
     public ResponseEntity<Map<String, String>> handleAiBudgetExceeded(
-            com.kinplatform.kin.usage.AiBudgetExceededException ex) {
+            com.kinplatform.platform.usage.AiBudgetExceededException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
     }
 
@@ -174,4 +174,5 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 }
+
 

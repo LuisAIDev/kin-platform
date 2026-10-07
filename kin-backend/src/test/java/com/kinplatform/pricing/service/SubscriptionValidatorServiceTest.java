@@ -9,7 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.kinplatform.ai.usage.AiBudgetControlService;
-import com.kinplatform.kin.usage.ProjectQuotaPort;
+import com.kinplatform.platform.usage.ProjectQuotaPort;
 import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.PricingPlanRepository;
 import com.kinplatform.pricing.SubscriptionStatus;
@@ -234,3 +234,4 @@ class SubscriptionValidatorServiceTest {
         assertEquals(sub.getPlan(), service.getCurrentPlan(USER_ID));
     }
 }
+

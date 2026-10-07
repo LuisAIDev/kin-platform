@@ -1,4 +1,4 @@
-package com.kinplatform.ai.enterprise.adapter;
+package com.kinplatform.platform.ai_enterprise.adapter;
 
 import org.junit.jupiter.api.Test;
 
@@ -164,3 +164,4 @@ class EnterpriseEntitiesTest {
         assertEquals(9L, entity.getSize());
     }
 }
+

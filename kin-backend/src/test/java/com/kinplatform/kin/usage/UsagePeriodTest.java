@@ -1,4 +1,4 @@
-package com.kinplatform.kin.usage;
+package com.kinplatform.platform.usage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -37,3 +37,4 @@ class UsagePeriodTest {
         assertTrue(period.isAfter(new UsagePeriod(period.start().minusMonths(1), period.start())));
     }
 }
+

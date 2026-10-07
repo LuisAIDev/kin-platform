@@ -1,4 +1,4 @@
-package com.kinplatform.ai.enterprise.adapter;
+package com.kinplatform.platform.ai_enterprise.adapter;
 
 import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.platform.enterprise.valueobjects.DocumentArtifact;
@@ -57,4 +57,5 @@ final class EnterprisePersistenceTestFixtures {
         return EnterpriseScore.calculate(70.0, 65.0, 80.0, 60.0, 50.0, 75.0, 68.0, 55.0, 0.82);
     }
 }
+
 

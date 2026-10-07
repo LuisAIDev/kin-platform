@@ -1,4 +1,4 @@
-package com.kinplatform.ai.enterprise.adapter;
+package com.kinplatform.platform.ai_enterprise.adapter;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -12,11 +12,11 @@ import static org.mockito.Mockito.when;
 
 import com.kinplatform.ai.usage.AiBudgetControlService;
 import com.kinplatform.ai.usage.ReservationContext;
-import com.kinplatform.kin.usage.AiBudgetExceededException;
-import com.kinplatform.kin.usage.AiReservation;
-import com.kinplatform.kin.usage.CostEstimator;
-import com.kinplatform.kin.usage.HeuristicCostEstimator;
-import com.kinplatform.kin.usage.UsagePeriod;
+import com.kinplatform.platform.usage.AiBudgetExceededException;
+import com.kinplatform.platform.usage.AiReservation;
+import com.kinplatform.platform.usage.CostEstimator;
+import com.kinplatform.platform.usage.HeuristicCostEstimator;
+import com.kinplatform.platform.usage.UsagePeriod;
 import com.kinplatform.pricing.PricingPlan;
 import com.kinplatform.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.platform.project.Project;
@@ -146,4 +146,6 @@ class AiBudgetEnterpriseGateTest {
         assertNull(reservationContext.current());
     }
 }
+
+
 

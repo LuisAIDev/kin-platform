@@ -1,4 +1,4 @@
-package com.kinplatform.ai.enterprise.adapter;
+package com.kinplatform.platform.ai_enterprise.adapter;
 
 import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.platform.enterprise.ports.EnterpriseProjectRepository;
@@ -171,4 +171,5 @@ class EnterpriseProjectRepositoryAdapterTest {
         assertFalse(EnterpriseProjectRepositoryAdapter.class.isInterface());
     }
 }
+
 

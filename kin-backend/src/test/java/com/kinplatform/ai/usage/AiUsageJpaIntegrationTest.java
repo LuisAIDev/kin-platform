@@ -3,7 +3,7 @@ package com.kinplatform.ai.usage;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.kinplatform.kin.usage.UsagePeriod;
+import com.kinplatform.platform.usage.UsagePeriod;
 import com.kinplatform.test.PostgresTestSupport;
 import com.kinplatform.user.User;
 import com.kinplatform.user.UserRepository;
@@ -146,3 +146,4 @@ class AiUsageJpaIntegrationTest extends PostgresTestSupport {
         assertTrue(repo.findByUserIdAndPeriodStart(user, period.start()).isPresent());
     }
 }
+

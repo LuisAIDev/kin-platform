@@ -1,4 +1,4 @@
-package com.kinplatform.ai.enterprise.integration;
+package com.kinplatform.platform.ai_enterprise.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -93,5 +93,6 @@ class JpaEnterpriseDataProviderTest {
         assertThat(data.documents().get(0).status()).isEqualTo("ERROR");
     }
 }
+
 
 

@@ -1,4 +1,4 @@
-package com.kinplatform.kin.infrastructure.outbox;
+package com.kinplatform.platform.infrastructure.outbox;
 
 import com.kinplatform.common.event.ReportGeneratedEvent;
 import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
@@ -66,3 +66,4 @@ class OutboxRelayDisabledIntegrationTest {
                 "SELECT COUNT(*) FROM domain_event_outbox WHERE status = 'PENDING'", Integer.class);
     }
 }
+

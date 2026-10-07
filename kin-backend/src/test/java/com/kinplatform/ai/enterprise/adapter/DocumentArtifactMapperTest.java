@@ -1,4 +1,4 @@
-package com.kinplatform.ai.enterprise.adapter;
+package com.kinplatform.platform.ai_enterprise.adapter;
 
 import com.kinplatform.platform.enterprise.valueobjects.DocumentArtifact;
 import com.kinplatform.platform.enterprise.valueobjects.DocumentType;
@@ -128,4 +128,5 @@ class DocumentArtifactMapperTest {
             () -> mapperConError.toEntity(doc, new EnterpriseProjectEntity()));
     }
 }
+
 

@@ -1,9 +1,9 @@
 package com.kinplatform.common.conversation;
 
-import com.kinplatform.kin.KinMethod;
-import com.kinplatform.kin.KinMethodCommand;
-import com.kinplatform.kin.KinMethodResult;
-import com.kinplatform.kin.StreamingMethodOutcome;
+import com.kinplatform.platform.method.KinMethod;
+import com.kinplatform.platform.method.KinMethodCommand;
+import com.kinplatform.platform.method.KinMethodResult;
+import com.kinplatform.platform.method.StreamingMethodOutcome;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.Message;
 import com.kinplatform.common.context.ProjectContext;
@@ -319,6 +319,7 @@ public class ConversationOrchestrator {
         }
     }
 }
+
 
 
 

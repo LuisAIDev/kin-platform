@@ -1,4 +1,4 @@
-package com.kinplatform.ai.enterprise.adapter;
+package com.kinplatform.platform.ai_enterprise.adapter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -237,4 +237,5 @@ class EnterpriseProjectJpaIntegrationTest extends PostgresTestSupport {
         assertTrue(nanos < 2_000, "Los instantes difieren en " + nanos + " ns");
     }
 }
+
 

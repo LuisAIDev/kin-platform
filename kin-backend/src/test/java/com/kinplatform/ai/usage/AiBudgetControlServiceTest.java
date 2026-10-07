@@ -12,12 +12,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.kin.usage.AiBudgetExceededException;
-import com.kinplatform.kin.usage.AiReservation;
-import com.kinplatform.kin.usage.AiUsagePort;
-import com.kinplatform.kin.usage.CostEstimator;
-import com.kinplatform.kin.usage.HeuristicCostEstimator;
-import com.kinplatform.kin.usage.UsagePeriod;
+import com.kinplatform.platform.usage.AiBudgetExceededException;
+import com.kinplatform.platform.usage.AiReservation;
+import com.kinplatform.platform.usage.AiUsagePort;
+import com.kinplatform.platform.usage.CostEstimator;
+import com.kinplatform.platform.usage.HeuristicCostEstimator;
+import com.kinplatform.platform.usage.UsagePeriod;
 import com.kinplatform.pricing.PricingPlan;
 import java.math.BigDecimal;
 import java.util.List;
@@ -199,7 +199,7 @@ class AiBudgetControlServiceTest {
     @Test
     void summary_calculaUsadoReservadoDisponible() {
         var period = UsagePeriod.current();
-        var record = new com.kinplatform.kin.usage.AiUsageRecord(
+        var record = new com.kinplatform.platform.usage.AiUsageRecord(
                 UUID.randomUUID(),
                 USER_ID,
                 period,
@@ -234,3 +234,5 @@ class AiBudgetControlServiceTest {
         assertEquals(new BigDecimal("6.25"), summary.budgetRemaining());
     }
 }
+
+

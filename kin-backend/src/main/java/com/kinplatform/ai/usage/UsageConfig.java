@@ -1,7 +1,7 @@
 package com.kinplatform.ai.usage;
 
-import com.kinplatform.kin.usage.CostEstimator;
-import com.kinplatform.kin.usage.HeuristicCostEstimator;
+import com.kinplatform.platform.usage.CostEstimator;
+import com.kinplatform.platform.usage.HeuristicCostEstimator;
 import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -24,3 +24,4 @@ public class UsageConfig {
         return new HeuristicCostEstimator(inputPricePer1M, outputPricePer1M, maxOutputTokens);
     }
 }
+

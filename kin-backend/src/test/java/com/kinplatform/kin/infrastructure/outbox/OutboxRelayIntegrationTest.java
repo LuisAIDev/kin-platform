@@ -1,4 +1,4 @@
-package com.kinplatform.kin.infrastructure.outbox;
+package com.kinplatform.platform.infrastructure.outbox;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.common.event.DomainEvent;
@@ -7,7 +7,7 @@ import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.common.eventbus.domain.OutboxRecord;
 import com.kinplatform.common.eventbus.domain.OutboxStatus;
-import com.kinplatform.kin.infrastructure.outbox.OutboxRecordRowMapper;
+import com.kinplatform.platform.infrastructure.outbox.OutboxRecordRowMapper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.AfterEach;
@@ -222,4 +222,6 @@ class OutboxRelayIntegrationTest extends com.kinplatform.test.PostgresTestSuppor
         return meterRegistry.find(name).counter().count();
     }
 }
+
+
 

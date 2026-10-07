@@ -2,7 +2,7 @@ package com.kinplatform.enterprise.certification;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import com.kinplatform.kin.KinMethod;
+import com.kinplatform.platform.method.KinMethod;
 import com.kinplatform.common.ai.PromptAssembler;
 import com.kinplatform.common.conversation.ConversationOrchestrator;
 import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
@@ -56,6 +56,7 @@ class EnterpriseRuntimeCertificationTest extends PostgresTestSupport {
         assertNotNull(context.getBean(MeterRegistry.class));
     }
 }
+
 
 
 

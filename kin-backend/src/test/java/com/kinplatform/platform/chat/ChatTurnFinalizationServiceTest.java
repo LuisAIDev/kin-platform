@@ -19,7 +19,7 @@ import com.kinplatform.common.event.ConversationCompletedEvent;
 import com.kinplatform.common.event.DomainEvent;
 import com.kinplatform.common.event.ReportGeneratedEvent;
 import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
-import com.kinplatform.kin.infrastructure.outbox.TransactionalOutboxEventPublisher;
+import com.kinplatform.platform.infrastructure.outbox.TransactionalOutboxEventPublisher;
 import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.platform.reporting.report.model.ConsultingReport;
 import java.util.List;
@@ -157,6 +157,7 @@ class ChatTurnFinalizationServiceTest {
         assertTrue(true);
     }
 }
+
 
 
 

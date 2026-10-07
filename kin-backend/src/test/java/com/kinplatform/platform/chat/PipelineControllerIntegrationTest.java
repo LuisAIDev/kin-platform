@@ -13,7 +13,7 @@ import com.kinplatform.platform.chat.dto.ChatMessageResponse;
 import com.kinplatform.platform.chat.dto.ChatRequest;
 import com.kinplatform.platform.chat.dto.ChatResponse;
 import com.kinplatform.platform.chat.dto.SaveMessageRequest;
-import com.kinplatform.kin.TestIntegrationPipeline;
+import com.kinplatform.platform.method.TestIntegrationPipeline;
 import com.kinplatform.common.ai.AIRequest;
 import com.kinplatform.common.ai.AIResponder;
 import com.kinplatform.common.context.ContextRepository;
@@ -114,6 +114,7 @@ class PipelineControllerIntegrationTest {
         verify(contextRepository).save(any(UUID.class), any(ProjectContext.class));
     }
 }
+
 
 
 

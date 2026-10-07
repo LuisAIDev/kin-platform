@@ -10,8 +10,8 @@ import static org.mockito.Mockito.when;
 
 import com.kinplatform.ai.usage.AiUsageRecorder;
 import com.kinplatform.ai.usage.ReservationContext;
-import com.kinplatform.kin.usage.AiReservation;
-import com.kinplatform.kin.usage.UsagePeriod;
+import com.kinplatform.platform.usage.AiReservation;
+import com.kinplatform.platform.usage.UsagePeriod;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -199,3 +199,4 @@ class DeepSeekProviderUsageTest {
         verify(recorder, never()).recordActual(any(), anyLong(), anyLong());
     }
 }
+
