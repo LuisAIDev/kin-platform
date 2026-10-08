@@ -5,6 +5,11 @@ import com.kinplatform.kin.medical.licensing.domain.License;
 import com.kinplatform.kin.medical.licensing.domain.LicenseModule;
 import com.kinplatform.kin.medical.licensing.generator.LicenseGenerator;
 import com.kinplatform.kin.medical.licensing.service.LicenseService;
+import java.nio.file.Path;
+import java.security.PrivateKey;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,13 +18,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.nio.file.Path;
-import java.security.PrivateKey;
-import java.time.Instant;
-import java.util.EnumSet;
-import java.util.Map;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/admin/licensing")
@@ -34,9 +32,8 @@ public class LicenseAdminController {
     @Value("${kin.license.private-key-path}")
     private String privateKeyPath;
 
-    public LicenseAdminController(LicenseGenerator generator,
-                                   LicenseService licenseService,
-                                   KeyPairLoader keyPairLoader) {
+    public LicenseAdminController(
+            LicenseGenerator generator, LicenseService licenseService, KeyPairLoader keyPairLoader) {
         this.generator = generator;
         this.licenseService = licenseService;
         this.keyPairLoader = keyPairLoader;
@@ -63,9 +60,8 @@ public class LicenseAdminController {
 
             PrivateKey privateKey = keyPairLoader.loadPrivateKey(Path.of(privateKeyPath));
 
-            String licenseContent = generator.generate(
-                    licenseId, ipsName, nit, serverHash,
-                    maxPhysicians, modules, privateKey);
+            String licenseContent =
+                    generator.generate(licenseId, ipsName, nit, serverHash, maxPhysicians, modules, privateKey);
 
             log.info("Licencia generada: {} para {}", licenseId, ipsName);
 
@@ -85,10 +81,7 @@ public class LicenseAdminController {
     public ResponseEntity<Map<String, Object>> status() {
         License license = licenseService.getCurrentLicense();
         if (license == null) {
-            return ResponseEntity.ok(Map.of(
-                    "active", false,
-                    "message", "Sin licencia activa"
-            ));
+            return ResponseEntity.ok(Map.of("active", false, "message", "Sin licencia activa"));
         }
         return ResponseEntity.ok(Map.of(
                 "active", true,
@@ -96,8 +89,7 @@ public class LicenseAdminController {
                 "ipsName", license.getIpsName(),
                 "expiresAt", license.getExpiresAt().toString(),
                 "maxPhysicians", license.getMaxPhysicians(),
-                "modules", license.getModules().stream().map(Enum::name).toList()
-        ));
+                "modules", license.getModules().stream().map(Enum::name).toList()));
     }
 
     @PostMapping("/reload")
@@ -111,4 +103,3 @@ public class LicenseAdminController {
         }
     }
 }
-

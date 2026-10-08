@@ -2,13 +2,12 @@ package com.kinplatform.platform.ai_enterprise.adapter;
 
 import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.platform.enterprise.ports.EnterpriseProjectRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Adaptador JPA del puerto {@link EnterpriseProjectRepository} (Fase 10,
@@ -46,8 +45,8 @@ public class EnterpriseProjectRepositoryAdapter implements EnterpriseProjectRepo
      * @param repository repositorio Spring Data (obligatorio)
      * @param mapper     mapeador entidad ⇄ dominio (obligatorio)
      */
-    public EnterpriseProjectRepositoryAdapter(EnterpriseProjectJpaRepository repository,
-                                              EnterpriseProjectMapper mapper) {
+    public EnterpriseProjectRepositoryAdapter(
+            EnterpriseProjectJpaRepository repository, EnterpriseProjectMapper mapper) {
         if (repository == null) {
             throw new IllegalArgumentException("repository no puede ser null");
         }
@@ -93,10 +92,7 @@ public class EnterpriseProjectRepositoryAdapter implements EnterpriseProjectRepo
             return List.of();
         }
         return repository.findByProjectIdOrderByVersionAsc(projectId).stream()
-            .map(mapper::toDomain)
-            .toList();
+                .map(mapper::toDomain)
+                .toList();
     }
 }
-
-
-

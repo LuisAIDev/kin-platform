@@ -1,13 +1,18 @@
 package com.kinplatform.kin.medical.billing.authorization;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kinplatform.common.security.AuthenticatedUsers;
-import com.kinplatform.common.security.TenantContext;
 import com.kinplatform.common.audit.api.AuditService;
 import com.kinplatform.common.audit.domain.AuditAction;
 import com.kinplatform.common.audit.domain.AuditResourceType;
-import com.kinplatform.common.user.User;
+import com.kinplatform.common.security.AuthenticatedUsers;
+import com.kinplatform.common.security.TenantContext;
 import com.kinplatform.common.user.UserRepository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
@@ -15,13 +20,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -43,8 +41,8 @@ public class MipresService {
         UUID orgId = TenantContext.get();
 
         // Validar autorización en MIPRES
-        Optional<MipresClient.AuthorizationData> authData = mipresClient.consultarAutorizacion(
-                request.authorizationNumber(), request.contractId());
+        Optional<MipresClient.AuthorizationData> authData =
+                mipresClient.consultarAutorizacion(request.authorizationNumber(), request.contractId());
 
         if (authData.isEmpty()) {
             throw new IllegalArgumentException("Autorización MIPRES no encontrada: " + request.authorizationNumber());
@@ -66,10 +64,13 @@ public class MipresService {
 
         prescription = prescriptionRepository.save(prescription);
 
-        auditService.logAccess(userId, AuditAction.MIPRES_PRESCRIPTION_CREATE,
-                AuditResourceType.MIPRES_PRESCRIPTION, prescription.getId(), orgId,
-                Map.of("authorizationNumber", request.authorizationNumber(),
-                        "cupsCode", prescription.getCupsCode()));
+        auditService.logAccess(
+                userId,
+                AuditAction.MIPRES_PRESCRIPTION_CREATE,
+                AuditResourceType.MIPRES_PRESCRIPTION,
+                prescription.getId(),
+                orgId,
+                Map.of("authorizationNumber", request.authorizationNumber(), "cupsCode", prescription.getCupsCode()));
 
         log.info("MipresService: Prescripción MIPRES creada: {} para org {}", prescription.getId(), orgId);
         return prescription;
@@ -85,8 +86,10 @@ public class MipresService {
         UUID orgId = TenantContext.get();
 
         // Verificar que la prescripción existe y pertenece a la org
-        MipresPrescription prescription = prescriptionRepository.findByPrescriptionNumber(request.authorizationNumber())
-                .orElseThrow(() -> new IllegalArgumentException("Prescripción no encontrada: " + request.authorizationNumber()));
+        MipresPrescription prescription = prescriptionRepository
+                .findByPrescriptionNumber(request.authorizationNumber())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Prescripción no encontrada: " + request.authorizationNumber()));
 
         if (!prescription.getOrganizationId().equals(orgId)) {
             throw new AccessDeniedException("La prescripción no pertenece a su organización");
@@ -125,9 +128,7 @@ public class MipresService {
                         "cupsCode", request.cupsCode(),
                         "quantity", request.quantity(),
                         "value", request.value().toString())))
-                .rawResponse(toJson(Map.of(
-                        "success", true,
-                        "supplyId", supplyId)))
+                .rawResponse(toJson(Map.of("success", true, "supplyId", supplyId)))
                 .build();
 
         supply = supplyRepository.save(supply);
@@ -137,14 +138,26 @@ public class MipresService {
             prescriptionRepository.save(prescription.withStatus(MipresPrescription.PrescriptionStatus.CONSUMED));
         }
 
-        auditService.logAccess(userId, AuditAction.MIPRES_SUPPLY_REPORT,
-                AuditResourceType.MIPRES_SUPPLY, supply.getId(), orgId,
-                Map.of("authorizationNumber", request.authorizationNumber(),
-                        "cupsCode", request.cupsCode(),
-                        "quantity", request.quantity(),
-                        "supplyId", supplyId));
+        auditService.logAccess(
+                userId,
+                AuditAction.MIPRES_SUPPLY_REPORT,
+                AuditResourceType.MIPRES_SUPPLY,
+                supply.getId(),
+                orgId,
+                Map.of(
+                        "authorizationNumber",
+                        request.authorizationNumber(),
+                        "cupsCode",
+                        request.cupsCode(),
+                        "quantity",
+                        request.quantity(),
+                        "supplyId",
+                        supplyId));
 
-        log.info("MipresService: Suministro MIPRES reportado: {} para auth {}", supply.getId(), request.authorizationNumber());
+        log.info(
+                "MipresService: Suministro MIPRES reportado: {} para auth {}",
+                supply.getId(),
+                request.authorizationNumber());
         return supply;
     }
 
@@ -157,7 +170,8 @@ public class MipresService {
         UUID userId = AuthenticatedUsers.require(userRepository, auth).getId();
         UUID orgId = TenantContext.get();
 
-        MipresSupply supply = supplyRepository.findById(supplyId)
+        MipresSupply supply = supplyRepository
+                .findById(supplyId)
                 .orElseThrow(() -> new IllegalArgumentException("Suministro no encontrado: " + supplyId));
 
         if (!supply.getOrganizationId().equals(orgId)) {
@@ -173,8 +187,12 @@ public class MipresService {
 
         supply = supplyRepository.save(supply.withStatus(MipresSupply.SupplyStatus.ANULLED));
 
-        auditService.logAccess(userId, AuditAction.MIPRES_SUPPLY_ANULLED,
-                AuditResourceType.MIPRES_SUPPLY, supply.getId(), orgId,
+        auditService.logAccess(
+                userId,
+                AuditAction.MIPRES_SUPPLY_ANULLED,
+                AuditResourceType.MIPRES_SUPPLY,
+                supply.getId(),
+                orgId,
                 Map.of("motivo", motivo));
 
         log.info("MipresService: Suministro MIPRES anulado: {} motivo: {}", supplyId, motivo);
@@ -185,17 +203,19 @@ public class MipresService {
     @PreAuthorize("hasAnyRole('IPS_ADMIN', 'IPS_FACTURADOR', 'PHYSICIAN', 'ADMIN')")
     public Optional<MipresPrescription> getPrescription(UUID id) {
         UUID orgId = TenantContext.get();
-        return prescriptionRepository.findById(id)
-                .filter(p -> p.getOrganizationId().equals(orgId));
+        return prescriptionRepository.findById(id).filter(p -> p.getOrganizationId()
+                .equals(orgId));
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyRole('IPS_ADMIN', 'IPS_FACTURADOR', 'PHYSICIAN', 'ADMIN')")
-    public List<MipresPrescription> getPrescriptions(UUID contractId, UUID patientId, MipresPrescription.PrescriptionStatus status) {
+    public List<MipresPrescription> getPrescriptions(
+            UUID contractId, UUID patientId, MipresPrescription.PrescriptionStatus status) {
         UUID orgId = TenantContext.get();
 
         if (contractId != null) {
-            return prescriptionRepository.findByOrganizationIdAndStatus(orgId, status != null ? status : MipresPrescription.PrescriptionStatus.AUTHORIZED);
+            return prescriptionRepository.findByOrganizationIdAndStatus(
+                    orgId, status != null ? status : MipresPrescription.PrescriptionStatus.AUTHORIZED);
         }
         if (patientId != null) {
             return prescriptionRepository.findByPatientId(patientId);
@@ -205,7 +225,8 @@ public class MipresService {
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyRole('IPS_ADMIN', 'IPS_FACTURADOR', 'PHYSICIAN', 'ADMIN')")
-    public List<MipresSupply> getSupplies(UUID contractId, UUID prescriptionId, LocalDate startDate, LocalDate endDate) {
+    public List<MipresSupply> getSupplies(
+            UUID contractId, UUID prescriptionId, LocalDate startDate, LocalDate endDate) {
         UUID orgId = TenantContext.get();
 
         if (prescriptionId != null) {
@@ -221,16 +242,11 @@ public class MipresService {
     @PreAuthorize("hasAnyRole('IPS_ADMIN', 'IPS_FACTURADOR', 'PHYSICIAN', 'ADMIN')")
     public Optional<MipresSupply> getSupply(UUID id) {
         UUID orgId = TenantContext.get();
-        return supplyRepository.findById(id)
-                .filter(s -> s.getOrganizationId().equals(orgId));
+        return supplyRepository.findById(id).filter(s -> s.getOrganizationId().equals(orgId));
     }
 
     // DTOs
-    public record CreatePrescriptionRequest(
-            String authorizationNumber,
-            UUID contractId,
-            UUID patientId
-    ) {}
+    public record CreatePrescriptionRequest(String authorizationNumber, UUID contractId, UUID patientId) {}
 
     public record ReportSupplyRequest(
             String authorizationNumber,
@@ -239,8 +255,7 @@ public class MipresService {
             BigDecimal value,
             BigDecimal unitValueCop,
             String batchNumber,
-            LocalDate expirationDate
-    ) {}
+            LocalDate expirationDate) {}
 
     // Helper para update de prescripción
     @Transactional
@@ -259,5 +274,3 @@ public class MipresService {
         }
     }
 }
-
-

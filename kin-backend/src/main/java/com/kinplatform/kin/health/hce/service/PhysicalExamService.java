@@ -1,26 +1,24 @@
 package com.kinplatform.kin.health.hce.service;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
-import com.kinplatform.kin.health.hce.dto.CreatePhysicalExamRequest;
-import com.kinplatform.kin.health.hce.dto.PhysicalExamResponse;
-import com.kinplatform.kin.health.hce.entity.PhysicalExam;
-import com.kinplatform.kin.health.hce.entity.Encounter;
-import com.kinplatform.kin.health.hce.repository.EncounterRepository;
-import com.kinplatform.kin.health.hce.repository.PhysicalExamRepository;
 import com.kinplatform.common.user.User;
 import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.kin.health.hce.dto.CreatePhysicalExamRequest;
+import com.kinplatform.kin.health.hce.dto.PhysicalExamResponse;
+import com.kinplatform.kin.health.hce.entity.Encounter;
+import com.kinplatform.kin.health.hce.entity.PhysicalExam;
+import com.kinplatform.kin.health.hce.repository.EncounterRepository;
+import com.kinplatform.kin.health.hce.repository.PhysicalExamRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,12 +30,14 @@ public class PhysicalExamService {
 
     @Transactional
     public PhysicalExamResponse recordExam(CreatePhysicalExamRequest request) {
-        Encounter encounter = encounterRepository.findById(request.getEncounterId())
+        Encounter encounter = encounterRepository
+                .findById(request.getEncounterId())
                 .orElseThrow(() -> new EntityNotFoundException("Encounter not found"));
 
         checkAccess(encounter);
 
-        User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
+        User currentUser = AuthenticatedUsers.require(
+                userRepository, SecurityContextHolder.getContext().getAuthentication());
 
         validateRanges(request);
 
@@ -56,7 +56,10 @@ public class PhysicalExamService {
                 .heightCm(request.getHeightCm())
                 .glasgowScore(request.getGlasgowScore())
                 .painScale(request.getPainScale())
-                .painScaleType(request.getPainScaleType() != null ? request.getPainScaleType() : PhysicalExam.PainScaleType.EVA)
+                .painScaleType(
+                        request.getPainScaleType() != null
+                                ? request.getPainScaleType()
+                                : PhysicalExam.PainScaleType.EVA)
                 .generalAppearance(request.getGeneralAppearance())
                 .headNeck(request.getHeadNeck())
                 .cardiovascular(request.getCardiovascular())
@@ -77,7 +80,8 @@ public class PhysicalExamService {
 
     @Transactional(readOnly = true)
     public PhysicalExamResponse getByEncounter(UUID encounterId) {
-        PhysicalExam exam = physicalExamRepository.findByEncounterId(encounterId)
+        PhysicalExam exam = physicalExamRepository
+                .findByEncounterId(encounterId)
                 .orElseThrow(() -> new EntityNotFoundException("Physical exam not found for encounter"));
 
         checkAccessByExam(exam);
@@ -103,7 +107,9 @@ public class PhysicalExamService {
         if (request.getHeartRate() != null && (request.getHeartRate() < 30 || request.getHeartRate() > 250)) {
             throw new IllegalArgumentException("Heart rate must be between 30 and 250");
         }
-        if (request.getTemperature() != null && (request.getTemperature().compareTo(BigDecimal.valueOf(30)) < 0 || request.getTemperature().compareTo(BigDecimal.valueOf(45)) > 0)) {
+        if (request.getTemperature() != null
+                && (request.getTemperature().compareTo(BigDecimal.valueOf(30)) < 0
+                        || request.getTemperature().compareTo(BigDecimal.valueOf(45)) > 0)) {
             throw new IllegalArgumentException("Temperature must be between 30.0 and 45.0");
         }
         if (request.getSpo2() != null && (request.getSpo2() < 50 || request.getSpo2() > 100)) {
@@ -118,9 +124,11 @@ public class PhysicalExamService {
     }
 
     private void checkAccess(Encounter encounter) {
-        User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
+        User currentUser = AuthenticatedUsers.require(
+                userRepository, SecurityContextHolder.getContext().getAuthentication());
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_IPS_ADMIN") || a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_IPS_ADMIN")
+                        || a.getAuthority().equals("ROLE_ADMIN"));
         boolean isPhysician = encounter.getPhysicianId().equals(currentUser.getId());
 
         if (!isAdmin && !isPhysician) {
@@ -129,9 +137,11 @@ public class PhysicalExamService {
     }
 
     private void checkAccessByExam(PhysicalExam exam) {
-        User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
+        User currentUser = AuthenticatedUsers.require(
+                userRepository, SecurityContextHolder.getContext().getAuthentication());
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_IPS_ADMIN") || a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_IPS_ADMIN")
+                        || a.getAuthority().equals("ROLE_ADMIN"));
         boolean isPhysician = exam.getPhysicianId().equals(currentUser.getId());
 
         if (!isAdmin && !isPhysician) {
@@ -184,4 +194,3 @@ public class PhysicalExamService {
         return response;
     }
 }
-

@@ -6,11 +6,10 @@ import com.kinplatform.common.pricing.ProductVertical;
 import com.kinplatform.common.pricing.SubscriptionStatus;
 import com.kinplatform.common.pricing.UserSubscription;
 import com.kinplatform.common.pricing.UserSubscriptionRepository;
-import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
-import com.kinplatform.kin.health.triage.port.TriageConsultationRepository;
 import com.kinplatform.common.user.User;
 import com.kinplatform.common.user.UserRepository;
 import com.kinplatform.common.user.UserRole;
+import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -75,16 +74,14 @@ public class HealthQuotaPortImpl implements HealthQuotaPort {
     }
 
     @Override
-    public boolean hasEligibleSubscription(
-            UUID userId, ProductVertical vertical, SubscriptionStatus... statuses) {
+    public boolean hasEligibleSubscription(UUID userId, ProductVertical vertical, SubscriptionStatus... statuses) {
         User user = userRepository.findById(userId).orElse(null);
         if (user != null && Boolean.TRUE.equals(user.getUnlimitedAccess())) {
             return true;
         }
-        List<SubscriptionStatus> allowed =
-                statuses == null || statuses.length == 0
-                        ? List.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL)
-                        : List.of(statuses);
+        List<SubscriptionStatus> allowed = statuses == null || statuses.length == 0
+                ? List.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL)
+                : List.of(statuses);
         for (SubscriptionStatus status : allowed) {
             if (subscriptionRepository
                     .findByUserAndPlanVerticalAndStatus(userId, vertical, status)
@@ -114,7 +111,8 @@ public class HealthQuotaPortImpl implements HealthQuotaPort {
             return subscription.getPlan();
         }
         ProductVertical vertical = verticalForRole(userId);
-        return planRepository.findFirstByVerticalAndIsActiveTrueOrderByPriceAsc(vertical)
+        return planRepository
+                .findFirstByVerticalAndIsActiveTrueOrderByPriceAsc(vertical)
                 .orElseThrow(() -> new RuntimeException("No active pricing plan found for vertical " + vertical));
     }
 
@@ -129,4 +127,3 @@ public class HealthQuotaPortImpl implements HealthQuotaPort {
         return ProductVertical.EMPRESAS;
     }
 }
-

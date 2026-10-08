@@ -1,17 +1,16 @@
 package com.kinplatform.kin.health.hce.entity;
 
 import jakarta.persistence.*;
-import java.time.Instant;
-import java.time.LocalDate;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
 @Data
@@ -19,14 +18,15 @@ import org.hibernate.type.SqlTypes;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "discharge_summaries",
-       indexes = {
-           @Index(name = "idx_discharge_summaries_patient_id", columnList = "patient_id"),
-           @Index(name = "idx_discharge_summaries_admission_id", columnList = "admission_id"),
-           @Index(name = "idx_discharge_summaries_physician_id", columnList = "attending_physician_id"),
-           @Index(name = "idx_discharge_summaries_dates", columnList = "admission_date, discharge_date"),
-           @Index(name = "idx_discharge_summaries_condition", columnList = "discharge_condition")
-       })
+@Table(
+        name = "discharge_summaries",
+        indexes = {
+            @Index(name = "idx_discharge_summaries_patient_id", columnList = "patient_id"),
+            @Index(name = "idx_discharge_summaries_admission_id", columnList = "admission_id"),
+            @Index(name = "idx_discharge_summaries_physician_id", columnList = "attending_physician_id"),
+            @Index(name = "idx_discharge_summaries_dates", columnList = "admission_date, discharge_date"),
+            @Index(name = "idx_discharge_summaries_condition", columnList = "discharge_condition")
+        })
 public class DischargeSummary {
 
     @Id
@@ -107,6 +107,11 @@ public class DischargeSummary {
     private Instant updatedAt;
 
     public enum DischargeCondition {
-        STABLE, IMPROVED, UNCHANGED, WORSENED, DECEASED, TRANSFERRED
+        STABLE,
+        IMPROVED,
+        UNCHANGED,
+        WORSENED,
+        DECEASED,
+        TRANSFERRED
     }
 }

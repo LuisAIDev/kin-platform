@@ -5,18 +5,17 @@ import com.kinplatform.kin.medical.billing.rips.model.RipsBatch;
 import com.kinplatform.kin.medical.billing.rips.model.RipsBatchRepository;
 import com.kinplatform.kin.medical.billing.rips.model.RipsRecord;
 import com.kinplatform.kin.medical.billing.rips.model.RipsRecordRepository;
-import com.kinplatform.kin.medical.billing.rips.validator.ValidationResult;
-import com.kinplatform.kin.medical.billing.rips.validator.XsdValidator;
 import com.kinplatform.kin.medical.billing.rips.validator.BusinessRuleValidator;
 import com.kinplatform.kin.medical.billing.rips.validator.RipsValidator;
-import com.kinplatform.common.security.TenantContext;
+import com.kinplatform.kin.medical.billing.rips.validator.ValidationResult;
+import com.kinplatform.kin.medical.billing.rips.validator.XsdValidator;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +31,12 @@ public class RipsGenerationOrchestrator {
     private final RipsValidator ripsValidator;
     private final RipsContextBuilder contextBuilder;
 
-    public RipsBatch execute(UUID organizationId, UUID contractId, LocalDate periodStart, LocalDate periodEnd, RipsBatch.RipsType ripsType) {
+    public RipsBatch execute(
+            UUID organizationId,
+            UUID contractId,
+            LocalDate periodStart,
+            LocalDate periodEnd,
+            RipsBatch.RipsType ripsType) {
 
         var existing = batchRepository.findByOrganizationIdAndContractIdAndPeriodStartAndPeriodEndAndRipsType(
                 organizationId, contractId, periodStart, periodEnd, ripsType);
@@ -108,8 +112,9 @@ public class RipsGenerationOrchestrator {
         for (RipsBatch.RipsType type : RipsBatch.RipsType.values()) {
             execute(organizationId, contractId, periodStart, periodEnd, type);
         }
-        return batchRepository.findByOrganizationIdAndContractIdAndPeriodStartAndPeriodEndAndRipsType(
-                organizationId, contractId, periodStart, periodEnd, RipsBatch.RipsType.AT)
+        return batchRepository
+                .findByOrganizationIdAndContractIdAndPeriodStartAndPeriodEndAndRipsType(
+                        organizationId, contractId, periodStart, periodEnd, RipsBatch.RipsType.AT)
                 .orElseThrow();
     }
 
@@ -121,4 +126,3 @@ public class RipsGenerationOrchestrator {
         return sb.toString();
     }
 }
-

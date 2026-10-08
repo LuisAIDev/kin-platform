@@ -5,23 +5,23 @@ import com.kinplatform.kin.health.hce.dto.PatientHistoryResponse;
 import com.kinplatform.kin.health.hce.dto.response.HistoryAggregateResponse;
 import com.kinplatform.kin.health.hce.entity.PatientHistory;
 import com.kinplatform.kin.health.hce.entity.PatientHistory.HistoryType;
-import com.kinplatform.kin.health.hce.entity.PatientHistory.Status;
 import com.kinplatform.kin.health.hce.entity.PatientHistory.Severity;
+import com.kinplatform.kin.health.hce.entity.PatientHistory.Status;
 import com.kinplatform.kin.health.hce.util.HistoryJsonHelper;
-import org.springframework.stereotype.Component;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.stereotype.Component;
 
 @Component
 public class HistoryMapper {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
-    public CreatePatientHistoryRequest toCreateRequest(String type, Map<String, Object> data, UUID patientId, UUID recordedBy) {
+    public CreatePatientHistoryRequest toCreateRequest(
+            String type, Map<String, Object> data, UUID patientId, UUID recordedBy) {
         HistoryType historyType = mapTypeFrontendToEntity(type);
         String description = extractDescription(historyType, data);
         LocalDate onsetDate = extractOnsetDate(historyType, data);
@@ -45,7 +45,8 @@ public class HistoryMapper {
                 .build();
     }
 
-    public PatientHistory toEntity(String type, Map<String, Object> data, UUID patientId, UUID recordedBy, UUID existingId) {
+    public PatientHistory toEntity(
+            String type, Map<String, Object> data, UUID patientId, UUID recordedBy, UUID existingId) {
         CreatePatientHistoryRequest req = toCreateRequest(type, data, patientId, recordedBy);
         return PatientHistory.builder()
                 .id(existingId)
@@ -81,7 +82,8 @@ public class HistoryMapper {
         Map<String, Object> data = new java.util.LinkedHashMap<>();
         data.put("description", r.getDescription());
         if (r.getOnsetDate() != null) data.put("onsetDate", r.getOnsetDate().format(DATE_FORMATTER));
-        if (r.getResolutionDate() != null) data.put("resolutionDate", r.getResolutionDate().format(DATE_FORMATTER));
+        if (r.getResolutionDate() != null)
+            data.put("resolutionDate", r.getResolutionDate().format(DATE_FORMATTER));
         if (r.getStatus() != null) data.put("status", r.getStatus().name());
         if (r.getSeverity() != null) data.put("severity", mapSeverityEntityToFrontend(r.getSeverity()));
         if (r.getNotes() != null) data.put("notes", r.getNotes());
@@ -112,21 +114,23 @@ public class HistoryMapper {
     }
 
     private LocalDate extractOnsetDate(HistoryType type, Map<String, Object> data) {
-        String dateStr = switch (type) {
-            case ALLERGY, SURGERY, VACCINE -> (String) data.getOrDefault("date", data.get("onsetDate"));
-            case MEDICATION -> (String) data.get("startDate");
-            case FAMILY -> null;
-            case TOXICOLOGICAL -> (String) data.get("startDate");
-            case GYNECO_OBSTETRIC -> (String) data.get("lastMenstrualPeriod");
-        };
+        String dateStr =
+                switch (type) {
+                    case ALLERGY, SURGERY, VACCINE -> (String) data.getOrDefault("date", data.get("onsetDate"));
+                    case MEDICATION -> (String) data.get("startDate");
+                    case FAMILY -> null;
+                    case TOXICOLOGICAL -> (String) data.get("startDate");
+                    case GYNECO_OBSTETRIC -> (String) data.get("lastMenstrualPeriod");
+                };
         return dateStr != null ? LocalDate.parse(dateStr, DATE_FORMATTER) : null;
     }
 
     private LocalDate extractResolutionDate(HistoryType type, Map<String, Object> data) {
-        String dateStr = switch (type) {
-            case MEDICATION, TOXICOLOGICAL -> (String) data.get("endDate");
-            default -> null;
-        };
+        String dateStr =
+                switch (type) {
+                    case MEDICATION, TOXICOLOGICAL -> (String) data.get("endDate");
+                    default -> null;
+                };
         return dateStr != null ? LocalDate.parse(dateStr, DATE_FORMATTER) : null;
     }
 
@@ -225,7 +229,7 @@ public class HistoryMapper {
     }
 
     private Map<String, Object> parseDetails(String json) {
-        if (json == null || json.isBlank() || json.equals("{}")) {
+        if (json == null || json.isBlank() || "{}".equals(json)) {
             return Map.of();
         }
         return HistoryJsonHelper.fromJson(json);

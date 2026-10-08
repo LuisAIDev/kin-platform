@@ -2,22 +2,20 @@ package com.kinplatform.kin.medical.billing.rips.generator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kinplatform.kin.medical.billing.authorization.AuthorizationRepository;
 import com.kinplatform.kin.medical.billing.contract.EpsContract;
 import com.kinplatform.kin.medical.billing.contract.EpsContractRepository;
 import com.kinplatform.kin.medical.billing.contract.TariffCups;
-import com.kinplatform.kin.medical.billing.authorization.Authorization;
-import com.kinplatform.kin.medical.billing.authorization.AuthorizationRepository;
 import com.kinplatform.kin.medical.billing.rips.RipsSerializationException;
+import com.kinplatform.kin.medical.billing.rips.model.ApRecord;
 import com.kinplatform.kin.medical.billing.rips.model.RipsBatch;
 import com.kinplatform.kin.medical.billing.rips.model.RipsRecord;
-import com.kinplatform.kin.medical.billing.rips.model.ApRecord;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -35,7 +33,8 @@ public class ApGenerator implements RipsGenerator {
 
     @Override
     public List<RipsRecord> generate(RipsGenerationContext context) {
-        EpsContract contract = contractRepository.findById(context.contractId())
+        EpsContract contract = contractRepository
+                .findById(context.contractId())
                 .orElseThrow(() -> new IllegalArgumentException("Contrato no encontrado: " + context.contractId()));
 
         List<Object> procedimientos = context.orders().stream()
@@ -74,7 +73,8 @@ public class ApGenerator implements RipsGenerator {
 
     private ApRecord createApRecord(Object order, EpsContract contract, RipsGenerationContext context) {
         String cupsCode = getField(order, "getCupsCode", "890301");
-        String fechaProcedimiento = getField(order, "getOrderDate", java.time.LocalDate.now().toString());
+        String fechaProcedimiento =
+                getField(order, "getOrderDate", java.time.LocalDate.now().toString());
         String codigoDiagnostico = getField(order, "getDiagnosisCode", "Z00");
         String ambitoRealizacion = getField(order, "getAmbitoRealizacion", "1");
         String finalidadProcedimiento = getField(order, "getFinalidadProcedimiento", "1");
@@ -91,7 +91,8 @@ public class ApGenerator implements RipsGenerator {
                 .codigoPrestador(contract.getOrganizationId().toString().substring(0, 10))
                 .numFactura(contract.getDianPrefix() + String.format("%010d", contract.getDianCurrentSequence() + 1))
                 .codigoProcedimiento(cupsCode)
-                .fechaProcedimiento(java.time.LocalDate.parse(getField(order, "getOrderDate", java.time.LocalDate.now().toString())))
+                .fechaProcedimiento(java.time.LocalDate.parse(getField(
+                        order, "getOrderDate", java.time.LocalDate.now().toString())))
                 .codigoDiagnostico(getField(order, "getDiagnosisCode", "Z00"))
                 .valorProcedimiento(tariff != null ? tariff.getUnitPriceCop() : BigDecimal.ZERO)
                 .ambitoRealizacion(getField(order, "getAmbitoRealizacion", "1"))
@@ -116,4 +117,3 @@ public class ApGenerator implements RipsGenerator {
         }
     }
 }
-

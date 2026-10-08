@@ -4,12 +4,11 @@ import com.kinplatform.kin.medical.licensing.crypto.LicenseVerifier;
 import com.kinplatform.kin.medical.licensing.domain.License;
 import com.kinplatform.kin.medical.licensing.domain.LicenseModule;
 import com.kinplatform.kin.medical.licensing.domain.LicenseValidationResult;
-import org.springframework.stereotype.Service;
-
 import java.security.PublicKey;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.Set;
+import org.springframework.stereotype.Service;
 
 @Service
 public class LicenseValidator {
@@ -17,15 +16,12 @@ public class LicenseValidator {
     private final LicenseVerifier verifier;
     private final ServerHashCalculator serverHashCalculator;
 
-    public LicenseValidator(LicenseVerifier verifier,
-                            ServerHashCalculator serverHashCalculator) {
+    public LicenseValidator(LicenseVerifier verifier, ServerHashCalculator serverHashCalculator) {
         this.verifier = verifier;
         this.serverHashCalculator = serverHashCalculator;
     }
 
-    public LicenseValidationResult validate(String licenseFileContent,
-                                             PublicKey publicKey,
-                                             int currentPhysicianCount) {
+    public LicenseValidationResult validate(String licenseFileContent, PublicKey publicKey, int currentPhysicianCount) {
         try {
             ParsedLicense parsed = parseLicenseFile(licenseFileContent);
             if (parsed == null) {
@@ -51,9 +47,8 @@ public class LicenseValidator {
             }
 
             if (currentPhysicianCount > license.getMaxPhysicians()) {
-                return LicenseValidationResult.invalid(
-                        "Médicos activos (" + currentPhysicianCount + ") exceden el límite ("
-                                + license.getMaxPhysicians() + ")");
+                return LicenseValidationResult.invalid("Médicos activos (" + currentPhysicianCount
+                        + ") exceden el límite (" + license.getMaxPhysicians() + ")");
             }
 
             return LicenseValidationResult.active(license, "Licencia válida");
@@ -67,8 +62,7 @@ public class LicenseValidator {
             return null;
         }
         try {
-            String between = content
-                    .replace("-----BEGIN KIN LICENSE-----", "")
+            String between = content.replace("-----BEGIN KIN LICENSE-----", "")
                     .replace("-----END KIN LICENSE-----", "")
                     .trim();
 
@@ -76,7 +70,8 @@ public class LicenseValidator {
             int sigEnd = between.indexOf("-----END SIGNATURE-----");
 
             String plainText = between.substring(0, sigStart);
-            String signature = between.substring(sigStart + "-----BEGIN SIGNATURE-----".length(), sigEnd).trim();
+            String signature = between.substring(sigStart + "-----BEGIN SIGNATURE-----".length(), sigEnd)
+                    .trim();
 
             return new ParsedLicense(plainText, signature);
         } catch (Exception e) {
@@ -86,8 +81,12 @@ public class LicenseValidator {
 
     private License parseFields(String plainText) {
         try {
-            String licenseId = null, ipsName = null, nit = null, serverHash = null;
-            Instant issuedAt = null, expiresAt = null;
+            String licenseId = null;
+            String ipsName = null;
+            String nit = null;
+            String serverHash = null;
+            Instant issuedAt = null;
+            Instant expiresAt = null;
             int maxPhysicians = 0;
             Set<LicenseModule> modules = EnumSet.noneOf(LicenseModule.class);
 
@@ -98,14 +97,14 @@ public class LicenseValidator {
                 String value = parts[1].trim();
 
                 switch (key) {
-                    case "LICENSE_ID"      -> licenseId = value;
-                    case "IPS_NAME"        -> ipsName = value;
-                    case "NIT"             -> nit = value;
-                    case "SERVER_HASH"     -> serverHash = value;
-                    case "ISSUED_AT"       -> issuedAt = Instant.parse(value);
-                    case "EXPIRES_AT"      -> expiresAt = Instant.parse(value);
-                    case "MAX_PHYSICIANS"  -> maxPhysicians = Integer.parseInt(value);
-                    case "MODULES"         -> {
+                    case "LICENSE_ID" -> licenseId = value;
+                    case "IPS_NAME" -> ipsName = value;
+                    case "NIT" -> nit = value;
+                    case "SERVER_HASH" -> serverHash = value;
+                    case "ISSUED_AT" -> issuedAt = Instant.parse(value);
+                    case "EXPIRES_AT" -> expiresAt = Instant.parse(value);
+                    case "MAX_PHYSICIANS" -> maxPhysicians = Integer.parseInt(value);
+                    case "MODULES" -> {
                         for (String m : value.split(",")) {
                             modules.add(LicenseModule.fromString(m));
                         }
@@ -113,13 +112,11 @@ public class LicenseValidator {
                 }
             }
 
-            return new License(licenseId, ipsName, nit, serverHash,
-                    issuedAt, expiresAt, maxPhysicians, modules);
+            return new License(licenseId, ipsName, nit, serverHash, issuedAt, expiresAt, maxPhysicians, modules);
         } catch (Exception e) {
             return null;
         }
     }
 
-    private record ParsedLicense(String plainText, String signature) { }
+    private record ParsedLicense(String plainText, String signature) {}
 }
-

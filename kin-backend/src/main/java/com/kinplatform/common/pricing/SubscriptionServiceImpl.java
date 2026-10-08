@@ -1,25 +1,18 @@
 package com.kinplatform.common.pricing;
 
-import com.kinplatform.kin.health.documents.port.DocumentStorageQuotaPort;
-import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
+import com.kinplatform.common.ai.usage.AiBudgetControlService;
 import com.kinplatform.common.pricing.dto.PatientSubscriptionStatusResponse;
 import com.kinplatform.common.pricing.dto.SubscriptionResponse;
-import com.kinplatform.common.pricing.PricingPlanRepository;
-import com.kinplatform.common.pricing.SubscriptionStatus;
-import com.kinplatform.common.pricing.UserSubscription;
-import com.kinplatform.common.pricing.UserSubscriptionRepository;
 import com.kinplatform.common.user.UserRepository;
-import com.kinplatform.common.pricing.ProductVertical;
-import com.kinplatform.common.ai.usage.AiBudgetControlService;
+import com.kinplatform.kin.health.documents.port.DocumentStorageQuotaPort;
+import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -38,10 +31,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public SubscriptionResponse subscribe(UUID userId, UUID planId) {
         log.info("User {} subscribing to plan {}", userId, planId);
 
-        var user = userRepository.findById(userId)
+        var user = userRepository
+                .findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
-        var plan = planRepository.findById(planId)
+        var plan = planRepository
+                .findById(planId)
                 .orElseThrow(() -> new IllegalArgumentException("Pricing plan not found: " + planId));
 
         if (!plan.getIsActive()) {
@@ -53,7 +48,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                     "Paid plans require payment. Use /stripe/create-checkout-session instead.");
         }
 
-        subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+        subscriptionRepository
+                .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .ifPresent(s -> {
                     throw new IllegalArgumentException("User already has an active subscription");
                 });
@@ -83,17 +79,20 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public SubscriptionResponse startTrial(UUID userId, UUID planId) {
         log.info("User {} starting trial for plan {}", userId, planId);
 
-        var user = userRepository.findById(userId)
+        var user = userRepository
+                .findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
-        var plan = planRepository.findById(planId)
+        var plan = planRepository
+                .findById(planId)
                 .orElseThrow(() -> new PlanNotFoundException("Pricing plan not found: " + planId));
 
         if (!plan.getIsActive()) {
             throw new IllegalArgumentException("Pricing plan is not active: " + planId);
         }
 
-        subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+        subscriptionRepository
+                .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .ifPresent(s -> {
                     throw new IllegalArgumentException("User already has an active subscription");
                 });
@@ -126,7 +125,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public SubscriptionResponse cancelSubscription(UUID userId) {
         log.info("Cancelling subscription for user {}", userId);
 
-        var subscription = subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+        var subscription = subscriptionRepository
+                .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("No active subscription found for user: " + userId));
 
         subscription.setStatus(SubscriptionStatus.CANCELLED);
@@ -146,7 +146,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public SubscriptionResponse cancelPatientSubscription(UUID userId) {
         log.info("Cancelling patient subscription for user {}", userId);
 
-        var subscription = subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+        var subscription = subscriptionRepository
+                .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("No active subscription found for user: " + userId));
 
         var plan = subscription.getPlan();
@@ -160,7 +161,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         var user = saved.getUser();
         // Revertir al plan FREE de SALUD_PERSONAL
-        var freePlan = planRepository.findByCodeAndVertical("FREE", ProductVertical.SALUD_PERSONAL)
+        var freePlan = planRepository
+                .findByCodeAndVertical("FREE", ProductVertical.SALUD_PERSONAL)
                 .orElseThrow(() -> new RuntimeException("Plan FREE no encontrado para SALUD_PERSONAL"));
         user.setCurrentPlan(freePlan);
         userRepository.save(user);
@@ -174,7 +176,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public SubscriptionResponse getCurrentSubscription(UUID userId) {
         log.debug("Fetching current subscription for user {}", userId);
 
-        var subscription = subscriptionRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
+        var subscription = subscriptionRepository
+                .findTopByUserIdOrderByCreatedAtDesc(userId)
                 .orElseThrow(() -> new IllegalArgumentException("No subscription found for user: " + userId));
 
         return SubscriptionResponse.fromEntity(subscription);
@@ -183,7 +186,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     @Transactional(readOnly = true)
     public boolean hasAvailableMessages(UUID userId) {
-        var subscription = subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+        var subscription = subscriptionRepository
+                .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .orElse(null);
 
         if (subscription == null) {
@@ -201,19 +205,21 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     @Transactional
     public void incrementMessagesUsed(UUID userId) {
-        var subscription = subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+        var subscription = subscriptionRepository
+                .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .orElseThrow(() -> new IllegalArgumentException("No active subscription found for user: " + userId));
 
         var plan = subscription.getPlan();
-        if (plan.getMessagesPerMonth() != null
-                && subscription.getMessagesUsed() >= plan.getMessagesPerMonth()) {
+        if (plan.getMessagesPerMonth() != null && subscription.getMessagesUsed() >= plan.getMessagesPerMonth()) {
             throw new IllegalStateException("Monthly message limit reached");
         }
 
         subscription.setMessagesUsed(subscription.getMessagesUsed() + 1);
         subscriptionRepository.save(subscription);
-        log.debug("Incremented messages used for user {}: {}/{}",
-                userId, subscription.getMessagesUsed(),
+        log.debug(
+                "Incremented messages used for user {}: {}/{}",
+                userId,
+                subscription.getMessagesUsed(),
                 plan.getMessagesPerMonth() != null ? plan.getMessagesPerMonth() : "unlimited");
     }
 
@@ -330,5 +336,3 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .build();
     }
 }
-
-

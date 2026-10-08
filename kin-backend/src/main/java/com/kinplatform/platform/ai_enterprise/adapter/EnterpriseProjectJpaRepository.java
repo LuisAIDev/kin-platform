@@ -1,10 +1,9 @@
 package com.kinplatform.platform.ai_enterprise.adapter;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
  * Repositorio Spring Data del proyecto empresarial (Fase 10, Milestone 2G).
@@ -14,8 +13,7 @@ import java.util.UUID;
  * versión, versión concreta y todas las versiones ordenadas de forma
  * ascendente. Sin lógica de negocio.</p>
  */
-public interface EnterpriseProjectJpaRepository
-        extends JpaRepository<EnterpriseProjectEntity, EnterpriseProjectId> {
+public interface EnterpriseProjectJpaRepository extends JpaRepository<EnterpriseProjectEntity, EnterpriseProjectId> {
 
     /**
      * Devuelve la versión más reciente del proyecto, o vacío si no existe.
@@ -43,5 +41,3 @@ public interface EnterpriseProjectJpaRepository
      */
     List<EnterpriseProjectEntity> findByProjectIdOrderByVersionAsc(UUID projectId);
 }
-
-

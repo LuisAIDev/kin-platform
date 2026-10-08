@@ -3,15 +3,14 @@ package com.kinplatform.kin.medical.billing.rips.generator;
 import com.kinplatform.kin.medical.billing.contract.EpsContract;
 import com.kinplatform.kin.medical.billing.contract.EpsContractRepository;
 import com.kinplatform.kin.medical.billing.contract.TariffCups;
+import com.kinplatform.kin.medical.billing.rips.model.AuRecord;
 import com.kinplatform.kin.medical.billing.rips.model.RipsBatch;
 import com.kinplatform.kin.medical.billing.rips.model.RipsRecord;
-import com.kinplatform.kin.medical.billing.rips.model.AuRecord;
+import java.math.BigDecimal;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -27,7 +26,8 @@ public class AuGenerator implements RipsGenerator {
 
     @Override
     public List<RipsRecord> generate(RipsGenerationContext context) {
-        EpsContract contract = contractRepository.findById(context.contractId())
+        EpsContract contract = contractRepository
+                .findById(context.contractId())
                 .orElseThrow(() -> new IllegalArgumentException("Contrato no encontrado: " + context.contractId()));
 
         // Filter encounters of type URGENCIA
@@ -60,7 +60,8 @@ public class AuGenerator implements RipsGenerator {
     private AuRecord createAuRecord(Object encounter, EpsContract contract, RipsGenerationContext context) {
         String tipoDocumento = getField(encounter, "getPatientDocumentType", "CC");
         String numeroDocumento = getField(encounter, "getPatientDocumentNumber", "0000000000");
-        String fechaUrgencia = getField(encounter, "getEncounterDate", java.time.LocalDate.now().toString());
+        String fechaUrgencia = getField(
+                encounter, "getEncounterDate", java.time.LocalDate.now().toString());
         String motivoUrgencia = getField(encounter, "getUrgencyReason", "CONSULTA");
         String codigoDiagnosticoSalida = getField(encounter, "getDischargeDiagnosisCode", "Z00");
         String destinoUsuario = getField(encounter, "getDischargeDestination", "1");
@@ -83,8 +84,7 @@ public class AuGenerator implements RipsGenerator {
                 destinoUsuario,
                 estadoUsuario,
                 cupsCode,
-                valorUrgencia
-        );
+                valorUrgencia);
     }
 
     private String getField(Object obj, String methodName, String defaultValue) {
@@ -95,4 +95,3 @@ public class AuGenerator implements RipsGenerator {
         }
     }
 }
-

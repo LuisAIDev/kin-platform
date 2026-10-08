@@ -1,14 +1,13 @@
 package com.kinplatform.platform.ai_enterprise.adapter;
 
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import com.kinplatform.platform.enterprise.ports.EnterpriseProjectAccessControl;
 import com.kinplatform.platform.project.Project;
 import com.kinplatform.platform.project.ProjectRepository;
-import com.kinplatform.common.user.User;
-import com.kinplatform.common.user.UserRepository;
+import java.util.UUID;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 /**
  * Adaptador de infraestructura del control de acceso Enterprise (remediación C1).
@@ -29,8 +28,7 @@ public class ProjectOwnerAccessControl implements EnterpriseProjectAccessControl
      * @param projectRepository repositorio de proyectos de KIN (obligatorio)
      * @param userRepository    repositorio de usuarios (obligatorio)
      */
-    public ProjectOwnerAccessControl(ProjectRepository projectRepository,
-                                     UserRepository userRepository) {
+    public ProjectOwnerAccessControl(ProjectRepository projectRepository, UserRepository userRepository) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
     }
@@ -47,12 +45,7 @@ public class ProjectOwnerAccessControl implements EnterpriseProjectAccessControl
         }
         Project project = projectRepository.findById(projectId).orElse(null);
         return project != null
-            && project.getUser() != null
-            && user.getId().equals(project.getUser().getId());
+                && project.getUser() != null
+                && user.getId().equals(project.getUser().getId());
     }
 }
-
-
-
-
-

@@ -6,16 +6,11 @@ import com.kinplatform.kin.medical.billing.rips.generator.RipsGenerationContext;
 import com.kinplatform.kin.medical.billing.rips.model.RipsBatch;
 import com.kinplatform.kin.medical.billing.rips.model.RipsRecord;
 import com.kinplatform.kin.medical.billing.rips.model.RipsRecordRepository;
-import com.kinplatform.kin.medical.billing.rips.model.SisproModalidadPagoRepository;
 import com.kinplatform.kin.medical.billing.rips.model.SisproCoberturaPlanRepository;
 import com.kinplatform.kin.medical.billing.rips.model.SisproConceptoRecaudoRepository;
+import com.kinplatform.kin.medical.billing.rips.model.SisproModalidadPagoRepository;
 import com.kinplatform.kin.medical.billing.rips.model.SisproTipoIdRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -24,8 +19,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.regex.Pattern;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -39,13 +36,10 @@ public class RipsValidator {
     private final SisproConceptoRecaudoRepository conceptoRecaudoRepository;
     private final SisproTipoIdRepository tipoIdRepository;
 
-    private static final Set<String> VALID_TIPO_OPERACION = Set.of(
-        "SS-CUFE", "SS-CUDE", "SS-POS", "SS-SNum", "SS-Recaudo", "SS-Reporte", "SS-SinAporte"
-    );
+    private static final Set<String> VALID_TIPO_OPERACION =
+            Set.of("SS-CUFE", "SS-CUDE", "SS-POS", "SS-SNum", "SS-Recaudo", "SS-Reporte", "SS-SinAporte");
 
-    private static final Set<String> ACTIVA_METODO = Set.of(
-        "SS-CUFE", "SS-CUDE", "SS-POS", "SS-SNum"
-    );
+    private static final Set<String> ACTIVA_METODO = Set.of("SS-CUFE", "SS-CUDE", "SS-POS", "SS-SNum");
 
     private static final Pattern MONETARIO_PATTERN = Pattern.compile("^\\d+(\\.\\d{1,2})?$");
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -62,8 +56,8 @@ public class RipsValidator {
             RipsRecord record = records.get(i);
             int row = i + 1;
             try {
-                Map<String, Object> data = objectMapper.readValue(
-                    record.getRipsLineData(), new TypeReference<Map<String, Object>>() {});
+                Map<String, Object> data =
+                        objectMapper.readValue(record.getRipsLineData(), new TypeReference<Map<String, Object>>() {});
 
                 validateRecord(batch.getRipsType(), data, row, errors);
 
@@ -134,14 +128,27 @@ public class RipsValidator {
     private void validateMonetaryFields(Map<String, Object> data, int row, List<String> errors) {
         String prefix = "Fila " + row + ": ";
 
-        String[] monetaryFields = {"copago", "cuotaModeradora", "pagosCompartidos", "anticipo", "valorConsulta", "valorProcedimiento", "valorUrgencia", "valorUnitario", "valorTotal", "valorTotalFactura"};
+        String[] monetaryFields = {
+            "copago",
+            "cuotaModeradora",
+            "pagosCompartidos",
+            "anticipo",
+            "valorConsulta",
+            "valorProcedimiento",
+            "valorUrgencia",
+            "valorUnitario",
+            "valorTotal",
+            "valorTotalFactura"
+        };
 
         for (String field : monetaryFields) {
             Object value = data.get(field);
             if (value != null) {
                 String strValue = String.valueOf(value);
                 if (!isValidMonetary(strValue)) {
-                    errors.add(prefix + field.toUpperCase() + " formato monetario inválido (sin símbolos, sin separadores de miles, decimal con punto): " + strValue);
+                    errors.add(prefix + field.toUpperCase()
+                            + " formato monetario inválido (sin símbolos, sin separadores de miles, decimal con punto): "
+                            + strValue);
                 } else {
                     try {
                         BigDecimal decimal = new BigDecimal(strValue);
@@ -159,7 +166,15 @@ public class RipsValidator {
     private void validateDateFields(Map<String, Object> data, int row, List<String> errors) {
         String prefix = "Fila " + row + ": ";
 
-        String[] dateFields = {"fechaConsulta", "fechaProcedimiento", "fechaUrgencia", "fechaServicio", "fechaNacimiento", "fechaInicioPeriodo", "fechaFinPeriodo"};
+        String[] dateFields = {
+            "fechaConsulta",
+            "fechaProcedimiento",
+            "fechaUrgencia",
+            "fechaServicio",
+            "fechaNacimiento",
+            "fechaInicioPeriodo",
+            "fechaFinPeriodo"
+        };
 
         for (String field : dateFields) {
             Object value = data.get(field);
@@ -179,7 +194,8 @@ public class RipsValidator {
         String numPoliza = getString(data, "numeroPoliza");
 
         if (!isBlank(numContrato) && !isBlank(numPoliza)) {
-            errors.add(prefix + "Regla de exclusividad: NUMERO_CONTRATO y NUMERO_POLIZA no pueden tener valor simultáneamente");
+            errors.add(prefix
+                    + "Regla de exclusividad: NUMERO_CONTRATO y NUMERO_POLIZA no pueden tener valor simultáneamente");
         }
     }
 
@@ -295,21 +311,26 @@ public class RipsValidator {
         for (int i = 0; i < records.size(); i++) {
             try {
                 RipsRecord record = records.get(i);
-                Map<String, Object> data = objectMapper.readValue(
-                    record.getRipsLineData(), new TypeReference<Map<String, Object>>() {});
+                Map<String, Object> data =
+                        objectMapper.readValue(record.getRipsLineData(), new TypeReference<Map<String, Object>>() {});
 
                 String numDoc = getString(data, "numDocumento");
                 String modalidad = getString(data, "modalidadPago");
                 String cobertura = getString(data, "coberturaPlanBeneficios");
 
                 if (!isBlank(numDoc)) {
-                    if (modalidadPorUsuario.containsKey(numDoc) && !modalidadPorUsuario.get(numDoc).equals(modalidad)) {
-                        errors.add("Fila " + (i + 1) + ": Usuario " + numDoc + " tiene MODALIDAD_PAGO inconsistente (" + modalidadPorUsuario.get(numDoc) + " vs " + modalidad + ")");
+                    if (modalidadPorUsuario.containsKey(numDoc)
+                            && !modalidadPorUsuario.get(numDoc).equals(modalidad)) {
+                        errors.add("Fila " + (i + 1) + ": Usuario " + numDoc + " tiene MODALIDAD_PAGO inconsistente ("
+                                + modalidadPorUsuario.get(numDoc) + " vs " + modalidad + ")");
                     }
                     modalidadPorUsuario.put(numDoc, modalidad);
 
-                    if (coberturaPorUsuario.containsKey(numDoc) && !coberturaPorUsuario.get(numDoc).equals(cobertura)) {
-                        errors.add("Fila " + (i + 1) + ": Usuario " + numDoc + " tiene COBERTURA_PLAN_BENEFICIOS inconsistente (" + coberturaPorUsuario.get(numDoc) + " vs " + cobertura + ")");
+                    if (coberturaPorUsuario.containsKey(numDoc)
+                            && !coberturaPorUsuario.get(numDoc).equals(cobertura)) {
+                        errors.add("Fila " + (i + 1) + ": Usuario " + numDoc
+                                + " tiene COBERTURA_PLAN_BENEFICIOS inconsistente (" + coberturaPorUsuario.get(numDoc)
+                                + " vs " + cobertura + ")");
                     }
                     coberturaPorUsuario.put(numDoc, cobertura);
                 }
@@ -354,4 +375,3 @@ public class RipsValidator {
         return tipoIdRepository.existsByCodigoAndActivoTrue(value);
     }
 }
-

@@ -3,8 +3,8 @@ package com.kinplatform.platform.ai_enterprise.adapter;
 import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.platform.enterprise.aggregate.GenerationStatus;
 import com.kinplatform.platform.enterprise.valueobjects.DocumentArtifact;
-
 import java.util.List;
+
 /**
  * Mapeador del proyecto empresarial (Fase 10, Milestone 2G).
  *
@@ -68,8 +68,8 @@ public final class EnterpriseProjectMapper {
         entity.setFailedReason(project.failedReason());
         entity.setScore(scoreMapper.toEmbedded(project.score()));
         List<DocumentArtifactEntity> documents = project.documents().stream()
-            .map(artifact -> documentMapper.toEntity(artifact, entity))
-            .toList();
+                .map(artifact -> documentMapper.toEntity(artifact, entity))
+                .toList();
         entity.setDocuments(documents);
         return entity;
     }
@@ -85,22 +85,35 @@ public final class EnterpriseProjectMapper {
         if (entity == null) {
             throw new IllegalArgumentException("entity no puede ser null");
         }
-        List<DocumentArtifact> documents = entity.getDocuments().stream()
-            .map(documentMapper::toDomain)
-            .toList();
+        List<DocumentArtifact> documents =
+                entity.getDocuments().stream().map(documentMapper::toDomain).toList();
         var score = scoreMapper.toDomain(entity.getScore());
         GenerationStatus status = GenerationStatus.valueOf(entity.getStatus());
         return switch (status) {
             case REQUESTED -> EnterpriseProject.request(entity.getProjectId(), entity.getVersion());
-            case RUNNING -> EnterpriseProject.start(entity.getProjectId(), entity.getVersion(),
-                entity.getCreatedAt(), entity.getUpdatedAt(), documents, score);
-            case COMPLETED -> EnterpriseProject.complete(entity.getProjectId(), entity.getVersion(),
-                entity.getCreatedAt(), entity.getUpdatedAt(), entity.getCompletedAt(), documents, score);
-            case FAILED -> EnterpriseProject.fail(entity.getProjectId(), entity.getVersion(),
-                entity.getCreatedAt(), entity.getUpdatedAt(), entity.getFailedReason(), documents, score);
+            case RUNNING -> EnterpriseProject.start(
+                    entity.getProjectId(),
+                    entity.getVersion(),
+                    entity.getCreatedAt(),
+                    entity.getUpdatedAt(),
+                    documents,
+                    score);
+            case COMPLETED -> EnterpriseProject.complete(
+                    entity.getProjectId(),
+                    entity.getVersion(),
+                    entity.getCreatedAt(),
+                    entity.getUpdatedAt(),
+                    entity.getCompletedAt(),
+                    documents,
+                    score);
+            case FAILED -> EnterpriseProject.fail(
+                    entity.getProjectId(),
+                    entity.getVersion(),
+                    entity.getCreatedAt(),
+                    entity.getUpdatedAt(),
+                    entity.getFailedReason(),
+                    documents,
+                    score);
         };
     }
 }
-
-
-

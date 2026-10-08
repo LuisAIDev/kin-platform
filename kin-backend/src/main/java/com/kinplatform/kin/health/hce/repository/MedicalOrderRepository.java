@@ -3,15 +3,12 @@ package com.kinplatform.kin.health.hce.repository;
 import com.kinplatform.kin.health.hce.entity.MedicalOrder;
 import com.kinplatform.kin.health.hce.entity.MedicalOrder.OrderType;
 import com.kinplatform.kin.health.hce.entity.MedicalOrder.Status;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @Repository
 public interface MedicalOrderRepository extends JpaRepository<MedicalOrder, UUID> {
@@ -28,7 +25,8 @@ public interface MedicalOrderRepository extends JpaRepository<MedicalOrder, UUID
 
     List<MedicalOrder> findByStatus(Status status);
 
-    @Query("SELECT m FROM MedicalOrder m WHERE m.patientId = :patientId AND m.orderedAt BETWEEN :start AND :end ORDER BY m.orderedAt DESC")
+    @Query(
+            "SELECT m FROM MedicalOrder m WHERE m.patientId = :patientId AND m.orderedAt BETWEEN :start AND :end ORDER BY m.orderedAt DESC")
     List<MedicalOrder> findByPatientIdAndOrderedAtBetween(
             @Param("patientId") UUID patientId,
             @Param("start") java.time.Instant start,
@@ -40,7 +38,8 @@ public interface MedicalOrderRepository extends JpaRepository<MedicalOrder, UUID
     @Query("SELECT m FROM MedicalOrder m WHERE m.treatmentPlanId = :treatmentPlanId ORDER BY m.orderedAt DESC")
     List<MedicalOrder> findByTreatmentPlanIdOrderByOrderedAtDescList(@Param("treatmentPlanId") UUID treatmentPlanId);
 
-    long countByEncounterIdAndStatus(UUID encounterId, com.kinplatform.kin.health.hce.entity.MedicalOrder.Status status);
+    long countByEncounterIdAndStatus(
+            UUID encounterId, com.kinplatform.kin.health.hce.entity.MedicalOrder.Status status);
 
     boolean existsByEncounterIdAndCupsCode(UUID encounterId, String cupsCode);
 }

@@ -2,14 +2,12 @@ package com.kinplatform.kin.medical.billing.rips.validator;
 
 import com.kinplatform.kin.medical.billing.rips.generator.RipsGenerationContext;
 import com.kinplatform.kin.medical.billing.rips.model.RipsBatch;
-import com.kinplatform.kin.medical.billing.rips.model.RipsRecord;
 import com.kinplatform.kin.medical.billing.rips.model.RipsRecordRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -24,9 +22,11 @@ public class BusinessRuleValidator {
             BigDecimal totalCalculated = calculateTotalFromDetails(context, batch);
             BigDecimal afTotal = extractAfTotal(batch);
 
-            if (afTotal != null && totalCalculated != null
+            if (afTotal != null
+                    && totalCalculated != null
                     && afTotal.subtract(totalCalculated).abs().compareTo(new BigDecimal("0.01")) > 0) {
-                errors.add("AF valor_total (" + afTotal + ") no coincide con suma AC+AP+AU+AT (" + totalCalculated + ")");
+                errors.add(
+                        "AF valor_total (" + afTotal + ") no coincide con suma AC+AP+AU+AT (" + totalCalculated + ")");
             }
         }
 
@@ -48,13 +48,9 @@ public class BusinessRuleValidator {
         return BigDecimal.ZERO;
     }
 
-    private void validateAuthorizations(RipsBatch batch, RipsGenerationContext context, List<String> errors) {
-    }
+    private void validateAuthorizations(RipsBatch batch, RipsGenerationContext context, List<String> errors) {}
 
-    private void validateCupsInTariff(RipsBatch batch, RipsGenerationContext context, List<String> errors) {
-    }
+    private void validateCupsInTariff(RipsBatch batch, RipsGenerationContext context, List<String> errors) {}
 
-    private void validateDiagnosisCodes(RipsBatch batch, List<String> errors) {
-    }
+    private void validateDiagnosisCodes(RipsBatch batch, List<String> errors) {}
 }
-

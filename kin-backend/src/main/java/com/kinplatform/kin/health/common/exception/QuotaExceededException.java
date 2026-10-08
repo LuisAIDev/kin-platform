@@ -1,8 +1,6 @@
 package com.kinplatform.kin.health.common.exception;
 
 import lombok.Data;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 @Data
 public class QuotaExceededException extends RuntimeException {

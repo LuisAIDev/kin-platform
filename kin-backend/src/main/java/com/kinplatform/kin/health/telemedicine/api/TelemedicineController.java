@@ -1,15 +1,14 @@
 package com.kinplatform.kin.health.telemedicine.api;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
-import com.kinplatform.kin.health.physician.api.RelationshipService;
-import com.kinplatform.kin.health.telemedicine.domain.Appointment;
-import com.kinplatform.kin.health.telemedicine.domain.Appointment.AppointmentStatus;
-import com.kinplatform.kin.health.telemedicine.domain.Message;
-import com.kinplatform.kin.health.telemedicine.port.AppointmentRepository;
-import com.kinplatform.kin.health.telemedicine.port.MessageRepository;
 import com.kinplatform.common.user.User;
 import com.kinplatform.common.user.UserRepository;
 import com.kinplatform.common.user.UserRole;
+import com.kinplatform.kin.health.physician.api.RelationshipService;
+import com.kinplatform.kin.health.telemedicine.domain.Appointment;
+import com.kinplatform.kin.health.telemedicine.domain.Appointment.AppointmentStatus;
+import com.kinplatform.kin.health.telemedicine.port.AppointmentRepository;
+import com.kinplatform.kin.health.telemedicine.port.MessageRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -52,10 +51,7 @@ import org.springframework.web.bind.annotation.RestController;
  * médico-paciente.</p>
  */
 @RestController
-@RequestMapping({
-    "/health/telemedicine",
-    "/medical/telemedicine"
-})
+@RequestMapping({"/health/telemedicine", "/medical/telemedicine"})
 public class TelemedicineController {
 
     private static final Logger log = LoggerFactory.getLogger(TelemedicineController.class);
@@ -66,8 +62,11 @@ public class TelemedicineController {
     private final MessageRepository messageRepository;
     private final AppointmentRepository appointmentRepository;
 
-    public TelemedicineController(TelemedicineService telemedicineService, UserRepository userRepository,
-            RelationshipService relationshipService, MessageRepository messageRepository,
+    public TelemedicineController(
+            TelemedicineService telemedicineService,
+            UserRepository userRepository,
+            RelationshipService relationshipService,
+            MessageRepository messageRepository,
             AppointmentRepository appointmentRepository) {
         this.telemedicineService = telemedicineService;
         this.userRepository = userRepository;
@@ -151,10 +150,10 @@ public class TelemedicineController {
 
     @PostMapping("/appointments/{appointmentId}/video-room")
     public ResponseEntity<VideoRoomResponse> getOrCreateVideoRoom(
-            @PathVariable UUID appointmentId,
-            Authentication auth) {
+            @PathVariable UUID appointmentId, Authentication auth) {
         UUID userId = AuthenticatedUsers.require(userRepository, auth).getId();
-        Appointment appointment = appointmentRepository.findById(appointmentId)
+        Appointment appointment = appointmentRepository
+                .findById(appointmentId)
                 .orElseThrow(() -> new RuntimeException("Cita no encontrada"));
 
         // Validar participante (1 llamada)
@@ -164,9 +163,7 @@ public class TelemedicineController {
 
         // Validar estado (PENDIENTE o CONFIRMADA)
         if (!appointment.isOpen()) {
-            throw new IllegalStateException(
-                    "La videollamada solo está disponible para citas pendientes o confirmadas"
-            );
+            throw new IllegalStateException("La videollamada solo está disponible para citas pendientes o confirmadas");
         }
 
         // Validar ventana de tiempo (30 min antes a 2h después)
@@ -176,10 +173,8 @@ public class TelemedicineController {
         OffsetDateTime windowEnd = scheduled.plusHours(2);
 
         if (now.isBefore(windowStart) || now.isAfter(windowEnd)) {
-            throw new IllegalStateException(
-                    "La videollamada solo está disponible desde 30 minutos antes " +
-                    "hasta 2 horas después de la cita agendada"
-            );
+            throw new IllegalStateException("La videollamada solo está disponible desde 30 minutos antes "
+                    + "hasta 2 horas después de la cita agendada");
         }
 
         // Obtener o crear el room ID (idempotente)
@@ -250,5 +245,3 @@ public class TelemedicineController {
         }
     }
 }
-
-

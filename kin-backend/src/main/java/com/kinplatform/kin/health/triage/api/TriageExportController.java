@@ -1,5 +1,9 @@
 package com.kinplatform.kin.health.triage.api;
 
+import com.kinplatform.common.pricing.ProductVertical;
+import com.kinplatform.common.pricing.SubscriptionStatus;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import com.kinplatform.kin.health.common.exception.QuotaExceededException;
 import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
 import com.kinplatform.kin.health.triage.application.TriageExportAssembler;
@@ -7,13 +11,8 @@ import com.kinplatform.kin.health.triage.application.TriageExportDocument;
 import com.kinplatform.kin.health.triage.domain.TriageConditionResult;
 import com.kinplatform.kin.health.triage.domain.TriageConsultation;
 import com.kinplatform.kin.health.triage.port.TriageConsultationRepository;
-import com.kinplatform.common.pricing.ProductVertical;
-import com.kinplatform.common.pricing.SubscriptionStatus;
-import com.kinplatform.common.user.User;
-import com.kinplatform.common.user.UserRepository;
 import jakarta.validation.constraints.NotNull;
 import java.security.Principal;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -27,10 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping({
-    "/health/triage",
-    "/medical/triage"
-})
+@RequestMapping({"/health/triage", "/medical/triage"})
 public class TriageExportController {
 
     private static final Logger log = LoggerFactory.getLogger(TriageExportController.class);
@@ -52,9 +48,7 @@ public class TriageExportController {
     }
 
     @GetMapping("/{triageId}/export/pdf")
-    public ResponseEntity<byte[]> exportPdf(
-            @PathVariable @NotNull UUID triageId,
-            Principal principal) {
+    public ResponseEntity<byte[]> exportPdf(@PathVariable @NotNull UUID triageId, Principal principal) {
 
         UUID userId = extractUserId(principal);
         TriageConsultation consultation = loadTriageConsultation(triageId, userId);
@@ -68,8 +62,7 @@ public class TriageExportController {
             // (pdf_export = FALSE en el plan gratuito). Un paciente en plan FREE se
             // bloquea aunque todavía tenga triajes gratuitos disponibles este mes.
             boolean eligible = healthQuotaPort.hasEligibleSubscription(
-                    userId, ProductVertical.SALUD_PERSONAL,
-                    SubscriptionStatus.ACTIVE);
+                    userId, ProductVertical.SALUD_PERSONAL, SubscriptionStatus.ACTIVE);
             if (!eligible) {
                 throw new QuotaExceededException(
                         "La exportación PDF del informe de triaje requiere el plan Personal+ ($9/mes).",
@@ -99,35 +92,26 @@ public class TriageExportController {
             throw new IllegalArgumentException("Principal nulo");
         }
         String name = principal.getName();
-        var user = userRepository.findByEmail(name).orElseThrow(
-                () -> new IllegalArgumentException("Usuario no encontrado: " + name)
-        );
+        var user = userRepository
+                .findByEmail(name)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + name));
         return user.getId();
     }
 
     private TriageConsultation loadTriageConsultation(UUID triageId, UUID userId) {
-        return consultationRepository.findByIdAndUserId(triageId, userId)
+        return consultationRepository
+                .findByIdAndUserId(triageId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("Triaje no encontrado o acceso denegado: " + triageId));
     }
 
-    private TriageExportDocument buildExportDocument(
-            UUID triageId,
-            UUID userId,
-            TriageConsultation consultation) {
+    private TriageExportDocument buildExportDocument(UUID triageId, UUID userId, TriageConsultation consultation) {
 
         String symptoms = formatSymptoms(consultation.symptoms());
         String results = formatResults(consultation.results());
         String recommendation = formatRecommendation(consultation.results());
 
         return TriageExportDocument.of(
-                triageId,
-                userId,
-                getPatientName(userId),
-                consultation.createdAt(),
-                symptoms,
-                results,
-                recommendation
-        );
+                triageId, userId, getPatientName(userId), consultation.createdAt(), symptoms, results, recommendation);
     }
 
     private String getPatientName(UUID userId) {

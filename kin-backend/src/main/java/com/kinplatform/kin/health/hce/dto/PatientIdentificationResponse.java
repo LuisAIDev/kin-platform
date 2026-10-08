@@ -1,7 +1,6 @@
 package com.kinplatform.kin.health.hce.dto;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

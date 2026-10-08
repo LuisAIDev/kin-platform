@@ -1,6 +1,5 @@
 package com.kinplatform.kin.health.physician.api;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
@@ -32,6 +31,7 @@ public class PhysicianApplicationRequest {
     @Size(max = 30, message = "Teléfono inválido")
     private String phone;
 
-    @jakarta.validation.constraints.AssertTrue(message = "Debes aceptar el consentimiento para el tratamiento de tus datos de salud")
+    @jakarta.validation.constraints.AssertTrue(
+            message = "Debes aceptar el consentimiento para el tratamiento de tus datos de salud")
     private Boolean healthDataConsent;
 }

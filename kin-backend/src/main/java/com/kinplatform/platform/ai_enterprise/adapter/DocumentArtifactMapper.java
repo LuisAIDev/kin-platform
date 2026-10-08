@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.platform.enterprise.valueobjects.DocumentArtifact;
 import com.kinplatform.platform.enterprise.valueobjects.DocumentType;
 import com.kinplatform.platform.enterprise.valueobjects.RenderFormat;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Map;
@@ -53,20 +52,23 @@ public final class DocumentArtifactMapper {
             throw new IllegalArgumentException("artifact no puede ser null");
         }
         return DocumentArtifactEntity.builder()
-            .id(artifact.id())
-            .project(project)
-            .type(artifact.type().name())
-            .content(artifact.content())
-            .createdAt(artifact.createdAt())
-            .generatedBy(artifact.generatedBy())
-            .engineVersion(artifact.engineVersion())
-            .inputHash(artifact.inputHash())
-            .metadataJson(toJson(artifact.metadata()))
-            .checksum(artifact.checksum())
-            .size(artifact.size())
-            .mimeType(artifact.mimeType())
-            .renderFormat(artifact.renderFormat() == null ? null : artifact.renderFormat().name())
-            .build();
+                .id(artifact.id())
+                .project(project)
+                .type(artifact.type().name())
+                .content(artifact.content())
+                .createdAt(artifact.createdAt())
+                .generatedBy(artifact.generatedBy())
+                .engineVersion(artifact.engineVersion())
+                .inputHash(artifact.inputHash())
+                .metadataJson(toJson(artifact.metadata()))
+                .checksum(artifact.checksum())
+                .size(artifact.size())
+                .mimeType(artifact.mimeType())
+                .renderFormat(
+                        artifact.renderFormat() == null
+                                ? null
+                                : artifact.renderFormat().name())
+                .build();
     }
 
     /**
@@ -80,20 +82,19 @@ public final class DocumentArtifactMapper {
             throw new IllegalArgumentException("entity no puede ser null");
         }
         return new DocumentArtifact(
-            entity.getId(),
-            DocumentType.valueOf(entity.getType()),
-            entity.getContent(),
-            entity.getCreatedAt(),
-            entity.getGeneratedBy(),
-            entity.getEngineVersion(),
-            entity.getInputHash(),
-            entity.getProject().getVersion(),
-            fromJson(entity.getMetadataJson()),
-            entity.getChecksum(),
-            entity.getSize(),
-            entity.getMimeType(),
-            entity.getRenderFormat() == null ? null : RenderFormat.valueOf(entity.getRenderFormat())
-        );
+                entity.getId(),
+                DocumentType.valueOf(entity.getType()),
+                entity.getContent(),
+                entity.getCreatedAt(),
+                entity.getGeneratedBy(),
+                entity.getEngineVersion(),
+                entity.getInputHash(),
+                entity.getProject().getVersion(),
+                fromJson(entity.getMetadataJson()),
+                entity.getChecksum(),
+                entity.getSize(),
+                entity.getMimeType(),
+                entity.getRenderFormat() == null ? null : RenderFormat.valueOf(entity.getRenderFormat()));
     }
 
     private String toJson(Map<String, String> metadata) {
@@ -112,13 +113,10 @@ public final class DocumentArtifactMapper {
             return Map.of();
         }
         try {
-            return objectMapper.readValue(json,
-                objectMapper.getTypeFactory().constructMapType(Map.class, String.class, String.class));
+            return objectMapper.readValue(
+                    json, objectMapper.getTypeFactory().constructMapType(Map.class, String.class, String.class));
         } catch (IOException e) {
             throw new UncheckedIOException("No se pudo deserializar los metadatos del documento", e);
         }
     }
 }
-
-
-

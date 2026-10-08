@@ -1,10 +1,10 @@
 package com.kinplatform.common.pricing.stripe;
 
-import com.kinplatform.kin.medical.payment.PaymentGateway;
 import com.kinplatform.common.pricing.PricingPlanRepository;
 import com.kinplatform.common.pricing.SubscriptionStatus;
 import com.kinplatform.common.pricing.UserSubscriptionRepository;
 import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.kin.medical.payment.PaymentGateway;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
@@ -17,8 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -224,15 +222,14 @@ public class StripeService implements PaymentGateway {
             subscriptionRepository.save(subscription);
 
             // Establecer el plan actual del usuario como el plan gratuito
-            var freePlan = planRepository.findFirstByIsActiveTrueOrderByPriceAsc()
+            var freePlan = planRepository
+                    .findFirstByIsActiveTrueOrderByPriceAsc()
                     .orElseThrow(() -> new RuntimeException("No free plan found"));
             user.setCurrentPlan(freePlan);
             user.setSubscription(null);
             userRepository.save(user);
 
-            log.info(
-                    "Subscription cancelled and user reverted to free plan: user {}",
-                    user.getId());
+            log.info("Subscription cancelled and user reverted to free plan: user {}", user.getId());
         } catch (Exception e) {
             log.error("Failed to process subscription deleted event for subscription {}", subscriptionId, e);
             throw new RuntimeException("Failed to handle subscription deletion", e);
@@ -328,17 +325,11 @@ public class StripeService implements PaymentGateway {
     public com.kinplatform.kin.medical.payment.PaymentGateway.CheckoutSession createCheckoutSession(
             com.kinplatform.kin.medical.payment.PaymentGateway.CreateCheckoutRequest request) {
 
-        var response = createCheckoutSession(
-                request.userId(),
-                request.planId(),
-                request.successUrl(),
-                request.cancelUrl()
-        );
+        var response =
+                createCheckoutSession(request.userId(), request.planId(), request.successUrl(), request.cancelUrl());
 
         return new com.kinplatform.kin.medical.payment.PaymentGateway.CheckoutSession(
-                response.getSessionId(),
-                response.getUrl()
-        );
+                response.getSessionId(), response.getUrl());
     }
 
     @Override
@@ -347,6 +338,3 @@ public class StripeService implements PaymentGateway {
         processWebhookEvent(event);
     }
 }
-
-
-

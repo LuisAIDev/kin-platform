@@ -1,5 +1,9 @@
 package com.kinplatform.kin.medical.billing.authorization;
 
+import java.time.OffsetDateTime;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,13 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-
-import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.util.Base64;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -77,11 +74,8 @@ public class MipresTokenService {
         log.info("Generando nuevo token MIPRES para NIT: {}", nit);
 
         try {
-            Map<String, Object> response = webClient.post()
-                    .uri(url)
-                    .retrieve()
-                    .bodyToMono(Map.class)
-                    .block();
+            Map<String, Object> response =
+                    webClient.post().uri(url).retrieve().bodyToMono(Map.class).block();
 
             if (response == null || !response.containsKey("token")) {
                 throw new MipresTokenException("Respuesta inválida al generar token: " + response);
@@ -152,7 +146,8 @@ public class MipresTokenService {
 
     private String getConfiguredPin() {
         if (pinBase64 == null || pinBase64.isBlank()) {
-            throw new IllegalStateException("MIPRES_PIN_BASE64 no configurado. Configure la variable de entorno MIPRES_PIN_BASE64.");
+            throw new IllegalStateException(
+                    "MIPRES_PIN_BASE64 no configurado. Configure la variable de entorno MIPRES_PIN_BASE64.");
         }
         return pinBase64;
     }

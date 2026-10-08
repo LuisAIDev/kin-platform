@@ -1,29 +1,24 @@
 package com.kinplatform.kin.health.hce.service;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import com.kinplatform.kin.health.hce.dto.CreatePatientHistoryRequest;
 import com.kinplatform.kin.health.hce.dto.PatientHistoryResponse;
 import com.kinplatform.kin.health.hce.entity.PatientHistory;
 import com.kinplatform.kin.health.hce.entity.PatientHistory.HistoryType;
 import com.kinplatform.kin.health.hce.entity.PatientHistory.Status;
-import com.kinplatform.kin.health.hce.entity.PatientHistory.Severity;
 import com.kinplatform.kin.health.hce.repository.PatientHistoryRepository;
-import com.kinplatform.kin.health.hce.util.HistoryJsonHelper;
-import com.kinplatform.common.user.User;
-import com.kinplatform.common.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -34,12 +29,14 @@ public class PatientHistoryService {
 
     @Transactional
     public PatientHistoryResponse addHistory(CreatePatientHistoryRequest request) {
-        User patient = userRepository.findById(request.getPatientId())
+        User patient = userRepository
+                .findById(request.getPatientId())
                 .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
 
         checkPatientAccess(patient);
 
-        User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
+        User currentUser = AuthenticatedUsers.require(
+                userRepository, SecurityContextHolder.getContext().getAuthentication());
 
         PatientHistory history = PatientHistory.builder()
                 .patientId(request.getPatientId())
@@ -61,26 +58,24 @@ public class PatientHistoryService {
 
     @Transactional(readOnly = true)
     public List<PatientHistoryResponse> getByPatientAndType(UUID patientId, HistoryType type) {
-        User patient = userRepository.findById(patientId)
-                .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
+        User patient =
+                userRepository.findById(patientId).orElseThrow(() -> new EntityNotFoundException("Patient not found"));
 
         checkPatientAccess(patient);
 
-        return patientHistoryRepository.findByPatientIdAndHistoryType(patientId, type)
-                .stream()
+        return patientHistoryRepository.findByPatientIdAndHistoryType(patientId, type).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<PatientHistoryResponse> getAllByPatient(UUID patientId) {
-        User patient = userRepository.findById(patientId)
-                .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
+        User patient =
+                userRepository.findById(patientId).orElseThrow(() -> new EntityNotFoundException("Patient not found"));
 
         checkPatientAccess(patient);
 
-        return patientHistoryRepository.findByPatientIdOrderByRecordedAtDesc(patientId)
-                .stream()
+        return patientHistoryRepository.findByPatientIdOrderByRecordedAtDesc(patientId).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -101,12 +96,15 @@ public class PatientHistoryService {
      */
     @Transactional
     public PatientHistoryResponse updateHistory(UUID id, CreatePatientHistoryRequest request) {
-        PatientHistory existing = patientHistoryRepository.findById(id)
+        PatientHistory existing = patientHistoryRepository
+                .findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Historia clínica no encontrada con id: " + id));
 
         // Validar acceso al paciente del historial existente
-        User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
-        checkPatientAccess(userRepository.findById(existing.getPatientId())
+        User currentUser = AuthenticatedUsers.require(
+                userRepository, SecurityContextHolder.getContext().getAuthentication());
+        checkPatientAccess(userRepository
+                .findById(existing.getPatientId())
                 .orElseThrow(() -> new EntityNotFoundException("Patient not found")));
 
         // Actualizar SOLO campos de negocio (auditoría NO se toca)
@@ -137,11 +135,14 @@ public class PatientHistoryService {
      */
     @Transactional
     public void deleteById(UUID id) {
-        PatientHistory existing = patientHistoryRepository.findById(id)
+        PatientHistory existing = patientHistoryRepository
+                .findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Historia clínica no encontrada con id: " + id));
 
-        User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
-        checkPatientAccess(userRepository.findById(existing.getPatientId())
+        User currentUser = AuthenticatedUsers.require(
+                userRepository, SecurityContextHolder.getContext().getAuthentication());
+        checkPatientAccess(userRepository
+                .findById(existing.getPatientId())
                 .orElseThrow(() -> new EntityNotFoundException("Patient not found")));
 
         patientHistoryRepository.deleteById(id);
@@ -149,9 +150,11 @@ public class PatientHistoryService {
 
     // checkPatientAccess: SE MANTIENE PRIVATE (sin cambios de lógica ni visibilidad)
     private void checkPatientAccess(User patient) {
-        User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
+        User currentUser = AuthenticatedUsers.require(
+                userRepository, SecurityContextHolder.getContext().getAuthentication());
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_IPS_ADMIN") || a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_IPS_ADMIN")
+                        || a.getAuthority().equals("ROLE_ADMIN"));
         boolean isPhysician = currentUser.getRole().equals(com.kinplatform.common.user.UserRole.PHYSICIAN);
 
         if (!isAdmin && !isPhysician) {
@@ -178,4 +181,3 @@ public class PatientHistoryService {
                 .build();
     }
 }
-

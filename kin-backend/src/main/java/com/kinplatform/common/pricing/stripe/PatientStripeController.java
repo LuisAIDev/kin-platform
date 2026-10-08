@@ -1,21 +1,18 @@
 package com.kinplatform.common.pricing.stripe;
 
+import com.kinplatform.common.pricing.PricingPlanRepository;
+import com.kinplatform.common.pricing.ProductVertical;
+import com.kinplatform.common.security.AuthenticatedUsers;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
+import com.kinplatform.common.user.UserRole;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import com.kinplatform.common.security.AuthenticatedUsers;
-import com.kinplatform.common.pricing.PricingPlan;
-import com.kinplatform.common.pricing.PricingPlanRepository;
-import com.kinplatform.common.pricing.ProductVertical;
-import com.kinplatform.common.user.User;
-import com.kinplatform.common.user.UserRepository;
-import com.kinplatform.common.user.UserRole;
-
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/stripe/patient")
@@ -28,8 +25,7 @@ public class PatientStripeController {
 
     @PostMapping("/create-checkout-session")
     public ResponseEntity<CheckoutResponse> createCheckoutSessionPatient(
-            Authentication auth,
-            @Valid @RequestBody CheckoutRequest request) {
+            Authentication auth, @Valid @RequestBody CheckoutRequest request) {
 
         User user = AuthenticatedUsers.require(userRepository, auth);
 
@@ -68,4 +64,3 @@ public class PatientStripeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
-

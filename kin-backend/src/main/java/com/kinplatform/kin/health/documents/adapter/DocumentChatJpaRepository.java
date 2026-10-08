@@ -1,6 +1,5 @@
 package com.kinplatform.kin.health.documents.adapter;
 
-import com.kinplatform.kin.health.documents.domain.DocumentChatRole;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;

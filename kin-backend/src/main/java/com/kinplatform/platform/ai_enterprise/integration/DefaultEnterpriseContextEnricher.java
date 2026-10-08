@@ -62,8 +62,3 @@ public class DefaultEnterpriseContextEnricher implements EnterpriseContextEnrich
         return new StructuredDatum(entity.getSection(), entity.getKey(), entity.getValue(), entity.getSourceType());
     }
 }
-
-
-
-
-

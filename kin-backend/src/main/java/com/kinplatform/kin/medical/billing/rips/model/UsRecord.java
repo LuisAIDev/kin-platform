@@ -1,10 +1,9 @@
 package com.kinplatform.kin.medical.billing.rips.model;
 
-import lombok.*;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import lombok.*;
 
 @Data
 @NoArgsConstructor
@@ -35,4 +34,3 @@ public class UsRecord {
     private String telefono;
     private String email;
 }
-

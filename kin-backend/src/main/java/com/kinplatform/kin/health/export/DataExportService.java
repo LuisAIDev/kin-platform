@@ -4,15 +4,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.kinplatform.common.audit.adapter.AuditLogJpaRepository;
 import com.kinplatform.common.entity.DataExportRequest;
 import com.kinplatform.common.repository.DataExportRequestRepository;
-import com.kinplatform.common.audit.adapter.AuditLogJpaRepository;
-import com.kinplatform.common.audit.domain.AuditAction;
-import com.kinplatform.common.audit.domain.AuditResourceType;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import com.kinplatform.kin.health.common.entity.UserConsent;
 import com.kinplatform.kin.health.common.repository.UserConsentRepository;
 import com.kinplatform.kin.health.documents.adapter.ClinicalDocumentJpaRepository;
-import com.kinplatform.kin.health.documents.domain.DocumentStatus;
 import com.kinplatform.kin.health.hce.entity.Diagnoses;
 import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.entity.MedicalOrder;
@@ -24,24 +23,19 @@ import com.kinplatform.kin.health.hce.repository.MedicalOrderRepository;
 import com.kinplatform.kin.health.hce.repository.PhysicalExamRepository;
 import com.kinplatform.kin.health.hce.repository.TreatmentPlanRepository;
 import com.kinplatform.kin.health.telemedicine.adapter.MessageJpaRepository;
-import com.kinplatform.common.user.User;
-import com.kinplatform.common.user.UserRepository;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.io.*;
-import java.math.BigDecimal;
 import java.nio.file.*;
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -62,9 +56,11 @@ public class DataExportService {
 
     private static String EXPORT_DIR = "/app/storage/exports/";
     private static final int EXPIRY_DAYS = 7;
-    private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneId.of("UTC"));
+    private static final DateTimeFormatter ISO_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneId.of("UTC"));
 
-    public DataExportService(DataExportRequestRepository exportRepository,
+    public DataExportService(
+            DataExportRequestRepository exportRepository,
             UserRepository userRepository,
             UserConsentRepository consentRepository,
             EncounterRepository encounterRepository,
@@ -87,9 +83,9 @@ public class DataExportService {
         this.messageRepository = messageRepository;
         this.auditRepository = auditRepository;
         this.objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-            .enable(SerializationFeature.INDENT_OUTPUT);
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .enable(SerializationFeature.INDENT_OUTPUT);
     }
 
     @Transactional
@@ -100,10 +96,10 @@ public class DataExportService {
         }
 
         DataExportRequest request = DataExportRequest.builder()
-            .userId(userId)
-            .status("PENDING")
-            .requestedAt(Instant.now())
-            .build();
+                .userId(userId)
+                .status("PENDING")
+                .requestedAt(Instant.now())
+                .build();
         request = exportRepository.save(request);
 
         processExport(request.getId());
@@ -175,19 +171,18 @@ public class DataExportService {
             return;
         }
         try (var stream = Files.walk(userDocDir)) {
-            stream.filter(Files::isRegularFile)
-                .forEach(file -> {
-                    try {
-                        String relativePath = userDocDir.relativize(file).toString().replace("\\", "/");
-                        String entryName = prefix + relativePath;
-                        ZipEntry entry = new ZipEntry(entryName);
-                        zos.putNextEntry(entry);
-                        Files.copy(file, zos);
-                        zos.closeEntry();
-                    } catch (IOException e) {
-                        log.warn("Error adding document to ZIP: {}", file, e);
-                    }
-                });
+            stream.filter(Files::isRegularFile).forEach(file -> {
+                try {
+                    String relativePath = userDocDir.relativize(file).toString().replace("\\", "/");
+                    String entryName = prefix + relativePath;
+                    ZipEntry entry = new ZipEntry(entryName);
+                    zos.putNextEntry(entry);
+                    Files.copy(file, zos);
+                    zos.closeEntry();
+                } catch (IOException e) {
+                    log.warn("Error adding document to ZIP: {}", file, e);
+                }
+            });
         }
     }
 
@@ -197,7 +192,9 @@ public class DataExportService {
         sb.append("=============================================\n\n");
         sb.append("Usuario: ").append(user.getEmail()).append("\n");
         sb.append("ID: ").append(user.getId()).append("\n");
-        sb.append("Fecha de exportación: ").append(ISO_FORMATTER.format(Instant.now())).append("\n");
+        sb.append("Fecha de exportación: ")
+                .append(ISO_FORMATTER.format(Instant.now()))
+                .append("\n");
         sb.append("Ley aplicable: Ley 1581 de 2012 (Colombia) - Art. 8 Derecho de Acceso\n\n");
         sb.append("CONTENIDO DEL ARCHIVO:\n");
         sb.append("- profile.json: Datos de perfil del usuario\n");
@@ -228,21 +225,45 @@ public class DataExportService {
             profile.put("documentType", null);
             profile.put("documentNumber", null);
             profile.put("phone", user.getPhone());
-            profile.put("birthDate", user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null);
+            profile.put(
+                    "birthDate",
+                    user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null);
             profile.put("gender", user.getSex());
             profile.put("role", user.getRole() != null ? user.getRole().name() : null);
-            profile.put("subscriptionTier", user.getCurrentPlan() != null ? user.getCurrentPlan().getName() : (user.getSubscription() != null ? user.getSubscription().getPlan().getName() : "FREE"));
+            profile.put(
+                    "subscriptionTier",
+                    user.getCurrentPlan() != null
+                            ? user.getCurrentPlan().getName()
+                            : (user.getSubscription() != null
+                                    ? user.getSubscription().getPlan().getName()
+                                    : "FREE"));
             profile.put("healthDataConsent", user.getHealthDataConsent());
             profile.put("healthDataConsentAt", null);
             profile.put("marketingConsent", null);
             profile.put("marketingConsentAt", null);
             profile.put("termsAcceptedAt", null);
-            profile.put("createdAt", user.getCreatedAt() != null ? ISO_FORMATTER.format(user.getCreatedAt().toInstant()) : null);
-            profile.put("updatedAt", user.getUpdatedAt() != null ? ISO_FORMATTER.format(user.getUpdatedAt().toInstant()) : null);
-            profile.put("lastLoginAt", user.getLastLoginAt() != null ? ISO_FORMATTER.format(user.getLastLoginAt().toInstant()) : null);
+            profile.put(
+                    "createdAt",
+                    user.getCreatedAt() != null
+                            ? ISO_FORMATTER.format(user.getCreatedAt().toInstant())
+                            : null);
+            profile.put(
+                    "updatedAt",
+                    user.getUpdatedAt() != null
+                            ? ISO_FORMATTER.format(user.getUpdatedAt().toInstant())
+                            : null);
+            profile.put(
+                    "lastLoginAt",
+                    user.getLastLoginAt() != null
+                            ? ISO_FORMATTER.format(user.getLastLoginAt().toInstant())
+                            : null);
             profile.put("emailVerified", user.getEmailVerified());
             profile.put("emailVerifiedAt", null);
-            profile.put("physicianVerificationStatus", user.getPhysicianVerificationStatus() != null ? user.getPhysicianVerificationStatus().name() : null);
+            profile.put(
+                    "physicianVerificationStatus",
+                    user.getPhysicianVerificationStatus() != null
+                            ? user.getPhysicianVerificationStatus().name()
+                            : null);
             return objectMapper.writeValueAsString(profile);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error serializando profile.json", e);
@@ -257,7 +278,9 @@ public class DataExportService {
             for (UserConsent c : consents) {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id", c.getId().toString());
-                m.put("consentType", c.getConsentType() != null ? c.getConsentType().name() : null);
+                m.put(
+                        "consentType",
+                        c.getConsentType() != null ? c.getConsentType().name() : null);
                 m.put("version", c.getVersion());
                 m.put("status", c.getAccepted() ? "ACCEPTED" : "PENDING");
                 m.put("acceptedAt", c.getAcceptedAt() != null ? ISO_FORMATTER.format(c.getAcceptedAt()) : null);
@@ -281,18 +304,26 @@ public class DataExportService {
 
     private String buildEncountersJson(UUID userId) {
         try {
-            List<Encounter> encounters = encounterRepository.findByPatientIdOrderByStartedAtDesc(userId, org.springframework.data.domain.Pageable.unpaged()).getContent();
+            List<Encounter> encounters = encounterRepository
+                    .findByPatientIdOrderByStartedAtDesc(userId, org.springframework.data.domain.Pageable.unpaged())
+                    .getContent();
             List<Map<String, Object>> list = new ArrayList<>();
             for (Encounter e : encounters) {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id", e.getId().toString());
                 m.put("patientId", e.getPatientId().toString());
-                m.put("physicianId", e.getPhysicianId() != null ? e.getPhysicianId().toString() : null);
-                m.put("organizationId", e.getOrganizationId() != null ? e.getOrganizationId().toString() : null);
+                m.put(
+                        "physicianId",
+                        e.getPhysicianId() != null ? e.getPhysicianId().toString() : null);
+                m.put(
+                        "organizationId",
+                        e.getOrganizationId() != null ? e.getOrganizationId().toString() : null);
                 m.put("status", e.getStatus() != null ? e.getStatus().name() : null);
                 m.put("startedAt", e.getStartedAt() != null ? ISO_FORMATTER.format(e.getStartedAt()) : null);
                 m.put("closedAt", e.getClosedAt() != null ? ISO_FORMATTER.format(e.getClosedAt()) : null);
-                m.put("encounterType", e.getEncounterType() != null ? e.getEncounterType().name() : null);
+                m.put(
+                        "encounterType",
+                        e.getEncounterType() != null ? e.getEncounterType().name() : null);
                 m.put("chiefComplaint", e.getChiefComplaint());
                 m.put("createdAt", e.getCreatedAt() != null ? ISO_FORMATTER.format(e.getCreatedAt()) : null);
                 m.put("updatedAt", e.getUpdatedAt() != null ? ISO_FORMATTER.format(e.getUpdatedAt()) : null);
@@ -315,17 +346,27 @@ public class DataExportService {
             for (Diagnoses d : diagnoses) {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id", d.getId().toString());
-                m.put("encounterId", d.getEncounterId() != null ? d.getEncounterId().toString() : null);
+                m.put(
+                        "encounterId",
+                        d.getEncounterId() != null ? d.getEncounterId().toString() : null);
                 m.put("patientId", d.getPatientId().toString());
-                m.put("physicianId", d.getPhysicianId() != null ? d.getPhysicianId().toString() : null);
-                m.put("diagnosisType", d.getDiagnosisType() != null ? d.getDiagnosisType().name() : null);
+                m.put(
+                        "physicianId",
+                        d.getPhysicianId() != null ? d.getPhysicianId().toString() : null);
+                m.put(
+                        "diagnosisType",
+                        d.getDiagnosisType() != null ? d.getDiagnosisType().name() : null);
                 m.put("status", d.getStatus() != null ? d.getStatus().name() : null);
                 m.put("cie10Code", d.getCie10Code());
                 m.put("cie10Description", d.getCie10Description());
                 m.put("certainty", d.getCertainty() != null ? d.getCertainty().name() : null);
-                m.put("classification", d.getClassification() != null ? d.getClassification().name() : null);
+                m.put(
+                        "classification",
+                        d.getClassification() != null ? d.getClassification().name() : null);
                 m.put("onsetDate", d.getOnsetDate() != null ? d.getOnsetDate().toString() : null);
-                m.put("resolutionDate", d.getResolutionDate() != null ? d.getResolutionDate().toString() : null);
+                m.put(
+                        "resolutionDate",
+                        d.getResolutionDate() != null ? d.getResolutionDate().toString() : null);
                 m.put("notes", d.getNotes());
                 m.put("createdAt", d.getCreatedAt() != null ? ISO_FORMATTER.format(d.getCreatedAt()) : null);
                 m.put("updatedAt", d.getUpdatedAt() != null ? ISO_FORMATTER.format(d.getUpdatedAt()) : null);
@@ -348,15 +389,23 @@ public class DataExportService {
             for (TreatmentPlan t : plans) {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id", t.getId().toString());
-                m.put("encounterId", t.getEncounterId() != null ? t.getEncounterId().toString() : null);
+                m.put(
+                        "encounterId",
+                        t.getEncounterId() != null ? t.getEncounterId().toString() : null);
                 m.put("patientId", t.getPatientId().toString());
-                m.put("physicianId", t.getPhysicianId() != null ? t.getPhysicianId().toString() : null);
+                m.put(
+                        "physicianId",
+                        t.getPhysicianId() != null ? t.getPhysicianId().toString() : null);
                 m.put("conduct", t.getConduct() != null ? t.getConduct().name() : null);
                 m.put("therapeuticGoals", t.getTherapeuticGoals());
                 m.put("followupPlan", t.getFollowupPlan());
                 m.put("reevaluationCriteria", t.getReevaluationCriteria());
                 m.put("prognosis", t.getPrognosis() != null ? t.getPrognosis().name() : null);
-                m.put("estimatedDuration", t.getEstimatedDuration() != null ? t.getEstimatedDuration().toString() : null);
+                m.put(
+                        "estimatedDuration",
+                        t.getEstimatedDuration() != null
+                                ? t.getEstimatedDuration().toString()
+                                : null);
                 m.put("createdAt", t.getCreatedAt() != null ? ISO_FORMATTER.format(t.getCreatedAt()) : null);
                 m.put("updatedAt", t.getUpdatedAt() != null ? ISO_FORMATTER.format(t.getUpdatedAt()) : null);
                 list.add(m);
@@ -378,10 +427,16 @@ public class DataExportService {
             for (MedicalOrder m : orders) {
                 Map<String, Object> o = new LinkedHashMap<>();
                 o.put("id", m.getId().toString());
-                o.put("treatmentPlanId", m.getTreatmentPlanId() != null ? m.getTreatmentPlanId().toString() : null);
-                o.put("encounterId", m.getEncounterId() != null ? m.getEncounterId().toString() : null);
+                o.put(
+                        "treatmentPlanId",
+                        m.getTreatmentPlanId() != null ? m.getTreatmentPlanId().toString() : null);
+                o.put(
+                        "encounterId",
+                        m.getEncounterId() != null ? m.getEncounterId().toString() : null);
                 o.put("patientId", m.getPatientId().toString());
-                o.put("physicianId", m.getPhysicianId() != null ? m.getPhysicianId().toString() : null);
+                o.put(
+                        "physicianId",
+                        m.getPhysicianId() != null ? m.getPhysicianId().toString() : null);
                 o.put("orderType", m.getOrderType() != null ? m.getOrderType().name() : null);
                 o.put("status", m.getStatus() != null ? m.getStatus().name() : null);
                 o.put("drugName", m.getDrugName());
@@ -397,7 +452,9 @@ public class DataExportService {
                 o.put("instructions", m.getInstructions());
                 o.put("orderedAt", m.getOrderedAt() != null ? ISO_FORMATTER.format(m.getOrderedAt()) : null);
                 o.put("executedAt", m.getExecutedAt() != null ? ISO_FORMATTER.format(m.getExecutedAt()) : null);
-                o.put("executedBy", m.getExecutedBy() != null ? m.getExecutedBy().toString() : null);
+                o.put(
+                        "executedBy",
+                        m.getExecutedBy() != null ? m.getExecutedBy().toString() : null);
                 o.put("executionNotes", m.getExecutionNotes());
                 o.put("createdAt", m.getCreatedAt() != null ? ISO_FORMATTER.format(m.getCreatedAt()) : null);
                 o.put("updatedAt", m.getUpdatedAt() != null ? ISO_FORMATTER.format(m.getUpdatedAt()) : null);
@@ -420,23 +477,33 @@ public class DataExportService {
             for (PhysicalExam e : exams) {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id", e.getId().toString());
-                m.put("encounterId", e.getEncounterId() != null ? e.getEncounterId().toString() : null);
-                m.put("evolutionId", e.getEvolutionId() != null ? e.getEvolutionId().toString() : null);
+                m.put(
+                        "encounterId",
+                        e.getEncounterId() != null ? e.getEncounterId().toString() : null);
+                m.put(
+                        "evolutionId",
+                        e.getEvolutionId() != null ? e.getEvolutionId().toString() : null);
                 m.put("patientId", e.getPatientId().toString());
-                m.put("physicianId", e.getPhysicianId() != null ? e.getPhysicianId().toString() : null);
+                m.put(
+                        "physicianId",
+                        e.getPhysicianId() != null ? e.getPhysicianId().toString() : null);
                 m.put("recordedAt", e.getRecordedAt() != null ? ISO_FORMATTER.format(e.getRecordedAt()) : null);
                 m.put("bpSystolic", e.getBpSystolic());
                 m.put("bpDiastolic", e.getBpDiastolic());
                 m.put("heartRate", e.getHeartRate());
                 m.put("respiratoryRate", e.getRespiratoryRate());
-                m.put("temperature", e.getTemperature() != null ? e.getTemperature().toString() : null);
+                m.put(
+                        "temperature",
+                        e.getTemperature() != null ? e.getTemperature().toString() : null);
                 m.put("spo2", e.getSpo2());
                 m.put("weightKg", e.getWeightKg() != null ? e.getWeightKg().toString() : null);
                 m.put("heightCm", e.getHeightCm() != null ? e.getHeightCm().toString() : null);
                 m.put("bmi", e.getBmi() != null ? e.getBmi().toString() : null);
                 m.put("glasgowScore", e.getGlasgowScore());
                 m.put("painScale", e.getPainScale());
-                m.put("painScaleType", e.getPainScaleType() != null ? e.getPainScaleType().name() : null);
+                m.put(
+                        "painScaleType",
+                        e.getPainScaleType() != null ? e.getPainScaleType().name() : null);
                 m.put("generalAppearance", e.getGeneralAppearance());
                 m.put("headNeck", e.getHeadNeck());
                 m.put("cardiovascular", e.getCardiovascular());
@@ -464,8 +531,10 @@ public class DataExportService {
 
     private String buildMessagesJson(UUID userId) {
         try {
-            List<com.kinplatform.kin.health.telemedicine.adapter.MessageEntity> sent = messageRepository.findBySenderIdOrderByCreatedAtAsc(userId);
-            List<com.kinplatform.kin.health.telemedicine.adapter.MessageEntity> received = messageRepository.findByReceiverIdOrderByCreatedAtAsc(userId);
+            List<com.kinplatform.kin.health.telemedicine.adapter.MessageEntity> sent =
+                    messageRepository.findBySenderIdOrderByCreatedAtAsc(userId);
+            List<com.kinplatform.kin.health.telemedicine.adapter.MessageEntity> received =
+                    messageRepository.findByReceiverIdOrderByCreatedAtAsc(userId);
             Map<UUID, com.kinplatform.kin.health.telemedicine.adapter.MessageEntity> all = new LinkedHashMap<>();
             for (var m : sent) all.put(m.getId(), m);
             for (var m : received) all.put(m.getId(), m);
@@ -474,7 +543,9 @@ public class DataExportService {
             for (var m : all.values()) {
                 Map<String, Object> o = new LinkedHashMap<>();
                 o.put("id", m.getId().toString());
-                o.put("conversationId", m.getConversationId() != null ? m.getConversationId().toString() : null);
+                o.put(
+                        "conversationId",
+                        m.getConversationId() != null ? m.getConversationId().toString() : null);
                 o.put("senderId", m.getSenderId().toString());
                 o.put("receiverId", m.getReceiverId().toString());
                 o.put("content", m.getContent());
@@ -495,7 +566,8 @@ public class DataExportService {
 
     private String buildAuditLogJson(UUID userId) {
         try {
-            var page = auditRepository.findByUserIdOrderByTimestampDesc(userId, org.springframework.data.domain.PageRequest.of(0, 1000));
+            var page = auditRepository.findByUserIdOrderByTimestampDesc(
+                    userId, org.springframework.data.domain.PageRequest.of(0, 1000));
             List<Map<String, Object>> list = new ArrayList<>();
             for (var a : page.getContent()) {
                 Map<String, Object> m = new LinkedHashMap<>();
@@ -503,8 +575,12 @@ public class DataExportService {
                 m.put("userId", a.getUserId() != null ? a.getUserId().toString() : null);
                 m.put("patientId", a.getPatientId() != null ? a.getPatientId().toString() : null);
                 m.put("action", a.getAction() != null ? a.getAction().name() : null);
-                m.put("resourceType", a.getResourceType() != null ? a.getResourceType().name() : null);
-                m.put("resourceId", a.getResourceId() != null ? a.getResourceId().toString() : null);
+                m.put(
+                        "resourceType",
+                        a.getResourceType() != null ? a.getResourceType().name() : null);
+                m.put(
+                        "resourceId",
+                        a.getResourceId() != null ? a.getResourceId().toString() : null);
                 m.put("timestamp", a.getTimestamp() != null ? a.getTimestamp().toString() : null);
                 m.put("ipAddress", a.getIpAddress());
                 m.put("userAgent", a.getUserAgent());
@@ -529,20 +605,21 @@ public class DataExportService {
             meta.put("generatedAt", ISO_FORMATTER.format(Instant.now()));
             meta.put("userId", user.getId().toString());
             meta.put("userEmail", user.getEmail());
-            meta.put("filesIncluded", List.of(
-                "README.txt",
-                "profile.json",
-                "consents.json",
-                "encounters.json",
-                "diagnoses.json",
-                "treatment_plans.json",
-                "medical_orders.json",
-                "physical_exams.json",
-                "documents/",
-                "messages.json",
-                "audit_log.json",
-                "metadata.json"
-            ));
+            meta.put(
+                    "filesIncluded",
+                    List.of(
+                            "README.txt",
+                            "profile.json",
+                            "consents.json",
+                            "encounters.json",
+                            "diagnoses.json",
+                            "treatment_plans.json",
+                            "medical_orders.json",
+                            "physical_exams.json",
+                            "documents/",
+                            "messages.json",
+                            "audit_log.json",
+                            "metadata.json"));
             meta.put("dataController", "KIN HEALTH SAS");
             meta.put("legalBasis", "Ley 1581 de 2012 Art. 8 - Derecho de Acceso / Habeas Data");
             meta.put("retentionPolicy", "Export disponible 7 días, luego eliminación automática");
@@ -554,8 +631,9 @@ public class DataExportService {
     }
 
     public DataExportRequest getExportStatus(UUID requestId, UUID userId) {
-        DataExportRequest request = exportRepository.findById(requestId)
-            .orElseThrow(() -> new IllegalArgumentException("Export no encontrado"));
+        DataExportRequest request = exportRepository
+                .findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Export no encontrado"));
         if (!request.getUserId().equals(userId)) {
             throw new SecurityException("No autorizado");
         }
@@ -597,5 +675,3 @@ public class DataExportService {
         }
     }
 }
-
-

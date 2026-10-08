@@ -1,17 +1,15 @@
 package com.kinplatform.common.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.kinplatform.common.entity.DataDeletionRequest;
 import com.kinplatform.kin.health.legal.DataDeletionService;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/health/data-deletion")
@@ -23,11 +21,9 @@ public class DataDeletionController {
     @PostMapping
     @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<DataDeletionRequest> requestDeletion(
-            Authentication auth,
-            @RequestBody DeletionRequestDto dto) {
+            Authentication auth, @RequestBody DeletionRequestDto dto) {
         UUID userId = extractUserId(auth);
-        DataDeletionRequest request = service.requestDeletion(
-            userId, dto.reason(), dto.scope(), dto.dataCategories());
+        DataDeletionRequest request = service.requestDeletion(userId, dto.reason(), dto.scope(), dto.dataCategories());
         return ResponseEntity.status(HttpStatus.CREATED).body(request);
     }
 
@@ -40,8 +36,7 @@ public class DataDeletionController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<DataDeletionRequest>> getAllRequests(
-            @RequestParam(required = false) String status) {
+    public ResponseEntity<List<DataDeletionRequest>> getAllRequests(@RequestParam(required = false) String status) {
         if (status != null) {
             return ResponseEntity.ok(service.getRequestsByStatus(status));
         }
@@ -50,9 +45,7 @@ public class DataDeletionController {
 
     @PutMapping("/{id}/approve")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<DataDeletionRequest> approve(
-            @PathVariable UUID id,
-            Authentication auth) {
+    public ResponseEntity<DataDeletionRequest> approve(@PathVariable UUID id, Authentication auth) {
         UUID adminId = extractUserId(auth);
         return ResponseEntity.ok(service.approveDeletion(id, adminId));
     }
@@ -60,18 +53,14 @@ public class DataDeletionController {
     @PutMapping("/{id}/reject")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DataDeletionRequest> reject(
-            @PathVariable UUID id,
-            Authentication auth,
-            @RequestBody RejectRequestDto dto) {
+            @PathVariable UUID id, Authentication auth, @RequestBody RejectRequestDto dto) {
         UUID adminId = extractUserId(auth);
         return ResponseEntity.ok(service.rejectDeletion(id, adminId, dto.reason()));
     }
 
     @PostMapping("/{id}/execute")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<DataDeletionRequest> execute(
-            @PathVariable UUID id,
-            @RequestBody ExecuteRequestDto dto) {
+    public ResponseEntity<DataDeletionRequest> execute(@PathVariable UUID id, @RequestBody ExecuteRequestDto dto) {
         return ResponseEntity.ok(service.executeDeletion(id, dto.confirm()));
     }
 
@@ -80,10 +69,7 @@ public class DataDeletionController {
     }
 
     public record DeletionRequestDto(
-        String reason,
-        String scope,
-        com.fasterxml.jackson.databind.JsonNode dataCategories
-    ) {}
+            String reason, String scope, com.fasterxml.jackson.databind.JsonNode dataCategories) {}
 
     public record RejectRequestDto(String reason) {}
 

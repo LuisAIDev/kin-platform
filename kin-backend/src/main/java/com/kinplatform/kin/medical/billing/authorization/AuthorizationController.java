@@ -1,6 +1,10 @@
 package com.kinplatform.kin.medical.billing.authorization;
 
 import jakarta.validation.Valid;
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,11 +12,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/billing/authorizations")
@@ -22,8 +21,7 @@ public class AuthorizationController {
     private final AuthorizationService authorizationService;
 
     @GetMapping
-    public ResponseEntity<Page<Authorization>> list(
-            @PageableDefault(size = 20) Pageable pageable) {
+    public ResponseEntity<Page<Authorization>> list(@PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(authorizationService.findAll(pageable));
     }
 
@@ -38,19 +36,19 @@ public class AuthorizationController {
     }
 
     @GetMapping("/expiring")
-    public ResponseEntity<List<Authorization>> findExpiringSoon(
-            @RequestParam(defaultValue = "30") int days) {
+    public ResponseEntity<List<Authorization>> findExpiringSoon(@RequestParam(defaultValue = "30") int days) {
         return ResponseEntity.ok(authorizationService.findExpiringSoon(Duration.ofDays(days)));
     }
 
     @PostMapping
-    public ResponseEntity<Authorization> create(@Valid @RequestBody AuthorizationService.CreateAuthorizationRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(authorizationService.create(request));
+    public ResponseEntity<Authorization> create(
+            @Valid @RequestBody AuthorizationService.CreateAuthorizationRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(authorizationService.create(request));
     }
 
     @PutMapping("/{id}/approve")
-    public ResponseEntity<Authorization> approve(@PathVariable UUID id, @Valid @RequestBody AuthorizationService.ApproveAuthorizationRequest request) {
+    public ResponseEntity<Authorization> approve(
+            @PathVariable UUID id, @Valid @RequestBody AuthorizationService.ApproveAuthorizationRequest request) {
         return ResponseEntity.ok(authorizationService.approve(id, request));
     }
 
@@ -65,9 +63,7 @@ public class AuthorizationController {
 
     @GetMapping("/valid-for-encounter")
     public ResponseEntity<Boolean> validateForEncounter(
-            @RequestParam UUID patientId,
-            @RequestParam String cupsCode,
-            @RequestParam UUID contractId) {
+            @RequestParam UUID patientId, @RequestParam String cupsCode, @RequestParam UUID contractId) {
         return ResponseEntity.ok(authorizationService.validateForEncounter(patientId, cupsCode, contractId));
     }
 }

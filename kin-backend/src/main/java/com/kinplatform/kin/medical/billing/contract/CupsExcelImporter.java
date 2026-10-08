@@ -1,24 +1,36 @@
 package com.kinplatform.kin.medical.billing.contract;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.*;
 
 @Component
 @Slf4j
 public class CupsExcelImporter {
 
     private static final Map<String, Integer> COLUMN_MAP = Map.of(
-            "CUPS_CODE", 0, "DESCRIPTION", 1, "UNIT_PRICE_COPS", 2,
-            "CUPS_CATEGORY", 3, "REQUIRES_AUTH", 4, "AUTH_VALIDITY_DAYS", 5,
-            "EFFECTIVE_FROM", 6, "EFFECTIVE_TO", 7
-    );
+            "CUPS_CODE",
+            0,
+            "DESCRIPTION",
+            1,
+            "UNIT_PRICE_COPS",
+            2,
+            "CUPS_CATEGORY",
+            3,
+            "REQUIRES_AUTH",
+            4,
+            "AUTH_VALIDITY_DAYS",
+            5,
+            "EFFECTIVE_FROM",
+            6,
+            "EFFECTIVE_TO",
+            7);
 
     public List<TariffCups> parse(MultipartFile file) throws IOException {
         List<TariffCups> tariffs = new ArrayList<>();
@@ -46,12 +58,14 @@ public class CupsExcelImporter {
 
     private TariffCups parseRow(Row row) {
         try {
-            String cupsCode = getCellString(row, COLUMN_MAP.get("CUPS_CODE")).trim().toUpperCase();
+            String cupsCode =
+                    getCellString(row, COLUMN_MAP.get("CUPS_CODE")).trim().toUpperCase();
             if (cupsCode.isEmpty()) return null;
 
             String description = getCellString(row, COLUMN_MAP.get("DESCRIPTION"));
             BigDecimal price = getCellBigDecimal(row, COLUMN_MAP.get("UNIT_PRICE_COPS"));
-            String categoryStr = getCellString(row, COLUMN_MAP.get("CUPS_CATEGORY")).trim().toUpperCase();
+            String categoryStr =
+                    getCellString(row, COLUMN_MAP.get("CUPS_CATEGORY")).trim().toUpperCase();
             Boolean requiresAuth = getCellBoolean(row, COLUMN_MAP.get("REQUIRES_AUTH"));
             Integer authDays = getCellInteger(row, COLUMN_MAP.get("AUTH_VALIDITY_DAYS"));
             LocalDate effectiveFrom = getCellDate(row, COLUMN_MAP.get("EFFECTIVE_FROM"));
@@ -80,8 +94,11 @@ public class CupsExcelImporter {
     }
 
     private TariffCups.CupsCategory parseCategory(String str) {
-        try { return TariffCups.CupsCategory.valueOf(str); }
-        catch (Exception e) { return TariffCups.CupsCategory.OTRO; }
+        try {
+            return TariffCups.CupsCategory.valueOf(str);
+        } catch (Exception e) {
+            return TariffCups.CupsCategory.OTRO;
+        }
     }
 
     private String getCellString(Row row, int colIdx) {
@@ -101,8 +118,11 @@ public class CupsExcelImporter {
         if (cell.getCellType() == CellType.NUMERIC) {
             return BigDecimal.valueOf(cell.getNumericCellValue());
         }
-        try { return new BigDecimal(getCellString(row, colIdx)); }
-        catch (Exception e) { return null; }
+        try {
+            return new BigDecimal(getCellString(row, colIdx));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private Boolean getCellBoolean(Row row, int colIdx) {
@@ -110,15 +130,18 @@ public class CupsExcelImporter {
         if (cell == null) return false;
         if (cell.getCellType() == CellType.BOOLEAN) return cell.getBooleanCellValue();
         String val = getCellString(row, colIdx).trim().toLowerCase();
-        return val.equals("true") || val.equals("1") || val.equals("si") || val.equals("yes");
+        return "true".equals(val) || "1".equals(val) || "si".equals(val) || "yes".equals(val);
     }
 
     private Integer getCellInteger(Row row, int colIdx) {
         Cell cell = row.getCell(colIdx);
         if (cell == null) return null;
         if (cell.getCellType() == CellType.NUMERIC) return (int) cell.getNumericCellValue();
-        try { return Integer.parseInt(getCellString(row, colIdx)); }
-        catch (Exception e) { return null; }
+        try {
+            return Integer.parseInt(getCellString(row, colIdx));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private LocalDate getCellDate(Row row, int colIdx) {
@@ -129,14 +152,19 @@ public class CupsExcelImporter {
         }
         String str = getCellString(row, colIdx).trim();
         if (str.isEmpty()) return null;
-        try { return LocalDate.parse(str); }
-        catch (Exception e) { return null; }
+        try {
+            return LocalDate.parse(str);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private boolean isRowEmpty(Row row) {
         for (int i = 0; i < 3; i++) {
             Cell cell = row.getCell(i);
-            if (cell != null && cell.getCellType() != CellType.BLANK && !getCellString(row, i).trim().isEmpty()) {
+            if (cell != null
+                    && cell.getCellType() != CellType.BLANK
+                    && !getCellString(row, i).trim().isEmpty()) {
                 return false;
             }
         }

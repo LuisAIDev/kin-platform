@@ -1,6 +1,8 @@
 package com.kinplatform.kin.health.hce.service;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import com.kinplatform.kin.health.hce.dto.AnamnesisResponse;
 import com.kinplatform.kin.health.hce.dto.CreateAnamnesisRequest;
 import com.kinplatform.kin.health.hce.dto.UpdateAnamnesisRequest;
@@ -8,19 +10,14 @@ import com.kinplatform.kin.health.hce.entity.Anamnesis;
 import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.repository.AnamnesisRepository;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
-import com.kinplatform.common.user.User;
-import com.kinplatform.common.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +29,8 @@ public class AnamnesisService {
 
     @Transactional
     public AnamnesisResponse createAnamnesis(CreateAnamnesisRequest request) {
-        Encounter encounter = encounterRepository.findById(request.getEncounterId())
+        Encounter encounter = encounterRepository
+                .findById(request.getEncounterId())
                 .orElseThrow(() -> new EntityNotFoundException("Encounter not found"));
 
         checkAccess(encounter);
@@ -43,7 +41,8 @@ public class AnamnesisService {
             }
         }
 
-        User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
+        User currentUser = AuthenticatedUsers.require(
+                userRepository, SecurityContextHolder.getContext().getAuthentication());
 
         Anamnesis anamnesis = Anamnesis.builder()
                 .encounterId(encounter.getId())
@@ -67,7 +66,8 @@ public class AnamnesisService {
 
     @Transactional(readOnly = true)
     public AnamnesisResponse getByEncounterId(UUID encounterId) {
-        Anamnesis anamnesis = anamnesisRepository.findByEncounterId(encounterId)
+        Anamnesis anamnesis = anamnesisRepository
+                .findByEncounterId(encounterId)
                 .orElseThrow(() -> new EntityNotFoundException("Anamnesis not found for encounter"));
         checkAccessByAnamnesis(anamnesis);
         return toResponse(anamnesis);
@@ -75,8 +75,8 @@ public class AnamnesisService {
 
     @Transactional
     public AnamnesisResponse updateAnamnesis(UUID id, UpdateAnamnesisRequest request) {
-        Anamnesis anamnesis = anamnesisRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Anamnesis not found"));
+        Anamnesis anamnesis =
+                anamnesisRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Anamnesis not found"));
 
         checkAccessByAnamnesis(anamnesis);
 
@@ -121,16 +121,17 @@ public class AnamnesisService {
 
     @Transactional(readOnly = true)
     public List<AnamnesisResponse> findByPatientId(UUID patientId) {
-        return anamnesisRepository.findByPatientIdOrderByCreatedAtDesc(patientId)
-                .stream()
+        return anamnesisRepository.findByPatientIdOrderByCreatedAtDesc(patientId).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     private void checkAccess(Encounter encounter) {
-        User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
+        User currentUser = AuthenticatedUsers.require(
+                userRepository, SecurityContextHolder.getContext().getAuthentication());
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_IPS_ADMIN") || a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_IPS_ADMIN")
+                        || a.getAuthority().equals("ROLE_ADMIN"));
         boolean isPhysician = encounter.getPhysicianId().equals(currentUser.getId());
 
         if (!isAdmin && !isPhysician) {
@@ -139,9 +140,11 @@ public class AnamnesisService {
     }
 
     private void checkAccessByAnamnesis(Anamnesis anamnesis) {
-        User currentUser = AuthenticatedUsers.require(userRepository, SecurityContextHolder.getContext().getAuthentication());
+        User currentUser = AuthenticatedUsers.require(
+                userRepository, SecurityContextHolder.getContext().getAuthentication());
         boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_IPS_ADMIN") || a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_IPS_ADMIN")
+                        || a.getAuthority().equals("ROLE_ADMIN"));
         boolean isPhysician = anamnesis.getPhysicianId().equals(currentUser.getId());
 
         if (!isAdmin && !isPhysician) {
@@ -170,4 +173,3 @@ public class AnamnesisService {
                 .build();
     }
 }
-

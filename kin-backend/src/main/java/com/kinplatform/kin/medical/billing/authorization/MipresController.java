@@ -1,26 +1,22 @@
 package com.kinplatform.kin.medical.billing.authorization;
 
-import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.common.security.TenantContext;
-import com.kinplatform.common.user.User;
 import com.kinplatform.common.user.UserRepository;
-import com.kinplatform.common.user.UserRole;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/billing/mipres")
@@ -36,26 +32,23 @@ public class MipresController {
     @PostMapping("/prescriptions")
     @PreAuthorize("hasAnyRole('IPS_ADMIN', 'IPS_FACTURADOR', 'PHYSICIAN', 'ADMIN')")
     public ResponseEntity<MipresPrescriptionResponse> createPrescription(
-            Authentication auth,
-            @Valid @RequestBody CreatePrescriptionRequest request) {
+            Authentication auth, @Valid @RequestBody CreatePrescriptionRequest request) {
 
         UUID orgId = TenantContext.get();
-        var prescription = mipresService.createPrescription(auth,
+        var prescription = mipresService.createPrescription(
+                auth,
                 new MipresService.CreatePrescriptionRequest(
-                        request.authorizationNumber(),
-                        request.contractId(),
-                        request.patientId()));
+                        request.authorizationNumber(), request.contractId(), request.patientId()));
 
         return ResponseEntity.status(201).body(MipresPrescriptionResponse.from(prescription));
     }
 
     @GetMapping("/prescriptions/{id}")
     @PreAuthorize("hasAnyRole('IPS_ADMIN', 'IPS_FACTURADOR', 'PHYSICIAN', 'ADMIN')")
-    public ResponseEntity<MipresPrescriptionResponse> getPrescription(
-            Authentication auth,
-            @PathVariable UUID id) {
+    public ResponseEntity<MipresPrescriptionResponse> getPrescription(Authentication auth, @PathVariable UUID id) {
 
-        return mipresService.getPrescription(id)
+        return mipresService
+                .getPrescription(id)
                 .map(p -> ResponseEntity.ok(MipresPrescriptionResponse.from(p)))
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -69,9 +62,8 @@ public class MipresController {
             @RequestParam(required = false) MipresPrescription.PrescriptionStatus status) {
 
         var prescriptions = mipresService.getPrescriptions(contractId, patientId, status);
-        var response = prescriptions.stream()
-                .map(MipresPrescriptionResponse::from)
-                .toList();
+        var response =
+                prescriptions.stream().map(MipresPrescriptionResponse::from).toList();
         return ResponseEntity.ok(response);
     }
 
@@ -80,10 +72,10 @@ public class MipresController {
     @PostMapping("/supplies")
     @PreAuthorize("hasAnyRole('IPS_ADMIN', 'IPS_FACTURADOR', 'ADMIN')")
     public ResponseEntity<MipresSupplyResponse> reportSupply(
-            Authentication auth,
-            @Valid @RequestBody ReportSupplyRequest request) {
+            Authentication auth, @Valid @RequestBody ReportSupplyRequest request) {
 
-        var supply = mipresService.reportSupply(auth,
+        var supply = mipresService.reportSupply(
+                auth,
                 new MipresService.ReportSupplyRequest(
                         request.authorizationNumber(),
                         request.cupsCode(),
@@ -99,9 +91,7 @@ public class MipresController {
     @PutMapping("/supplies/{id}/anular")
     @PreAuthorize("hasAnyRole('IPS_ADMIN', 'IPS_FACTURADOR', 'ADMIN')")
     public ResponseEntity<MipresSupplyResponse> anularSupply(
-            Authentication auth,
-            @PathVariable UUID id,
-            @RequestParam @Size(max = 500) String motivo) {
+            Authentication auth, @PathVariable UUID id, @RequestParam @Size(max = 500) String motivo) {
 
         var supply = mipresService.anularSupply(auth, id, motivo);
         return ResponseEntity.ok(MipresSupplyResponse.from(supply));
@@ -117,19 +107,16 @@ public class MipresController {
             @RequestParam(required = false) LocalDate endDate) {
 
         var supplies = mipresService.getSupplies(contractId, prescriptionId, startDate, endDate);
-        var response = supplies.stream()
-                .map(MipresSupplyResponse::from)
-                .toList();
+        var response = supplies.stream().map(MipresSupplyResponse::from).toList();
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/supplies/{id}")
     @PreAuthorize("hasAnyRole('IPS_ADMIN', 'IPS_FACTURADOR', 'PHYSICIAN', 'ADMIN')")
-    public ResponseEntity<MipresSupplyResponse> getSupply(
-            Authentication auth,
-            @PathVariable UUID id) {
+    public ResponseEntity<MipresSupplyResponse> getSupply(Authentication auth, @PathVariable UUID id) {
 
-        return mipresService.getSupply(id)
+        return mipresService
+                .getSupply(id)
                 .map(s -> ResponseEntity.ok(MipresSupplyResponse.from(s)))
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -150,20 +137,18 @@ public class MipresController {
         var supplies = mipresService.getSupplies(null, null, start, end);
 
         long totalSupplies = supplies.size();
-        long totalQuantity = supplies.stream().mapToLong(MipresSupply::getQuantity).sum();
-        BigDecimal totalValue = supplies.stream()
-                .map(MipresSupply::getTotalValueCop)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        long totalQuantity =
+                supplies.stream().mapToLong(MipresSupply::getQuantity).sum();
+        BigDecimal totalValue =
+                supplies.stream().map(MipresSupply::getTotalValueCop).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         var byStatus = supplies.stream()
                 .collect(java.util.stream.Collectors.groupingBy(
-                        MipresSupply::getStatus,
-                        java.util.stream.Collectors.counting()));
+                        MipresSupply::getStatus, java.util.stream.Collectors.counting()));
 
         var byCups = supplies.stream()
                 .collect(java.util.stream.Collectors.groupingBy(
-                        MipresSupply::getCupsCode,
-                        java.util.stream.Collectors.counting()));
+                        MipresSupply::getCupsCode, java.util.stream.Collectors.counting()));
 
         return ResponseEntity.ok(Map.of(
                 "periodStart", start,
@@ -172,8 +157,7 @@ public class MipresController {
                 "totalQuantity", totalQuantity,
                 "totalValueCop", totalValue,
                 "byStatus", byStatus,
-                "byCups", byCups
-        ));
+                "byCups", byCups));
     }
 
     // ========== DTOs Response ==========
@@ -191,14 +175,22 @@ public class MipresController {
             String diagnosisCie10,
             Integer qtyApproved,
             BigDecimal unitPriceCop,
-            OffsetDateTime createdAt
-    ) {
+            OffsetDateTime createdAt) {
         static MipresPrescriptionResponse from(MipresPrescription p) {
             return new MipresPrescriptionResponse(
-                    p.getId(), p.getOrganizationId(), p.getContractId(), p.getPatientId(),
-                    p.getPrescriptionNumber(), p.getNit(), p.getPrescriptionDate(),
-                    p.getStatus(), p.getCupsCode(), p.getDiagnosisCie10(),
-                    p.getQtyApproved(), p.getUnitPriceCop(), p.getCreatedAt());
+                    p.getId(),
+                    p.getOrganizationId(),
+                    p.getContractId(),
+                    p.getPatientId(),
+                    p.getPrescriptionNumber(),
+                    p.getNit(),
+                    p.getPrescriptionDate(),
+                    p.getStatus(),
+                    p.getCupsCode(),
+                    p.getDiagnosisCie10(),
+                    p.getQtyApproved(),
+                    p.getUnitPriceCop(),
+                    p.getCreatedAt());
         }
     }
 
@@ -216,24 +208,30 @@ public class MipresController {
             String batchNumber,
             LocalDate expirationDate,
             MipresSupply.SupplyStatus status,
-            OffsetDateTime createdAt
-    ) {
+            OffsetDateTime createdAt) {
         static MipresSupplyResponse from(MipresSupply s) {
             return new MipresSupplyResponse(
-                    s.getId(), s.getPrescriptionId(), s.getOrganizationId(),
-                    s.getSupplyId(), s.getPrescriptionNumber(), s.getSupplyDate(),
-                    s.getCupsCode(), s.getQuantity(), s.getUnitValueCop(), s.getTotalValueCop(),
-                    s.getBatchNumber(), s.getExpirationDate(), s.getStatus(), s.getCreatedAt());
+                    s.getId(),
+                    s.getPrescriptionId(),
+                    s.getOrganizationId(),
+                    s.getSupplyId(),
+                    s.getPrescriptionNumber(),
+                    s.getSupplyDate(),
+                    s.getCupsCode(),
+                    s.getQuantity(),
+                    s.getUnitValueCop(),
+                    s.getTotalValueCop(),
+                    s.getBatchNumber(),
+                    s.getExpirationDate(),
+                    s.getStatus(),
+                    s.getCreatedAt());
         }
     }
 
     // ========== DTOs Request ==========
 
     public record CreatePrescriptionRequest(
-            @NotNull @Size(max = 20) String authorizationNumber,
-            @NotNull UUID contractId,
-            @NotNull UUID patientId
-    ) {}
+            @NotNull @Size(max = 20) String authorizationNumber, @NotNull UUID contractId, @NotNull UUID patientId) {}
 
     public record ReportSupplyRequest(
             @NotNull @Size(max = 20) String authorizationNumber,
@@ -242,7 +240,5 @@ public class MipresController {
             @NotNull BigDecimal value,
             @NotNull BigDecimal unitValueCop,
             @Size(max = 50) String batchNumber,
-            LocalDate expirationDate
-    ) {}
+            LocalDate expirationDate) {}
 }
-

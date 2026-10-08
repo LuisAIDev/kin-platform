@@ -8,14 +8,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinColumns;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.OffsetDateTime;
-import java.util.UUID;
 
 /**
  * Entidad JPA de un documento del proyecto empresarial (Fase 10, Milestone 2G).
@@ -86,5 +85,3 @@ public class DocumentArtifactEntity {
     @Column(name = "render_format", length = 32)
     private String renderFormat;
 }
-
-

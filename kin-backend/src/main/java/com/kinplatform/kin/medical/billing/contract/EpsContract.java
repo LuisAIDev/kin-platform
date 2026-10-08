@@ -1,21 +1,22 @@
 package com.kinplatform.kin.medical.billing.contract;
 
 import jakarta.persistence.*;
-import lombok.*;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import lombok.*;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @Entity
-@Table(name = "eps_contracts", indexes = {
-    @Index(name = "idx_eps_contracts_org", columnList = "organization_id"),
-    @Index(name = "idx_eps_contracts_status", columnList = "status")
-})
+@Table(
+        name = "eps_contracts",
+        indexes = {
+            @Index(name = "idx_eps_contracts_org", columnList = "organization_id"),
+            @Index(name = "idx_eps_contracts_status", columnList = "status")
+        })
 public class EpsContract {
 
     @Id
@@ -88,7 +89,22 @@ public class EpsContract {
         updatedAt = OffsetDateTime.now();
     }
 
-    public enum Regimen { CONTRIBUTIVO, SUBSIDIADO, ESPECIAL, EXCEPCION }
-    public enum ContractStatus { ACTIVE, SUSPENDED, TERMINATED }
-    public enum BillingCycle { WEEKLY, BIWEEKLY, MONTHLY }
+    public enum Regimen {
+        CONTRIBUTIVO,
+        SUBSIDIADO,
+        ESPECIAL,
+        EXCEPCION
+    }
+
+    public enum ContractStatus {
+        ACTIVE,
+        SUSPENDED,
+        TERMINATED
+    }
+
+    public enum BillingCycle {
+        WEEKLY,
+        BIWEEKLY,
+        MONTHLY
+    }
 }

@@ -2,14 +2,10 @@ package com.kinplatform.kin.health.physician.api;
 
 import com.kinplatform.common.audit.api.AuditService;
 import com.kinplatform.common.audit.domain.AuditAction;
-import com.kinplatform.common.audit.domain.AuditResourceType;
+import com.kinplatform.common.user.PhysicianVerificationStatus;
 import com.kinplatform.common.user.User;
 import com.kinplatform.common.user.UserRepository;
-import com.kinplatform.common.user.PhysicianVerificationStatus;
-import java.time.OffsetDateTime;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +47,8 @@ public class PhysicianApplicationService {
 
         // Validar email verificado
         if (!Boolean.TRUE.equals(user.getEmailVerified())) {
-            throw new IllegalStateException("El correo electrónico debe estar verificado para solicitar capacidad profesional");
+            throw new IllegalStateException(
+                    "El correo electrónico debe estar verificado para solicitar capacidad profesional");
         }
 
         // Validar que no existe solicitud previa en PENDING o APPROVED
@@ -94,9 +91,7 @@ public class PhysicianApplicationService {
                         "specialty", request.getSpecialty(),
                         "country", request.getCountry(),
                         "phone", request.getPhone(),
-                        "requestedAt", java.time.OffsetDateTime.now().toString()
-                ))
-        );
+                        "requestedAt", java.time.OffsetDateTime.now().toString())));
 
         log.info("Usuario {} ha solicitado capacidad profesional (PENDING)", userId);
         return PhysicianVerificationStatus.PENDING;
@@ -129,8 +124,7 @@ public class PhysicianApplicationService {
                 user.getSpecialty(),
                 user.getCountry(),
                 user.getPhone(),
-                user.getPhysicianVerificationStatus()
-        );
+                user.getPhysicianVerificationStatus());
     }
 
     public record ApplicationStatusResponse(
@@ -140,8 +134,5 @@ public class PhysicianApplicationService {
             String specialty,
             String country,
             String phone,
-            PhysicianVerificationStatus physicianVerificationStatus
-    ) {}
+            PhysicianVerificationStatus physicianVerificationStatus) {}
 }
-
-

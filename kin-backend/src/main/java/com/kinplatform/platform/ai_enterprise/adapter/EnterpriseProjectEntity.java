@@ -10,14 +10,13 @@ import jakarta.persistence.IdClass;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Entidad JPA del proyecto empresarial (Fase 10, Milestone 2G).
@@ -64,13 +63,10 @@ public class EnterpriseProjectEntity {
     @Column(name = "failed_reason", columnDefinition = "TEXT")
     private String failedReason;
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL,
-        orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("id ASC")
     private List<DocumentArtifactEntity> documents = new ArrayList<>();
 
     @Embedded
     private EnterpriseScoreEntity score;
 }
-
-

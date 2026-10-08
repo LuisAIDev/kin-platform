@@ -1,6 +1,5 @@
 package com.kinplatform.common.pricing;
 
-import com.kinplatform.common.pricing.ProductVertical;
 import com.kinplatform.common.pricing.dto.CreatePricingPlanRequest;
 import com.kinplatform.common.pricing.dto.PricingPlanResponse;
 import com.kinplatform.common.pricing.dto.UpdatePricingPlanRequest;
@@ -68,4 +67,3 @@ public class PricingPlanController {
         }
     }
 }
-

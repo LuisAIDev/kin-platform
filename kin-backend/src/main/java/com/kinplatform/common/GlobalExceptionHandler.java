@@ -1,17 +1,16 @@
 package com.kinplatform.common;
 
-import com.kinplatform.kin.health.common.exception.QuotaExceededException;
 import com.kinplatform.common.auth.EmailVerificationRequiredException;
 import com.kinplatform.common.auth.PhysicianPendingReviewException;
 import com.kinplatform.common.pricing.PlanNotFoundException;
+import com.kinplatform.common.usage.AiBudgetExceededException;
+import com.kinplatform.kin.health.common.exception.QuotaExceededException;
 import com.kinplatform.platform.project.ProjectLimitExceededException;
 import com.kinplatform.platform.project.ReportNotFoundException;
-import com.kinplatform.common.usage.AiBudgetExceededException;
+import jakarta.persistence.EntityNotFoundException;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.time.Instant;
-import java.util.UUID;
-import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -31,7 +30,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
         String msg = ex.getMessage();
-        HttpStatus status = (msg != null && msg.contains("no encontrado")) ? HttpStatus.NOT_FOUND : HttpStatus.BAD_REQUEST;
+        HttpStatus status =
+                (msg != null && msg.contains("no encontrado")) ? HttpStatus.NOT_FOUND : HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status).body(Map.of("error", ex.getMessage()));
     }
 
@@ -142,8 +142,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AiBudgetExceededException.class)
-    public ResponseEntity<Map<String, String>> handleAiBudgetExceeded(
-            AiBudgetExceededException ex) {
+    public ResponseEntity<Map<String, String>> handleAiBudgetExceeded(AiBudgetExceededException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
     }
 
@@ -175,6 +174,3 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 }
-
-
-

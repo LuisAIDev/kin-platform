@@ -2,16 +2,12 @@ package com.kinplatform.kin.health.documents.api;
 
 import com.kinplatform.common.security.AuthenticatedUsers;
 import com.kinplatform.common.security.PatientAccess;
-import com.kinplatform.kin.health.documents.domain.ClinicalDocument;
-import com.kinplatform.kin.health.documents.domain.DocumentStatus;
 import com.kinplatform.common.user.User;
 import com.kinplatform.common.user.UserRepository;
 import com.kinplatform.common.user.UserRole;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kinplatform.kin.health.documents.domain.ClinicalDocument;
+import com.kinplatform.kin.health.documents.domain.DocumentStatus;
 import jakarta.validation.constraints.NotNull;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -42,10 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
  * sobre un paciente exige relación {@code ACTIVE} (Área 5) y queda auditada.</p>
  */
 @RestController
-@RequestMapping({
-    "/health/documents",
-    "/medical/documents"
-})
+@RequestMapping({"/health/documents", "/medical/documents"})
 public class DocumentController {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentController.class);
@@ -68,8 +61,12 @@ public class DocumentController {
         ClinicalDocument document;
         try {
             document = documentService.uploadDocument(
-                    user.getId(), patientId, file.getOriginalFilename(), file.getContentType(),
-                    file.getBytes(), description);
+                    user.getId(),
+                    patientId,
+                    file.getOriginalFilename(),
+                    file.getContentType(),
+                    file.getBytes(),
+                    description);
         } catch (Exception e) {
             throw new IllegalStateException("No se pudo subir el documento: " + e.getMessage(), e);
         }
@@ -89,7 +86,8 @@ public class DocumentController {
 
     @GetMapping("/my")
     public ResponseEntity<List<DocumentResponse>> myDocuments(Authentication authentication) {
-        UUID patientId = AuthenticatedUsers.require(userRepository, authentication).getId();
+        UUID patientId =
+                AuthenticatedUsers.require(userRepository, authentication).getId();
         List<DocumentResponse> list = documentService.listMyDocuments(patientId).stream()
                 .map(DocumentResponse::from)
                 .toList();
@@ -111,8 +109,7 @@ public class DocumentController {
         ClinicalDocument document;
         try {
             document = documentService.uploadOwnDocument(
-                    user.getId(), file.getOriginalFilename(), file.getContentType(),
-                    file.getBytes(), description);
+                    user.getId(), file.getOriginalFilename(), file.getContentType(), file.getBytes(), description);
         } catch (Exception e) {
             throw new IllegalStateException("No se pudo subir el documento: " + e.getMessage(), e);
         }
@@ -126,7 +123,8 @@ public class DocumentController {
         DocumentService.DownloadedDocument downloaded = documentService.downloadDocument(documentId, userId);
         return ResponseEntity.ok()
                 .contentType(parseMediaType(downloaded.mimeType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION,
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename*=UTF-8''" + encode(downloaded.fileName()))
                 .body(downloaded.content());
     }
@@ -160,8 +158,12 @@ public class DocumentController {
         ClinicalDocument document;
         try {
             document = documentService.importOwnDocument(
-                    user.getId(), file.getOriginalFilename(), file.getContentType(),
-                    file.getBytes(), type, description);
+                    user.getId(),
+                    file.getOriginalFilename(),
+                    file.getContentType(),
+                    file.getBytes(),
+                    type,
+                    description);
         } catch (Exception e) {
             throw new IllegalStateException("No se pudo importar el documento: " + e.getMessage(), e);
         }
@@ -213,9 +215,16 @@ public class DocumentController {
             boolean analyzable) {
         static DocumentResponse from(ClinicalDocument d) {
             return new DocumentResponse(
-                    d.id(), d.fileName(), d.fileSize(), d.mimeType(), d.patientId(), d.physicianId(),
-                    d.description(), d.status(), d.uploadedAt(), d.hasExtractedText());
+                    d.id(),
+                    d.fileName(),
+                    d.fileSize(),
+                    d.mimeType(),
+                    d.patientId(),
+                    d.physicianId(),
+                    d.description(),
+                    d.status(),
+                    d.uploadedAt(),
+                    d.hasExtractedText());
         }
     }
 }
-

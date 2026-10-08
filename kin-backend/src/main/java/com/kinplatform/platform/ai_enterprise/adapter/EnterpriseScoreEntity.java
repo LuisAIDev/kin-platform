@@ -63,5 +63,3 @@ public class EnterpriseScoreEntity {
     @Column(name = "score_grade", length = 16)
     private String grade;
 }
-
-

@@ -3,15 +3,14 @@ package com.kinplatform.kin.medical.billing.rips.generator;
 import com.kinplatform.kin.medical.billing.contract.EpsContract;
 import com.kinplatform.kin.medical.billing.contract.EpsContractRepository;
 import com.kinplatform.kin.medical.billing.contract.TariffCups;
+import com.kinplatform.kin.medical.billing.rips.model.AtRecord;
 import com.kinplatform.kin.medical.billing.rips.model.RipsBatch;
 import com.kinplatform.kin.medical.billing.rips.model.RipsRecord;
-import com.kinplatform.kin.medical.billing.rips.model.AtRecord;
+import java.math.BigDecimal;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -27,7 +26,8 @@ public class AtGenerator implements RipsGenerator {
 
     @Override
     public List<RipsRecord> generate(RipsGenerationContext context) {
-        EpsContract contract = contractRepository.findById(context.contractId())
+        EpsContract contract = contractRepository
+                .findById(context.contractId())
                 .orElseThrow(() -> new IllegalArgumentException("Contrato no encontrado: " + context.contractId()));
 
         // Filter orders of type MEDICAMENTO, INSUMO, DISPOSITIVO
@@ -62,13 +62,16 @@ public class AtGenerator implements RipsGenerator {
 
     private AtRecord createAtRecord(Object order, EpsContract contract, RipsGenerationContext context) {
         String cupsCode = getField(order, "getCupsCode", "890501");
-        String fechaServicio = getField(order, "getOrderDate", java.time.LocalDate.now().toString());
+        String fechaServicio =
+                getField(order, "getOrderDate", java.time.LocalDate.now().toString());
         String descripcion = getField(order, "getDescription", "Servicio");
         int cantidad = getFieldInt(order, "getQuantity", 1);
         String tipoOtrosServicios = getField(order, "getServiceType", "MEDICAMENTO");
 
         TariffCups tariff = context.getTariff(cupsCode);
-        BigDecimal valorUnitario = context.getTariff(cupsCode) != null ? context.getTariff(cupsCode).getUnitPriceCop() : BigDecimal.ZERO;
+        BigDecimal valorUnitario = context.getTariff(cupsCode) != null
+                ? context.getTariff(cupsCode).getUnitPriceCop()
+                : BigDecimal.ZERO;
         BigDecimal valorTotal = valorUnitario.multiply(BigDecimal.valueOf(cantidad));
 
         return AtRecord.fromOrder(
@@ -84,8 +87,7 @@ public class AtGenerator implements RipsGenerator {
                 valorUnitario,
                 valorTotal,
                 fechaServicio,
-                tipoOtrosServicios
-        );
+                tipoOtrosServicios);
     }
 
     private String getField(Object obj, String methodName, String defaultValue) {
@@ -104,4 +106,3 @@ public class AtGenerator implements RipsGenerator {
         }
     }
 }
-

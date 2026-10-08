@@ -2,16 +2,16 @@ package com.kinplatform.kin.medical.billing.contract;
 
 import com.kinplatform.common.security.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -24,20 +24,23 @@ public class TariffImportService {
 
     @Transactional
     public TariffImportResult importTariffs(UUID contractId, MultipartFile file) throws IOException {
-        contractRepository.findByIdAndOrganizationId(contractId, TenantContext.get())
+        contractRepository
+                .findByIdAndOrganizationId(contractId, TenantContext.get())
                 .orElseThrow(() -> new EntityNotFoundException("Contract not found: " + contractId));
 
         List<TariffCups> tariffs = excelImporter.parse(file);
         log.info("Parsed {} tariffs from file for contract {}", tariffs.size(), contractId);
 
-        int created = 0, updated = 0, errors = 0;
+        int created = 0;
+        int updated = 0;
+        int errors = 0;
         List<String> errorMessages = new ArrayList<>();
 
         for (TariffCups tariff : tariffs) {
             try {
                 tariff.setContractId(contractId);
-                Optional<TariffCups> existing = tariffRepository
-                        .findByContractIdAndCupsCodeAndEffectiveFrom(contractId, tariff.getCupsCode(), tariff.getEffectiveFrom());
+                Optional<TariffCups> existing = tariffRepository.findByContractIdAndCupsCodeAndEffectiveFrom(
+                        contractId, tariff.getCupsCode(), tariff.getEffectiveFrom());
 
                 if (existing.isPresent()) {
                     TariffCups toUpdate = existing.get();

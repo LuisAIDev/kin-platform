@@ -10,23 +10,22 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "clinical_attachments",
-       indexes = {
-           @Index(name = "idx_clinical_attachments_patient_id", columnList = "patient_id"),
-           @Index(name = "idx_clinical_attachments_encounter_id", columnList = "encounter_id"),
-           @Index(name = "idx_clinical_attachments_type", columnList = "attachment_type"),
-           @Index(name = "idx_clinical_attachments_loinc", columnList = "loinc_code"),
-           @Index(name = "idx_clinical_attachments_dicom", columnList = "dicom_study_uid"),
-           @Index(name = "idx_clinical_attachments_performed_at", columnList = "performed_at")
-       })
+@Table(
+        name = "clinical_attachments",
+        indexes = {
+            @Index(name = "idx_clinical_attachments_patient_id", columnList = "patient_id"),
+            @Index(name = "idx_clinical_attachments_encounter_id", columnList = "encounter_id"),
+            @Index(name = "idx_clinical_attachments_type", columnList = "attachment_type"),
+            @Index(name = "idx_clinical_attachments_loinc", columnList = "loinc_code"),
+            @Index(name = "idx_clinical_attachments_dicom", columnList = "dicom_study_uid"),
+            @Index(name = "idx_clinical_attachments_performed_at", columnList = "performed_at")
+        })
 public class ClinicalAttachment {
 
     @Id
@@ -124,14 +123,91 @@ public class ClinicalAttachment {
     private Instant updatedAt;
 
     public enum AttachmentType {
-        LAB_RESULT, IMAGING, PATHOLOGY, ENDOSCOPY, ELECTROCARDIOGRAM, OTHER
+        LAB_RESULT,
+        IMAGING,
+        PATHOLOGY,
+        ENDOSCOPY,
+        ELECTROCARDIOGRAM,
+        OTHER
     }
 
-public enum DicomModality {
-        CT, MR, XR, US, NM, PT, OT, CR, DX, MG, IO, PX, RF, HC, ES, LS, ST, GM, BD, BI, CD, CF, CP, CS, DD, DG, DM, EC, EPS, FA, FS, GS, HD, IVUS, IVOCT, IVUSOCT, KER, KO, LEN, LN, MB, MRA, MRV, MS, OP, OPM, OPT, OPV, PAT, PTX, REG, RES, RFA, RTDOSE, RTIMAGE, RTPLAN, RTRECORD, RTSTRUCT, RWV, SD, SMR, SPC, SR, SRF, TD, TG, VA, XA, XC
+    public enum DicomModality {
+        CT,
+        MR,
+        XR,
+        US,
+        NM,
+        PT,
+        OT,
+        CR,
+        DX,
+        MG,
+        IO,
+        PX,
+        RF,
+        HC,
+        ES,
+        LS,
+        ST,
+        GM,
+        BD,
+        BI,
+        CD,
+        CF,
+        CP,
+        CS,
+        DD,
+        DG,
+        DM,
+        EC,
+        EPS,
+        FA,
+        FS,
+        GS,
+        HD,
+        IVUS,
+        IVOCT,
+        IVUSOCT,
+        KER,
+        KO,
+        LEN,
+        LN,
+        MB,
+        MRA,
+        MRV,
+        MS,
+        OP,
+        OPM,
+        OPT,
+        OPV,
+        PAT,
+        PTX,
+        REG,
+        RES,
+        RFA,
+        RTDOSE,
+        RTIMAGE,
+        RTPLAN,
+        RTRECORD,
+        RTSTRUCT,
+        RWV,
+        SD,
+        SMR,
+        SPC,
+        SR,
+        SRF,
+        TD,
+        TG,
+        VA,
+        XA,
+        XC
     }
 
     public enum AbnormalFlag {
-        NORMAL, HIGH, LOW, CRITICAL, ABNORMAL
+        NORMAL,
+        HIGH,
+        LOW,
+        CRITICAL,
+        ABNORMAL
     }
 }

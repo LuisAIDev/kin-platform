@@ -1,7 +1,6 @@
 package com.kinplatform.kin.health.documents.adapter;
 
 import com.kinplatform.kin.health.documents.domain.DocumentChatMessage;
-import com.kinplatform.kin.health.documents.domain.DocumentChatRole;
 import com.kinplatform.kin.health.documents.port.DocumentChatRepository;
 import java.util.List;
 import java.util.UUID;

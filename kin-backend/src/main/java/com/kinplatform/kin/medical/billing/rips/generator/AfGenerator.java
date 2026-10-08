@@ -3,15 +3,14 @@ package com.kinplatform.kin.medical.billing.rips.generator;
 import com.kinplatform.kin.medical.billing.contract.EpsContract;
 import com.kinplatform.kin.medical.billing.contract.EpsContractRepository;
 import com.kinplatform.kin.medical.billing.contract.TariffCups;
+import com.kinplatform.kin.medical.billing.rips.model.AfRecord;
 import com.kinplatform.kin.medical.billing.rips.model.RipsBatch;
 import com.kinplatform.kin.medical.billing.rips.model.RipsRecord;
-import com.kinplatform.kin.medical.billing.rips.model.AfRecord;
+import java.math.BigDecimal;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -27,7 +26,8 @@ public class AfGenerator implements RipsGenerator {
 
     @Override
     public List<RipsRecord> generate(RipsGenerationContext context) {
-        EpsContract contract = contractRepository.findById(context.contractId())
+        EpsContract contract = contractRepository
+                .findById(context.contractId())
                 .orElseThrow(() -> new IllegalArgumentException("Contrato no encontrado: " + context.contractId()));
 
         BigDecimal valorTotal = calculateTotalFromOtherTypes(context);
@@ -49,4 +49,3 @@ public class AfGenerator implements RipsGenerator {
                 .orElse(BigDecimal.ZERO);
     }
 }
-

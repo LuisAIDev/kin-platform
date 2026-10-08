@@ -1,10 +1,9 @@
 package com.kinplatform.platform.ai_enterprise.adapter;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.io.Serializable;
 import java.util.UUID;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Clave primaria compuesta del proyecto empresarial (Fase 10, Milestone 2G).
@@ -34,5 +33,3 @@ public class EnterpriseProjectId implements Serializable {
         this.version = version;
     }
 }
-
-

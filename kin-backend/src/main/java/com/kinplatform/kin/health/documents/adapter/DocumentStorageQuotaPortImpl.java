@@ -1,16 +1,15 @@
 package com.kinplatform.kin.health.documents.adapter;
 
-import com.kinplatform.kin.health.documents.domain.DocumentStatus;
-import com.kinplatform.kin.health.documents.port.DocumentStorageQuotaPort;
 import com.kinplatform.common.pricing.PricingPlan;
 import com.kinplatform.common.pricing.PricingPlanRepository;
 import com.kinplatform.common.pricing.ProductVertical;
 import com.kinplatform.common.pricing.SubscriptionStatus;
-import com.kinplatform.common.pricing.UserSubscription;
 import com.kinplatform.common.pricing.UserSubscriptionRepository;
 import com.kinplatform.common.user.User;
 import com.kinplatform.common.user.UserRepository;
 import com.kinplatform.common.user.UserRole;
+import com.kinplatform.kin.health.documents.domain.DocumentStatus;
+import com.kinplatform.kin.health.documents.port.DocumentStorageQuotaPort;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -71,7 +70,8 @@ public class DocumentStorageQuotaPortImpl implements DocumentStorageQuotaPort {
             return subscription.getPlan();
         }
         ProductVertical vertical = verticalForRole(userId);
-        return planRepository.findFirstByVerticalAndIsActiveTrueOrderByPriceAsc(vertical)
+        return planRepository
+                .findFirstByVerticalAndIsActiveTrueOrderByPriceAsc(vertical)
                 .orElseThrow(() -> new RuntimeException("No active pricing plan found for vertical " + vertical));
     }
 

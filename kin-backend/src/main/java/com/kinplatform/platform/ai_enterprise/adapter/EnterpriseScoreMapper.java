@@ -29,18 +29,18 @@ public final class EnterpriseScoreMapper {
             return null;
         }
         return EnterpriseScoreEntity.builder()
-            .market(score.market())
-            .innovation(score.innovation())
-            .viability(score.viability())
-            .financial(score.financial())
-            .risk(score.risk())
-            .scalability(score.scalability())
-            .team(score.team())
-            .sustainability(score.sustainability())
-            .overall(score.overallScore())
-            .confidence(score.confidence())
-            .grade(score.grade().name())
-            .build();
+                .market(score.market())
+                .innovation(score.innovation())
+                .viability(score.viability())
+                .financial(score.financial())
+                .risk(score.risk())
+                .scalability(score.scalability())
+                .team(score.team())
+                .sustainability(score.sustainability())
+                .overall(score.overallScore())
+                .confidence(score.confidence())
+                .grade(score.grade().name())
+                .build();
     }
 
     /**
@@ -54,11 +54,14 @@ public final class EnterpriseScoreMapper {
             return null;
         }
         return EnterpriseScore.calculate(
-            entity.getMarket(), entity.getInnovation(), entity.getViability(),
-            entity.getFinancial(), entity.getRisk(), entity.getScalability(),
-            entity.getTeam(), entity.getSustainability(), entity.getConfidence());
+                entity.getMarket(),
+                entity.getInnovation(),
+                entity.getViability(),
+                entity.getFinancial(),
+                entity.getRisk(),
+                entity.getScalability(),
+                entity.getTeam(),
+                entity.getSustainability(),
+                entity.getConfidence());
     }
 }
-
-
-

@@ -3,8 +3,6 @@ package com.kinplatform.kin.medical.billing.contract;
 import com.kinplatform.common.security.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Component
 @RequiredArgsConstructor
@@ -29,7 +27,8 @@ public class ContractValidator {
             throw new IllegalArgumentException("Días de pago no puede ser negativo");
         }
 
-        if (contractRepository.existsByOrganizationIdAndEpsNit(TenantContext.get(), request.epsNit().trim().toUpperCase())) {
+        if (contractRepository.existsByOrganizationIdAndEpsNit(
+                TenantContext.get(), request.epsNit().trim().toUpperCase())) {
             throw new IllegalArgumentException("Ya existe un contrato con este NIT para la organización");
         }
     }
@@ -38,10 +37,14 @@ public class ContractValidator {
         if (request.paymentTermsDays() != null && request.paymentTermsDays() < 0) {
             throw new IllegalArgumentException("Días de pago no puede ser negativo");
         }
-        if (request.endDate() != null && request.startDate() != null && request.endDate().isBefore(request.startDate())) {
+        if (request.endDate() != null
+                && request.startDate() != null
+                && request.endDate().isBefore(request.startDate())) {
             throw new IllegalArgumentException("Fecha fin no puede ser anterior a fecha inicio");
         }
-        if (request.endDate() != null && contract.getStartDate() != null && request.endDate().isBefore(contract.getStartDate())) {
+        if (request.endDate() != null
+                && contract.getStartDate() != null
+                && request.endDate().isBefore(contract.getStartDate())) {
             throw new IllegalArgumentException("Fecha fin no puede ser anterior a fecha inicio");
         }
     }

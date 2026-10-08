@@ -3,24 +3,20 @@ package com.kinplatform.kin.health.legal;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.kinplatform.common.entity.DataDeletionRequest;
-import com.kinplatform.common.repository.DataDeletionRepository;
 import com.kinplatform.common.audit.adapter.AuditLogJpaRepository;
 import com.kinplatform.common.audit.domain.AuditAction;
 import com.kinplatform.common.audit.domain.AuditResourceType;
+import com.kinplatform.common.entity.DataDeletionRequest;
+import com.kinplatform.common.repository.DataDeletionRepository;
+import com.kinplatform.common.user.UserRepository;
 import com.kinplatform.kin.health.hce.entity.Encounter;
 import com.kinplatform.kin.health.hce.repository.EncounterRepository;
-import com.kinplatform.common.user.User;
-import com.kinplatform.common.user.UserRepository;
+import java.time.Instant;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.security.MessageDigest;
-import java.time.Instant;
-import java.util.*;
 
 @Slf4j
 @Service
@@ -33,24 +29,26 @@ public class DataDeletionService {
     private final AuditLogJpaRepository auditRepository;
     private final ObjectMapper objectMapper;
 
-    private static final Set<String> DELETABLE_CATEGORIES = Set.of(
-        "ACCOUNT_INFO", "MESSAGES", "CONSENTS", "AUDIT_LOGS"
-    );
+    private static final Set<String> DELETABLE_CATEGORIES =
+            Set.of("ACCOUNT_INFO", "MESSAGES", "CONSENTS", "AUDIT_LOGS");
 
-    private static final Set<String> PROTECTED_CATEGORIES = Set.of(
-        "HCE", "CLINICAL_DOCUMENTS", "FINANCIAL_RECORDS"
-    );
+    private static final Set<String> PROTECTED_CATEGORIES = Set.of("HCE", "CLINICAL_DOCUMENTS", "FINANCIAL_RECORDS");
 
     @Transactional
     public DataDeletionRequest requestDeletion(UUID userId, String reason, String scope, JsonNode dataCategories) {
         // Check for HCE (legal hold)
-        boolean hasHCE = encounterRepository.countByPatientIdAndStatus(userId, com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.COMPLETED) > 0
-            || encounterRepository.countByPatientIdAndStatus(userId, com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.IN_PROGRESS) > 0;
+        boolean hasHCE = encounterRepository.countByPatientIdAndStatus(
+                                userId, com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.COMPLETED)
+                        > 0
+                || encounterRepository.countByPatientIdAndStatus(
+                                userId, com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.IN_PROGRESS)
+                        > 0;
         boolean legalHold = hasHCE;
         String legalHoldReason = null;
 
         if (hasHCE) {
-            legalHoldReason = "El usuario tiene Historia Clínica Electrónica (HCE) sujeta a retención legal 20 años (Resolución 839/1995). Solo anonimización permitida.";
+            legalHoldReason =
+                    "El usuario tiene Historia Clínica Electrónica (HCE) sujeta a retención legal 20 años (Resolución 839/1995). Solo anonimización permitida.";
         }
 
         // Validate scope and categories
@@ -77,14 +75,14 @@ public class DataDeletionService {
         }
 
         DataDeletionRequest request = DataDeletionRequest.builder()
-            .userId(userId)
-            .reason(reason)
-            .scope(scope)
-            .dataCategories(dataCategories)
-            .status("PENDING")
-            .legalHold(legalHold)
-            .legalHoldReason(legalHoldReason)
-            .build();
+                .userId(userId)
+                .reason(reason)
+                .scope(scope)
+                .dataCategories(dataCategories)
+                .status("PENDING")
+                .legalHold(legalHold)
+                .legalHoldReason(legalHoldReason)
+                .build();
 
         return deletionRepository.save(request);
     }
@@ -99,8 +97,9 @@ public class DataDeletionService {
 
     @Transactional
     public DataDeletionRequest approveDeletion(UUID requestId, UUID adminId) {
-        DataDeletionRequest request = deletionRepository.findById(requestId)
-            .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada: " + requestId));
+        DataDeletionRequest request = deletionRepository
+                .findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada: " + requestId));
 
         if (!"PENDING".equals(request.getStatus())) {
             throw new IllegalStateException("Solo se pueden aprobar solicitudes en estado PENDING");
@@ -116,29 +115,30 @@ public class DataDeletionService {
         request = deletionRepository.save(request);
 
         auditRepository.save(new com.kinplatform.common.audit.adapter.AuditLogEntity(
-            UUID.randomUUID(),
-            adminId,
-            AuditAction.UPDATE,
-            AuditResourceType.USER,
-            requestId,
-            request.getUserId(),
-            Instant.now().atOffset(java.time.ZoneOffset.UTC),
-            null, null,
-            Map.of(
-                "scope", request.getScope(),
-                "legalHold", request.getLegalHold(),
-                "action", "APPROVED"
-            ).toString(),
-            Instant.now().atOffset(java.time.ZoneOffset.UTC)
-        ));
+                UUID.randomUUID(),
+                adminId,
+                AuditAction.UPDATE,
+                AuditResourceType.USER,
+                requestId,
+                request.getUserId(),
+                Instant.now().atOffset(java.time.ZoneOffset.UTC),
+                null,
+                null,
+                Map.of(
+                                "scope", request.getScope(),
+                                "legalHold", request.getLegalHold(),
+                                "action", "APPROVED")
+                        .toString(),
+                Instant.now().atOffset(java.time.ZoneOffset.UTC)));
 
         return request;
     }
 
     @Transactional
     public DataDeletionRequest rejectDeletion(UUID requestId, UUID adminId, String reason) {
-        DataDeletionRequest request = deletionRepository.findById(requestId)
-            .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada: " + requestId));
+        DataDeletionRequest request = deletionRepository
+                .findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada: " + requestId));
 
         if (!"PENDING".equals(request.getStatus())) {
             throw new IllegalStateException("Solo se pueden rechazar solicitudes en estado PENDING");
@@ -151,21 +151,18 @@ public class DataDeletionService {
         request = deletionRepository.save(request);
 
         auditRepository.save(new com.kinplatform.common.audit.adapter.AuditLogEntity(
-            UUID.randomUUID(),
-            adminId,
-            AuditAction.UPDATE,
-            AuditResourceType.USER,
-            requestId,
-            request.getUserId(),
-            Instant.now().atOffset(java.time.ZoneOffset.UTC),
-            null, null,
-            Map.of(
-                "scope", request.getScope(),
-                "action", "REJECTED",
-                "reason", reason
-            ).toString(),
-            Instant.now().atOffset(java.time.ZoneOffset.UTC)
-        ));
+                UUID.randomUUID(),
+                adminId,
+                AuditAction.UPDATE,
+                AuditResourceType.USER,
+                requestId,
+                request.getUserId(),
+                Instant.now().atOffset(java.time.ZoneOffset.UTC),
+                null,
+                null,
+                Map.of("scope", request.getScope(), "action", "REJECTED", "reason", reason)
+                        .toString(),
+                Instant.now().atOffset(java.time.ZoneOffset.UTC)));
 
         return request;
     }
@@ -176,16 +173,21 @@ public class DataDeletionService {
             throw new IllegalArgumentException("Confirmación requerida: confirm=true");
         }
 
-        DataDeletionRequest request = deletionRepository.findById(requestId)
-            .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada: " + requestId));
+        DataDeletionRequest request = deletionRepository
+                .findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada: " + requestId));
 
         if (!"APPROVED".equals(request.getStatus())) {
             throw new IllegalStateException("Solo se pueden ejecutar solicitudes aprobadas");
         }
 
         UUID userId = request.getUserId();
-        boolean hasHCE = encounterRepository.countByPatientIdAndStatus(userId, com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.COMPLETED) > 0
-            || encounterRepository.countByPatientIdAndStatus(userId, com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.IN_PROGRESS) > 0;
+        boolean hasHCE = encounterRepository.countByPatientIdAndStatus(
+                                userId, com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.COMPLETED)
+                        > 0
+                || encounterRepository.countByPatientIdAndStatus(
+                                userId, com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.IN_PROGRESS)
+                        > 0;
         int anonymized = 0;
         int deleted = 0;
 
@@ -209,23 +211,28 @@ public class DataDeletionService {
         request = deletionRepository.save(request);
 
         auditRepository.save(new com.kinplatform.common.audit.adapter.AuditLogEntity(
-            UUID.randomUUID(),
-            request.getUserId(),
-            AuditAction.EXECUTE,
-            AuditResourceType.USER,
-            requestId,
-            userId,
-            Instant.now().atOffset(java.time.ZoneOffset.UTC),
-            null, null,
-            Map.of(
-                "scope", request.getScope(),
-                "legalHold", request.getLegalHold(),
-                "anonymizedCount", anonymized,
-                "deletedCount", deleted,
-                "action", "DELETION_EXECUTED"
-            ).toString(),
-            Instant.now().atOffset(java.time.ZoneOffset.UTC)
-        ));
+                UUID.randomUUID(),
+                request.getUserId(),
+                AuditAction.EXECUTE,
+                AuditResourceType.USER,
+                requestId,
+                userId,
+                Instant.now().atOffset(java.time.ZoneOffset.UTC),
+                null,
+                null,
+                Map.of(
+                                "scope",
+                                request.getScope(),
+                                "legalHold",
+                                request.getLegalHold(),
+                                "anonymizedCount",
+                                anonymized,
+                                "deletedCount",
+                                deleted,
+                                "action",
+                                "DELETION_EXECUTED")
+                        .toString(),
+                Instant.now().atOffset(java.time.ZoneOffset.UTC)));
 
         return request;
     }
@@ -234,7 +241,8 @@ public class DataDeletionService {
         int count = 0;
         try {
             // Anonymize encounters
-            var encountersPage = encounterRepository.findByPatientIdOrderByStartedAtDesc(userId, org.springframework.data.domain.Pageable.unpaged());
+            var encountersPage = encounterRepository.findByPatientIdOrderByStartedAtDesc(
+                    userId, org.springframework.data.domain.Pageable.unpaged());
             if (encountersPage != null && encountersPage.getContent() != null) {
                 var encounters = encountersPage.getContent();
                 for (Encounter e : encounters) {
@@ -284,11 +292,12 @@ public class DataDeletionService {
     }
 
     public boolean checkLegalHold(UUID userId) {
-        boolean hasHCE = encounterRepository.countByPatientIdAndStatus(userId, com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.COMPLETED) > 0
-            || encounterRepository.countByPatientIdAndStatus(userId, com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.IN_PROGRESS) > 0;
+        boolean hasHCE = encounterRepository.countByPatientIdAndStatus(
+                                userId, com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.COMPLETED)
+                        > 0
+                || encounterRepository.countByPatientIdAndStatus(
+                                userId, com.kinplatform.kin.health.hce.entity.Encounter.EncounterStatus.IN_PROGRESS)
+                        > 0;
         return hasHCE;
     }
 }
-
-
-

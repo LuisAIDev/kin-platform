@@ -68,22 +68,16 @@ public final class ContentCipher {
     @PostConstruct
     public void validate() {
         if (cryptoSecret == null || cryptoSecret.isBlank()) {
-            throw new IllegalStateException(
-                "KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET no está configurada. " +
-                "Esta variable es OBLIGATORIA en producción para proteger los mensajes médicos."
-            );
+            throw new IllegalStateException("KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET no está configurada. "
+                    + "Esta variable es OBLIGATORIA en producción para proteger los mensajes médicos.");
         }
-        if (cryptoSecret.equals("kin-telemedicine-dev-key")
-                && !"dev".equals(springProfilesActive)) {
+        if ("kin-telemedicine-dev-key".equals(cryptoSecret) && !"dev".equals(springProfilesActive)) {
             throw new IllegalStateException(
-                "La clave de cifrado de telemedicina está usando el valor de DESARROLLO en un " +
-                "entorno no-dev. Configura KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET con un valor seguro."
-            );
+                    "La clave de cifrado de telemedicina está usando el valor de DESARROLLO en un "
+                            + "entorno no-dev. Configura KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET con un valor seguro.");
         }
         if (cryptoSecret.length() < 32) {
-            throw new IllegalStateException(
-                "KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET debe tener al menos 32 caracteres."
-            );
+            throw new IllegalStateException("KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET debe tener al menos 32 caracteres.");
         }
     }
 
