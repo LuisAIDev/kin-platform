@@ -51,6 +51,7 @@ import com.kinplatform.common.interview.stage.InterviewStage;
 import com.kinplatform.common.knowledge.KnowledgeRepository;
 import com.kinplatform.common.knowledge.KnowledgeSource;
 import com.kinplatform.common.knowledge.deduplication.DeduplicationEngine;
+import com.kinplatform.common.knowledge.deduplication.DeduplicationStage;
 import com.kinplatform.common.knowledge.deduplication.DeduplicationStrategy;
 import com.kinplatform.common.knowledge.deduplication.ExactMatchStrategy;
 import com.kinplatform.common.knowledge.deduplication.FuzzyMatchStrategy;
@@ -180,5 +181,15 @@ public class KinCommonConfig {
     @Bean
     public EnrichmentEngine enrichmentEngine(FactRanker factRanker) {
         return new EnrichmentEngine(factRanker);
+    }
+
+    @Bean
+    public EnrichmentStage enrichmentStage(EnrichmentEngine enrichmentEngine) {
+        return new EnrichmentStage(enrichmentEngine);
+    }
+
+    @Bean
+    public DeduplicationStage deduplicationStage(DeduplicationEngine deduplicationEngine) {
+        return new DeduplicationStage(deduplicationEngine);
     }
 }

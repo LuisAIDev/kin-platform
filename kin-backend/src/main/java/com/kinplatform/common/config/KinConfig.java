@@ -34,9 +34,6 @@ import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.common.engine.EngineExecutor;
 import com.kinplatform.common.engine.EngineRegistry;
-import com.kinplatform.common.enrichment.EnrichmentEngine;
-import com.kinplatform.common.enrichment.FactRanker;
-import com.kinplatform.common.enrichment.stage.EnrichmentStage;
 import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.common.event.InMemoryDomainEventBus;
 import com.kinplatform.common.interview.InterviewQuestion;
@@ -48,7 +45,6 @@ import com.kinplatform.common.interview.stage.InterviewStage;
 import com.kinplatform.common.knowledge.KnowledgeRepository;
 import com.kinplatform.common.knowledge.KnowledgeSource;
 import com.kinplatform.common.knowledge.deduplication.DeduplicationEngine;
-import com.kinplatform.common.knowledge.deduplication.DeduplicationStage;
 import com.kinplatform.common.knowledge.deduplication.DeduplicationStrategy;
 import com.kinplatform.common.knowledge.deduplication.ExactMatchStrategy;
 import com.kinplatform.common.knowledge.deduplication.FuzzyMatchStrategy;
@@ -190,16 +186,6 @@ public class KinConfig {
     @Bean
     public DeduplicationEngine deduplicationEngine(List<DeduplicationStrategy> strategies) {
         return new DeduplicationEngine(strategies);
-    }
-
-    @Bean
-    public DeduplicationStage deduplicationStage(DeduplicationEngine deduplicationEngine) {
-        return new DeduplicationStage(deduplicationEngine);
-    }
-
-    @Bean
-    public EnrichmentStage enrichmentStage(EnrichmentEngine enrichmentEngine) {
-        return new EnrichmentStage(enrichmentEngine);
     }
 
     @Bean
