@@ -13,8 +13,9 @@ services:
     name: kin-backend
     runtime: docker
     repo: https://github.com/LuisAIDev/kin-platform
-    rootDir: kin-backend
+    rootDir: .
     dockerContext: .
+    dockerfilePath: ./kin-backend/Dockerfile
     plan: starter
     healthCheckPath: /api/v1/actuator/health
     autoDeploy: true

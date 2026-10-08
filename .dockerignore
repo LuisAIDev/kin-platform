@@ -1,0 +1,21 @@
+# Contexto de build = raiz del repo (Fix A: incluir parent pom)
+.git/
+.gitignore
+node_modules/
+**/node_modules/
+**/target/
+data/
+screenshots/
+docs/
+kin-docs/
+kin-frontend/
+kin-frontend-medical/
+org/
+scripts/
+**/.env*
+**/.idea/
+**/.vscode/
+**/*.iml
+**/hs_err_pid*
+backend-*.log
+*.log
