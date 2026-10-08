@@ -1,6 +1,6 @@
 package com.kinplatform.common.ai.usage;
 
-import com.kinplatform.platform.usage.AiReservation;
+import com.kinplatform.common.usage.AiReservation;
 
 /**
  * Receptor del uso real de tokens reportado por el proveedor de IA. El
@@ -22,5 +22,6 @@ public interface AiUsageRecorder {
      */
     void recordActual(AiReservation reservation, long inputTokens, long outputTokens);
 }
+
 
 

@@ -26,9 +26,9 @@ import com.kinplatform.common.conversation.TurnDirective;
 import com.kinplatform.common.conversation.TurnResult;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.platform.reporting.report.ReportRepository;
-import com.kinplatform.platform.usage.AiBudgetExceededException;
-import com.kinplatform.platform.usage.AiReservation;
-import com.kinplatform.platform.usage.UsagePeriod;
+import com.kinplatform.common.usage.AiBudgetExceededException;
+import com.kinplatform.common.usage.AiReservation;
+import com.kinplatform.common.usage.UsagePeriod;
 import com.kinplatform.common.pricing.PricingPlan;
 import com.kinplatform.common.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.platform.project.Project;
@@ -218,6 +218,7 @@ class ChatOrchestratorBudgetGateTest {
         return new TurnResult(ctx, decision, directive, "¿pregunta?", ResponseValidation.ok(), null, List.of());
     }
 }
+
 
 
 

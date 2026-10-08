@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.kinplatform.platform.method.KinMethod;
+import com.kinplatform.common.method.KinMethod;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.ProjectContext;
@@ -177,6 +177,7 @@ class EnterprisePipelineResultsIntegrationTest {
         return ProjectContext.restore(data, EnumSet.allOf(AnalyzedDimension.class), null, 5, false);
     }
 }
+
 
 
 

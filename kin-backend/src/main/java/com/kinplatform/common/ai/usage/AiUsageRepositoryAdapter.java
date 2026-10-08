@@ -1,8 +1,8 @@
 package com.kinplatform.common.ai.usage;
 
-import com.kinplatform.platform.usage.AiUsagePort;
-import com.kinplatform.platform.usage.AiUsageRecord;
-import com.kinplatform.platform.usage.UsagePeriod;
+import com.kinplatform.common.usage.AiUsagePort;
+import com.kinplatform.common.usage.AiUsageRecord;
+import com.kinplatform.common.usage.UsagePeriod;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,5 +66,6 @@ public class AiUsageRepositoryAdapter implements AiUsagePort {
                 outputTokens);
     }
 }
+
 
 

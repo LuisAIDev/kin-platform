@@ -1,6 +1,6 @@
 package com.kinplatform.platform.reporting.report.model;
 
-import com.kinplatform.platform.enrichment.EvidenceCategory;
+import com.kinplatform.common.enrichment.EvidenceCategory;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,5 +30,6 @@ class CitedSourceTest {
         assertFalse(new CitedSource("", "https://x", "", EvidenceCategory.MARKET, 0.5).isEmpty());
     }
 }
+
 
 

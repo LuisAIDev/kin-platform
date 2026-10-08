@@ -1,7 +1,7 @@
 package com.kinplatform.common.ai.usage;
 
-import com.kinplatform.platform.usage.ProjectQuotaPort;
-import com.kinplatform.platform.usage.UsagePeriod;
+import com.kinplatform.common.usage.ProjectQuotaPort;
+import com.kinplatform.common.usage.UsagePeriod;
 import com.kinplatform.common.user.UserRepository;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -57,6 +57,7 @@ public class ProjectQuotaAdapter implements ProjectQuotaPort {
         return userRepository.tryIncrementCompletedProjects(userId, limit) == 1;
     }
 }
+
 
 
 

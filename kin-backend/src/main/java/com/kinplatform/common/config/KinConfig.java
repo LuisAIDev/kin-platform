@@ -4,7 +4,6 @@ import com.kinplatform.common.ai.interview.adapter.JpaInterviewRepository;
 import com.kinplatform.common.ai.knowledge.adapter.KinKnowledgeProperties;
 import com.kinplatform.common.ai.provider.AIProvider;
 import com.kinplatform.common.ai.provider.ProviderRouter;
-import com.kinplatform.common.method.KinMethod;
 import com.kinplatform.common.ai.AIResponder;
 import com.kinplatform.common.ai.PromptAssembler;
 import com.kinplatform.common.ai.prompt.ConversationPromptBuilder;
@@ -30,10 +29,7 @@ import com.kinplatform.common.context.ExplorationPriority;
 import com.kinplatform.common.context.ProjectContextSyncPort;
 import com.kinplatform.common.context.strategy.ConversationStrategist;
 import com.kinplatform.common.context.strategy.DefaultExplorationStrategy;
-import com.kinplatform.common.conversation.ConversationOrchestrator;
 import com.kinplatform.common.conversation.ResponseFallback;
-import com.kinplatform.common.conversation.history.HistoryWindow;
-import com.kinplatform.common.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.engine.DomainEngine;
 import com.kinplatform.common.engine.EngineExecutor;
@@ -41,12 +37,8 @@ import com.kinplatform.common.engine.EngineRegistry;
 import com.kinplatform.common.enrichment.EnrichmentEngine;
 import com.kinplatform.common.enrichment.FactRanker;
 import com.kinplatform.common.enrichment.stage.EnrichmentStage;
-import com.kinplatform.platform.enterprise.application.EnterprisePipelineResultStore;
-import com.kinplatform.platform.enterprise.application.EnterpriseProjectTrigger;
 import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.common.event.InMemoryDomainEventBus;
-import com.kinplatform.kin.health.differential.stage.DifferentialStage;
-import com.kinplatform.kin.health.triage.stage.TriageStage;
 import com.kinplatform.common.interview.InterviewQuestion;
 import com.kinplatform.common.interview.InterviewRepository;
 import com.kinplatform.common.interview.engine.AnswerValidator;
@@ -74,47 +66,7 @@ import com.kinplatform.common.pipeline.stage.AnalyzerStage;
 import com.kinplatform.common.pipeline.stage.ConsultorStage;
 import com.kinplatform.common.pipeline.stage.EvaluatorStage;
 import com.kinplatform.common.pipeline.stage.EventStage;
-import com.kinplatform.common.pipeline.stage.OpportunityStage;
-import com.kinplatform.common.pipeline.stage.RecommendationStage;
-import com.kinplatform.common.pipeline.stage.ReportStage;
-import com.kinplatform.common.pipeline.stage.RiskStage;
-import com.kinplatform.common.pipeline.stage.ScoringStage;
 import com.kinplatform.common.pipeline.stage.StrategistStage;
-import com.kinplatform.platform.reporting.RecommendationEngine;
-import com.kinplatform.platform.reporting.RecommendationModel;
-import com.kinplatform.platform.reporting.opportunity.AutomationOpportunityAnalyzer;
-import com.kinplatform.platform.reporting.opportunity.CompetitiveOpportunityAnalyzer;
-import com.kinplatform.platform.reporting.opportunity.FinancialOpportunityAnalyzer;
-import com.kinplatform.platform.reporting.opportunity.InnovationOpportunityAnalyzer;
-import com.kinplatform.platform.reporting.opportunity.MarketOpportunityAnalyzer;
-import com.kinplatform.platform.reporting.opportunity.MonetizationOpportunityAnalyzer;
-import com.kinplatform.platform.reporting.opportunity.OpportunityAnalyzer;
-import com.kinplatform.platform.reporting.opportunity.OpportunityEngine;
-import com.kinplatform.platform.reporting.opportunity.OpportunityModel;
-import com.kinplatform.platform.reporting.opportunity.ScalabilityOpportunityAnalyzer;
-import com.kinplatform.platform.reporting.opportunity.TechnologicalOpportunityAnalyzer;
-import com.kinplatform.platform.reporting.report.ReportAssemblers;
-import com.kinplatform.platform.reporting.report.ReportEngine;
-import com.kinplatform.platform.reporting.report.ReportModel;
-import com.kinplatform.platform.reporting.report.assembler.ExecutiveSummaryAssembler;
-import com.kinplatform.platform.reporting.report.assembler.FinancialSectionAssembler;
-import com.kinplatform.platform.reporting.report.assembler.InnovationSectionAssembler;
-import com.kinplatform.platform.reporting.report.assembler.MarketSectionAssembler;
-import com.kinplatform.platform.reporting.report.assembler.NextStepsSectionAssembler;
-import com.kinplatform.platform.reporting.report.assembler.OpportunitiesSectionAssembler;
-import com.kinplatform.platform.reporting.report.assembler.RecommendationsSectionAssembler;
-import com.kinplatform.platform.reporting.report.assembler.ReportMetadataAssembler;
-import com.kinplatform.platform.reporting.report.assembler.RisksSectionAssembler;
-import com.kinplatform.platform.reporting.report.assembler.ScoresSectionAssembler;
-import com.kinplatform.platform.reporting.risk.BusinessRiskAnalyzer;
-import com.kinplatform.platform.reporting.risk.FinancialRiskAnalyzer;
-import com.kinplatform.platform.reporting.risk.MarketRiskAnalyzer;
-import com.kinplatform.platform.reporting.risk.RiskAnalyzer;
-import com.kinplatform.platform.reporting.risk.RiskEngine;
-import com.kinplatform.platform.reporting.risk.RiskModel;
-import com.kinplatform.platform.reporting.risk.TechnicalRiskAnalyzer;
-import com.kinplatform.platform.scoring.ScoringEngine;
-import com.kinplatform.platform.scoring.ScoringModel;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -123,16 +75,6 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class KinConfig {
-
-    @Bean
-    public ScoringModel scoringModel() {
-        return ScoringModel.defaultModel();
-    }
-
-    @Bean
-    public ScoringEngine scoringEngine(ScoringModel scoringModel) {
-        return new ScoringEngine(scoringModel);
-    }
 
     @Bean
     public ExecutiveSummaryFormatter executiveSummaryFormatter() {
@@ -211,208 +153,6 @@ public class KinConfig {
     }
 
     @Bean
-    public ScoringStage scoringStage(ScoringEngine scoringEngine) {
-        return new ScoringStage(scoringEngine);
-    }
-
-    @Bean
-    public RecommendationModel recommendationModel() {
-        return RecommendationModel.defaultModel();
-    }
-
-    @Bean
-    public RecommendationEngine recommendationEngine(RecommendationModel recommendationModel) {
-        return new RecommendationEngine(recommendationModel);
-    }
-
-    @Bean
-    public RecommendationStage recommendationStage(RecommendationEngine recommendationEngine) {
-        return new RecommendationStage(recommendationEngine);
-    }
-
-    @Bean
-    public RiskModel riskModel() {
-        return RiskModel.defaultModel();
-    }
-
-    @Bean
-    public BusinessRiskAnalyzer businessRiskAnalyzer() {
-        return new BusinessRiskAnalyzer();
-    }
-
-    @Bean
-    public TechnicalRiskAnalyzer technicalRiskAnalyzer() {
-        return new TechnicalRiskAnalyzer();
-    }
-
-    @Bean
-    public FinancialRiskAnalyzer financialRiskAnalyzer() {
-        return new FinancialRiskAnalyzer();
-    }
-
-    @Bean
-    public MarketRiskAnalyzer marketRiskAnalyzer() {
-        return new MarketRiskAnalyzer();
-    }
-
-    @Bean
-    public RiskEngine riskEngine(List<RiskAnalyzer> analyzers, RiskModel riskModel) {
-        return new RiskEngine(analyzers, riskModel);
-    }
-
-    @Bean
-    public RiskStage riskStage(RiskEngine riskEngine) {
-        return new RiskStage(riskEngine);
-    }
-
-    @Bean
-    public OpportunityModel opportunityModel() {
-        return OpportunityModel.defaultModel();
-    }
-
-    @Bean
-    public MarketOpportunityAnalyzer marketOpportunityAnalyzer() {
-        return new MarketOpportunityAnalyzer();
-    }
-
-    @Bean
-    public InnovationOpportunityAnalyzer innovationOpportunityAnalyzer() {
-        return new InnovationOpportunityAnalyzer();
-    }
-
-    @Bean
-    public TechnologicalOpportunityAnalyzer technologicalOpportunityAnalyzer() {
-        return new TechnologicalOpportunityAnalyzer();
-    }
-
-    @Bean
-    public FinancialOpportunityAnalyzer financialOpportunityAnalyzer() {
-        return new FinancialOpportunityAnalyzer();
-    }
-
-    @Bean
-    public CompetitiveOpportunityAnalyzer competitiveOpportunityAnalyzer() {
-        return new CompetitiveOpportunityAnalyzer();
-    }
-
-    @Bean
-    public ScalabilityOpportunityAnalyzer scalabilityOpportunityAnalyzer() {
-        return new ScalabilityOpportunityAnalyzer();
-    }
-
-    @Bean
-    public AutomationOpportunityAnalyzer automationOpportunityAnalyzer() {
-        return new AutomationOpportunityAnalyzer();
-    }
-
-    @Bean
-    public MonetizationOpportunityAnalyzer monetizationOpportunityAnalyzer() {
-        return new MonetizationOpportunityAnalyzer();
-    }
-
-    @Bean
-    public OpportunityEngine opportunityEngine(List<OpportunityAnalyzer> analyzers, OpportunityModel opportunityModel) {
-        return new OpportunityEngine(analyzers, opportunityModel);
-    }
-
-    @Bean
-    public OpportunityStage opportunityStage(OpportunityEngine opportunityEngine) {
-        return new OpportunityStage(opportunityEngine);
-    }
-
-    @Bean
-    public ReportModel reportModel() {
-        return ReportModel.defaultModel();
-    }
-
-    @Bean
-    public ExecutiveSummaryAssembler executiveSummaryAssembler() {
-        return new ExecutiveSummaryAssembler();
-    }
-
-    @Bean
-    public ScoresSectionAssembler scoresSectionAssembler() {
-        return new ScoresSectionAssembler();
-    }
-
-    @Bean
-    public RecommendationsSectionAssembler recommendationsSectionAssembler() {
-        return new RecommendationsSectionAssembler();
-    }
-
-    @Bean
-    public RisksSectionAssembler risksSectionAssembler() {
-        return new RisksSectionAssembler();
-    }
-
-    @Bean
-    public OpportunitiesSectionAssembler opportunitiesSectionAssembler() {
-        return new OpportunitiesSectionAssembler();
-    }
-
-    @Bean
-    public FinancialSectionAssembler financialSectionAssembler() {
-        return new FinancialSectionAssembler();
-    }
-
-    @Bean
-    public MarketSectionAssembler marketSectionAssembler() {
-        return new MarketSectionAssembler();
-    }
-
-    @Bean
-    public InnovationSectionAssembler innovationSectionAssembler() {
-        return new InnovationSectionAssembler();
-    }
-
-    @Bean
-    public NextStepsSectionAssembler nextStepsSectionAssembler(ReportModel reportModel) {
-        return new NextStepsSectionAssembler(reportModel);
-    }
-
-    @Bean
-    public ReportMetadataAssembler reportMetadataAssembler(ReportModel reportModel) {
-        return new ReportMetadataAssembler(reportModel);
-    }
-
-    @Bean
-    public ReportAssemblers reportAssemblers(
-            ExecutiveSummaryAssembler executiveSummary,
-            ScoresSectionAssembler scores,
-            RecommendationsSectionAssembler recommendations,
-            RisksSectionAssembler risks,
-            OpportunitiesSectionAssembler opportunities,
-            FinancialSectionAssembler financial,
-            MarketSectionAssembler market,
-            InnovationSectionAssembler innovation,
-            NextStepsSectionAssembler nextSteps,
-            ReportMetadataAssembler metadata) {
-        return new ReportAssemblers(
-                executiveSummary,
-                scores,
-                recommendations,
-                risks,
-                opportunities,
-                financial,
-                market,
-                innovation,
-                nextSteps,
-                metadata);
-    }
-
-    @Bean
-    public ReportEngine reportEngine(ReportAssemblers reportAssemblers, ReportModel reportModel) {
-        return new ReportEngine(reportAssemblers, reportModel);
-    }
-
-    @Bean
-    public ReportStage reportStage(ReportEngine reportEngine) {
-        return new ReportStage(reportEngine);
-    }
-
-    
-
-    @Bean
     public KnowledgeGateway knowledgeGateway(
             SourceRegistry sourceRegistry,
             SourceValidator sourceValidator,
@@ -430,11 +170,6 @@ public class KinConfig {
     public KnowledgeStage knowledgeStage(
             KnowledgeEngine knowledgeEngine, KinKnowledgeProperties kinKnowledgeProperties) {
         return new KnowledgeStage(knowledgeEngine, kinKnowledgeProperties.isShadowEnabled());
-    }
-
-    @Bean
-    public EnrichmentStage enrichmentStage(EnrichmentEngine enrichmentEngine) {
-        return new EnrichmentStage(enrichmentEngine);
     }
 
     @Bean
@@ -460,6 +195,11 @@ public class KinConfig {
     @Bean
     public DeduplicationStage deduplicationStage(DeduplicationEngine deduplicationEngine) {
         return new DeduplicationStage(deduplicationEngine);
+    }
+
+    @Bean
+    public EnrichmentStage enrichmentStage(EnrichmentEngine enrichmentEngine) {
+        return new EnrichmentStage(enrichmentEngine);
     }
 
     @Bean
@@ -491,92 +231,4 @@ public class KinConfig {
     public InterviewStage interviewStage(InterviewEngine interviewEngine, InterviewRepository interviewRepository) {
         return new InterviewStage(interviewEngine, interviewRepository);
     }
-
-    @Bean
-    public Pipeline chatPipeline(
-            AnalyzerStage analyzer,
-            TriageStage triage,
-            DifferentialStage differential,
-            EvaluatorStage evaluator,
-            StrategistStage strategist,
-            InterviewStage interview,
-            KnowledgeStage knowledge,
-            DeduplicationStage deduplication,
-            EnrichmentStage enrichment,
-            ConsultorStage consultor,
-            ScoringStage scoring,
-            RecommendationStage recommendation,
-            RiskStage risk,
-            OpportunityStage opportunity,
-            ReportStage report,
-            EventStage eventStage) {
-        return new Pipeline(
-                List.of(
-                        analyzer,
-                        triage,
-                        differential,
-                        evaluator,
-                        strategist,
-                        interview,
-                        knowledge,
-                        deduplication,
-                        enrichment,
-                        scoring,
-                        recommendation,
-                        risk,
-                        opportunity,
-                        report,
-                        consultor,
-                        eventStage),
-                null,
-                StageRetryPolicy.none(),
-                new StageTimeoutConfig(
-                        Map.of(
-                                consultor.name(), 60_000L,
-                                // Adquisición de conocimiento externo (ADR-021): 6 fuentes
-                                // secuenciales con red real; el default de 5 s es insuficiente
-                                // (cold start de World Bank/datos.gov.co entre 1 y 20 s por fuente).
-                                knowledge.name(), 120_000L),
-                        StagePolicy.DEFAULT_TIMEOUT_MILLIS,
-                        StageTimeoutConfig.TimeoutAction.FAIL));
-    }
-
-    @Bean
-    public KinMethod kinMethod(
-            Pipeline chatPipeline,
-            ContextRepository contextRepository,
-            ProjectContextSyncPort projectContextSyncPort,
-            EnterprisePipelineResultStore enterprisePipelineResultStore) {
-        return new KinMethod(
-                chatPipeline,
-                contextRepository,
-                new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
-                projectContextSyncPort,
-                enterprisePipelineResultStore);
-    }
-
-    @Bean
-    public ConversationOrchestrator conversationOrchestrator(
-            HistoryWindow historyWindow,
-            DefaultTurnPolicy turnPolicy,
-            KinMethod kinMethod,
-            ResponseGuard responseGuard,
-            ContextRepository contextRepository,
-            EnterpriseProjectTrigger enterpriseProjectTrigger) {
-        return new ConversationOrchestrator(
-                historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository, enterpriseProjectTrigger);
-    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

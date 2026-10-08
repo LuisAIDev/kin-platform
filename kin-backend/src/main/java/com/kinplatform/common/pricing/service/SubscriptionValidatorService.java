@@ -2,7 +2,7 @@ package com.kinplatform.common.pricing.service;
 
 import com.kinplatform.common.ai.usage.AiBudgetControlService;
 import com.kinplatform.common.ai.usage.AiUsageSummary;
-import com.kinplatform.platform.usage.ProjectQuotaPort;
+import com.kinplatform.common.usage.ProjectQuotaPort;
 import com.kinplatform.common.pricing.PricingPlan;
 import com.kinplatform.common.pricing.PricingPlanRepository;
 import com.kinplatform.common.pricing.SubscriptionStatus;
@@ -195,6 +195,7 @@ public class SubscriptionValidatorService {
         }
     }
 }
+
 
 
 

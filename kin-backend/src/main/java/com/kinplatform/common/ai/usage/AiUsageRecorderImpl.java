@@ -1,6 +1,6 @@
 package com.kinplatform.common.ai.usage;
 
-import com.kinplatform.platform.usage.AiReservation;
+import com.kinplatform.common.usage.AiReservation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,5 +28,6 @@ public class AiUsageRecorderImpl implements AiUsageRecorder {
         budgetControlService.recordActual(reservation, inputTokens, outputTokens);
     }
 }
+
 
 

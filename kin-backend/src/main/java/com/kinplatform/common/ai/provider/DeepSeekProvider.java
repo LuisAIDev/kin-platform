@@ -3,7 +3,7 @@ package com.kinplatform.common.ai.provider;
 import com.kinplatform.common.ai.usage.AiUsageRecorder;
 import com.kinplatform.common.ai.usage.ReservationContext;
 import com.kinplatform.common.context.Message;
-import com.kinplatform.platform.usage.AiReservation;
+import com.kinplatform.common.usage.AiReservation;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -461,6 +461,7 @@ public class DeepSeekProvider implements AIProvider {
         return messages;
     }
 }
+
 
 
 

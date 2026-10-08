@@ -12,7 +12,7 @@ import com.kinplatform.common.ai.context.adapter.JpaContextRepository;
 import com.kinplatform.common.ai.context.adapter.ProjectContextEntity;
 import com.kinplatform.common.ai.context.adapter.ProjectContextJpaRepository;
 import com.kinplatform.platform.chat.ChatMessageRepository;
-import com.kinplatform.platform.method.KinMethod;
+import com.kinplatform.common.method.KinMethod;
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.CompletenessEvaluator;
 import com.kinplatform.common.context.ContextRepository;
@@ -184,6 +184,7 @@ class ProjectContextSyncIntegrationTest {
         assertEquals("Título Existente", project.getTitle());
     }
 }
+
 
 
 

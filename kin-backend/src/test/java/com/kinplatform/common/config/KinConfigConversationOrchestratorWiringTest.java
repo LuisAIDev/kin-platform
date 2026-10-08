@@ -28,7 +28,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * Tests de wiring del ciclo automático Enterprise (Fase 10, M3B): verifica que
- * {@link KinConfig#conversationOrchestrator} inyecta el
+ * {@link KinPlatformConfig#conversationOrchestrator} inyecta el
  * {@link EnterpriseProjectTrigger} real (y no el {@code NO_OP_TRIGGER}) al
  * {@link ConversationOrchestrator} usando el constructor aditivo de 6 argumentos.
  */
@@ -38,7 +38,7 @@ class KinConfigConversationOrchestratorWiringTest {
     private static final UUID PROJECT_ID = UUID.randomUUID();
     private static final UUID USER_ID = UUID.randomUUID();
 
-    private final KinConfig kinConfig = new KinConfig();
+    private final KinPlatformConfig kinPlatformConfig = new KinPlatformConfig();
 
     @Mock
     private KinMethod kinMethod;
@@ -58,7 +58,7 @@ class KinConfigConversationOrchestratorWiringTest {
             contexto, null, ConversationDecision.generateReport("informe"),
             "Aquí tenés el informe de viabilidad completo.", null, List.of(), ConsultingReport.empty()));
 
-        ConversationOrchestrator orchestrator = kinConfig.conversationOrchestrator(
+        ConversationOrchestrator orchestrator = kinPlatformConfig.conversationOrchestrator(
             new HistoryWindow(), new DefaultTurnPolicy(), kinMethod,
             new ResponseGuard(), contextRepository, enterpriseProjectTrigger);
 

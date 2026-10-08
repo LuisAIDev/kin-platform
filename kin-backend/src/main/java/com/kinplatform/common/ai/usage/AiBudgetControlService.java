@@ -1,11 +1,11 @@
 package com.kinplatform.common.ai.usage;
 
-import com.kinplatform.platform.usage.AiBudgetExceededException;
-import com.kinplatform.platform.usage.AiReservation;
-import com.kinplatform.platform.usage.AiUsagePort;
-import com.kinplatform.platform.usage.CostEstimator;
-import com.kinplatform.platform.usage.HeuristicCostEstimator;
-import com.kinplatform.platform.usage.UsagePeriod;
+import com.kinplatform.common.usage.AiBudgetExceededException;
+import com.kinplatform.common.usage.AiReservation;
+import com.kinplatform.common.usage.AiUsagePort;
+import com.kinplatform.common.usage.CostEstimator;
+import com.kinplatform.common.usage.HeuristicCostEstimator;
+import com.kinplatform.common.usage.UsagePeriod;
 import com.kinplatform.common.pricing.PricingPlan;
 import java.math.BigDecimal;
 import java.util.List;
@@ -178,6 +178,7 @@ public class AiBudgetControlService {
                 period.end());
     }
 }
+
 
 
 

@@ -3,11 +3,11 @@ package com.kinplatform.platform.reporting.opportunity;
 import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
-import com.kinplatform.platform.enrichment.EnrichmentResult;
-import com.kinplatform.platform.enrichment.EvidenceCategory;
-import com.kinplatform.platform.enrichment.EvidenceRank;
-import com.kinplatform.platform.enrichment.EvidenceScore;
-import com.kinplatform.platform.enrichment.KnowledgeEvidence;
+import com.kinplatform.common.enrichment.EnrichmentResult;
+import com.kinplatform.common.enrichment.EvidenceCategory;
+import com.kinplatform.common.enrichment.EvidenceRank;
+import com.kinplatform.common.enrichment.EvidenceScore;
+import com.kinplatform.common.enrichment.KnowledgeEvidence;
 import com.kinplatform.common.knowledge.KnowledgeFact;
 import com.kinplatform.common.knowledge.SourceTrust;
 import com.kinplatform.platform.scoring.ScoreResult;
@@ -69,6 +69,7 @@ class OpportunityInputEnrichmentTest {
             "enriquecido", "Test", "v1");
     }
 }
+
 
 
 

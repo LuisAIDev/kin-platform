@@ -2,10 +2,10 @@ package com.kinplatform.platform.reporting.risk;
 
 import com.kinplatform.common.context.AnalyzedDimension;
 import com.kinplatform.common.context.CompletenessEvaluation;
-import com.kinplatform.platform.enrichment.EnrichmentResult;
-import com.kinplatform.platform.enrichment.EvidenceCategory;
-import com.kinplatform.platform.enrichment.EvidenceRank;
-import com.kinplatform.platform.enrichment.KnowledgeEvidence;
+import com.kinplatform.common.enrichment.EnrichmentResult;
+import com.kinplatform.common.enrichment.EvidenceCategory;
+import com.kinplatform.common.enrichment.EvidenceRank;
+import com.kinplatform.common.enrichment.KnowledgeEvidence;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -160,6 +160,7 @@ public class TechnicalRiskAnalyzer implements RiskAnalyzer {
         return fact.claim() + " (fuente: " + source + ")";
     }
 }
+
 
 
 

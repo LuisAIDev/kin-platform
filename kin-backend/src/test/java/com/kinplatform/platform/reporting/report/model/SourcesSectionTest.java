@@ -1,6 +1,6 @@
 package com.kinplatform.platform.reporting.report.model;
 
-import com.kinplatform.platform.enrichment.EvidenceCategory;
+import com.kinplatform.common.enrichment.EvidenceCategory;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -42,5 +42,6 @@ class SourcesSectionTest {
         assertTrue(section.sources().isEmpty());
     }
 }
+
 
 

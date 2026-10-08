@@ -6,7 +6,7 @@ import com.kinplatform.common.conversation.ResponseValidation;
 import com.kinplatform.common.conversation.TurnDirective;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.common.engine.EngineResult;
-import com.kinplatform.platform.enrichment.EnrichmentResult;
+import com.kinplatform.common.enrichment.EnrichmentResult;
 import com.kinplatform.common.event.DomainEvent;
 import com.kinplatform.kin.health.differential.domain.DifferentialResult;
 import com.kinplatform.kin.health.triage.domain.TriageResult;
@@ -320,6 +320,7 @@ public class PipelineContext {
         this.responseValidation = validation;
     }
 }
+
 
 
 

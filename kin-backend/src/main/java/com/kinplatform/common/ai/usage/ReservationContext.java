@@ -1,6 +1,6 @@
 package com.kinplatform.common.ai.usage;
 
-import com.kinplatform.platform.usage.AiReservation;
+import com.kinplatform.common.usage.AiReservation;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,5 +26,6 @@ public class ReservationContext {
         CURRENT.remove();
     }
 }
+
 
 

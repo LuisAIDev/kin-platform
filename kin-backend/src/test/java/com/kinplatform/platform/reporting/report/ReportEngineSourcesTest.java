@@ -1,10 +1,10 @@
 package com.kinplatform.platform.reporting.report;
 
-import com.kinplatform.platform.enrichment.EnrichmentResult;
-import com.kinplatform.platform.enrichment.EvidenceCategory;
-import com.kinplatform.platform.enrichment.EvidenceRank;
-import com.kinplatform.platform.enrichment.EvidenceScore;
-import com.kinplatform.platform.enrichment.KnowledgeEvidence;
+import com.kinplatform.common.enrichment.EnrichmentResult;
+import com.kinplatform.common.enrichment.EvidenceCategory;
+import com.kinplatform.common.enrichment.EvidenceRank;
+import com.kinplatform.common.enrichment.EvidenceScore;
+import com.kinplatform.common.enrichment.KnowledgeEvidence;
 import com.kinplatform.common.knowledge.KnowledgeFact;
 import com.kinplatform.common.knowledge.SourceTrust;
 import com.kinplatform.platform.reporting.report.assembler.ExecutiveSummaryAssembler;
@@ -76,6 +76,7 @@ class ReportEngineSourcesTest {
             "enriquecido", "Test", "v1");
     }
 }
+
 
 
 

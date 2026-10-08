@@ -1,6 +1,6 @@
 package com.kinplatform.platform.reporting.report.assembler;
 
-import com.kinplatform.platform.enrichment.EnrichmentResult;
+import com.kinplatform.common.enrichment.EnrichmentResult;
 import com.kinplatform.platform.reporting.report.ReportInput;
 import com.kinplatform.platform.reporting.report.SectionAssembler;
 import com.kinplatform.platform.reporting.report.model.CitedSource;
@@ -48,6 +48,7 @@ public class SourcesSectionAssembler implements SectionAssembler<SourcesSection>
         return new SourcesSection(List.copyOf(bySourceId.values()));
     }
 }
+
 
 
 

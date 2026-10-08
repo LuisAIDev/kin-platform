@@ -18,8 +18,8 @@ import com.kinplatform.platform.export.intent.ExportAction;
 import com.kinplatform.platform.export.intent.ExportChatIntentService;
 import com.kinplatform.platform.reporting.report.ReportRepository;
 import com.kinplatform.platform.reporting.report.model.ConsultingReport;
-import com.kinplatform.platform.usage.AiBudgetExceededException;
-import com.kinplatform.platform.usage.AiReservation;
+import com.kinplatform.common.usage.AiBudgetExceededException;
+import com.kinplatform.common.usage.AiReservation;
 import com.kinplatform.common.pricing.service.SubscriptionValidatorService;
 import com.kinplatform.platform.project.ProjectRepository;
 import java.io.IOException;
@@ -860,6 +860,7 @@ public class ChatOrchestratorServiceImpl implements ChatOrchestratorService {
         return messages;
     }
 }
+
 
 
 

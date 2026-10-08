@@ -4,7 +4,7 @@ import com.kinplatform.common.context.CompletenessEvaluation;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.decision.ConversationDecision;
 import com.kinplatform.common.engine.EngineInput;
-import com.kinplatform.platform.enrichment.EnrichmentResult;
+import com.kinplatform.common.enrichment.EnrichmentResult;
 import com.kinplatform.platform.scoring.ScoreResult;
 
 /**
@@ -42,6 +42,7 @@ public record OpportunityInput(
         return new OpportunityInput(projectContext, evaluation, decision, score, enrichment);
     }
 }
+
 
 
 
