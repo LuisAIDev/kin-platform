@@ -60,6 +60,7 @@ import com.kinplatform.common.knowledge.engine.KnowledgeEngine;
 import com.kinplatform.common.knowledge.engine.KnowledgeGateway;
 import com.kinplatform.common.knowledge.engine.SourceRegistry;
 import com.kinplatform.common.knowledge.engine.SourceValidator;
+import com.kinplatform.common.knowledge.stage.KnowledgeStage;
 import com.kinplatform.common.pipeline.Pipeline;
 import com.kinplatform.common.pipeline.resilience.StagePolicy;
 import com.kinplatform.common.pipeline.resilience.StageRetryPolicy;
@@ -191,5 +192,151 @@ public class KinCommonConfig {
     @Bean
     public DeduplicationStage deduplicationStage(DeduplicationEngine deduplicationEngine) {
         return new DeduplicationStage(deduplicationEngine);
+    }
+
+    @Bean
+    public ExecutiveSummaryFormatter executiveSummaryFormatter() {
+        return new ExecutiveSummaryFormatter();
+    }
+
+    @Bean
+    public ScoresSectionFormatter scoresSectionFormatter() {
+        return new ScoresSectionFormatter();
+    }
+
+    @Bean
+    public RecommendationsSectionFormatter recommendationsSectionFormatter() {
+        return new RecommendationsSectionFormatter();
+    }
+
+    @Bean
+    public RisksSectionFormatter risksSectionFormatter() {
+        return new RisksSectionFormatter();
+    }
+
+    @Bean
+    public OpportunitiesSectionFormatter opportunitiesSectionFormatter() {
+        return new OpportunitiesSectionFormatter();
+    }
+
+    @Bean
+    public FinancialSectionFormatter financialSectionFormatter() {
+        return new FinancialSectionFormatter();
+    }
+
+    @Bean
+    public MarketSectionFormatter marketSectionFormatter() {
+        return new MarketSectionFormatter();
+    }
+
+    @Bean
+    public InnovationSectionFormatter innovationSectionFormatter() {
+        return new InnovationSectionFormatter();
+    }
+
+    @Bean
+    public NextStepsSectionFormatter nextStepsSectionFormatter() {
+        return new NextStepsSectionFormatter();
+    }
+
+    @Bean
+    public ReportMetadataFormatter reportMetadataFormatter() {
+        return new ReportMetadataFormatter();
+    }
+
+    @Bean
+    public SourcesSectionFormatter sourcesSectionFormatter() {
+        return new SourcesSectionFormatter();
+    }
+
+    @Bean
+    public AnalyzerStage analyzerStage(ContextAnalyzerPort analyzer) {
+        return new AnalyzerStage(analyzer);
+    }
+
+    @Bean
+    public EvaluatorStage evaluatorStage(CompletenessEvaluator evaluator) {
+        return new EvaluatorStage(evaluator);
+    }
+
+    @Bean
+    public StrategistStage strategistStage(ConversationStrategist strategist) {
+        return new StrategistStage(strategist);
+    }
+
+    @Bean
+    public ConsultorStage consultorStage(
+            AIResponder aiResponder, PromptAssembler promptAssembler, ResponseGuard responseGuard) {
+        return new ConsultorStage(aiResponder, promptAssembler, responseGuard);
+    }
+
+    @Bean
+    public KnowledgeGateway knowledgeGateway(
+            SourceRegistry sourceRegistry,
+            SourceValidator sourceValidator,
+            org.springframework.beans.factory.ObjectProvider<KnowledgeRepository> knowledgeRepositoryProvider) {
+        KnowledgeRepository repository = knowledgeRepositoryProvider.getIfAvailable();
+        return new KnowledgeGateway(sourceRegistry, sourceValidator, repository);
+    }
+
+    @Bean
+    public KnowledgeEngine knowledgeEngine(KnowledgeGateway knowledgeGateway) {
+        return new KnowledgeEngine(knowledgeGateway);
+    }
+
+    @Bean
+    public KnowledgeStage knowledgeStage(
+            KnowledgeEngine knowledgeEngine, KinKnowledgeProperties kinKnowledgeProperties) {
+        return new KnowledgeStage(knowledgeEngine, kinKnowledgeProperties.isShadowEnabled());
+    }
+
+    @Bean
+    public ExactMatchStrategy exactMatchStrategy() {
+        return new ExactMatchStrategy();
+    }
+
+    @Bean
+    public FuzzyMatchStrategy fuzzyMatchStrategy() {
+        return new FuzzyMatchStrategy(0.85);
+    }
+
+    @Bean
+    public SemanticMatchStrategy semanticMatchStrategy() {
+        return new SemanticMatchStrategy(0.90);
+    }
+
+    @Bean
+    public DeduplicationEngine deduplicationEngine(List<DeduplicationStrategy> strategies) {
+        return new DeduplicationEngine(strategies);
+    }
+
+    @Bean
+    public AnswerValidator answerValidator() {
+        return new AnswerValidator();
+    }
+
+    @Bean
+    public InterviewBlueprint interviewBlueprint() {
+        return new InterviewBlueprint(List.of(
+                InterviewQuestion.required("q-proyecto", AnalyzedDimension.PROJECT_NAME, "nombre del proyecto", 1),
+                InterviewQuestion.required("q-sector", AnalyzedDimension.SECTOR, "sector y giro del negocio", 2),
+                InterviewQuestion.required("q-problema", AnalyzedDimension.PROBLEM, "problema que resuelve", 3),
+                InterviewQuestion.required("q-solucion", AnalyzedDimension.SOLUTION, "solución propuesta", 4),
+                InterviewQuestion.required("q-cliente", AnalyzedDimension.TARGET_CUSTOMER, "cliente objetivo", 5)));
+    }
+
+    @Bean
+    public InterviewEngine interviewEngine(InterviewBlueprint blueprint, AnswerValidator validator) {
+        return new InterviewEngine(blueprint, validator);
+    }
+
+    @Bean
+    public InterviewRepository interviewRepository(JpaInterviewRepository jpaInterviewRepository) {
+        return jpaInterviewRepository;
+    }
+
+    @Bean
+    public InterviewStage interviewStage(InterviewEngine interviewEngine, InterviewRepository interviewRepository) {
+        return new InterviewStage(interviewEngine, interviewRepository);
     }
 }
