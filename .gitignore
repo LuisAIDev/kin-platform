@@ -33,6 +33,10 @@ node_modules/
 # Build artifacts / stray compiled classes
 org/
 
+target/
+kin-license-generator/target/
+kin-backend/target/
+
 # Generated copies / probe artifacts
 probe-clean/
 .probe-clean/

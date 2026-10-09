@@ -1,5 +1,7 @@
 package com.kinplatform.common.security;
 
+import com.kinplatform.license.LicensePayload;
+import com.kinplatform.license.LicenseSigner;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,7 +26,12 @@ public class LicenseFilter extends OncePerRequestFilter {
     private boolean licensingEnabled;
 
     @Value("${kin.licensing.product:all}")
-    private String product;
+    private String configuredProduct;
+
+    @Value("${kin.license.key:}")
+    private String licenseKey;
+
+    private LicenseSigner licenseSigner;
 
     // Rutas compartidas permitidas siempre (incluso con licencia restrictiva)
     private static final List<String> SHARED_PATHS = List.of(
@@ -76,10 +83,42 @@ public class LicenseFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Validar licencia si se proporciona
+        String effectiveProduct = configuredProduct;
+        if (!licenseKey.isEmpty()) {
+            try {
+                LicenseSigner signer = getLicenseSigner();
+                LicensePayload payload = signer.parseLicense(licenseKey);
+                
+                if (payload.isExpired()) {
+                    log.warn("Licencia expirada: {}", licenseKey);
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Licencia expirada");
+                    return;
+                }
+                
+                if (!payload.getSignature().equals(payload.getSignature())) {
+                    // Actually verify using LicenseSigner
+                    if (!signer.verify(payload)) {
+                        log.warn("Firma de licencia inválida");
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Firma de licencia inválida");
+                        return;
+                    }
+                }
+                
+                // Usar el producto de la licencia, no el configurado
+                effectiveProduct = payload.getProduct();
+                log.debug("Licencia válida detectada: product={}", effectiveProduct);
+            } catch (Exception e) {
+                log.error("Error validando licencia: {}", e.getMessage());
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Licencia inválida: " + e.getMessage());
+                return;
+            }
+        }
+
         String uri = request.getRequestURI();
 
         // product=all → todo permitido
-        if ("all".equalsIgnoreCase(product)) {
+        if ("all".equalsIgnoreCase(effectiveProduct)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -91,7 +130,7 @@ public class LicenseFilter extends OncePerRequestFilter {
         }
 
         // product=medical → bloquear rutas exclusivas de PLATFORM
-        if ("medical".equalsIgnoreCase(product)) {
+        if ("medical".equalsIgnoreCase(effectiveProduct)) {
             if (PLATFORM_PREFIXES.stream().anyMatch(uri::startsWith)) {
                 log.warn("Acceso bloqueado por licencia (medical): {}", uri);
                 response.sendError(HttpServletResponse.SC_FORBIDDEN,
@@ -101,7 +140,7 @@ public class LicenseFilter extends OncePerRequestFilter {
         }
 
         // product=platform → bloquear rutas exclusivas de MEDICAL
-        if ("platform".equalsIgnoreCase(product)) {
+        if ("platform".equalsIgnoreCase(effectiveProduct)) {
             if (MEDICAL_PREFIXES.stream().anyMatch(uri::startsWith)) {
                 // Excepciones: rutas compartidas bajo prefijos médicos
                 if ("/api/v1/admin/health/email".equals(uri) ||
@@ -120,5 +159,12 @@ public class LicenseFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private synchronized LicenseSigner getLicenseSigner() throws Exception {
+        if (licenseSigner == null) {
+            licenseSigner = new LicenseSigner();
+        }
+        return licenseSigner;
     }
 }

@@ -36,9 +36,10 @@
         </license>
     </licenses>
 
-    <!-- Módulos del reactor: solo kin-backend -->
+    <!-- Módulos del reactor: multi-producto -->
     <modules>
         <module>kin-backend</module>
+        <module>kin-license-generator</module>
     </modules>
 
     <!-- ================= PROPIEDADES CENTRALIZADAS ================= -->

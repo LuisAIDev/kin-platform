@@ -257,6 +257,13 @@
             <artifactId>awaitility</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- License generator for on-premise license validation -->
+        <dependency>
+            <groupId>com.kinplatform</groupId>
+            <artifactId>kin-license-generator</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
