@@ -378,6 +378,15 @@ kin:
     grace-period-days: 0
 
   # -----------------------------------------------------------
+  # Licenciamiento Runtime — Selección de producto (On-Premise / SaaS)
+  # KIN_PRODUCT: medical | platform | all (default: all)
+  # KIN_LICENSING_ENABLED: true para activar control por licencia en on-premise
+  # -----------------------------------------------------------
+  licensing:
+    enabled: ${KIN_LICENSING_ENABLED:false}
+    product: ${KIN_PRODUCT:all}  # medical | platform | all
+
+  # -----------------------------------------------------------
   # Transactional Outbox (ADR-026, KIN 2.4)
   # Garantiza entrega at-least-once de Domain Events escribiendo en la misma
   # transacción del caso de uso. El relé (OutboxRelay) publica asíncronamente.

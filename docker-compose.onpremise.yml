@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: kin-postgres
+    environment:
+      POSTGRES_DB: kin_db
+      POSTGRES_USER: kin_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - kin_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  kin-backend:
+    image: kin-backend:latest
+    container_name: kin-backend
+    environment:
+      KIN_PRODUCT: ${KIN_PRODUCT:-all}
+      KIN_LICENSING_ENABLED: ${KIN_LICENSING_ENABLED:-false}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/kin_db
+      DB_USER: kin_user
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  kin_data:
