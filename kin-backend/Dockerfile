@@ -2,15 +2,17 @@
 FROM maven:3.9-eclipse-temurin-17-alpine AS build
 WORKDIR /app
 
-# Copiar parent pom + modulo kin-backend
+# Copiar parent pom + modulo kin-backend + modulo license-generator
 COPY pom.xml ./
 COPY kin-backend/pom.xml kin-backend/
+COPY kin-license-generator/pom.xml kin-license-generator/
 
 # Descargar dependencias (cacheable)
 RUN mvn -B -q -pl kin-backend -am dependency:go-offline
 
-# Copiar codigo fuente
+# Copiar codigo fuente de ambos modulos
 COPY kin-backend/src kin-backend/src
+COPY kin-license-generator/src kin-license-generator/src
 
 # Compilar
 RUN mvn -B -q -pl kin-backend -am package -DskipTests
