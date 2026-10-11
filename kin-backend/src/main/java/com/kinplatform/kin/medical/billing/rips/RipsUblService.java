@@ -24,13 +24,11 @@ public class RipsUblService {
 
     private final RipsBatchRepository batchRepository;
     private final RipsRecordRepository recordRepository;
-    private final XmlMapper xmlMapper;
 
-    public RipsUblService(RipsBatchRepository batchRepository, RipsRecordRepository recordRepository) {
-        this.batchRepository = batchRepository;
-        this.recordRepository = recordRepository;
-        this.xmlMapper = new XmlMapper();
-        this.xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
+    private final XmlMapper xmlMapper = new XmlMapper();
+
+    {
+        xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
 
     @Transactional(readOnly = true)
