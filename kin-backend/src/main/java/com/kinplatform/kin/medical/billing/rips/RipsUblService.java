@@ -25,10 +25,10 @@ public class RipsUblService {
     private final RipsBatchRepository batchRepository;
     private final RipsRecordRepository recordRepository;
 
-    private final XmlMapper xmlMapper = new XmlMapper();
+    private static final XmlMapper XML_MAPPER = new XmlMapper();
 
-    {
-        xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
+    static {
+        XML_MAPPER.enable(SerializationFeature.INDENT_OUTPUT);
     }
 
     @Transactional(readOnly = true)
@@ -52,7 +52,7 @@ public class RipsUblService {
                 .build();
 
         try {
-            return xmlMapper.writeValueAsString(payload);
+            return XML_MAPPER.writeValueAsString(payload);
         } catch (Exception e) {
             log.error("Error serializando UBL a XML para batch {}: {}", batchId, e.getMessage(), e);
             throw new RipsValidationException("Error generando XML UBL: " + e.getMessage(), e);
