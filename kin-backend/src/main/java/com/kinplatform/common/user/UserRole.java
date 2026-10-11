@@ -12,6 +12,7 @@ public enum UserRole {
     IPS_ENFERMERA,
     IPS_FACTURADOR,
     IPS_AUDITOR,
-    RECEPTIONIST
+    RECEPTIONIST,
+    BILLING
 }
 

@@ -26,6 +26,7 @@ public class RipsController {
 
     private final RipsGenerationService ripsService;
     private final RipsBatchRepository batchRepository;
+    private final RipsUblService ripsUblService;
 
     /**
      * Genera RIPS para un contrato y período (los 6 tipos).
@@ -91,8 +92,8 @@ public class RipsController {
             .body(zip);
     }
 
-    /**
-     * Reenvía un batch fallido.
+/**
+     * Reenv�a un batch fallido.
      * POST /api/v1/billing/rips/{batchId}/retry
      */
     @PostMapping("/{batchId}/retry")
@@ -101,6 +102,20 @@ public class RipsController {
         UUID orgId = TenantContext.get();
         RipsBatch batch = ripsService.retry(orgId, batchId);
         return ResponseEntity.ok(RipsBatchResponse.from(batch));
+    }
+
+    /**
+     * Obtiene el fragmento UBL Ext 2 (salud) para embeber en la FEV.
+     * GET /api/v1/billing/rips/{batchId}/ubl
+     */
+    @GetMapping(value = "/{batchId}/ubl", produces = MediaType.APPLICATION_XML_VALUE)
+    @PreAuthorize("hasAnyRole('IPS_ADMIN', 'IPS_FACTURADOR', 'ADMIN')")
+    public ResponseEntity<String> getUblXml(@PathVariable UUID batchId) {
+        UUID orgId = TenantContext.get();
+        String xml = ripsUblService.generateUblXml(batchId);
+        return ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_XML)
+            .body(xml);
     }
 
     @ExceptionHandler(BatchNotFoundException.class)

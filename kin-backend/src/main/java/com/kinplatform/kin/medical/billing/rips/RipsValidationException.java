@@ -4,4 +4,8 @@ public class RipsValidationException extends RuntimeException {
     public RipsValidationException(String message) {
         super(message);
     }
+
+    public RipsValidationException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
