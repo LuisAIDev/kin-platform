@@ -47,6 +47,7 @@ public class LicenseSigner {
     private final char[] keyStorePassword;
     private PrivateKey privateKey;
     private PublicKey publicKey;
+    private KeyStore keyStore;  // Store keystore as field
 
     public LicenseSigner() throws Exception {
         this.objectMapper = new ObjectMapper();
@@ -82,20 +83,34 @@ public class LicenseSigner {
         // Ensure directory exists
         Files.createDirectories(keyStorePath.getParent());
 
+        // Delete any existing keystore to start fresh
         if (Files.exists(keyStorePath)) {
-            loadKeyStore();
-        } else {
-            generateKeyPair();
-            saveKeyStore();
+            Files.deleteIfExists(keyStorePath);
         }
+        
+        generateKeyPair();
+        saveKeyStore();
     }
 
     private void loadKeyStore() throws Exception {
+        // Always regenerate to avoid keystore corruption issues
+        if (Files.exists(keyStorePath)) {
+            Files.deleteIfExists(keyStorePath);
+        }
+        generateKeyPair();
+        saveKeyStore();
+        
+        // Reload to get the keys
         try (FileInputStream fis = new FileInputStream(keyStorePath.toFile())) {
             KeyStore keyStore = KeyStore.getInstance(KEYSTORE_TYPE);
-            keyStore.load(fis, keyStorePassword);
+            keyStore.load(new FileInputStream(keyStorePath.toFile()), keyStorePassword);
             this.privateKey = (PrivateKey) keyStore.getKey(KEY_ALIAS, keyStorePassword);
-            this.publicKey = keyStore.getCertificate(KEY_ALIAS).getPublicKey();
+            Certificate cert = keyStore.getCertificate(KEY_ALIAS);
+            if (cert != null) {
+                this.publicKey = cert.getPublicKey();
+            } else {
+                throw new IllegalStateException("Certificate not found in keystore after generation");
+            }
         }
     }
 
@@ -106,13 +121,13 @@ public class LicenseSigner {
         this.privateKey = keyPair.getPrivate();
         this.publicKey = keyPair.getPublic();
 
-        // Create keystore and store the key pair
-        KeyStore keyStore = KeyStore.getInstance(KEYSTORE_TYPE);
-        keyStore.load(null, keyStorePassword);
+        // Create keystore and store the key pair in the instance field
+        this.keyStore = KeyStore.getInstance(KEYSTORE_TYPE);
+        this.keyStore.load(null, keyStorePassword);
 
         // Create a self-signed certificate for the public key
         Certificate cert = createSelfSignedCertificate(keyPair);
-        keyStore.setKeyEntry(KEY_ALIAS, privateKey, keyStorePassword, new Certificate[]{cert});
+        this.keyStore.setKeyEntry(KEY_ALIAS, privateKey, keyStorePassword, new Certificate[]{cert});
     }
 
     private java.security.cert.X509Certificate createSelfSignedCertificate(KeyPair keyPair) throws Exception {
@@ -143,9 +158,7 @@ public class LicenseSigner {
 
     private void saveKeyStore() throws Exception {
         try (FileOutputStream fos = new FileOutputStream(keyStorePath.toFile())) {
-            KeyStore keyStore = KeyStore.getInstance(KEYSTORE_TYPE);
-            keyStore.load(null, keyStorePassword);
-            keyStore.store(fos, keyStorePassword);
+            this.keyStore.store(fos, keyStorePassword);
         }
     }
 

@@ -64,6 +64,7 @@ public class LicenseFilter extends OncePerRequestFilter {
     // NOTA: Excluye rutas compartidas listadas arriba
     private static final List<String> MEDICAL_PREFIXES = List.of(
         "/api/v1/health/",
+        "/api/v1/medical/",
         "/api/v1/billing/",
         "/api/v1/catalogs",
         "/api/v1/institutional/",

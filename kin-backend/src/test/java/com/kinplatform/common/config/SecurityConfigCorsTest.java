@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import com.kinplatform.common.security.JwtAuthenticationFilter;
+import com.kinplatform.common.security.LicenseFilter;
 import com.kinplatform.common.security.RateLimitingFilter;
 import com.kinplatform.common.security.SubscriptionAccessFilter;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,8 @@ class SecurityConfigCorsTest {
         var config = new SecurityConfig(
                 mock(JwtAuthenticationFilter.class),
                 mock(RateLimitingFilter.class),
-                mock(SubscriptionAccessFilter.class));
+                mock(SubscriptionAccessFilter.class),
+                mock(LicenseFilter.class));
         ReflectionTestUtils.setField(
                 config, "allowedOrigins", "http://localhost:3000,https://kin-frontend.onrender.com");
 
@@ -39,7 +41,8 @@ class SecurityConfigCorsTest {
         var config = new SecurityConfig(
                 mock(JwtAuthenticationFilter.class),
                 mock(RateLimitingFilter.class),
-                mock(SubscriptionAccessFilter.class));
+                mock(SubscriptionAccessFilter.class),
+                mock(LicenseFilter.class));
         ReflectionTestUtils.setField(config, "allowedOrigins", "");
 
         var source = config.corsConfigurationSource();

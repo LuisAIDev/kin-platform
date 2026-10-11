@@ -7,27 +7,37 @@ services:
     environment:
       POSTGRES_DB: kin_db
       POSTGRES_USER: kin_user
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: test_pass_123
     volumes:
       - kin_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kin_user -d kin_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   kin-backend:
     image: kin-backend:latest
     container_name: kin-backend
     environment:
-      KIN_PRODUCT: ${KIN_PRODUCT:-all}
-      KIN_LICENSING_ENABLED: ${KIN_LICENSING_ENABLED:-false}
-      DATABASE_URL: jdbc:postgresql://postgres:5432/kin_db
-      DB_USER: kin_user
-      DB_PASSWORD: ${DB_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
+      KIN_PRODUCT: medical
+      KIN_LICENSING_ENABLED: false
+      KIN_HEALTH_TELEMEDICINE_CRYPTO_SECRET: test-crypto-secret-test-crypto-secret-test-crypto-secret-test-crypto-secret
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/kin_db
+      SPRING_DATASOURCE_USERNAME: kin_user
+      SPRING_DATASOURCE_PASSWORD: test_pass_123
+      JWT_SECRET: dGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQ=
+      KIN_AI_COST_CONTROL_ENABLED: false
+      SPRING_PROFILES_ACTIVE: dev
     ports:
       - "8080:8080"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

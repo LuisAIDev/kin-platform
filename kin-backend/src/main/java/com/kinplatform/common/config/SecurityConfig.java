@@ -32,6 +32,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final RateLimitingFilter rateLimitingFilter;
     private final com.kinplatform.common.security.SubscriptionAccessFilter subscriptionAccessFilter;
+    private final com.kinplatform.common.security.LicenseFilter licenseFilter;
 
     @Value("${app.cors.allowed-origins:http://localhost:3000}")
     private String allowedOrigins;
@@ -56,15 +57,34 @@ public class SecurityConfig {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/auth/**")
+.authorizeHttpRequests(auth -> auth.requestMatchers("/auth/**")
                         .permitAll()
                         .requestMatchers("/pricing-plans/**")
                         .permitAll()
                         .requestMatchers("/stripe/webhook")
                         .permitAll()
-                        // Webhook de Wompi (server-to-server): sin autenticación JWT;
+                        // Webhook de Wompi (server-to-server): sin autenticaci�n JWT;
                         // la autenticidad se valida con el checksum X-Event-Checksum.
                         .requestMatchers("/wompi/webhook")
+                        .permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info")
+                        .permitAll()
+                        .requestMatchers("/public/privacy-policy/**")
+                        .permitAll()
+                        // Shared paths (allowed by LicenseFilter for ARCO rights / Ley 1581)
+                        .requestMatchers("/health/data-deletion", "/health/data-export", "/health/data-rectification")
+                        .permitAll()
+                        .requestMatchers("/health/consents")
+                        .permitAll()
+                        .requestMatchers("/admin/health/email")
+                        .permitAll()
+                        .requestMatchers("/subscriptions")
+                        .permitAll()
+                        .requestMatchers("/stripe/**")
+                        .permitAll()
+                        .requestMatchers("/auth/**")
+                        .permitAll()
+                        .requestMatchers("/auth/test")
                         .permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info")
                         .permitAll()
@@ -199,6 +219,7 @@ public class SecurityConfig {
                         .addHeaderWriter(new StaticHeadersWriter(
                                 "Permissions-Policy", "camera=(), microphone=(), geolocation=()"))
                         .addHeaderWriter(new StaticHeadersWriter("Referrer-Policy", "strict-origin-when-cross-origin")))
+                .addFilterBefore(licenseFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(rateLimitingFilter, JwtAuthenticationFilter.class)
                 .addFilterAfter(subscriptionAccessFilter, JwtAuthenticationFilter.class);
