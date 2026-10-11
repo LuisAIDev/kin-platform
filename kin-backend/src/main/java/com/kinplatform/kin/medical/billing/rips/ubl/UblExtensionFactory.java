@@ -1,14 +1,22 @@
 package com.kinplatform.kin.medical.billing.rips.ubl;
 
-import com.kinplatform.kin.medical.billing.rips.model.RipsBatch;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kinplatform.kin.medical.billing.rips.model.RipsRecord;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class UblExtensionFactory {
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
 
     public static RipsInteroperabilidadPayload fromRecord(RipsRecord record, String codigoPrestador) {
         CustomTagGeneral responsable = CustomTagGeneral.builder()
@@ -18,54 +26,24 @@ public class UblExtensionFactory {
 
         CustomTagGeneral actoAdministrativo = CustomTagGeneral.builder()
                 .name("Tipo, identificacion del acto administrativo")
-                .value("Resolucion NNNN:AAAA")
+                .value("Resolucion 2275:2023")
                 .build();
 
-        List<AdditionalInformation> additionalInfos = List.of(
-                AdditionalInformation.builder()
-                        .name("CODIGO_PRESTADOR")
-                        .value(codigoPrestador)
-                        .valueSchemeName("salud codigo_habilitacion")
-                        .build(),
-                AdditionalInformation.builder()
-                        .name("MODALIDAD_PAGO")
-                        .value(record.getRipsLineData()) // TODO: extraer del JSON
-                        .valueSchemeName("salud modalidad_pago")
-                        .build(),
-                AdditionalInformation.builder()
-                        .name("COBERTURA_PLAN_BENEFICIOS")
-                        .value(record.getRipsLineData()) // TODO: extraer del JSON
-                        .valueSchemeName("salud cobertura_plan")
-                        .build(),
-                AdditionalInformation.builder()
-                        .name("NUMERO_CONTRATO")
-                        .value("") // opcional
-                        .build(),
-                AdditionalInformation.builder()
-                        .name("NUMERO_POLIZA")
-                        .value("") // opcional
-                        .build(),
-                AdditionalInformation.builder()
-                        .name("COPAGO")
-                        .value(record.getRipsLineData()) // TODO: extraer del JSON
-                        .build(),
-                AdditionalInformation.builder()
-                        .name("CUOTA_MODERADORA")
-                        .value(record.getRipsLineData()) // TODO: extraer del JSON
-                        .build(),
-                AdditionalInformation.builder()
-                        .name("PAGOS_COMPARTIDOS")
-                        .value(record.getRipsLineData()) // TODO: extraer del JSON
-                        .build(),
-                AdditionalInformation.builder()
-                        .name("FECHA_INICIO_PERIODO")
-                        .value(record.getRipsLineData()) // TODO: extraer del JSON
-                        .build(),
-                AdditionalInformation.builder()
-                        .name("FECHA_FIN_PERIODO")
-                        .value(record.getRipsLineData()) // TODO: extraer del JSON
-                        .build()
-        );
+        Map<String, Object> data = parseRipsLineData(record.getRipsLineData());
+
+        List<AdditionalInformation> additionalInfos = new ArrayList<>();
+
+        addIfPresent(additionalInfos, "CODIGO_PRESTADOR", codigoPrestador, "salud codigo_habilitacion");
+        addIfPresent(additionalInfos, data, "tipoOperacion", "TIPO_OPERACION", null);
+        addIfPresent(additionalInfos, data, "modalidadPago", "MODALIDAD_PAGO", "salud modalidad_pago");
+        addIfPresent(additionalInfos, data, "coberturaPlanBeneficios", "COBERTURA_PLAN_BENEFICIOS", "salud cobertura_plan");
+        addIfPresent(additionalInfos, data, "numeroContrato", "NUMERO_CONTRATO", null);
+        addIfPresent(additionalInfos, data, "numeroPoliza", "NUMERO_POLIZA", null);
+        addIfPresentBigDecimal(additionalInfos, data, "copago", "COPAGO");
+        addIfPresentBigDecimal(additionalInfos, data, "cuotaModeradora", "CUOTA_MODERADORA");
+        addIfPresentBigDecimal(additionalInfos, data, "pagosCompartidos", "PAGOS_COMPARTIDOS");
+        addIfPresentDate(additionalInfos, data, "fechaInicioPeriodo", "FECHA_INICIO_PERIODO");
+        addIfPresentDate(additionalInfos, data, "fechaFinPeriodo", "FECHA_FIN_PERIODO");
 
         UsuarioCollection usuarioCollection = UsuarioCollection.builder()
                 .schemeName("Usuario")
@@ -93,5 +71,75 @@ public class UblExtensionFactory {
         return RipsInteroperabilidadPayload.builder()
                 .extensions(List.of(extension))
                 .build();
+    }
+
+    private static Map<String, Object> parseRipsLineData(String json) {
+        try {
+            return objectMapper.readValue(json, Map.class);
+        } catch (Exception e) {
+            return Map.of();
+        }
+    }
+
+    private static void addIfPresent(List<AdditionalInformation> list, Map<String, Object> data, String key, String name, String schemeName) {
+        Object value = data.get(key);
+        if (value != null) {
+            String strValue = value.toString().trim();
+            if (!strValue.isEmpty()) {
+                list.add(AdditionalInformation.builder()
+                        .name(name)
+                        .value(strValue)
+                        .valueSchemeName(schemeName)
+                        .build());
+            }
+        }
+    }
+
+    private static void addIfPresent(List<AdditionalInformation> list, String name, String value, String schemeName) {
+        if (value != null && !value.trim().isEmpty()) {
+            list.add(AdditionalInformation.builder()
+                    .name(name)
+                    .value(value.trim())
+                    .valueSchemeName(schemeName)
+                    .build());
+        }
+    }
+
+    private static void addIfPresentBigDecimal(List<AdditionalInformation> list, Map<String, Object> data, String key, String name) {
+        Object value = data.get(key);
+        if (value != null) {
+            String strValue;
+            if (value instanceof BigDecimal bd) {
+                strValue = bd.stripTrailingZeros().toPlainString();
+            } else {
+                strValue = value.toString().trim();
+            }
+            if (!strValue.isEmpty()) {
+                list.add(AdditionalInformation.builder()
+                        .name(name)
+                        .value(strValue)
+                        .valueSchemeName(null)
+                        .build());
+            }
+        }
+    }
+
+    private static void addIfPresentDate(List<AdditionalInformation> list, Map<String, Object> data, String key, String name) {
+        Object value = data.get(key);
+        if (value != null) {
+            String strValue;
+            if (value instanceof LocalDate ld) {
+                strValue = ld.format(DATE_FORMAT);
+            } else {
+                strValue = value.toString().trim();
+            }
+            if (!strValue.isEmpty()) {
+                list.add(AdditionalInformation.builder()
+                        .name(name)
+                        .value(strValue)
+                        .valueSchemeName(null)
+                        .build());
+            }
+        }
     }
 }
