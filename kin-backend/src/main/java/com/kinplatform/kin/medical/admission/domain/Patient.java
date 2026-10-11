@@ -53,7 +53,7 @@ public class Patient {
     private LocalDate birthDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "gender", nullable = false, length = 1)
+    @Column(name = "gender", nullable = false, columnDefinition = "varchar(1)")
     private Gender gender;
 
     @Column(name = "phone", length = 30)
