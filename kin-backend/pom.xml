@@ -98,6 +98,12 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Jackson XML para UBL 2.1 (Fase 6.2b-2) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+        </dependency>
+
         <!-- Actuator -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
