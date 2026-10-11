@@ -57,3 +57,12 @@ kin-backend/config/license-keys/kin-private.pem
 # Generated license files
 *.key
 docs/rips/*.pdf
+# Scripts temporales del agente (no commitear)
+*.ps1
+!scripts/*.ps1
+
+# Documentacion regulatoria (no va al repo publico)
+docs/rips/*.pdf
+docs/rips/*.docx
+docs/rips/*.xlsx
+docs/rips/temp_anexo/
