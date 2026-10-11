@@ -1,6 +1,10 @@
 package com.kinplatform.kin.medical.billing.rips.model;
 
 import com.kinplatform.kin.medical.billing.contract.EpsContract;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,6 +35,28 @@ public class AfRecord {
     private BigDecimal valorTotal;
     private String tipoFactura;
 
+    @Pattern(regexp = "SS-CUFE|SS-CUDE|SS-POS|SS-SNum|SS-Recaudo|SS-Reporte|SS-SinAporte", message = "tipoOperacion debe ser válido")
+    private String tipoOperacion;
+
+    @NotBlank(message = "modalidadPago es obligatorio")
+    private String modalidadPago;
+
+    @NotBlank(message = "coberturaPlanBeneficios es obligatorio")
+    private String coberturaPlanBeneficios;
+
+    private String numeroContrato;
+
+    private String numeroPoliza;
+
+    @DecimalMin(value = "0.0", message = "pagosCompartidos no puede ser negativo")
+    private BigDecimal pagosCompartidos;
+
+    @NotNull(message = "fechaInicioPeriodo es obligatorio")
+    private LocalDate fechaInicioPeriodo;
+
+    @NotNull(message = "fechaFinPeriodo es obligatorio")
+    private LocalDate fechaFinPeriodo;
+
     public static AfRecord fromContract(EpsContract contract,
                                         LocalDate periodStart, LocalDate periodEnd,
                                         UUID batchId, int sequence, BigDecimal valorTotal) {
@@ -53,7 +79,7 @@ public class AfRecord {
 
     private static String buildJsonLine(EpsContract contract,
                                         LocalDate periodStart, LocalDate periodEnd, BigDecimal valorTotal) {
-        return String.format("""
+        return String.format(""" 
             {"codigo_prestador":"%s","nit_eps":"%s","periodo_inicio":"%s","periodo_fin":"%s","numero_factura":"%s","fecha_factura":"%s","valor_total":%s,"tipo_factura":"01"}""",
             contract.getOrganizationId().toString().substring(0, 10),
             contract.getEpsNit(),

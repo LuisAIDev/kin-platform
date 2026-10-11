@@ -56,3 +56,4 @@ kin-backend/config/license-keys/kin-private.pem
 
 # Generated license files
 *.key
+docs/rips/*.pdf
