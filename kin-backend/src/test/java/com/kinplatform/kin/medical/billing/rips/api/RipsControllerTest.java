@@ -2,6 +2,7 @@ package com.kinplatform.kin.medical.billing.rips.api;
 
 import com.kinplatform.kin.medical.billing.rips.GenerateRipsRequest;
 import com.kinplatform.kin.medical.billing.rips.RipsGenerationService;
+import com.kinplatform.kin.medical.billing.rips.RipsUblService;
 import com.kinplatform.kin.medical.billing.rips.model.RipsBatch;
 import com.kinplatform.kin.medical.billing.rips.model.RipsBatchRepository;
 import com.kinplatform.common.security.TenantContext;
@@ -43,6 +44,9 @@ class RipsControllerTest {
     @Mock
     private RipsBatchRepository batchRepository;
 
+    @Mock
+    private RipsUblService ripsUblService;
+
     private UUID orgId;
     private UUID contractId;
     private UUID batchId;
@@ -54,7 +58,7 @@ class RipsControllerTest {
         batchId = UUID.randomUUID();
         TenantContext.set(orgId);
 
-        var controller = new com.kinplatform.kin.medical.billing.rips.RipsController(ripsService, batchRepository);
+        var controller = new com.kinplatform.kin.medical.billing.rips.RipsController(ripsService, batchRepository, ripsUblService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
