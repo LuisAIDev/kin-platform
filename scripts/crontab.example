@@ -1,0 +1,10 @@
+# Backup diario a las 3:00 AM
+0 3 * * * /opt/kin/scripts/backup-postgres.sh >> /var/log/kin-backup.log 2>&1
+
+# Backup semanal completo los domingos a las 4:00 AM
+0 4 * * 0 /opt/kin/scripts/backup-postgres.sh >> /var/log/kin-backup.log 2>&1
+
+# Configuración de variables de entorno para cron:
+# DATABASE_URL=postgresql://user:pass@localhost:5432/kin
+# BACKUP_DIR=/var/backups/kin
+# RETENTION_DAYS=30
