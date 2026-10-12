@@ -2,6 +2,7 @@ package com.kinplatform.kin.medical.billing.rips.ubl;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,8 +19,18 @@ public class AdditionalInformation {
     private String name;
 
     @JacksonXmlProperty(localName = "Value")
-    private String value;
+    private Value value;
 
-    @JacksonXmlProperty(isAttribute = true, localName = "schemeName")
-    private String valueSchemeName;
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Value {
+
+        @JacksonXmlProperty(isAttribute = true, localName = "schemeName")
+        private String schemeName;
+
+        @JacksonXmlText
+        private String content;
+    }
 }

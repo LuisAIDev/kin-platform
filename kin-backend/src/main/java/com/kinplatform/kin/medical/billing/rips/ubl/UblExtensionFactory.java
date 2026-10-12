@@ -86,10 +86,13 @@ public class UblExtensionFactory {
         if (value != null) {
             String strValue = value.toString().trim();
             if (!strValue.isEmpty()) {
+                AdditionalInformation.Value valueObj = AdditionalInformation.Value.builder()
+                        .content(strValue)
+                        .schemeName(schemeName)
+                        .build();
                 list.add(AdditionalInformation.builder()
                         .name(name)
-                        .value(strValue)
-                        .valueSchemeName(schemeName)
+                        .value(valueObj)
                         .build());
             }
         }
@@ -97,10 +100,13 @@ public class UblExtensionFactory {
 
     private static void addIfPresent(List<AdditionalInformation> list, String name, String value, String schemeName) {
         if (value != null && !value.trim().isEmpty()) {
+            AdditionalInformation.Value valueObj = AdditionalInformation.Value.builder()
+                    .content(value.trim())
+                    .schemeName(schemeName)
+                    .build();
             list.add(AdditionalInformation.builder()
                     .name(name)
-                    .value(value.trim())
-                    .valueSchemeName(schemeName)
+                    .value(valueObj)
                     .build());
         }
     }
@@ -115,10 +121,13 @@ public class UblExtensionFactory {
                 strValue = value.toString().trim();
             }
             if (!strValue.isEmpty()) {
+                AdditionalInformation.Value valueObj = AdditionalInformation.Value.builder()
+                        .content(strValue)
+                        .schemeName(null)
+                        .build();
                 list.add(AdditionalInformation.builder()
                         .name(name)
-                        .value(strValue)
-                        .valueSchemeName(null)
+                        .value(valueObj)
                         .build());
             }
         }
@@ -134,10 +143,13 @@ public class UblExtensionFactory {
                 strValue = value.toString().trim();
             }
             if (!strValue.isEmpty()) {
+                AdditionalInformation.Value valueObj = AdditionalInformation.Value.builder()
+                        .content(strValue)
+                        .schemeName(null)
+                        .build();
                 list.add(AdditionalInformation.builder()
                         .name(name)
-                        .value(strValue)
-                        .valueSchemeName(null)
+                        .value(valueObj)
                         .build());
             }
         }
