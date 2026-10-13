@@ -47,7 +47,7 @@ export interface CheckoutResponse {
 }
 
 export const subscriptionApi = {
-  getPlans: () => api.get<PricingPlan[]>("/pricing-plans"),
+  getPlans: () => api.get<PricingPlan[]>("/pricing-plans/vertical/EMPRESAS"),
 
   /** Planes de una vertical concreta (p. ej. EMPRESAS para KIN Empresas). */
   getPlansByVertical: (vertical: string) =>
