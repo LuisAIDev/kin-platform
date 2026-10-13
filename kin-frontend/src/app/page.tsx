@@ -368,6 +368,16 @@ export default function Home() {
                     Arquitectura técnica
                   </Link>
                 </li>
+                <li>
+                  <Link href="/terminos" className="text-sm text-neutral-500 hover:text-primary-600 transition-colors">
+                    Términos y Condiciones
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacidad" className="text-sm text-neutral-500 hover:text-primary-600 transition-colors">
+                    Política de Privacidad
+                  </Link>
+                </li>
               </ul>
             </div>
             <div className="sm:text-right">
