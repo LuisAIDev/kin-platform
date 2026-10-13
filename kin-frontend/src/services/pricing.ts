@@ -32,7 +32,7 @@ export interface UpdatePricingPlanRequest {
 }
 
 export const pricingService = {
-  getAll: () => api.get<PricingPlan[]>("/pricing-plans"),
+  getAll: () => api.get<PricingPlan[]>("/pricing-plans/vertical/EMPRESAS"),
 
   update: (id: string, data: UpdatePricingPlanRequest) =>
     api.put<PricingPlan>(`/admin/pricing-plans/${id}`, data),
