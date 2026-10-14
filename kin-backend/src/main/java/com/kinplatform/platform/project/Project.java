@@ -2,6 +2,8 @@ package com.kinplatform.platform.project;
 
 import com.kinplatform.common.user.User;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Filter;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -10,6 +12,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@org.hibernate.annotations.Filter(
+    name = "tenantUserFilter",
+    condition = "user_id = :userId"
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
