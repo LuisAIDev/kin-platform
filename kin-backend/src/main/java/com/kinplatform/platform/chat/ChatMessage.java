@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.ParamDef;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -21,10 +20,6 @@ import java.util.UUID;
 @org.hibernate.annotations.FilterDef(
     name = "tenantUserFilter",
     parameters = @org.hibernate.annotations.ParamDef(name = "userId", type = UUID.class)
-)
-@org.hibernate.annotations.Filter(
-    name = "tenantUserFilter",
-    condition = "user_id = :userId"
 )
 @Data
 @NoArgsConstructor
