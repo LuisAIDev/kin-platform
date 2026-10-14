@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.ParamDef;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -15,6 +17,10 @@ import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+@org.hibernate.annotations.FilterDef(
+    name = "tenantUserFilter",
+    parameters = @org.hibernate.annotations.ParamDef(name = "userId", type = UUID.class)
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

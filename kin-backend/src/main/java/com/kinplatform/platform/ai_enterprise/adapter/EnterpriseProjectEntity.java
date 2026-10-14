@@ -17,6 +17,8 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.ParamDef;
 
 /**
  * Entidad JPA del proyecto empresarial (Fase 10, Milestone 2G).
@@ -32,6 +34,10 @@ import lombok.Setter;
  * dominio); la conversión es responsabilidad del mapeador. Entidad de
  * infraestructura: no contiene lógica de negocio.</p>
  */
+@org.hibernate.annotations.FilterDef(
+    name = "tenantUserFilter",
+    parameters = @org.hibernate.annotations.ParamDef(name = "userId", type = UUID.class)
+)
 @Entity
 @Table(name = "enterprise_project")
 @IdClass(EnterpriseProjectId.class)
