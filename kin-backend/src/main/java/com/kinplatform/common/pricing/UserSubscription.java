@@ -7,16 +7,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.hibernate.annotations.FilterDef;
-import org.hibernate.annotations.ParamDef;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-@org.hibernate.annotations.FilterDef(
-    name = "tenantUserFilter",
-    parameters = @org.hibernate.annotations.ParamDef(name = "userId", type = UUID.class)
-)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
