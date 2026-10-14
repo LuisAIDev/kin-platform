@@ -75,8 +75,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             TenantContext.set(user.getOrganizationId() != null
                     ? user.getOrganizationId()
                     : DEMO_ORGANIZATION_ID);
-            // Set current userId for tenant filtering (Platform/Enterprise multi-tenancy)
-            TenantContext.setCurrentUserId(user.getId());
 
             List<GrantedAuthority> authorities = new ArrayList<>();
             if (user.getRole() != UserRole.PHYSICIAN && user.getRole() != UserRole.PATIENT) {
@@ -96,7 +94,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
         } finally {
-            TenantContext.clearCurrentUserId();
             TenantContext.clear();
         }
     }
