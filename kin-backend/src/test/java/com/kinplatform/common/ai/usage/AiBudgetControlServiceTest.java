@@ -19,6 +19,8 @@ import com.kinplatform.common.usage.CostEstimator;
 import com.kinplatform.common.usage.HeuristicCostEstimator;
 import com.kinplatform.common.usage.UsagePeriod;
 import com.kinplatform.common.pricing.PricingPlan;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +32,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
+@org.mockito.junit.jupiter.MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 class AiBudgetControlServiceTest {
 
     private static final UUID USER_ID = UUID.randomUUID();
@@ -39,12 +42,21 @@ class AiBudgetControlServiceTest {
     @Mock
     private AiUsagePort usagePort;
 
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private com.kinplatform.common.user.User user;
+
     private AiBudgetControlService service;
 
     @BeforeEach
     void setUp() {
         CostEstimator estimator = new HeuristicCostEstimator(INPUT_PRICE, OUTPUT_PRICE, 4096);
-        service = new AiBudgetControlService(usagePort, estimator, true, new BigDecimal("1.00"));
+        // Default: user without unlimited access
+        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+        when(user.getUnlimitedAccess()).thenReturn(false);
+        service = new AiBudgetControlService(usagePort, new HeuristicCostEstimator(INPUT_PRICE, OUTPUT_PRICE, 4096), userRepository, true, new BigDecimal("1.00"));
     }
 
     private PricingPlan plan(BigDecimal budget) {
@@ -85,7 +97,7 @@ class AiBudgetControlServiceTest {
         // 200k caracteres -> ~50k tokens input @ $1/1M = $0.05 + output 4096 @ $2/1M = $0.008
         // necesita un mensaje enorme para superar $1.00 de tope; se sube el tope para el control
         var smallCap = new AiBudgetControlService(
-                usagePort, new HeuristicCostEstimator(INPUT_PRICE, OUTPUT_PRICE, 4096), true, new BigDecimal("0.01"));
+                usagePort, new HeuristicCostEstimator(INPUT_PRICE, OUTPUT_PRICE, 4096), userRepository, true, new BigDecimal("0.01"));
         String huge = "a".repeat(1_000_000); // ~250k tokens input @ $1/1M = $0.25
 
         assertThrows(
@@ -96,7 +108,7 @@ class AiBudgetControlServiceTest {
     @Test
     void reserve_controlDesactivado_devuelveNull() {
         var disabled = new AiBudgetControlService(
-                usagePort, new HeuristicCostEstimator(INPUT_PRICE, OUTPUT_PRICE, 4096), false, new BigDecimal("1.00"));
+                usagePort, new HeuristicCostEstimator(INPUT_PRICE, OUTPUT_PRICE, 4096), userRepository, false, new BigDecimal("1.00"));
 
         assertNull(disabled.reserve(USER_ID, plan(new BigDecimal("6.25")), "hola", List.of()));
         verify(usagePort, never()).tryReserve(any(), any(), any(), any());
@@ -109,6 +121,7 @@ class AiBudgetControlServiceTest {
                 () -> new AiBudgetControlService(
                         usagePort,
                         new HeuristicCostEstimator(BigDecimal.ZERO, BigDecimal.ZERO, 4096),
+                        userRepository,
                         true,
                         new BigDecimal("1.00")));
     }
@@ -120,6 +133,7 @@ class AiBudgetControlServiceTest {
                 () -> new AiBudgetControlService(
                         usagePort,
                         new HeuristicCostEstimator(BigDecimal.ZERO, new BigDecimal("0.28"), 4096),
+                        userRepository,
                         true,
                         new BigDecimal("1.00")));
     }
@@ -131,6 +145,7 @@ class AiBudgetControlServiceTest {
                 () -> new AiBudgetControlService(
                         usagePort,
                         new HeuristicCostEstimator(new BigDecimal("0.14"), BigDecimal.ZERO, 4096),
+                        userRepository,
                         true,
                         new BigDecimal("1.00")));
     }
@@ -140,6 +155,7 @@ class AiBudgetControlServiceTest {
         var service = new AiBudgetControlService(
                 usagePort,
                 new HeuristicCostEstimator(new BigDecimal("0.14"), new BigDecimal("0.28"), 4096),
+                userRepository,
                 true,
                 new BigDecimal("1.00"));
         assertTrue(service.isCostControlEnabled());
@@ -150,6 +166,7 @@ class AiBudgetControlServiceTest {
         var service = new AiBudgetControlService(
                 usagePort,
                 new HeuristicCostEstimator(BigDecimal.ZERO, BigDecimal.ZERO, 4096),
+                userRepository,
                 false,
                 new BigDecimal("1.00"));
         assertFalse(service.isCostControlEnabled());
