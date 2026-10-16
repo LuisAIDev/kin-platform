@@ -484,7 +484,7 @@ payment:
 jwt:
   secret: ${JWT_SECRET}
   # Access token: 24 h.
-  expiration-ms: 86400000
+  expiration-ms: ${JWT_EXPIRATION_MS:86400000}
   # Refresh token: 7 días (renovación sin re-autenticar).
   refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
 
