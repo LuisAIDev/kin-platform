@@ -26,7 +26,7 @@ public class HeuristicContextAnalyzerAdapter implements ContextAnalyzerPort {
             Pattern.CASE_INSENSITIVE);
 
     private static final Pattern PATTERN_SECTOR = Pattern.compile(
-            "(?:es un|es una|es un negocio de|es un emprendimiento de|se dedica a|trata de|es una empresa de|es un proyecto de|giro del negocio es|rubro es|rubro) " +
+            "(?:se dedica a|trata de|es una empresa de|es un proyecto de|giro del negocio es|rubro es|rubro|sector (?:es)?) " +
             "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\/]{2,60}?)(?=[\\.\\,\\;\\!\\?]|$)",
             Pattern.CASE_INSENSITIVE);
 
@@ -52,7 +52,7 @@ public class HeuristicContextAnalyzerAdapter implements ContextAnalyzerPort {
 
     private static final Pattern PATTERN_REVENUE_MODEL = Pattern.compile(
             "(?:modelo de ingresos (?:es)?|modelo de negocio (?:es)?|fuentes de ingresos (?:son|es)?|c[óo]mo facturamos|nuestros ingresos (?:vienen|provienen) de|facturamos|ticket promedio (?:es|de)|retainers) " +
-            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\;\\/\\.]{2,200}?)(?=[\\.\\!\\?]|$)",
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9%$][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9%$\\s\\-\\,\\;\\/\\.]{2,200}?)(?=[\\!\\?]|\\.\\s|\\.$|$)",
             Pattern.CASE_INSENSITIVE);
 
     private static final Pattern PATTERN_COMPETITION = Pattern.compile(
@@ -67,16 +67,16 @@ public class HeuristicContextAnalyzerAdapter implements ContextAnalyzerPort {
 
     private static final Pattern PATTERN_RESOURCES = Pattern.compile(
             "(?:los recursos (?:son|necesarios son)?|recursos (?:son|necesarios)?|necesitamos|requerimos|el capital (?:es|necesario es|requerido es)?|capital (?:es)?|la inversi[óo]n (?:es|necesaria es)?|inversi[óo]n (?:es)?|presupuesto (?:es|de)?|la caja (?:es)?|pr[ée]stamo (?:de|por)?) " +
-            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\$][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\.\\$]{2,200}?)(?=[\\.\\!\\?]|$)",
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\$][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\.\\$]{2,200}?)(?=[\\!\\?]|\\.\\s|\\.$|$)",
             Pattern.CASE_INSENSITIVE);
 
     private static final Pattern PATTERN_MVP = Pattern.compile(
             "(?:mi mvp (?:es)?|el mvp (?:es)?|mvp (?:es|consiste en)?|producto m[íi]nimo viable (?:es)?|validaci[óo]n temprana (?:es)?|el piloto (?:es|consiste en)?|piloto (?:es)?|producto de entrada (?:es)?) " +
-            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\;\\/\\.]{2,200}?)(?=[\\.\\!\\?]|$)",
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\;\\/\\.]{2,200}?)(?=[\\!\\?]|\\.\\s|\\.$|$)",
             Pattern.CASE_INSENSITIVE);
 
     private static final Pattern PATTERN_SCALABILITY = Pattern.compile(
-            "(?:la escalabilidad (?:es)?|escalabilidad (?:es)?|podemos escalar|escalar|c[óo]mo escalamos|los playbooks (?:son)?|playbooks (?:son)?|crecer sin|para escalar) " +
+            "(?:la escalabilidad(?: (?:es|depende de|consiste en|se basa en|implica))?|escalabilidad(?: (?:es|depende de|consiste en|se basa en|implica))?|podemos escalar|escalar|c[óo]mo escalamos|los playbooks (?:son)?|playbooks (?:son)?|crecer sin|para escalar) " +
             "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\;\\/\\.]{2,200}?)(?=[\\.\\!\\?]|$)",
             Pattern.CASE_INSENSITIVE);
 
