@@ -19,9 +19,10 @@ public interface ProjectContextSyncPort {
      * Sincroniza los campos de presentación del {@code Project} a partir del
      * contexto analítico del proyecto.
      *
+     * @param userId    identificador del propietario del proyecto
      * @param projectId identificador del proyecto (agregado {@code Project})
      * @param context   contexto analítico producido por el pipeline
      */
-    void sync(UUID projectId, ProjectContext context);
+    void sync(UUID userId, UUID projectId, ProjectContext context);
 }
 

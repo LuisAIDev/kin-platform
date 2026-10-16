@@ -69,7 +69,7 @@ class EnterprisePipelineResultsIntegrationTest {
                 contextRepository,
                 new com.kinplatform.common.conversation.ResponseFallback(
                         List.of(com.kinplatform.common.conversation.ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
-                (projectId, ctx) -> {},
+                (userId, projectId, ctx) -> {},
                 store);
         var trigger = new DefaultEnterpriseProjectTrigger(enterpriseRepository, bus);
         var orchestrator = new ConversationOrchestrator(

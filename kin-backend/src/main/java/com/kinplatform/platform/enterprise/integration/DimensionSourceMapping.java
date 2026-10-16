@@ -9,7 +9,7 @@ import java.util.List;
  * {@code project_structured_info}. Es una vista de enriquecimiento: no muta el
  * contexto.
  */
-final class DimensionSourceMapping {
+public final class DimensionSourceMapping {
 
     private DimensionSourceMapping() {}
 
@@ -25,7 +25,7 @@ final class DimensionSourceMapping {
      * Claves candidatas por dimensión. Se evalúan en orden; la primera con
      * valor resuelto gana según la prioridad de origen.
      */
-    static List<DimensionKey> candidateKeys(AnalyzedDimension dimension) {
+    public static List<DimensionKey> candidateKeys(AnalyzedDimension dimension) {
         return switch (dimension) {
             case PROJECT_NAME -> keys("DATOS_GENERALES", "nombre");
             case SECTOR -> keys("DATOS_GENERALES", "sector");
@@ -51,7 +51,7 @@ final class DimensionSourceMapping {
         return List.of(new DimensionKey(sectionA, keyA), new DimensionKey(sectionB, keyB));
     }
 
-    record DimensionKey(String section, String key) {}
+    public record DimensionKey(String section, String key) {}
 }
 
 

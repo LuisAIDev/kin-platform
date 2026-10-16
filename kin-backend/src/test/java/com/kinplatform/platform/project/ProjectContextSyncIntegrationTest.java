@@ -33,6 +33,7 @@ import com.kinplatform.common.pipeline.stage.EvaluatorStage;
 import com.kinplatform.common.pipeline.stage.EventStage;
 import com.kinplatform.common.pipeline.stage.StrategistStage;
 import com.kinplatform.common.pricing.service.SubscriptionValidatorService;
+import com.kinplatform.platform.projectinfo.ProjectStructuredInfoService;
 import com.kinplatform.common.user.User;
 import com.kinplatform.common.user.UserRepository;
 import java.lang.reflect.Method;
@@ -76,6 +77,9 @@ class ProjectContextSyncIntegrationTest {
     @Mock
     private CategoryRepository categoryRepository;
 
+    @Mock
+    private ProjectStructuredInfoService structuredInfoService;
+
     private final Map<UUID, ProjectContextEntity> contextStore = new HashMap<>();
     private Project project;
     private ContextRepository contextRepository;
@@ -107,7 +111,7 @@ class ProjectContextSyncIntegrationTest {
         when(projectRepository.findById(PROJECT_ID)).thenAnswer(i -> Optional.of(project));
         when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        sync = new ProjectContextSynchronizer(projectRepository);
+        sync = new ProjectContextSynchronizer(projectRepository, structuredInfoService);
     }
 
     private ConversationOrchestrator orchestrator() {

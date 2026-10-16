@@ -48,7 +48,7 @@ public class KinMethod {
     private final ProjectContextSyncPort contextSync;
     private final EnterprisePipelineResultStore pipelineResultStore;
 
-    private static final ProjectContextSyncPort NO_OP_SYNC = (projectId, context) -> {};
+    private static final ProjectContextSyncPort NO_OP_SYNC = (userId, projectId, context) -> {};
     private static final EnterprisePipelineResultStore NO_OP_RESULT_STORE = new EnterprisePipelineResultStore() {
         @Override
         public void store(EnterpriseTurnResults results) {}
@@ -143,7 +143,7 @@ public class KinMethod {
         var ctx = prepare(command);
         var result = pipeline.execute(ctx);
         contextRepository.save(command.projectId(), result.projectContext());
-        contextSync.sync(command.projectId(), result.projectContext());
+        contextSync.sync(command.userId(), command.projectId(), result.projectContext());
         capturePipelineResults(command.projectId(), result);
 
         return new KinMethodResult(
@@ -184,7 +184,7 @@ public class KinMethod {
         ctx.streaming(true);
         var result = pipeline.execute(ctx);
         contextRepository.save(command.projectId(), result.projectContext());
-        contextSync.sync(command.projectId(), result.projectContext());
+        contextSync.sync(command.userId(), command.projectId(), result.projectContext());
 
         Flux<String> flux = result.aiResponseFlux();
         if (flux == null) {
