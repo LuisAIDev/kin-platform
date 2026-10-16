@@ -45,6 +45,46 @@ public class HeuristicContextAnalyzerAdapter implements ContextAnalyzerPort {
             "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\;]{5,200}?)(?=[\\.\\!\\?]|$)",
             Pattern.CASE_INSENSITIVE);
 
+    private static final Pattern PATTERN_VALUE_PROPOSITION = Pattern.compile(
+            "(?:mi propuesta de valor (?:es)?|nuestra propuesta de valor (?:es)?|la propuesta de valor (?:es)?|propuesta de valor (?:es)?|el diferenciador (?:es)?|lo que nos distingue (?:es)?|nos distingue por|valor [uú]nico (?:es)?) " +
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\;]{4,200}?)(?=[\\.\\!\\?]|$)",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern PATTERN_REVENUE_MODEL = Pattern.compile(
+            "(?:modelo de ingresos (?:es)?|modelo de negocio (?:es)?|fuentes de ingresos (?:son|es)?|c[óo]mo facturamos|nuestros ingresos (?:vienen|provienen) de|facturamos|ticket promedio (?:es|de)|retainers) " +
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\;\\/\\.]{2,200}?)(?=[\\.\\!\\?]|$)",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern PATTERN_COMPETITION = Pattern.compile(
+            "(?:la competencia (?:es|son)?|nuestra competencia (?:es|son)?|competencia (?:es|son)?|competimos (?:con|contra)|nuestros (?:competidores|rivales) (?:son)?|(?:el )?competidor principal (?:es)?|rivales (?:son)?) " +
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\;\\/\\.]{2,200}?)(?=[\\.\\!\\?]|$)",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern PATTERN_RISKS = Pattern.compile(
+            "(?:los riesgos (?:son|principales son)?|el riesgo (?:principal )?(?:es)?|riesgos (?:son)?|riesgo (?:es)?|la mitigaci[óo]n (?:es)?|mitigaci[óo]n (?:es)?|dependencia (?:de|es)) " +
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\;\\/\\.]{4,200}?)(?=[\\.\\!\\?]|$)",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern PATTERN_RESOURCES = Pattern.compile(
+            "(?:los recursos (?:son|necesarios son)?|recursos (?:son|necesarios)?|necesitamos|requerimos|el capital (?:es|necesario es|requerido es)?|capital (?:es)?|la inversi[óo]n (?:es|necesaria es)?|inversi[óo]n (?:es)?|presupuesto (?:es|de)?|la caja (?:es)?|pr[ée]stamo (?:de|por)?) " +
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\$][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\.\\$]{2,200}?)(?=[\\.\\!\\?]|$)",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern PATTERN_MVP = Pattern.compile(
+            "(?:mi mvp (?:es)?|el mvp (?:es)?|mvp (?:es|consiste en)?|producto m[íi]nimo viable (?:es)?|validaci[óo]n temprana (?:es)?|el piloto (?:es|consiste en)?|piloto (?:es)?|producto de entrada (?:es)?) " +
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\;\\/\\.]{2,200}?)(?=[\\.\\!\\?]|$)",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern PATTERN_SCALABILITY = Pattern.compile(
+            "(?:la escalabilidad (?:es)?|escalabilidad (?:es)?|podemos escalar|escalar|c[óo]mo escalamos|los playbooks (?:son)?|playbooks (?:son)?|crecer sin|para escalar) " +
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\;\\/\\.]{2,200}?)(?=[\\.\\!\\?]|$)",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern PATTERN_OBJECTIVES = Pattern.compile(
+            "(?:los objetivos (?:son|del proyecto son)?|objetivos (?:son)?|el objetivo (?:es|principal es)?|objetivo (?:es)?|las metas (?:son)?|metas (?:son)?|nuestra meta (?:es)?|a (?:3|6|12) meses|en (?:3|6|12) meses) " +
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\;\\/\\.]{2,200}?)(?=[\\.\\!\\?]|$)",
+            Pattern.CASE_INSENSITIVE);
+
     @Override
     public AnalysisResult analyze(String userMessage, ProjectContext currentContext) {
         if (userMessage == null || userMessage.isBlank()) {
@@ -59,6 +99,14 @@ public class HeuristicContextAnalyzerAdapter implements ContextAnalyzerPort {
         extract(extracted, AnalyzedDimension.PROBLEM, PATTERN_PROBLEM, userMessage);
         extract(extracted, AnalyzedDimension.SOLUTION, PATTERN_SOLUTION, userMessage);
         extract(extracted, AnalyzedDimension.TARGET_CUSTOMER, PATTERN_CUSTOMER, userMessage);
+        extract(extracted, AnalyzedDimension.VALUE_PROPOSITION, PATTERN_VALUE_PROPOSITION, userMessage);
+        extract(extracted, AnalyzedDimension.REVENUE_MODEL, PATTERN_REVENUE_MODEL, userMessage);
+        extract(extracted, AnalyzedDimension.COMPETITION, PATTERN_COMPETITION, userMessage);
+        extract(extracted, AnalyzedDimension.RISKS, PATTERN_RISKS, userMessage);
+        extract(extracted, AnalyzedDimension.RESOURCES, PATTERN_RESOURCES, userMessage);
+        extract(extracted, AnalyzedDimension.MVP, PATTERN_MVP, userMessage);
+        extract(extracted, AnalyzedDimension.SCALABILITY, PATTERN_SCALABILITY, userMessage);
+        extract(extracted, AnalyzedDimension.OBJECTIVES, PATTERN_OBJECTIVES, userMessage);
 
         var result = new AnalysisResult(extracted);
         if (!result.isEmpty()) {

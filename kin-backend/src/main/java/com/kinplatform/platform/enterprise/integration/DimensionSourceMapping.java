@@ -39,7 +39,8 @@ public final class DimensionSourceMapping {
             case RISKS -> keys("RIESGOS", "riesgos_identificados");
             case RESOURCES -> keys("OPERACION", "empleados", "OPERACION", "equipos");
             case SCALABILITY -> keys("OPERACION", "capacidad_produccion");
-            case MVP, OBJECTIVES -> List.of();
+            case MVP -> keys("ESTRATEGIA", "mvp");
+            case OBJECTIVES -> keys("ESTRATEGIA", "objetivos");
         };
     }
 
