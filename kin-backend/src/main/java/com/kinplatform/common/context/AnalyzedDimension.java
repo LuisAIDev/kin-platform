@@ -15,7 +15,10 @@ public enum AnalyzedDimension {
     RESOURCES("Recursos necesarios"),
     MVP("MVP / validaci\u00F3n temprana"),
     SCALABILITY("Escalabilidad"),
-    OBJECTIVES("Objetivos del proyecto");
+    OBJECTIVES("Objetivos del proyecto"),
+    COSTOS_FIJOS("Costos fijos"),
+    COSTOS_VARIABLES("Costos variables"),
+    PRECIO_VENTA("Precio de venta");
 
     private final String displayName;
 

@@ -41,6 +41,9 @@ public final class DimensionSourceMapping {
             case SCALABILITY -> keys("OPERACION", "capacidad_produccion");
             case MVP -> keys("ESTRATEGIA", "mvp");
             case OBJECTIVES -> keys("ESTRATEGIA", "objetivos");
+            case COSTOS_FIJOS -> keys("FINANZAS", "costos_fijos");
+            case COSTOS_VARIABLES -> keys("FINANZAS", "costos_variables");
+            case PRECIO_VENTA -> keys("FINANZAS", "precio");
         };
     }
 

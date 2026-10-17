@@ -51,6 +51,7 @@ const chatEndRef = useRef<HTMLDivElement>(null);
 const sendingRef = useRef(false);
 const abortRef = useRef<AbortController | null>(null);
 const lastUserMessageRef = useRef<string>("");
+const pendingPromptRef = useRef(false);
 
   useEffect(() => {
     Promise.all([
@@ -194,6 +195,15 @@ const lastUserMessageRef = useRef<string>("");
       },
     });
   };
+
+  useEffect(() => {
+    if (loading || pendingPromptRef.current) return;
+    const pending = window.sessionStorage.getItem("kin_pending_prompt");
+    if (!pending) return;
+    pendingPromptRef.current = true;
+    window.sessionStorage.removeItem("kin_pending_prompt");
+    handleSend(pending);
+  }, [loading, handleSend]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {

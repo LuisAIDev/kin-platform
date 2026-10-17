@@ -82,7 +82,22 @@ public class HeuristicContextAnalyzerAdapter implements ContextAnalyzerPort {
 
     private static final Pattern PATTERN_OBJECTIVES = Pattern.compile(
             "(?:los objetivos (?:son|del proyecto son)?|objetivos (?:son)?|el objetivo (?:es|principal es)?|objetivo (?:es)?|las metas (?:son)?|metas (?:son)?|nuestra meta (?:es)?|a (?:3|6|12) meses|en (?:3|6|12) meses) " +
-            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\;\\/\\.]{2,200}?)(?=[\\.\\!\\?]|$)",
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\;\\/\\.]{2,200}?)(?=[\\!\\?]|\\.\\s|\\.$|$)",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern PATTERN_COSTOS_FIJOS = Pattern.compile(
+            "(?:los costos fijos(?: son| ascienden a)?|costos fijos(?: son)?|el costo fijo(?: es)?|costo fijo(?: es)?|los gastos fijos(?: son)?|gastos fijos(?: son)?|el arriendo(?: mensual)?(?: es)?|arriendo(?: mensual)?(?: es)?|la n[óo]mina(?: fija)?(?: es)?|n[óo]mina(?: fija)?(?: es)?|los salarios fijos(?: son)?|salarios fijos(?: son)?|los sueldos fijos(?: son)?|sueldos fijos(?: son)?|pagos fijos(?: son)?) " +
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\$%][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\.\\$%]{2,200}?)(?=[\\!\\?]|\\.\\s|\\.$|$)",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern PATTERN_COSTOS_VARIABLES = Pattern.compile(
+            "(?:los costos variables(?: son)?|costos variables(?: son)?|el costo variable(?: es)?|costo variable(?: es)?|los costos por unidad(?: son)?|costos por unidad(?: son)?|el costo por unidad(?: es)?|costo por unidad(?: es)?|los insumos(?: cuestan| son)?|insumos(?: cuestan| son)?|los materiales(?: cuestan| son)?|materiales(?: cuestan| son)?|las comisiones(?: son)?|comisiones(?: son)?) " +
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\$%][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\.\\$%]{2,200}?)(?=[\\!\\?]|\\.\\s|\\.$|$)",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern PATTERN_PRECIO_VENTA = Pattern.compile(
+            "(?:el precio de venta(?: es)?|precio de venta(?: es)?|el precio unitario(?: es)?|precio unitario(?: es)?|el precio al p[úu]blico(?: es)?|precio al p[úu]blico(?: es)?|vendemos (?:a|en)|lo vendemos (?:a|en)|el ticket promedio(?: es)?|ticket promedio(?: es)?) " +
+            "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\$%][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\.\\$%]{2,200}?)(?=[\\!\\?]|\\.\\s|\\.$|$)",
             Pattern.CASE_INSENSITIVE);
 
     @Override
@@ -107,6 +122,9 @@ public class HeuristicContextAnalyzerAdapter implements ContextAnalyzerPort {
         extract(extracted, AnalyzedDimension.MVP, PATTERN_MVP, userMessage);
         extract(extracted, AnalyzedDimension.SCALABILITY, PATTERN_SCALABILITY, userMessage);
         extract(extracted, AnalyzedDimension.OBJECTIVES, PATTERN_OBJECTIVES, userMessage);
+        extract(extracted, AnalyzedDimension.COSTOS_FIJOS, PATTERN_COSTOS_FIJOS, userMessage);
+        extract(extracted, AnalyzedDimension.COSTOS_VARIABLES, PATTERN_COSTOS_VARIABLES, userMessage);
+        extract(extracted, AnalyzedDimension.PRECIO_VENTA, PATTERN_PRECIO_VENTA, userMessage);
 
         var result = new AnalysisResult(extracted);
         if (!result.isEmpty()) {

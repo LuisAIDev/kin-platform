@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { enterpriseApi } from "@/services/enterpriseApi";
 import { projectInfoService } from "@/services/projectInfo";
 import type { EnterpriseInformation, InfoValue } from "@/types/enterprise";
@@ -66,6 +67,7 @@ interface EnterpriseInformationPanelProps {
 
 /** Sección "Información y fuentes" del dashboard Enterprise (FASE 8/9). */
 export function EnterpriseInformationPanel({ projectId }: EnterpriseInformationPanelProps) {
+  const router = useRouter();
   const [info, setInfo] = useState<EnterpriseInformation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
@@ -101,6 +103,23 @@ export function EnterpriseInformationPanel({ projectId }: EnterpriseInformationP
     } finally {
       setConfirming(null);
     }
+  };
+
+  const handleCompleteInformation = () => {
+    const firstMissing = info?.resolvedDimensions.find(
+      (d) =>
+        d.value == null ||
+        d.value === "" ||
+        d.state === "PENDING" ||
+        d.state === "NOT_AVAILABLE",
+    );
+    const message = firstMissing
+      ? `Ayúdame a definir mi ${firstMissing.displayName}.`
+      : "Quiero completar los datos faltantes de mi proyecto.";
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("kin_pending_prompt", message);
+    }
+    router.push(`/dashboard/projects/${projectId}`);
   };
 
   if (error) {
@@ -250,6 +269,17 @@ export function EnterpriseInformationPanel({ projectId }: EnterpriseInformationP
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-3 flex justify-end">
+        <button
+          type="button"
+          onClick={handleCompleteInformation}
+          data-testid="complete-information"
+          className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 transition"
+        >
+          Completar información
+        </button>
       </div>
 
       {info.documents.length > 0 && (

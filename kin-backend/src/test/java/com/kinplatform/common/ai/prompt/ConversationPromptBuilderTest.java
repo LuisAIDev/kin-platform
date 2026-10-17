@@ -69,7 +69,10 @@ class ConversationPromptBuilderTest {
         assertTrue(prompt.contains("Categoria indicada por el usuario: Software"));
         assertTrue(prompt.contains("NO es una verdad absoluta"));
         assertTrue(prompt.contains("prioriza SIEMPRE la informacion proporcionada por el usuario"));
-        assertTrue(prompt.contains("Cobertura: 14.3%"));
+        assertTrue(prompt.contains("Cobertura: "
+            + String.format(java.util.Locale.ROOT, "%.1f",
+                2.0 / AnalyzedDimension.values().length * 100)
+            + "%"));
         assertTrue(prompt.contains("## INSTRUCCIÓN ESTRATÉGICA"));
         assertTrue(prompt.contains("Dimensión prioritaria: Problema que resuelve"));
         assertTrue(prompt.contains("explorar el problema a resolver"));
