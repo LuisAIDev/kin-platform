@@ -46,7 +46,9 @@ import com.kinplatform.platform.enterprise.valueobjects.DocumentArtifact;
 import com.kinplatform.platform.enterprise.valueobjects.EnterpriseScore;
 import com.kinplatform.platform.enterprise.valueobjects.MarketPlan;
 import com.kinplatform.common.event.DomainEventBus;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.common.knowledge.KnowledgeResult;
+import org.springframework.transaction.annotation.Transactional;
 import com.kinplatform.platform.reporting.RecommendationResult;
 import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
 import com.kinplatform.platform.reporting.risk.RiskResult;
@@ -102,7 +104,7 @@ import java.util.concurrent.ForkJoinPool;
  * {@code engine}). La capa de aplicación compone los motores y los puertos
  * directamente.</p>
  */
-public final class EnterpriseGenerationService {
+public class EnterpriseGenerationService {
 
     private final BusinessModelEngine businessModelEngine;
     private final MarketEngine marketEngine;
@@ -117,6 +119,7 @@ public final class EnterpriseGenerationService {
     private final DomainEventBus eventBus;
     private final Executor executor;
     private final EnterpriseNarrativeGenerator narrativeGenerator;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     /**
      * Constructor principal con los ocho motores, el ensamblador de
@@ -173,6 +176,44 @@ public final class EnterpriseGenerationService {
             DomainEventBus eventBus,
             Executor executor,
             AIResponder aiResponder) {
+        this(
+                businessModelEngine,
+                marketEngine,
+                innovationEngine,
+                financialPlanEngine,
+                roadmapEngine,
+                riskPlanEngine,
+                kpiEngine,
+                enterpriseScoreEngine,
+                documentAssembler,
+                repository,
+                eventBus,
+                executor,
+                aiResponder,
+                null);
+    }
+
+    /**
+     * Constructor aditivo (Fase 8.1): inyecta el publicador del outbox para
+     * encolar de forma transaccional la solicitud de generación asíncrona. Sin
+     * publicador se conserva el comportamiento previo (ejecución en el
+     * ejecutor interno).
+     */
+    public EnterpriseGenerationService(
+            BusinessModelEngine businessModelEngine,
+            MarketEngine marketEngine,
+            InnovationEngine innovationEngine,
+            FinancialPlanEngine financialPlanEngine,
+            RoadmapEngine roadmapEngine,
+            RiskPlanEngine riskPlanEngine,
+            KpiEngine kpiEngine,
+            EnterpriseScoreEngine enterpriseScoreEngine,
+            EnterpriseDocumentAssembler documentAssembler,
+            EnterpriseProjectRepository repository,
+            DomainEventBus eventBus,
+            Executor executor,
+            AIResponder aiResponder,
+            OutboxEventPublisher outboxEventPublisher) {
         this.businessModelEngine = requireNonNull(businessModelEngine, "businessModelEngine");
         this.marketEngine = requireNonNull(marketEngine, "marketEngine");
         this.innovationEngine = requireNonNull(innovationEngine, "innovationEngine");
@@ -189,6 +230,7 @@ public final class EnterpriseGenerationService {
                 ? null
                 : new EnterpriseNarrativeGenerator(
                         aiResponder, documentAssembler, new EnterpriseNarrativePromptBuilder(documentAssembler));
+        this.outboxEventPublisher = outboxEventPublisher;
     }
 
     /**
@@ -227,6 +269,33 @@ public final class EnterpriseGenerationService {
                 eventBus,
                 ForkJoinPool.commonPool(),
                 aiResponder);
+    }
+
+    /**
+     * Constructor de conveniencia aditivo (Fase 8.1): motores deterministas por
+     * defecto, IA narrativa y publicador del outbox para la solicitud asíncrona.
+     */
+    public EnterpriseGenerationService(
+            EnterpriseDocumentAssembler documentAssembler,
+            EnterpriseProjectRepository repository,
+            DomainEventBus eventBus,
+            AIResponder aiResponder,
+            OutboxEventPublisher outboxEventPublisher) {
+        this(
+                new DefaultBusinessModelEngine(),
+                new DefaultMarketEngine(),
+                new DefaultInnovationEngine(),
+                new DefaultFinancialPlanEngine(),
+                new DefaultRoadmapEngine(),
+                new DefaultRiskPlanEngine(),
+                new DefaultKpiEngine(),
+                new DefaultEnterpriseScoreEngine(),
+                documentAssembler,
+                repository,
+                eventBus,
+                ForkJoinPool.commonPool(),
+                aiResponder,
+                outboxEventPublisher);
     }
 
     /**
@@ -329,22 +398,34 @@ public final class EnterpriseGenerationService {
      * @throws IllegalArgumentException si {@code request} es {@code null}
      */
     public CompletableFuture<EnterpriseProject> generateAsync(EnterpriseGenerationRequest request) {
-        if (request == null) {
-            throw new IllegalArgumentException("La solicitud de generación no puede ser null.");
-        }
-        return CompletableFuture.supplyAsync(() -> generate(request), executor);
+        return generateAsyncWithSupplemental(request, EnterpriseSupplementalInput.empty());
     }
 
     /**
      * Genera el proyecto empresarial de forma asíncrona incorporando los datos
      * numéricos estructurados (FASE 10B).
      */
+    @Transactional
     public CompletableFuture<EnterpriseProject> generateAsyncWithSupplemental(
             EnterpriseGenerationRequest request, EnterpriseSupplementalInput supplemental) {
         if (request == null) {
             throw new IllegalArgumentException("La solicitud de generación no puede ser null.");
         }
-        return CompletableFuture.supplyAsync(() -> generateWithSupplemental(request, supplemental), executor);
+        if (outboxEventPublisher == null) {
+            return CompletableFuture.supplyAsync(() -> generateWithSupplemental(request, supplemental), executor);
+        }
+        UUID projectId = request.projectId();
+        Optional<EnterpriseProject> latest = repository.findLatestVersion(projectId);
+        EnterpriseProject requested = requestedVersion(projectId, latest);
+        if (requested == null) {
+            return CompletableFuture.completedFuture(latest.orElseThrow());
+        }
+        // Encolado transaccional: el OutboxRelay publica el evento en el bus y el
+        // EnterpriseProjectRequestedListener ejecuta la generación de forma
+        // asíncrona y durable. No se persiste el aggregate aquí para no bloquear
+        // la generación del listener (idempotencia por versión).
+        outboxEventPublisher.publish(new EnterpriseProjectRequested(projectId, requested.version()));
+        return CompletableFuture.completedFuture(requested);
     }
 
     // ------------------------------------------------------------------

@@ -24,14 +24,22 @@ import AccountReviewScreen from "@/components/auth/AccountReviewScreen";
 export default function RoleGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  // Evita el hydration mismatch (React #418): servidor y primer render cliente
+  // deben producir el mismo HTML. Hasta después del montaje no se lee
+  // localStorage, así que ambos muestran la pantalla de verificación.
+  const [mounted, setMounted] = useState(false);
   // Forza un re-render tras re-sincronizar el espejo local (storeSession).
   const [, setResynced] = useState(false);
-  const user = typeof window !== "undefined" ? authService.getUser() : null;
+  const user = mounted ? authService.getUser() : null;
   const role = user?.role;
-  const selected = typeof window !== "undefined" ? getSelectedVertical() : null;
+  const selected = mounted ? getSelectedVertical() : null;
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
 
     if (user) {
       // canAccessPath recibe el contexto completo del usuario: la capacidad
@@ -67,9 +75,9 @@ export default function RoleGuard({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [role, pathname, router, selected, user]);
+  }, [mounted, role, pathname, router, selected, user]);
 
-  if (!user) {
+  if (!mounted || !user) {
     // Sin espejo local: mostramos una pantalla de carga mientras resolvemos la
     // sesión contra el servidor (evita parpadear el dashboard con contenido de
     // una sesión inexistente o lanzar llamadas 401 redundantes).

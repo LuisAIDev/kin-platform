@@ -20,6 +20,7 @@ import com.kinplatform.platform.enterprise.ports.EnterpriseProjectRepository;
 import com.kinplatform.platform.enterprise.progress.EnterpriseProgressPublisher;
 import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.common.eventbus.IdempotencyService;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,8 +80,10 @@ public class EnterpriseWebConfig {
      */
     @Bean
     public EnterpriseGenerationService enterpriseGenerationService(
-            EnterpriseProjectRepository repository, DomainEventBus eventBus, AIResponder aiResponder) {
-        return new EnterpriseGenerationService(new EnterpriseDocumentAssembler(), repository, eventBus, aiResponder);
+            EnterpriseProjectRepository repository, DomainEventBus eventBus, AIResponder aiResponder,
+            OutboxEventPublisher outboxEventPublisher) {
+        return new EnterpriseGenerationService(
+                new EnterpriseDocumentAssembler(), repository, eventBus, aiResponder, outboxEventPublisher);
     }
 
     /**
