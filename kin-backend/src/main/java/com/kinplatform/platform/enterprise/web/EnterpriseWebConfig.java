@@ -26,6 +26,7 @@ import java.util.concurrent.Executors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -81,9 +82,10 @@ public class EnterpriseWebConfig {
     @Bean
     public EnterpriseGenerationService enterpriseGenerationService(
             EnterpriseProjectRepository repository, DomainEventBus eventBus, AIResponder aiResponder,
-            OutboxEventPublisher outboxEventPublisher) {
+            OutboxEventPublisher outboxEventPublisher, PlatformTransactionManager transactionManager) {
         return new EnterpriseGenerationService(
-                new EnterpriseDocumentAssembler(), repository, eventBus, aiResponder, outboxEventPublisher);
+                new EnterpriseDocumentAssembler(), repository, eventBus, aiResponder,
+                outboxEventPublisher, transactionManager);
     }
 
     /**

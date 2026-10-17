@@ -48,7 +48,8 @@ import com.kinplatform.platform.enterprise.valueobjects.MarketPlan;
 import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.common.knowledge.KnowledgeResult;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import com.kinplatform.platform.reporting.RecommendationResult;
 import com.kinplatform.platform.reporting.opportunity.OpportunityResult;
 import com.kinplatform.platform.reporting.risk.RiskResult;
@@ -120,6 +121,7 @@ public class EnterpriseGenerationService {
     private final Executor executor;
     private final EnterpriseNarrativeGenerator narrativeGenerator;
     private final OutboxEventPublisher outboxEventPublisher;
+    private final TransactionTemplate transactionTemplate;
 
     /**
      * Constructor principal con los ocho motores, el ensamblador de
@@ -190,6 +192,7 @@ public class EnterpriseGenerationService {
                 eventBus,
                 executor,
                 aiResponder,
+                null,
                 null);
     }
 
@@ -213,7 +216,8 @@ public class EnterpriseGenerationService {
             DomainEventBus eventBus,
             Executor executor,
             AIResponder aiResponder,
-            OutboxEventPublisher outboxEventPublisher) {
+            OutboxEventPublisher outboxEventPublisher,
+            PlatformTransactionManager transactionManager) {
         this.businessModelEngine = requireNonNull(businessModelEngine, "businessModelEngine");
         this.marketEngine = requireNonNull(marketEngine, "marketEngine");
         this.innovationEngine = requireNonNull(innovationEngine, "innovationEngine");
@@ -231,6 +235,9 @@ public class EnterpriseGenerationService {
                 : new EnterpriseNarrativeGenerator(
                         aiResponder, documentAssembler, new EnterpriseNarrativePromptBuilder(documentAssembler));
         this.outboxEventPublisher = outboxEventPublisher;
+        this.transactionTemplate = transactionManager == null
+                ? null
+                : new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -295,7 +302,39 @@ public class EnterpriseGenerationService {
                 eventBus,
                 ForkJoinPool.commonPool(),
                 aiResponder,
-                outboxEventPublisher);
+                outboxEventPublisher,
+                null);
+    }
+
+    /**
+     * Constructor de conveniencia aditivo (Fase 8.2): motores deterministas por
+     * defecto, IA narrativa, publicador del outbox y el gestor de transacciones
+     * con el que se garantiza el commit del evento aunque el bean no sea
+     * proxificado por Spring.
+     */
+    public EnterpriseGenerationService(
+            EnterpriseDocumentAssembler documentAssembler,
+            EnterpriseProjectRepository repository,
+            DomainEventBus eventBus,
+            AIResponder aiResponder,
+            OutboxEventPublisher outboxEventPublisher,
+            PlatformTransactionManager transactionManager) {
+        this(
+                new DefaultBusinessModelEngine(),
+                new DefaultMarketEngine(),
+                new DefaultInnovationEngine(),
+                new DefaultFinancialPlanEngine(),
+                new DefaultRoadmapEngine(),
+                new DefaultRiskPlanEngine(),
+                new DefaultKpiEngine(),
+                new DefaultEnterpriseScoreEngine(),
+                documentAssembler,
+                repository,
+                eventBus,
+                ForkJoinPool.commonPool(),
+                aiResponder,
+                outboxEventPublisher,
+                transactionManager);
     }
 
     /**
@@ -405,13 +444,12 @@ public class EnterpriseGenerationService {
      * Genera el proyecto empresarial de forma asíncrona incorporando los datos
      * numéricos estructurados (FASE 10B).
      */
-    @Transactional
     public CompletableFuture<EnterpriseProject> generateAsyncWithSupplemental(
             EnterpriseGenerationRequest request, EnterpriseSupplementalInput supplemental) {
         if (request == null) {
             throw new IllegalArgumentException("La solicitud de generación no puede ser null.");
         }
-        if (outboxEventPublisher == null) {
+        if (outboxEventPublisher == null || transactionTemplate == null) {
             return CompletableFuture.supplyAsync(() -> generateWithSupplemental(request, supplemental), executor);
         }
         UUID projectId = request.projectId();
@@ -420,11 +458,11 @@ public class EnterpriseGenerationService {
         if (requested == null) {
             return CompletableFuture.completedFuture(latest.orElseThrow());
         }
-        // Encolado transaccional: el OutboxRelay publica el evento en el bus y el
-        // EnterpriseProjectRequestedListener ejecuta la generación de forma
-        // asíncrona y durable. No se persiste el aggregate aquí para no bloquear
-        // la generación del listener (idempotencia por versión).
-        outboxEventPublisher.publish(new EnterpriseProjectRequested(projectId, requested.version()));
+        // Transacción explícita vía TransactionTemplate: garantiza el INSERT en
+        // domain_event_outbox y su COMMIT aunque el bean no sea proxificado por
+        // @Transactional. El OutboxRelay lo publica y el listener genera.
+        transactionTemplate.executeWithoutResult(status ->
+                outboxEventPublisher.publish(new EnterpriseProjectRequested(projectId, requested.version())));
         return CompletableFuture.completedFuture(requested);
     }
 
