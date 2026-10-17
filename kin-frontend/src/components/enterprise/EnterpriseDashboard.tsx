@@ -251,7 +251,7 @@ export default function EnterpriseDashboard({
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
-        <div className="card-title">Generación</div>
+        <div className="card-title">Información</div>
         <ProgressBar progress={progress} status={status} />
       </div>
 

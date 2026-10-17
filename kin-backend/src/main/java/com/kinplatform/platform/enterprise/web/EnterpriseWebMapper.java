@@ -205,6 +205,22 @@ public final class EnterpriseWebMapper {
      */
     public EnterpriseDashboardResponse toDashboard(EnterpriseProject project,
                                                    List<EnterpriseProject> versions) {
+        return toDashboard(project, versions, null);
+    }
+
+    /**
+     * Construye el dashboard usando la completitud real de la información
+     * (dimensiones cubiertas) cuando está disponible; si no, usa el progreso
+     * de generación como respaldo.
+     *
+     * @param project             versión consultada (obligatoria)
+     * @param versions            todas las versiones del proyecto (obligatorio)
+     * @param informationProgress completitud 0-100, o {@code null} para el progreso de generación
+     * @return DTO de dashboard
+     */
+    public EnterpriseDashboardResponse toDashboard(EnterpriseProject project,
+                                                   List<EnterpriseProject> versions,
+                                                   Integer informationProgress) {
         requireProject(project);
         if (versions == null) {
             throw new IllegalArgumentException("versions no puede ser null");
@@ -226,7 +242,9 @@ public final class EnterpriseWebMapper {
             project.projectId(),
             project.version(),
             project.status().name(),
-            progress(project.status()),
+            informationProgress != null
+                ? Math.max(0, Math.min(100, informationProgress))
+                : progress(project.status()),
             project.documentCount(),
             versions.size(),
             project.createdAt(),

@@ -10,7 +10,7 @@ const STATE_LABEL: Record<string, string> = {
   IMPORTED: "Importado",
   CALCULATED: "Calculado",
   ESTIMATED: "Estimado",
-  AI_SUGGESTED: "Sugerido por IA",
+  AI_SUGGESTED: "Extraído por Motor",
   PENDING: "Pendiente",
   NOT_AVAILABLE: "No disponible",
 };

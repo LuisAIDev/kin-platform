@@ -1,5 +1,6 @@
 package com.kinplatform.platform.enterprise.web;
 
+import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.platform.enterprise.ports.EnterpriseProjectRepository;
 import com.kinplatform.platform.enterprise.web.dto.EnterpriseDashboardResponse;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,15 +43,32 @@ public class EnterpriseDashboardController {
 
     private final EnterpriseProjectRepository repository;
     private final EnterpriseWebMapper mapper;
+    private final ContextRepository contextRepository;
 
     /**
-     * @param repository puerto de persistencia del proyecto empresarial (obligatorio)
-     * @param mapper     mapeador dominio ⇄ DTO (obligatorio)
+     * Constructor de compatibilidad (pruebas): sin contexto disponible, el
+     * dashboard conserva el progreso derivado del estado de generación.
      */
     public EnterpriseDashboardController(EnterpriseProjectRepository repository,
                                          EnterpriseWebMapper mapper) {
+        this(repository, mapper, null);
+    }
+
+    /**
+     * Constructor de producción: incorpora la completitud real de la
+     * información del proyecto (dimensiones cubiertas sobre el total).
+     *
+     * @param repository        puerto de persistencia del proyecto empresarial (obligatorio)
+     * @param mapper            mapeador dominio ? DTO (obligatorio)
+     * @param contextRepository contexto durable del proyecto (opcional)
+     */
+    @Autowired
+    public EnterpriseDashboardController(EnterpriseProjectRepository repository,
+                                         EnterpriseWebMapper mapper,
+                                         ContextRepository contextRepository) {
         this.repository = require(repository, "repository");
         this.mapper = require(mapper, "mapper");
+        this.contextRepository = contextRepository;
     }
 
     @GetMapping("/{projectId}/{version}/dashboard")
@@ -75,7 +94,22 @@ public class EnterpriseDashboardController {
             .orElseThrow(() -> new EnterpriseNotFoundException(
                 "No existe la versión " + version + " del proyecto " + projectId + "."));
         List<EnterpriseProject> versions = repository.findAllVersions(projectId);
-        return ResponseEntity.ok(mapper.toDashboard(project, versions));
+        return ResponseEntity.ok(
+            mapper.toDashboard(project, versions, informationProgress(projectId)));
+    }
+
+    /**
+     * Completitud real de la información del proyecto (dimensiones cubiertas
+     * sobre el total). Devuelve {@code null} si no hay contexto disponible para
+     * conservar el progreso de generación como respaldo.
+     */
+    private Integer informationProgress(UUID projectId) {
+        if (contextRepository == null) {
+            return null;
+        }
+        return contextRepository.find(projectId)
+            .map(context -> (int) Math.round(context.coverageRatio() * 100))
+            .orElse(null);
     }
 
     private void requireValidVersion(int version) {
