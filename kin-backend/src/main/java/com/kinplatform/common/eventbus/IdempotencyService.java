@@ -19,8 +19,14 @@ import java.util.UUID;
 @Service
 public class IdempotencyService {
 
+    /**
+     * EXISTS siempre devuelve exactamente una fila (true/false). Evita el
+     * EmptyResultDataAccessException "Incorrect result size: expected 1,
+     * actual 0" que lanzaba queryForObject cuando el evento aún no había sido
+     * procesado (primer intento).
+     */
     private static final String CHECK_SQL = """
-        SELECT 1 FROM processed_events WHERE event_id = ?
+        SELECT EXISTS(SELECT 1 FROM processed_events WHERE event_id = ?)
         """;
 
     private static final String INSERT_SQL = """
