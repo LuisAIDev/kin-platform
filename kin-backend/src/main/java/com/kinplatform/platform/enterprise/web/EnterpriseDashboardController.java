@@ -4,6 +4,8 @@ import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.platform.enterprise.ports.EnterpriseProjectRepository;
 import com.kinplatform.platform.enterprise.web.dto.EnterpriseDashboardResponse;
+import com.kinplatform.platform.projectinfo.ProjectStructuredInfo;
+import com.kinplatform.platform.projectinfo.ProjectStructuredInfoRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -19,7 +21,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -44,6 +48,7 @@ public class EnterpriseDashboardController {
     private final EnterpriseProjectRepository repository;
     private final EnterpriseWebMapper mapper;
     private final ContextRepository contextRepository;
+    private final ProjectStructuredInfoRepository structuredInfoRepository;
 
     /**
      * Constructor de compatibilidad (pruebas): sin contexto disponible, el
@@ -51,24 +56,38 @@ public class EnterpriseDashboardController {
      */
     public EnterpriseDashboardController(EnterpriseProjectRepository repository,
                                          EnterpriseWebMapper mapper) {
-        this(repository, mapper, null);
+        this(repository, mapper, null, null);
+    }
+
+    /**
+     * Constructor de compatibilidad con tests: sin repositorio de información
+     * estructurada, {@code scoreStale} siempre es {@code false}.
+     */
+    public EnterpriseDashboardController(EnterpriseProjectRepository repository,
+                                         EnterpriseWebMapper mapper,
+                                         ContextRepository contextRepository) {
+        this(repository, mapper, contextRepository, null);
     }
 
     /**
      * Constructor de producción: incorpora la completitud real de la
-     * información del proyecto (dimensiones cubiertas sobre el total).
+     * información del proyecto y detecta si el score es anterior a la última
+     * actualización de {@code project_structured_info}.
      *
-     * @param repository        puerto de persistencia del proyecto empresarial (obligatorio)
-     * @param mapper            mapeador dominio ? DTO (obligatorio)
-     * @param contextRepository contexto durable del proyecto (opcional)
+     * @param repository              puerto de persistencia del proyecto empresarial (obligatorio)
+     * @param mapper                  mapeador dominio ? DTO (obligatorio)
+     * @param contextRepository       contexto durable del proyecto (opcional)
+     * @param structuredInfoRepository repositorio de información estructurada (opcional)
      */
     @Autowired
     public EnterpriseDashboardController(EnterpriseProjectRepository repository,
                                          EnterpriseWebMapper mapper,
-                                         ContextRepository contextRepository) {
+                                         ContextRepository contextRepository,
+                                         ProjectStructuredInfoRepository structuredInfoRepository) {
         this.repository = require(repository, "repository");
         this.mapper = require(mapper, "mapper");
         this.contextRepository = contextRepository;
+        this.structuredInfoRepository = structuredInfoRepository;
     }
 
     @GetMapping("/{projectId}/{version}/dashboard")
@@ -94,8 +113,25 @@ public class EnterpriseDashboardController {
             .orElseThrow(() -> new EnterpriseNotFoundException(
                 "No existe la versión " + version + " del proyecto " + projectId + "."));
         List<EnterpriseProject> versions = repository.findAllVersions(projectId);
+        boolean scoreStale = isScoreStale(project, projectId);
         return ResponseEntity.ok(
-            mapper.toDashboard(project, versions, informationProgress(projectId)));
+            mapper.toDashboard(project, versions, informationProgress(projectId), scoreStale));
+    }
+
+    /**
+     * Indica si el score persistido es anterior a la última actualización de la
+     * información estructurada del proyecto.
+     */
+    private boolean isScoreStale(EnterpriseProject project, UUID projectId) {
+        if (structuredInfoRepository == null || project.score() == null) {
+            return false;
+        }
+        return structuredInfoRepository.findByProjectIdOrderBySectionAscKeyAsc(projectId).stream()
+            .map(ProjectStructuredInfo::getUpdatedAt)
+            .filter(Objects::nonNull)
+            .max(Comparator.naturalOrder())
+            .map(updatedAt -> updatedAt.isAfter(project.updatedAt()))
+            .orElse(false);
     }
 
     /**

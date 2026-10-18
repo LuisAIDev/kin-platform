@@ -205,7 +205,7 @@ public final class EnterpriseWebMapper {
      */
     public EnterpriseDashboardResponse toDashboard(EnterpriseProject project,
                                                    List<EnterpriseProject> versions) {
-        return toDashboard(project, versions, null);
+        return toDashboard(project, versions, null, false);
     }
 
     /**
@@ -221,6 +221,13 @@ public final class EnterpriseWebMapper {
     public EnterpriseDashboardResponse toDashboard(EnterpriseProject project,
                                                    List<EnterpriseProject> versions,
                                                    Integer informationProgress) {
+        return toDashboard(project, versions, informationProgress, false);
+    }
+
+    public EnterpriseDashboardResponse toDashboard(EnterpriseProject project,
+                                                   List<EnterpriseProject> versions,
+                                                   Integer informationProgress,
+                                                   boolean scoreStale) {
         requireProject(project);
         if (versions == null) {
             throw new IllegalArgumentException("versions no puede ser null");
@@ -246,6 +253,7 @@ public final class EnterpriseWebMapper {
                 ? Math.max(0, Math.min(100, informationProgress))
                 : progress(project.status()),
             project.isPartial(),
+            scoreStale,
             project.documentCount(),
             versions.size(),
             project.createdAt(),

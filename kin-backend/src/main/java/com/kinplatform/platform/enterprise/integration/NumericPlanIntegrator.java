@@ -1,6 +1,7 @@
 package com.kinplatform.platform.enterprise.integration;
 
 import com.kinplatform.platform.enterprise.valueobjects.MarketPlan;
+import com.kinplatform.platform.projectinfo.StructuredInfoSourceType;
 import java.util.OptionalDouble;
 
 /**
@@ -32,7 +33,11 @@ public final class NumericPlanIntegrator {
         double sam = valueOr(base.sam(), input.sam());
         double som = valueOr(base.som(), input.som());
         double growth = valueOr(base.growthRate(), input.growthRate());
-        if (tam == base.tam() && sam == base.sam() && som == base.som() && growth == base.growthRate()) {
+        double confidence = base.confidence() > 0.0
+                ? base.confidence()
+                : marketConfidence(input);
+        if (tam == base.tam() && sam == base.sam() && som == base.som()
+                && growth == base.growthRate() && confidence == base.confidence()) {
             return base;
         }
         return MarketPlan.of(
@@ -44,7 +49,7 @@ public final class NumericPlanIntegrator {
                 base.channels(),
                 base.entryBarriers(),
                 base.customerSegments(),
-                base.confidence());
+                confidence);
     }
 
     /** Ingresos = precio × unidades. Vacío si falta precio o unidades. */
@@ -81,6 +86,33 @@ public final class NumericPlanIntegrator {
             return OptionalDouble.empty();
         }
         return OptionalDouble.of(fixed.getAsDouble() / contribution);
+    }
+
+    private static double marketConfidence(EnterpriseSupplementalInput input) {
+        double confidence = 0.0;
+        confidence = Math.max(confidence, confidenceOf(input.tam()));
+        confidence = Math.max(confidence, confidenceOf(input.sam()));
+        confidence = Math.max(confidence, confidenceOf(input.som()));
+        confidence = Math.max(confidence, confidenceOf(input.growthRate()));
+        return confidence;
+    }
+
+    private static double confidenceOf(ResolvedValue value) {
+        if (value == null || toNonNegative(value).isEmpty()) {
+            return 0.0;
+        }
+        if (value.state() == DataState.CONFIRMED
+                || value.sourceType() == StructuredInfoSourceType.USER_INPUT) {
+            return 1.0;
+        }
+        if (value.state() == DataState.AI_SUGGESTED
+                || value.sourceType() == StructuredInfoSourceType.AI_SUGGESTED) {
+            return 0.5;
+        }
+        if (value.state() == DataState.PENDING || value.state() == DataState.NOT_AVAILABLE) {
+            return 0.0;
+        }
+        return 0.5;
     }
 
     private static double valueOr(double base, ResolvedValue value) {

@@ -23,6 +23,7 @@ import java.util.UUID;
  * @param status                  estado de la generación
  * @param progress                progreso porcentual (0-100)
  * @param isPartial               indica si la generación usó datos insuficientes
+ * @param scoreStale              indica si el score es anterior a la última actualización de la información
  * @param documentCount           número de documentos de la versión
  * @param versionsCount           número total de versiones del proyecto
  * @param createdAt               instante de creación de la versión
@@ -53,6 +54,10 @@ public record EnterpriseDashboardResponse(
     @JsonProperty("isPartial")
     @Schema(description = "Indica si la generación usó datos insuficientes", example = "false")
     boolean isPartial,
+
+    @Schema(description = "Indica si el score quedó desactualizado respecto a la información estructurada",
+        example = "false")
+    boolean scoreStale,
 
     @PositiveOrZero @Schema(description = "Número de documentos de la versión", example = "7")
     int documentCount,
