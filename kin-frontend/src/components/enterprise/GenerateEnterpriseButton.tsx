@@ -20,10 +20,11 @@ interface GenerateEnterpriseButtonProps {
 export function GenerateEnterpriseButton({ projectId }: GenerateEnterpriseButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [apiStatus, setApiStatus] = useState<"REQUESTED" | "RUNNING" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async () => {
-    if (loading) {
+    if (loading || apiStatus !== null) {
       return;
     }
     setLoading(true);
@@ -31,12 +32,15 @@ export function GenerateEnterpriseButton({ projectId }: GenerateEnterpriseButton
     try {
       const status = await enterpriseApi.generate(projectId, true);
       if (status === 202 || status === 409) {
+        setApiStatus(status === 409 ? "RUNNING" : "REQUESTED");
         router.push(`/dashboard/projects/${projectId}/enterprise`);
         return;
       }
-      setLoading(false);
+      setApiStatus(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+      setApiStatus(null);
+    } finally {
       setLoading(false);
     }
   };
@@ -46,10 +50,12 @@ export function GenerateEnterpriseButton({ projectId }: GenerateEnterpriseButton
       <button
         type="button"
         onClick={() => void handleGenerate()}
-        disabled={loading}
+        disabled={loading || apiStatus !== null}
         className="block w-full rounded-xl bg-accent-600 px-4 py-2.5 text-sm font-medium text-white text-center hover:bg-accent-700 transition disabled:opacity-50"
       >
-        {loading ? "Generando..." : "Generar Proyecto Empresarial"}
+        {loading || apiStatus !== null
+          ? "Generando..."
+          : "Generar Proyecto Empresarial"}
       </button>
       {error ? (
         <p className="text-xs text-red-600 mt-2" data-testid="generate-error">

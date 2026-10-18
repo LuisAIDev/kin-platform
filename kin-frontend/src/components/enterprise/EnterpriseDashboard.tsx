@@ -137,7 +137,12 @@ export default function EnterpriseDashboard({
 
   /** Solicita la generación (POST async) y muestra el progreso en vivo. */
   const handleGenerate = useCallback(async () => {
-    if (!projectId || generating) {
+    if (
+      !projectId ||
+      generating ||
+      dashboard?.status === "RUNNING" ||
+      dashboard?.status === "REQUESTED"
+    ) {
       return;
     }
     setGenerating(true);
@@ -206,6 +211,8 @@ export default function EnterpriseDashboard({
 
   const status = dashboard?.status ?? "REQUESTED";
   const progress = dashboard?.progress ?? 0;
+  const generationActive =
+    dashboard?.status === "RUNNING" || dashboard?.status === "REQUESTED";
 
   return (
     <div className="app">
@@ -220,10 +227,12 @@ export default function EnterpriseDashboard({
           <button
             type="button"
             className="btn btn-primary"
-            disabled={generating}
+            disabled={generating || generationActive}
             onClick={() => void handleGenerate()}
           >
-            {generating ? "Generando..." : "Generar Proyecto Empresarial"}
+            {generating || generationActive
+              ? "Generando..."
+              : "Generar Proyecto Empresarial"}
           </button>
           <StatusBadge status={status} />
         </div>
@@ -232,6 +241,15 @@ export default function EnterpriseDashboard({
       {error ? (
         <div className="card" style={{ borderColor: "#fecaca", color: "#b91c1c" }}>
           Error: {error}
+        </div>
+      ) : null}
+      {status === "FAILED" && dashboard?.failedReason ? (
+        <div
+          className="card"
+          data-testid="failed-reason"
+          style={{ borderColor: "#fecaca", color: "#b91c1c" }}
+        >
+          <strong>La generación falló:</strong> {dashboard.failedReason}
         </div>
       ) : null}
       {sseError && !terminal ? (
@@ -251,7 +269,25 @@ export default function EnterpriseDashboard({
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
-        <div className="card-title">Información</div>
+        <div
+          className="card-title"
+          style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
+        >
+          Información
+          {dashboard?.isPartial === true ? (
+            <span
+              data-testid="partial-badge"
+              className="badge"
+              style={{
+                background: "#fffbeb",
+                color: "#b45309",
+                border: "1px solid #fcd34d",
+              }}
+            >
+              Datos insuficientes para análisis de mercado
+            </span>
+          ) : null}
+        </div>
         <ProgressBar progress={progress} status={status} />
       </div>
 
