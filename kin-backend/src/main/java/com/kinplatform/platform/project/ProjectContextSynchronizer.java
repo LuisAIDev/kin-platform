@@ -85,7 +85,7 @@ public class ProjectContextSynchronizer implements ProjectContextSyncPort {
                         key.section(),
                         key.key(),
                         value,
-                        StructuredInfoSourceType.AI_SUGGESTED));
+                        StructuredInfoSourceType.USER_INPUT));
                 break;
             }
         }
