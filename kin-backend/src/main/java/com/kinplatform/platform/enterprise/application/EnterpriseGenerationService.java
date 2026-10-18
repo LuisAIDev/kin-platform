@@ -48,6 +48,8 @@ import com.kinplatform.platform.enterprise.valueobjects.MarketPlan;
 import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import com.kinplatform.common.knowledge.KnowledgeResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import com.kinplatform.platform.reporting.RecommendationResult;
@@ -106,6 +108,8 @@ import java.util.concurrent.ForkJoinPool;
  * directamente.</p>
  */
 public class EnterpriseGenerationService {
+
+    private static final Logger log = LoggerFactory.getLogger(EnterpriseGenerationService.class);
 
     private final BusinessModelEngine businessModelEngine;
     private final MarketEngine marketEngine;
@@ -420,9 +424,20 @@ public class EnterpriseGenerationService {
         UUID projectId = request.projectId();
         Optional<EnterpriseProject> existing = repository.findByVersion(projectId, version);
         if (existing.isPresent()) {
-            return existing.get();
+            EnterpriseProject current = existing.get();
+            if (!current.isRequested()) {
+                log.info(
+                        "Generación idempotente: project={} version={} ya está en estado {}; no se reinicia.",
+                        projectId, version, current.status());
+                return current;
+            }
+            // REQUESTED huérfano (solicitud encolada que nunca arrancó): se
+            // reanuda la generación en lugar de devolverlo sin hacer nada.
+            log.info("Reanudando generación REQUESTED: project={} version={}.", projectId, version);
+            return generateFrom(request, current, supplemental);
         }
         EnterpriseProject requested = EnterpriseProject.request(projectId, version);
+        log.info("Creando versión REQUESTED: project={} version={}.", projectId, version);
         return generateFrom(request, repository.save(requested), supplemental);
     }
 
@@ -450,20 +465,48 @@ public class EnterpriseGenerationService {
             throw new IllegalArgumentException("La solicitud de generación no puede ser null.");
         }
         if (outboxEventPublisher == null || transactionTemplate == null) {
+            log.warn(
+                    "Outbox no disponible (publisher={}, transactionTemplate={}); ejecución inline no durable para project={}.",
+                    outboxEventPublisher != null, transactionTemplate != null, request.projectId());
             return CompletableFuture.supplyAsync(() -> generateWithSupplemental(request, supplemental), executor);
         }
         UUID projectId = request.projectId();
         Optional<EnterpriseProject> latest = repository.findLatestVersion(projectId);
         EnterpriseProject requested = requestedVersion(projectId, latest);
-        if (requested == null) {
-            return CompletableFuture.completedFuture(latest.orElseThrow());
+        // Si la última versión ya está REQUESTED/RUNNING, requestedVersion()
+        // devuelve null. Se re-encola ESA MISMA versión para que el listener la
+        // retome (caso típico: REQUESTED huérfano que nunca arrancó).
+        EnterpriseProject baseline = requested != null ? requested : latest.orElse(null);
+        if (baseline == null) {
+            throw new IllegalStateException(
+                    "No existe ninguna versión empresarial que encolar para project=" + projectId);
         }
-        // Transacción explícita vía TransactionTemplate: garantiza el INSERT en
-        // domain_event_outbox y su COMMIT aunque el bean no sea proxificado por
-        // @Transactional. El OutboxRelay lo publica y el listener genera.
-        transactionTemplate.executeWithoutResult(status ->
-                outboxEventPublisher.publish(new EnterpriseProjectRequested(projectId, requested.version())));
-        return CompletableFuture.completedFuture(requested);
+        int versionToEnqueue = baseline.version();
+        // correlationId único por solicitud: evita que la idempotencia del
+        // listener descarte un reintento legítimo del usuario.
+        String correlationId = UUID.randomUUID().toString();
+        log.info(
+                "Encolando EnterpriseProjectRequested: project={} version={} correlationId={} nuevaVersion={}.",
+                projectId, versionToEnqueue, correlationId, requested != null);
+        try {
+            transactionTemplate.executeWithoutResult(status -> {
+                log.info(
+                        "Transacción outbox abierta: project={} version={}. Llamando a publish...",
+                        projectId, versionToEnqueue);
+                outboxEventPublisher.publish(
+                        new EnterpriseProjectRequested(projectId, versionToEnqueue, correlationId));
+                log.info("publish() completado: project={} version={}.", projectId, versionToEnqueue);
+            });
+        } catch (RuntimeException ex) {
+            log.error(
+                    "ERROR CRÍTICO guardando EnterpriseProjectRequested en outbox: project={} version={}.",
+                    projectId, versionToEnqueue, ex);
+            throw ex;
+        }
+        log.info(
+                "Transacción confirmada: evento persistido en domain_event_outbox (project={} version={}).",
+                projectId, versionToEnqueue);
+        return CompletableFuture.completedFuture(baseline);
     }
 
     // ------------------------------------------------------------------

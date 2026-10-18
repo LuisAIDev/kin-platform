@@ -306,7 +306,7 @@ class EnterpriseGenerationServiceTest {
     }
 
     @Test
-    void generacionSolicitada_versionExistente_esIdempotente() {
+    void generacionSolicitada_versionRequestedExistente_laReanuda() {
         var service = realService();
         var projectId = UUID.randomUUID();
         var requested = EnterpriseProject.request(projectId, 1);
@@ -314,8 +314,11 @@ class EnterpriseGenerationServiceTest {
 
         var result = service.generateRequested(request(projectId), 1);
 
-        assertSame(requested, result);
-        assertTrue(eventBus.publishedEvents().isEmpty());
+        assertEquals(GenerationStatus.COMPLETED, result.status());
+        assertEquals(1, result.version());
+        assertEquals(7, result.documentCount());
+        assertTrue(eventBus.publishedEvents().stream()
+                .anyMatch(e -> e instanceof EnterpriseProjectGenerated));
     }
 
     @Test
