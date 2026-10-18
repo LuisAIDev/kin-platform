@@ -26,6 +26,18 @@ const STATE_BADGE: Record<string, string> = {
   NOT_AVAILABLE: "bg-red-100 text-red-700",
 };
 
+const STRUCTURED_DIMENSION: Record<string, string> = {
+  "MERCADO.tam": "TAM",
+  "MERCADO.sam": "SAM",
+  "MERCADO.som": "SOM",
+  "MERCADO.growth_rate": "GROWTH_RATE",
+  "MERCADO.competidores": "COMPETITION",
+  "FINANZAS.costos_fijos": "COSTOS_FIJOS",
+  "FINANZAS.costos_variables": "COSTOS_VARIABLES",
+  "FINANZAS.precio": "PRECIO_VENTA",
+  "RIESGOS.riesgos_identificados": "RISKS",
+};
+
 function valueText(value: InfoValue | null | undefined): string {
   if (!value) return "Por definir";
   if (value.value != null && value.value !== "") return value.value;
@@ -222,7 +234,19 @@ export function EnterpriseInformationPanel({
     state: info.supplemental.breakevenCalculable ? "CALCULATED" : "NOT_AVAILABLE",
   };
 
-  const allRows = [...rows, ...supplementalRows, breakevenRow];
+  const coveredDimensionNames = new Set(
+    info.resolvedDimensions
+      .filter((d) => d.value != null && d.value !== "")
+      .map((d) => d.dimension),
+  );
+  const visibleSupplementalRows = supplementalRows.filter((row) => {
+    const dimension =
+      row.section && row.key
+        ? STRUCTURED_DIMENSION[`${row.section}.${row.key}`]
+        : undefined;
+    return !dimension || !coveredDimensionNames.has(dimension);
+  });
+  const allRows = [...rows, ...visibleSupplementalRows, breakevenRow];
 
   return (
     <div className="card" data-testid="info-sources-panel">

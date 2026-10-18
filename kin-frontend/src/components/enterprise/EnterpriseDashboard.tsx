@@ -211,6 +211,13 @@ export default function EnterpriseDashboard({
 
   const status = dashboard?.status ?? "REQUESTED";
   const progress = dashboard?.progress ?? 0;
+  const overallScore = dashboard?.score?.overall ?? null;
+  const marketScore = dashboard?.score?.market ?? null;
+  const showScoreQualityHint =
+    dashboard != null &&
+    progress >= 100 &&
+    overallScore != null &&
+    overallScore < 60;
   const generationActive =
     dashboard?.status === "RUNNING" || dashboard?.status === "REQUESTED";
 
@@ -265,6 +272,24 @@ export default function EnterpriseDashboard({
           style={{ borderColor: "#fecaca", color: "#b91c1c" }}
         >
           <strong>La generación falló:</strong> {dashboard.failedReason}
+        </div>
+      ) : null}
+      {showScoreQualityHint ? (
+        <div
+          className="card"
+          data-testid="score-quality-hint"
+          style={{
+            borderColor: "#fcd34d",
+            background: "#fffbeb",
+            color: "#92400e",
+          }}
+        >
+          <strong>Información completa, score bajo.</strong> La barra de
+          Información mide cuántos datos existen; el Enterprise Score mide su
+          calidad y profundidad. Mercado: {marketScore ?? 0}/100. Si está en 0,
+          faltan datos de mercado verificados en esta versión. Valida o completa
+          el mercado y <strong>regenera</strong> el proyecto para recalcular el
+          score.
         </div>
       ) : null}
       {sseError && !terminal ? (
