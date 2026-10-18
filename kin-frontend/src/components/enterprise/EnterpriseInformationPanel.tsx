@@ -32,6 +32,15 @@ function valueText(value: InfoValue | null | undefined): string {
   return value.state === "NOT_AVAILABLE" ? "No disponible" : "Por definir";
 }
 
+function isDimensionMissing(dimension: { value: string | null; state: string }): boolean {
+  return (
+    dimension.value == null ||
+    dimension.value === "" ||
+    dimension.state === "PENDING" ||
+    dimension.state === "NOT_AVAILABLE"
+  );
+}
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -106,16 +115,14 @@ export function EnterpriseInformationPanel({ projectId }: EnterpriseInformationP
   };
 
   const handleCompleteInformation = () => {
-    const firstMissing = info?.resolvedDimensions.find(
-      (d) =>
-        d.value == null ||
-        d.value === "" ||
-        d.state === "PENDING" ||
-        d.state === "NOT_AVAILABLE",
-    );
-    const message = firstMissing
-      ? `Ayúdame a definir mi ${firstMissing.displayName}.`
-      : "Quiero completar los datos faltantes de mi proyecto.";
+    const firstMissing = info?.resolvedDimensions.find(isDimensionMissing);
+    if (!firstMissing) {
+      return;
+    }
+    const label =
+      firstMissing.displayName.replace(/\s*\([^)]*\)\s*$/, "").trim() ||
+      firstMissing.dimension;
+    const message = `Ayúdame a definir mi ${label}.`;
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem("kin_pending_prompt", message);
     }
@@ -139,6 +146,8 @@ export function EnterpriseInformationPanel({ projectId }: EnterpriseInformationP
       </div>
     );
   }
+
+  const firstMissing = info.resolvedDimensions.find(isDimensionMissing);
 
   const rows: InfoRow[] = info.resolvedDimensions.map((d) => ({
     dato: d.displayName,
@@ -271,16 +280,18 @@ export function EnterpriseInformationPanel({ projectId }: EnterpriseInformationP
         </table>
       </div>
 
-      <div className="mt-3 flex justify-end">
-        <button
-          type="button"
-          onClick={handleCompleteInformation}
-          data-testid="complete-information"
-          className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 transition"
-        >
-          Completar información
-        </button>
-      </div>
+      {firstMissing ? (
+        <div className="mt-3 flex justify-end">
+          <button
+            type="button"
+            onClick={handleCompleteInformation}
+            data-testid="complete-information"
+            className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 transition"
+          >
+            Completar información
+          </button>
+        </div>
+      ) : null}
 
       {info.documents.length > 0 && (
         <div className="mt-4">

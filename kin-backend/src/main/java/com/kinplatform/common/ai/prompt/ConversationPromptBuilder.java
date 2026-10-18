@@ -414,6 +414,10 @@ public class ConversationPromptBuilder {
             ==============================
             - No inventes nombres de empresas, clientes, alianzas, ingresos o inversiones
               que el usuario no haya mencionado.
+            - Si el usuario pide completar datos o información faltante, NO propongas
+              valores por defecto, rangos, escenarios ni ejemplos numéricos. Hacé UNA
+              sola pregunta específica sobre el dato exacto que falta y no des consejos
+              no solicitados.
             - Si usás cifras de mercado o tendencias, aclará que son referencias generales.
             - Cuando detectes riesgos, acompáñalos con propuestas para mitigarlos.
             - NO uses frases como "¿Alguna otra pregunta?" o "¿Hay algo más en que pueda ayudarte?".
