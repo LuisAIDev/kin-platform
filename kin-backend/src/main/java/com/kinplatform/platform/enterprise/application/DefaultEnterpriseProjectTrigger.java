@@ -4,6 +4,9 @@ import com.kinplatform.platform.enterprise.aggregate.EnterpriseProject;
 import com.kinplatform.platform.enterprise.events.EnterpriseProjectRequested;
 import com.kinplatform.platform.enterprise.ports.EnterpriseProjectRepository;
 import com.kinplatform.common.event.DomainEventBus;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -29,20 +32,55 @@ import java.util.UUID;
  * <p>La publicación es no bloqueante: el listener de
  * {@code EnterpriseProjectRequested} ejecuta la generación de forma asíncrona
  * y el turno de conversación no se ve afectado.</p>
+ *
+ * <p>Cuando se configura {@link OutboxEventPublisher} con un
+ * {@link PlatformTransactionManager}, la solicitud se persiste en el outbox
+ * transaccional en lugar de publicarse directamente en el bus en memoria. Así
+ * el relay solo la entrega después del commit y no puede leer estado no
+ * confirmado (carrera del chat). Sin esas dependencias se conserva la
+ * publicación en el {@link DomainEventBus} para los escenarios existentes.</p>
  */
 public final class DefaultEnterpriseProjectTrigger implements EnterpriseProjectTrigger {
 
     private final EnterpriseProjectRepository repository;
     private final DomainEventBus eventBus;
+    private final OutboxEventPublisher outboxEventPublisher;
+    private final TransactionTemplate transactionTemplate;
 
     /**
+     * Constructor de compatibilidad: publica directamente en el bus.
+     *
      * @param repository repositorio del proyecto empresarial (obligatorio)
      * @param eventBus   bus de eventos de dominio existente (obligatorio)
      */
     public DefaultEnterpriseProjectTrigger(EnterpriseProjectRepository repository,
                                            DomainEventBus eventBus) {
+        this(repository, eventBus, null, null);
+    }
+
+    /**
+     * Constructor transaccional: persiste la solicitud en el outbox cuando se
+     * proporcionan ambas dependencias; si se omiten ambas, delega en el bus.
+     *
+     * @param repository             repositorio del proyecto empresarial (obligatorio)
+     * @param eventBus               bus de eventos de dominio existente (obligatorio)
+     * @param outboxEventPublisher   publicador del outbox (opcional junto con el gestor)
+     * @param transactionManager     gestor transaccional (opcional junto con el publicador)
+     */
+    public DefaultEnterpriseProjectTrigger(EnterpriseProjectRepository repository,
+                                           DomainEventBus eventBus,
+                                           OutboxEventPublisher outboxEventPublisher,
+                                           PlatformTransactionManager transactionManager) {
         this.repository = requireNonNull(repository, "repository");
         this.eventBus = requireNonNull(eventBus, "eventBus");
+        if ((outboxEventPublisher == null) != (transactionManager == null)) {
+            throw new IllegalArgumentException(
+                "outboxEventPublisher y transactionManager deben configurarse juntos o ambos omitirse.");
+        }
+        this.outboxEventPublisher = outboxEventPublisher;
+        this.transactionTemplate = transactionManager == null
+            ? null
+            : new TransactionTemplate(transactionManager);
     }
 
     @Override
@@ -60,7 +98,15 @@ public final class DefaultEnterpriseProjectTrigger implements EnterpriseProjectT
         int version = latest.map(EnterpriseProject::nextVersion)
             .map(EnterpriseProject::version)
             .orElse(1);
-        eventBus.publish(new EnterpriseProjectRequested(projectId, version));
+        publish(new EnterpriseProjectRequested(projectId, version));
+    }
+
+    private void publish(EnterpriseProjectRequested event) {
+        if (transactionTemplate != null && outboxEventPublisher != null) {
+            transactionTemplate.executeWithoutResult(status -> outboxEventPublisher.publish(event));
+            return;
+        }
+        eventBus.publish(event);
     }
 
     private static <T> T requireNonNull(T value, String field) {

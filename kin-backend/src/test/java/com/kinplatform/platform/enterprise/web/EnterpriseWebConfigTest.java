@@ -19,7 +19,9 @@ import com.kinplatform.platform.enterprise.ports.EnterpriseProjectAccessControl;
 import com.kinplatform.platform.enterprise.ports.EnterpriseProjectRepository;
 import com.kinplatform.common.event.DomainEventBus;
 import com.kinplatform.common.event.InMemoryDomainEventBus;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import java.util.concurrent.Executor;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
@@ -103,6 +105,16 @@ class EnterpriseWebConfigTest {
         @Bean
         org.springframework.jdbc.core.JdbcTemplate jdbcTemplate() {
             return mock(org.springframework.jdbc.core.JdbcTemplate.class);
+        }
+
+        @Bean
+        OutboxEventPublisher outboxEventPublisher() {
+            return mock(OutboxEventPublisher.class);
+        }
+
+        @Bean
+        PlatformTransactionManager platformTransactionManager() {
+            return mock(PlatformTransactionManager.class);
         }
     }
 }

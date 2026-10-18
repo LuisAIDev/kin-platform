@@ -165,8 +165,10 @@ public class EnterpriseWebConfig {
 
     @Bean
     public EnterpriseProjectTrigger enterpriseProjectTrigger(
-            EnterpriseProjectRepository repository, DomainEventBus eventBus) {
-        return new DefaultEnterpriseProjectTrigger(repository, eventBus);
+            EnterpriseProjectRepository repository, DomainEventBus eventBus,
+            OutboxEventPublisher outboxEventPublisher, PlatformTransactionManager transactionManager) {
+        return new DefaultEnterpriseProjectTrigger(
+                repository, eventBus, outboxEventPublisher, transactionManager);
     }
 
     /**

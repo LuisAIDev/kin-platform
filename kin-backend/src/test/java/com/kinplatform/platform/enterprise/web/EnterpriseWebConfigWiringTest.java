@@ -21,6 +21,7 @@ import com.kinplatform.platform.enterprise.events.EnterpriseProjectRequested;
 import com.kinplatform.platform.enterprise.ports.EnterpriseProjectRepository;
 import com.kinplatform.common.event.InMemoryDomainEventBus;
 import com.kinplatform.common.eventbus.IdempotencyService;
+import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -28,6 +29,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 import org.mockito.Mockito;
 
 class EnterpriseWebConfigWiringTest {
@@ -52,7 +55,7 @@ class EnterpriseWebConfigWiringTest {
         when(repository.findLatestVersion(projectId)).thenReturn(Optional.empty());
         var eventBus = new InMemoryDomainEventBus();
 
-        EnterpriseProjectTrigger trigger = config.enterpriseProjectTrigger(repository, eventBus);
+        EnterpriseProjectTrigger trigger = config.enterpriseProjectTrigger(repository, eventBus, null, null);
 
         assertNotNull(trigger);
         trigger.request(projectId);
@@ -62,6 +65,24 @@ class EnterpriseWebConfigWiringTest {
         assertTrue(events.get(0) instanceof EnterpriseProjectRequested requested
                 && requested.projectId().equals(projectId)
                 && requested.version() == 1);
+    }
+
+    @Test
+    void enterpriseProjectTrigger_conOutbox_persisteLaSolicitudSinPublicarEnElBus() {
+        var projectId = UUID.randomUUID();
+        var repository = mock(EnterpriseProjectRepository.class);
+        when(repository.findLatestVersion(projectId)).thenReturn(Optional.empty());
+        var eventBus = new InMemoryDomainEventBus();
+        var outbox = mock(OutboxEventPublisher.class);
+        var transactionManager = mock(PlatformTransactionManager.class);
+        when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+
+        EnterpriseProjectTrigger trigger =
+                config.enterpriseProjectTrigger(repository, eventBus, outbox, transactionManager);
+        trigger.request(projectId);
+
+        verify(outbox).publish(any(EnterpriseProjectRequested.class));
+        assertTrue(eventBus.publishedEvents().isEmpty());
     }
 
     @Test
