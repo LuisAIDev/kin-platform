@@ -72,10 +72,14 @@ interface InfoRow {
 
 interface EnterpriseInformationPanelProps {
   projectId: string;
+  isPartial?: boolean;
 }
 
 /** Sección "Información y fuentes" del dashboard Enterprise (FASE 8/9). */
-export function EnterpriseInformationPanel({ projectId }: EnterpriseInformationPanelProps) {
+export function EnterpriseInformationPanel({
+  projectId,
+  isPartial = false,
+}: EnterpriseInformationPanelProps) {
   const router = useRouter();
   const [info, setInfo] = useState<EnterpriseInformation | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -116,13 +120,17 @@ export function EnterpriseInformationPanel({ projectId }: EnterpriseInformationP
 
   const handleCompleteInformation = () => {
     const firstMissing = info?.resolvedDimensions.find(isDimensionMissing);
-    if (!firstMissing) {
+    const message = isPartial
+      ? "Ayúdame a validar los datos de mercado, el sistema indica que son insuficientes."
+      : firstMissing
+        ? `Ayúdame a definir mi ${
+            firstMissing.displayName.replace(/\s*\([^)]*\)\s*$/, "").trim() ||
+            firstMissing.dimension
+          }.`
+        : null;
+    if (!message) {
       return;
     }
-    const label =
-      firstMissing.displayName.replace(/\s*\([^)]*\)\s*$/, "").trim() ||
-      firstMissing.dimension;
-    const message = `Ayúdame a definir mi ${label}.`;
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem("kin_pending_prompt", message);
     }
@@ -148,6 +156,7 @@ export function EnterpriseInformationPanel({ projectId }: EnterpriseInformationP
   }
 
   const firstMissing = info.resolvedDimensions.find(isDimensionMissing);
+  const showCompleteButton = firstMissing != null || isPartial;
 
   const rows: InfoRow[] = info.resolvedDimensions.map((d) => ({
     dato: d.displayName,
@@ -280,7 +289,7 @@ export function EnterpriseInformationPanel({ projectId }: EnterpriseInformationP
         </table>
       </div>
 
-      {firstMissing ? (
+      {showCompleteButton ? (
         <div className="mt-3 flex justify-end">
           <button
             type="button"

@@ -234,7 +234,22 @@ export default function EnterpriseDashboard({
               ? "Generando..."
               : "Generar Proyecto Empresarial"}
           </button>
-          <StatusBadge status={status} />
+          {dashboard?.isPartial ? (
+            <span
+              data-testid="status-badge"
+              className="badge"
+              title="El proyecto se completó con datos de mercado insuficientes. Valida o completa la información de mercado para obtener un análisis completo."
+              style={{
+                background: "#fffbeb",
+                color: "#b45309",
+                border: "1px solid #fcd34d",
+              }}
+            >
+              {status} (PARCIAL)
+            </span>
+          ) : (
+            <StatusBadge status={status} />
+          )}
         </div>
       </header>
 
@@ -341,7 +356,10 @@ export default function EnterpriseDashboard({
         </div>
       </div>
 
-      <EnterpriseInformationPanel projectId={projectId} />
+      <EnterpriseInformationPanel
+        projectId={projectId}
+        isPartial={dashboard?.isPartial === true}
+      />
 
       <div className="card">
         <LiveLog events={events} connected={connected} />
