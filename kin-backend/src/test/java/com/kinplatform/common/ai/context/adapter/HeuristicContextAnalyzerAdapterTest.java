@@ -1,5 +1,6 @@
 package com.kinplatform.common.ai.context.adapter;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,5 +61,28 @@ class HeuristicContextAnalyzerAdapterTest {
         String valueProposition = extracted.get(AnalyzedDimension.VALUE_PROPOSITION);
         assertTrue(valueProposition != null && valueProposition.contains("precio de PYME"),
                 "VALUE_PROPOSITION debe capturar el texto completo");
+    }
+
+    @Test
+    void marketDimensions_extraenPuntosSufijosYPorcentaje() {
+        var extracted = analyze(
+                "TAM es de 500.000 COP. SAM: 150 mil. SOM de 500M. Crecimiento anual del 15%.");
+
+        assertEquals("500000", extracted.get(AnalyzedDimension.TAM));
+        assertEquals("150000", extracted.get(AnalyzedDimension.SAM));
+        assertEquals("500000000", extracted.get(AnalyzedDimension.SOM));
+        assertEquals("15", extracted.get(AnalyzedDimension.GROWTH_RATE));
+    }
+
+    @Test
+    void marketDimensions_extraenFormatoInglesYDecimales() {
+        var extracted = analyze(
+                "TAM (Total Addressable Market): USD 1.500.000. "
+                        + "SAM = 300,000. SOM: 50.000. Crecimiento esperado de 12,5%.");
+
+        assertEquals("1500000", extracted.get(AnalyzedDimension.TAM));
+        assertEquals("300000", extracted.get(AnalyzedDimension.SAM));
+        assertEquals("50000", extracted.get(AnalyzedDimension.SOM));
+        assertEquals("12.5", extracted.get(AnalyzedDimension.GROWTH_RATE));
     }
 }

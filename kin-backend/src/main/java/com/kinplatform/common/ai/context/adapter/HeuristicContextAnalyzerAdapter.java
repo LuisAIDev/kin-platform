@@ -7,7 +7,9 @@ import com.kinplatform.common.context.ProjectContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.util.EnumMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -100,6 +102,38 @@ public class HeuristicContextAnalyzerAdapter implements ContextAnalyzerPort {
             "[:;]?\\s*([A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\$%][A-ZÁÉÍÓÚÜÑa-záéíóúüñ0-9\\s\\-\\,\\.\\$%]{2,200}?)(?=[\\!\\?]|\\.\\s|\\.$|$)",
             Pattern.CASE_INSENSITIVE);
 
+    private static final String NUMBER_TOKEN =
+            "(?:(?:\\$|us\\$|usd|cop|eur|mxn)\\s*)?\\d(?:[\\d.,]*\\d)?"
+            + "(?:\\s*(?:mill[oó]n(?:es)?|mm|mil|m|k|b)\\b)?";
+
+    private static final String CONNECTORS =
+            "(?:(?:de\\s+aproximadamente|estimado\\s+en|asciende\\s+a|aproximadamente|del|es|de|:|=)\\s*)*";
+
+    private static final Pattern PATTERN_TAM = Pattern.compile(
+            "(?:\\bTAM\\b|\\bmercado\\s+total(?:\\s+direccionable)?\\b|"
+            + "\\btotal\\s+addressable\\s+market\\b|\\btama[ñn]o\\s+(?:total\\s+)?del\\s+mercado\\b)"
+            + "\\s*(?:\\([^)]*\\))?\\s*" + CONNECTORS + "(" + NUMBER_TOKEN + ")",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+
+    private static final Pattern PATTERN_SAM = Pattern.compile(
+            "(?:\\bSAM\\b|\\bmercado\\s+(?:disponible|servible|direccionable)\\b|"
+            + "\\bserviceable\\s+available\\s+market\\b)"
+            + "\\s*(?:\\([^)]*\\))?\\s*" + CONNECTORS + "(" + NUMBER_TOKEN + ")",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+
+    private static final Pattern PATTERN_SOM = Pattern.compile(
+            "(?:\\bSOM\\b|\\bmercado\\s+(?:obtenible|alcanzable|capturable)\\b|"
+            + "\\bserviceable\\s+obtainable\\s+market\\b)"
+            + "\\s*(?:\\([^)]*\\))?\\s*" + CONNECTORS + "(" + NUMBER_TOKEN + ")",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+
+    private static final Pattern PATTERN_GROWTH_RATE = Pattern.compile(
+            "(?:\\bcrecimiento(?:\\s+(?:anual|esperado|proyectado|interanual|del\\s+mercado))*\\b|"
+            + "\\btasa\\s+de\\s+crecimiento\\b|\\bCAGR\\b|\\bgrowth\\s+rate\\b)"
+            + "\\s*(?:\\([^)]*\\))?\\s*" + CONNECTORS
+            + "([+]?\\d[\\d.,]*\\s*(?:%|por\\s+ciento))",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+
     @Override
     public AnalysisResult analyze(String userMessage, ProjectContext currentContext) {
         if (userMessage == null || userMessage.isBlank()) {
@@ -125,6 +159,10 @@ public class HeuristicContextAnalyzerAdapter implements ContextAnalyzerPort {
         extract(extracted, AnalyzedDimension.COSTOS_FIJOS, PATTERN_COSTOS_FIJOS, userMessage);
         extract(extracted, AnalyzedDimension.COSTOS_VARIABLES, PATTERN_COSTOS_VARIABLES, userMessage);
         extract(extracted, AnalyzedDimension.PRECIO_VENTA, PATTERN_PRECIO_VENTA, userMessage);
+        extractNumber(extracted, AnalyzedDimension.TAM, PATTERN_TAM, userMessage);
+        extractNumber(extracted, AnalyzedDimension.SAM, PATTERN_SAM, userMessage);
+        extractNumber(extracted, AnalyzedDimension.SOM, PATTERN_SOM, userMessage);
+        extractNumber(extracted, AnalyzedDimension.GROWTH_RATE, PATTERN_GROWTH_RATE, userMessage);
 
         var result = new AnalysisResult(extracted);
         if (!result.isEmpty()) {
@@ -141,6 +179,94 @@ public class HeuristicContextAnalyzerAdapter implements ContextAnalyzerPort {
             if (!value.isBlank()) {
                 target.put(dim, value);
             }
+        }
+    }
+
+    private void extractNumber(Map<AnalyzedDimension, String> target, AnalyzedDimension dim,
+                               Pattern pattern, String message) {
+        var matcher = pattern.matcher(message);
+        if (matcher.find()) {
+            String normalized = normalizeNumber(matcher.group(1));
+            if (normalized != null && !normalized.isBlank()) {
+                target.put(dim, normalized);
+            }
+        }
+    }
+
+    private static String normalizeNumber(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String value = raw.trim().toLowerCase(Locale.ROOT)
+                .replace("por ciento", "")
+                .replace("%", "")
+                .replace("us$", "")
+                .replace("$", "")
+                .replace("usd", "")
+                .replace("cop", "")
+                .replace("eur", "")
+                .replace("mxn", "")
+                .replace(" ", "");
+        if (value.isBlank()) {
+            return null;
+        }
+        long multiplier = 1L;
+        if (value.endsWith("millones")) {
+            multiplier = 1_000_000L;
+            value = value.substring(0, value.length() - "millones".length());
+        } else if (value.endsWith("millón")) {
+            multiplier = 1_000_000L;
+            value = value.substring(0, value.length() - "millón".length());
+        } else if (value.endsWith("millon")) {
+            multiplier = 1_000_000L;
+            value = value.substring(0, value.length() - "millon".length());
+        } else if (value.endsWith("mil")) {
+            multiplier = 1_000L;
+            value = value.substring(0, value.length() - "mil".length());
+        } else if (value.endsWith("mm")) {
+            multiplier = 1_000_000L;
+            value = value.substring(0, value.length() - 2);
+        } else if (value.endsWith("m")) {
+            multiplier = 1_000_000L;
+            value = value.substring(0, value.length() - 1);
+        } else if (value.endsWith("k")) {
+            multiplier = 1_000L;
+            value = value.substring(0, value.length() - 1);
+        } else if (value.endsWith("b")) {
+            multiplier = 1_000_000_000L;
+            value = value.substring(0, value.length() - 1);
+        }
+        if (value.isBlank()) {
+            return null;
+        }
+        while (value.endsWith(".") || value.endsWith(",")) {
+            value = value.substring(0, value.length() - 1);
+        }
+        if (value.isBlank()) {
+            return null;
+        }
+        if (value.contains(".") && value.contains(",")) {
+            if (value.lastIndexOf(',') > value.lastIndexOf('.')) {
+                value = value.replace(".", "").replace(',', '.');
+            } else {
+                value = value.replace(",", "");
+            }
+        } else if (value.contains(".")) {
+            if (value.matches("\\d{1,3}(?:\\.\\d{3})+")) {
+                value = value.replace(".", "");
+            }
+        } else if (value.contains(",")) {
+            if (value.matches("\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?")) {
+                value = value.replace(",", "");
+            } else {
+                value = value.replace(',', '.');
+            }
+        }
+        try {
+            return new BigDecimal(value).multiply(BigDecimal.valueOf(multiplier))
+                    .stripTrailingZeros().toPlainString();
+        } catch (NumberFormatException ex) {
+            return null;
         }
     }
 }

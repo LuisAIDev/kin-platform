@@ -18,7 +18,11 @@ public enum AnalyzedDimension {
     OBJECTIVES("Objetivos del proyecto"),
     COSTOS_FIJOS("Costos fijos"),
     COSTOS_VARIABLES("Costos variables"),
-    PRECIO_VENTA("Precio de venta");
+    PRECIO_VENTA("Precio de venta"),
+    TAM("TAM (mercado total)"),
+    SAM("SAM (mercado disponible)"),
+    SOM("SOM (mercado obtenible)"),
+    GROWTH_RATE("Crecimiento del mercado");
 
     private final String displayName;
 

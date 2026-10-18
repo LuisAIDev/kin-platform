@@ -5,7 +5,7 @@ import com.kinplatform.platform.projectinfo.StructuredInfoSourceType;
 import java.util.List;
 
 /**
- * Mapeo entre las 14 dimensiones de {@code ProjectContext} y las claves de
+ * Mapeo entre las dimensiones de {@code ProjectContext} y las claves de
  * {@code project_structured_info}. Es una vista de enriquecimiento: no muta el
  * contexto.
  */
@@ -44,6 +44,10 @@ public final class DimensionSourceMapping {
             case COSTOS_FIJOS -> keys("FINANZAS", "costos_fijos");
             case COSTOS_VARIABLES -> keys("FINANZAS", "costos_variables");
             case PRECIO_VENTA -> keys("FINANZAS", "precio");
+            case TAM -> keys("MERCADO", "tam");
+            case SAM -> keys("MERCADO", "sam");
+            case SOM -> keys("MERCADO", "som");
+            case GROWTH_RATE -> keys("MERCADO", "growth_rate");
         };
     }
 
