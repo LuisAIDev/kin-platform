@@ -83,7 +83,7 @@ public class DefaultEnterpriseScoreEngine implements EnterpriseScoreEngine {
         }
         var context = input.context();
 
-        double market = marketScore(input.marketPlan());
+        double market = marketScore(input.marketPlan(), input.financialPlan());
         double innovation = innovationScore(input.innovationPlan());
         double viability = viabilityScore(context);
         double financial = financialScore(input.financialPlan());
@@ -105,15 +105,32 @@ public class DefaultEnterpriseScoreEngine implements EnterpriseScoreEngine {
         return new EnterpriseScoreResult(score, confidence, explanation, "EnterpriseScoreEngine", ENGINE_VERSION);
     }
 
-    private double marketScore(MarketPlan marketPlan) {
+    private double marketScore(MarketPlan marketPlan, FinancialPlan financialPlan) {
         if (marketPlan == null) {
             return 0.0;
         }
-        double sizeScore =
-                marketPlan.tam() > 0.0 ? Math.min(100.0, (marketPlan.som() / marketPlan.tam()) * 100.0) : 0.0;
-        double growthScore = Math.min(100.0, marketPlan.growthRate());
-        double confidenceScore = marketPlan.confidence() * 100.0;
-        return clamp((sizeScore + growthScore + confidenceScore) / 3.0);
+        double som = marketPlan.som();
+        double growth = marketPlan.growthRate();
+        double confidence = marketPlan.confidence();
+        if (som <= 0.0 && growth <= 0.0) {
+            return 0.0;
+        }
+        // opex es el gasto operativo ANUAL; equivale a fixedCosts * 12.
+        double annualFixedCosts = financialPlan != null ? financialPlan.opex() : 0.0;
+        double sizeScore = annualFixedCosts > 0.0
+                ? Math.min(100.0, (som / annualFixedCosts) * 100.0)
+                : (som > 0.0 ? 60.0 : 0.0);
+        double growthScore = Math.min(100.0, growth * 4.0);
+        double confidenceScore = confidence * 100.0;
+
+        double score = 0.4 * sizeScore + 0.3 * growthScore + 0.3 * confidenceScore;
+        if (annualFixedCosts > 0.0 && som > annualFixedCosts) {
+            score += 10.0;
+        }
+        if (som > 0.0 && growth > 0.0) {
+            score = Math.max(60.0, score);
+        }
+        return clamp(score);
     }
 
     private double innovationScore(InnovationPlan plan) {

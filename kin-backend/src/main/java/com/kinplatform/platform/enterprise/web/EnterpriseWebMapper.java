@@ -8,6 +8,7 @@ import com.kinplatform.platform.enterprise.valueobjects.DocumentArtifact;
 import com.kinplatform.platform.enterprise.valueobjects.DocumentType;
 import com.kinplatform.platform.enterprise.valueobjects.EnterpriseScore;
 import com.kinplatform.platform.enterprise.valueobjects.RenderFormat;
+import com.kinplatform.platform.enterprise.valueobjects.ScoreGrade;
 import com.kinplatform.platform.enterprise.web.dto.EnterpriseDocumentResponse;
 import com.kinplatform.platform.enterprise.web.dto.EnterpriseDashboardResponse;
 import com.kinplatform.platform.enterprise.web.dto.EnterpriseExportResponse;
@@ -33,6 +34,8 @@ import java.util.UUID;
  * contiene lógica de negocio, solo transformación de representación.</p>
  */
 public final class EnterpriseWebMapper {
+
+    private static final int HEALTHY_OVERALL_FLOOR = 70;
 
     /**
      * Convierte una versión del proyecto en su representación completa.
@@ -245,6 +248,24 @@ public final class EnterpriseWebMapper {
         if (durationMillis != null) {
             statistics.put("generationDurationMs", durationMillis);
         }
+        EnterpriseScoreSection scoreSection = toScoreSection(project.score());
+        if (scoreSection != null && informationProgress != null && informationProgress >= 100
+                && hasAllPositivePillars(scoreSection)
+                && scoreSection.overall() != null
+                && scoreSection.overall() < HEALTHY_OVERALL_FLOOR) {
+            scoreSection = new EnterpriseScoreSection(
+                HEALTHY_OVERALL_FLOOR,
+                ScoreGrade.from(HEALTHY_OVERALL_FLOOR).name(),
+                scoreSection.confidence(),
+                scoreSection.market(),
+                scoreSection.innovation(),
+                scoreSection.viability(),
+                scoreSection.financial(),
+                scoreSection.risk(),
+                scoreSection.scalability(),
+                scoreSection.team(),
+                scoreSection.sustainability());
+        }
         return new EnterpriseDashboardResponse(
             project.projectId(),
             project.version(),
@@ -261,7 +282,8 @@ public final class EnterpriseWebMapper {
             project.completedAt(),
             project.failedReason(),
             durationMillis,
-            toScoreSection(project.score()),
+            scoreSection,
+            scoreExplanation(scoreSection),
             toDocuments(project.documents()),
             versions.stream().map(this::toVersion).toList(),
             Map.copyOf(statistics));
@@ -290,6 +312,44 @@ public final class EnterpriseWebMapper {
             score.scalability(),
             score.team(),
             score.sustainability());
+    }
+
+    private String scoreExplanation(EnterpriseScoreSection score) {
+        if (score == null) {
+            return null;
+        }
+        return "Score " + score.overall() + "/100 (" + score.grade() + "). "
+            + "Mercado " + rounded(score.market()) + "/100, "
+            + "innovación " + rounded(score.innovation()) + "/100, "
+            + "viabilidad " + rounded(score.viability()) + "/100, "
+            + "finanzas " + rounded(score.financial()) + "/100, "
+            + "riesgo " + rounded(score.risk()) + "/100, "
+            + "escalabilidad " + rounded(score.scalability()) + "/100, "
+            + "equipo " + rounded(score.team()) + "/100, "
+            + "sostenibilidad " + rounded(score.sustainability()) + "/100. "
+            + "Con información completa y sin pilares críticos en 0, el overall se "
+            + "eleva a un mínimo saludable de 70/100; los pilares muestran sus valores "
+            + "reales. La barra de Información mide completitud de datos; el score mide "
+            + "calidad y viabilidad.";
+    }
+
+    private boolean hasAllPositivePillars(EnterpriseScoreSection score) {
+        return positive(score.market())
+            && positive(score.innovation())
+            && positive(score.viability())
+            && positive(score.financial())
+            && positive(score.risk())
+            && positive(score.scalability())
+            && positive(score.team())
+            && positive(score.sustainability());
+    }
+
+    private boolean positive(Double value) {
+        return value != null && value > 0.0;
+    }
+
+    private long rounded(Double value) {
+        return value == null ? 0L : Math.round(value);
     }
 
     /**

@@ -32,6 +32,7 @@ import java.util.UUID;
  * @param failedReason            motivo del fallo, o {@code null}
  * @param generationDurationMillis duración de la generación, o {@code null}
  * @param score                   Enterprise Score, o {@code null} si no está disponible
+ * @param scoreExplanation        explicación legible del score y sus pilares
  * @param documents               documentos de la versión
  * @param versions                versiones del proyecto (ascendentes)
  * @param statistics              estadísticas (bytes totales, recuentos, duración)
@@ -82,6 +83,9 @@ public record EnterpriseDashboardResponse(
 
     @Schema(description = "Enterprise Score (null si no está disponible)")
     EnterpriseScoreSection score,
+
+    @Schema(description = "Explicación legible del score y sus pilares")
+    String scoreExplanation,
 
     @NotNull @Schema(description = "Documentos de la versión")
     List<EnterpriseDocumentResponse> documents,

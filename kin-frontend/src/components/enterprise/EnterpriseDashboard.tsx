@@ -213,6 +213,9 @@ export default function EnterpriseDashboard({
   const progress = dashboard?.progress ?? 0;
   const overallScore = dashboard?.score?.overall ?? null;
   const marketScore = dashboard?.score?.market ?? null;
+  const scoreExplanation = dashboard
+    ? (dashboard as EnterpriseDashboard & { scoreExplanation?: string }).scoreExplanation
+    : undefined;
   const showScoreQualityHint =
     dashboard != null &&
     progress >= 100 &&
@@ -334,6 +337,23 @@ export default function EnterpriseDashboard({
       <div className="grid">
         <div className="card">
           <EnterpriseScoreCard score={dashboard?.score} />
+          {scoreExplanation ? (
+            <div
+              data-testid="score-explanation"
+              style={{
+                marginTop: 12,
+                padding: 10,
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: 8,
+                color: "#475569",
+                fontSize: 12,
+                lineHeight: 1.5,
+              }}
+            >
+              <span aria-hidden="true">ℹ️</span> {scoreExplanation}
+            </div>
+          ) : null}
         </div>
         <div className="card">
           <VersionSelector

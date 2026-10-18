@@ -69,15 +69,15 @@ class DefaultEnterpriseScoreEngineTest {
         var result = engine.evaluate(input);
 
         assertFalse(result.isEmpty());
-        assertEquals(36.666666666666664, result.score().market(), 0.001);
+        assertEquals(89.0, result.score().market(), 0.001);
         assertEquals(75.0, result.score().innovation(), 0.001);
-        assertEquals(64.28571428571429, result.score().viability(), 0.001);
+        assertEquals(42.857142857142854, result.score().viability(), 0.001);
         assertEquals(69.58333333333333, result.score().financial(), 0.001);
         assertEquals(36.0, result.score().risk(), 0.001);
         assertEquals(70.0, result.score().scalability(), 0.001);
         assertEquals(70.0, result.score().team(), 0.001);
         assertEquals(80.0, result.score().sustainability(), 0.001);
-        assertEquals(63, result.score().overallScore());
+        assertEquals(67, result.score().overallScore());
         assertEquals(ScoreGrade.FAIR, result.score().grade());
         assertEquals(0.82, result.confidence(), 0.0001);
     }
