@@ -15,6 +15,7 @@ import com.kinplatform.platform.enterprise.application.EnterpriseRendererFactory
 import com.kinplatform.platform.enterprise.application.InMemoryEnterprisePipelineResultStore;
 import com.kinplatform.platform.enterprise.application.ProgressPublishingEnterpriseProjectRepository;
 import com.kinplatform.platform.enterprise.assembler.EnterpriseDocumentAssembler;
+import com.kinplatform.platform.enterprise.integration.EnterpriseDataProvider;
 import com.kinplatform.platform.enterprise.ports.EnterpriseProjectAccessControl;
 import com.kinplatform.platform.enterprise.ports.EnterpriseProjectRepository;
 import com.kinplatform.platform.enterprise.progress.EnterpriseProgressPublisher;
@@ -23,6 +24,7 @@ import com.kinplatform.common.eventbus.IdempotencyService;
 import com.kinplatform.common.eventbus.port.OutboxEventPublisher;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -186,7 +188,47 @@ public class EnterpriseWebConfig {
             Executor enterpriseGenerationExecutor,
             EnterprisePipelineResultStore enterprisePipelineResultStore,
             EnterpriseAiBudgetGate enterpriseAiBudgetGate,
+            IdempotencyService idempotencyService,
+            ObjectProvider<EnterpriseDataProvider> enterpriseDataProviderProvider) {
+        return buildEnterpriseProjectRequestedListener(
+                enterpriseGenerationOrchestrator,
+                contextRepository,
+                eventBus,
+                enterpriseGenerationExecutor,
+                enterprisePipelineResultStore,
+                enterpriseAiBudgetGate,
+                idempotencyService,
+                enterpriseDataProviderProvider.getIfAvailable());
+    }
+
+    EnterpriseProjectRequestedListener enterpriseProjectRequestedListener(
+            EnterpriseGenerationOrchestrator enterpriseGenerationOrchestrator,
+            ContextRepository contextRepository,
+            DomainEventBus eventBus,
+            Executor enterpriseGenerationExecutor,
+            EnterprisePipelineResultStore enterprisePipelineResultStore,
+            EnterpriseAiBudgetGate enterpriseAiBudgetGate,
             IdempotencyService idempotencyService) {
+        return buildEnterpriseProjectRequestedListener(
+                enterpriseGenerationOrchestrator,
+                contextRepository,
+                eventBus,
+                enterpriseGenerationExecutor,
+                enterprisePipelineResultStore,
+                enterpriseAiBudgetGate,
+                idempotencyService,
+                null);
+    }
+
+    private EnterpriseProjectRequestedListener buildEnterpriseProjectRequestedListener(
+            EnterpriseGenerationOrchestrator enterpriseGenerationOrchestrator,
+            ContextRepository contextRepository,
+            DomainEventBus eventBus,
+            Executor enterpriseGenerationExecutor,
+            EnterprisePipelineResultStore enterprisePipelineResultStore,
+            EnterpriseAiBudgetGate enterpriseAiBudgetGate,
+            IdempotencyService idempotencyService,
+            EnterpriseDataProvider enterpriseDataProvider) {
         return new EnterpriseProjectRequestedListener(
                 enterpriseGenerationOrchestrator,
                 contextRepository,
@@ -194,7 +236,8 @@ public class EnterpriseWebConfig {
                 enterpriseGenerationExecutor,
                 enterprisePipelineResultStore,
                 enterpriseAiBudgetGate,
-                idempotencyService);
+                idempotencyService,
+                enterpriseDataProvider);
     }
 
     /**

@@ -553,7 +553,10 @@ public class EnterpriseGenerationService {
             }
             EnterpriseProject withScore =
                     content.score() != null ? withDocuments.withScore(content.score()) : withDocuments;
-            EnterpriseProject completed = withScore.completeGeneration();
+            EnterpriseProject withPartial = content.partial()
+                    ? withScore.withPartial(true)
+                    : withScore;
+            EnterpriseProject completed = withPartial.completeGeneration();
             EnterpriseProject saved = repository.save(completed);
             eventBus.publish(new EnterpriseProjectGenerated(projectId, saved.version()));
             return saved;
@@ -584,7 +587,22 @@ public class EnterpriseGenerationService {
         MarketResult market = nonNull(
                 marketEngine.evaluate(new MarketInput(context, recommendations, opportunities, knowledge)),
                 MarketResult.empty());
-        MarketPlan marketPlan = NumericPlanIntegrator.integrateMarketPlan(market.plan(), supplemental);
+        if (market.isEmpty()) {
+            log.warn(
+                    "MarketResult vacío: project={} version={} supplementalEmpty={}; "
+                            + "se intentará completar con datos estructurados.",
+                    request.projectId(), version, supplemental == null || supplemental.isEmpty());
+        }
+        MarketPlan baseMarketPlan = market.plan() != null ? market.plan() : MarketPlan.empty();
+        MarketPlan marketPlan = NumericPlanIntegrator.integrateMarketPlan(baseMarketPlan, supplemental);
+        boolean partial = marketPlan.tam() <= 0.0 || marketPlan.som() <= 0.0;
+        if (partial) {
+            log.warn(
+                    "Datos de mercado insuficientes: project={} version={} tam={} sam={} som={} "
+                            + "supplementalEmpty={}; se marca isPartial=true.",
+                    request.projectId(), version, marketPlan.tam(), marketPlan.sam(), marketPlan.som(),
+                    supplemental == null || supplemental.isEmpty());
+        }
         InnovationResult innovation = nonNull(
                 innovationEngine.evaluate(new InnovationInput(context, opportunities, knowledge)),
                 InnovationResult.empty());
@@ -627,7 +645,7 @@ public class EnterpriseGenerationService {
                     scoreResult.score(),
                     documents);
         }
-        return new GeneratedContent(documents, scoreResult.score());
+        return new GeneratedContent(documents, scoreResult.score(), partial);
     }
 
     /**
@@ -655,7 +673,7 @@ public class EnterpriseGenerationService {
      * calculado por el motor (puede ser {@code null} si el motor no produjo
      * puntuación).
      */
-    private record GeneratedContent(List<DocumentArtifact> documents, EnterpriseScore score) {}
+    private record GeneratedContent(List<DocumentArtifact> documents, EnterpriseScore score, boolean partial) {}
 
     /**
      * Persiste el estado {@code FAILED} y emite el evento de fallo.

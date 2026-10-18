@@ -60,6 +60,7 @@ public final class EnterpriseProject {
     private final String failedReason;
     private final List<DocumentArtifact> documents;
     private final EnterpriseScore score;
+    private final boolean partial;
 
     /**
      * Constructor privado: punto único de validación de todas las invariantes.
@@ -67,7 +68,8 @@ public final class EnterpriseProject {
     private EnterpriseProject(UUID projectId, int version, GenerationStatus status,
                               OffsetDateTime createdAt, OffsetDateTime updatedAt,
                               OffsetDateTime completedAt, String failedReason,
-                              List<DocumentArtifact> documents, EnterpriseScore score) {
+                              List<DocumentArtifact> documents, EnterpriseScore score,
+                              boolean partial) {
         this.projectId = requireNotNull(projectId, "projectId");
         this.version = requireValidVersion(version);
         this.status = requireNotNull(status, "status");
@@ -78,6 +80,7 @@ public final class EnterpriseProject {
         this.failedReason = validateFailedReason(status, failedReason);
         this.documents = copyDocuments(documents);
         this.score = validateScore(status, score);
+        this.partial = validatePartial(status, partial);
     }
 
     // ------------------------------------------------------------------
@@ -96,7 +99,7 @@ public final class EnterpriseProject {
     public static EnterpriseProject request(UUID projectId, int version) {
         var now = OffsetDateTime.now();
         return new EnterpriseProject(projectId, version, GenerationStatus.REQUESTED,
-            now, now, null, null, List.of(), null);
+            now, now, null, null, List.of(), null, false);
     }
 
     /**
@@ -118,7 +121,7 @@ public final class EnterpriseProject {
     public static EnterpriseProject start(UUID projectId, int version,
                                           OffsetDateTime createdAt, OffsetDateTime updatedAt,
                                           List<DocumentArtifact> documents) {
-        return start(projectId, version, createdAt, updatedAt, documents, null);
+        return start(projectId, version, createdAt, updatedAt, documents, null, false);
     }
 
     /**
@@ -129,8 +132,18 @@ public final class EnterpriseProject {
                                           OffsetDateTime createdAt, OffsetDateTime updatedAt,
                                           List<DocumentArtifact> documents,
                                           EnterpriseScore score) {
+        return start(projectId, version, createdAt, updatedAt, documents, score, false);
+    }
+
+    /**
+     * Fábrica de reconstrucción {@code RUNNING} con la marca de datos parciales.
+     */
+    public static EnterpriseProject start(UUID projectId, int version,
+                                          OffsetDateTime createdAt, OffsetDateTime updatedAt,
+                                          List<DocumentArtifact> documents,
+                                          EnterpriseScore score, boolean partial) {
         return new EnterpriseProject(projectId, version, GenerationStatus.RUNNING,
-            createdAt, updatedAt, null, null, documents, score);
+            createdAt, updatedAt, null, null, documents, score, partial);
     }
 
     /**
@@ -153,7 +166,7 @@ public final class EnterpriseProject {
                                              OffsetDateTime createdAt, OffsetDateTime updatedAt,
                                              OffsetDateTime completedAt,
                                              List<DocumentArtifact> documents) {
-        return complete(projectId, version, createdAt, updatedAt, completedAt, documents, null);
+        return complete(projectId, version, createdAt, updatedAt, completedAt, documents, null, false);
     }
 
     /**
@@ -165,8 +178,19 @@ public final class EnterpriseProject {
                                              OffsetDateTime completedAt,
                                              List<DocumentArtifact> documents,
                                              EnterpriseScore score) {
+        return complete(projectId, version, createdAt, updatedAt, completedAt, documents, score, false);
+    }
+
+    /**
+     * Fábrica de reconstrucción {@code COMPLETED} con la marca de datos parciales.
+     */
+    public static EnterpriseProject complete(UUID projectId, int version,
+                                             OffsetDateTime createdAt, OffsetDateTime updatedAt,
+                                             OffsetDateTime completedAt,
+                                             List<DocumentArtifact> documents,
+                                             EnterpriseScore score, boolean partial) {
         return new EnterpriseProject(projectId, version, GenerationStatus.COMPLETED,
-            createdAt, updatedAt, completedAt, null, documents, score);
+            createdAt, updatedAt, completedAt, null, documents, score, partial);
     }
 
     /**
@@ -188,7 +212,7 @@ public final class EnterpriseProject {
     public static EnterpriseProject fail(UUID projectId, int version,
                                          OffsetDateTime createdAt, OffsetDateTime updatedAt,
                                          String failedReason, List<DocumentArtifact> documents) {
-        return fail(projectId, version, createdAt, updatedAt, failedReason, documents, null);
+        return fail(projectId, version, createdAt, updatedAt, failedReason, documents, null, false);
     }
 
     /**
@@ -199,8 +223,18 @@ public final class EnterpriseProject {
                                          OffsetDateTime createdAt, OffsetDateTime updatedAt,
                                          String failedReason, List<DocumentArtifact> documents,
                                          EnterpriseScore score) {
+        return fail(projectId, version, createdAt, updatedAt, failedReason, documents, score, false);
+    }
+
+    /**
+     * Fábrica de reconstrucción {@code FAILED} con la marca de datos parciales.
+     */
+    public static EnterpriseProject fail(UUID projectId, int version,
+                                         OffsetDateTime createdAt, OffsetDateTime updatedAt,
+                                         String failedReason, List<DocumentArtifact> documents,
+                                         EnterpriseScore score, boolean partial) {
         return new EnterpriseProject(projectId, version, GenerationStatus.FAILED,
-            createdAt, updatedAt, null, failedReason, documents, score);
+            createdAt, updatedAt, null, failedReason, documents, score, partial);
     }
 
     // ------------------------------------------------------------------
@@ -250,6 +284,13 @@ public final class EnterpriseProject {
         return score;
     }
 
+    /**
+     * Indica si la versión se generó con datos de mercado insuficientes.
+     */
+    public boolean isPartial() {
+        return partial;
+    }
+
     // ------------------------------------------------------------------
     // Transiciones de la máquina de estados
     // ------------------------------------------------------------------
@@ -265,7 +306,7 @@ public final class EnterpriseProject {
     public EnterpriseProject startGeneration() {
         requireState(GenerationStatus.REQUESTED, "iniciar la generación");
         return EnterpriseProject.start(projectId, version, createdAt,
-            OffsetDateTime.now(), documents, score);
+            OffsetDateTime.now(), documents, score, partial);
     }
 
     /**
@@ -280,7 +321,7 @@ public final class EnterpriseProject {
         requireState(GenerationStatus.RUNNING, "completar la generación");
         var now = OffsetDateTime.now();
         return EnterpriseProject.complete(projectId, version, createdAt, now,
-            now, documents, score);
+            now, documents, score, partial);
     }
 
     /**
@@ -294,7 +335,7 @@ public final class EnterpriseProject {
     public EnterpriseProject failGeneration(String reason) {
         requireState(GenerationStatus.RUNNING, "abortar la generación");
         return EnterpriseProject.fail(projectId, version, createdAt,
-            OffsetDateTime.now(), reason, documents, score);
+            OffsetDateTime.now(), reason, documents, score, partial);
     }
 
     // ------------------------------------------------------------------
@@ -321,7 +362,7 @@ public final class EnterpriseProject {
         var updated = new ArrayList<>(documents);
         updated.add(document);
         return EnterpriseProject.start(projectId, version, createdAt,
-            OffsetDateTime.now(), updated, score);
+            OffsetDateTime.now(), updated, score, partial);
     }
 
     /**
@@ -346,7 +387,7 @@ public final class EnterpriseProject {
         var updated = new ArrayList<>(documents);
         updated.set(index, document);
         return EnterpriseProject.start(projectId, version, createdAt,
-            OffsetDateTime.now(), updated, score);
+            OffsetDateTime.now(), updated, score, partial);
     }
 
     /**
@@ -366,7 +407,21 @@ public final class EnterpriseProject {
             throw new EnterpriseProjectException(identity() + " no admite un score nulo.");
         }
         return new EnterpriseProject(projectId, version, status, createdAt,
-            OffsetDateTime.now(), completedAt, failedReason, documents, score);
+            OffsetDateTime.now(), completedAt, failedReason, documents, score, partial);
+    }
+
+    /**
+     * Marca la versión en generación con datos insuficientes. La marca se
+     * conserva al completar o fallar la generación.
+     *
+     * @param value {@code true} si faltan datos para la generación completa
+     * @return nueva instancia {@code RUNNING} con la marca actualizada
+     * @throws EnterpriseProjectException si el estado no es {@code RUNNING}
+     */
+    public EnterpriseProject withPartial(boolean value) {
+        requireState(GenerationStatus.RUNNING, "marcar datos parciales");
+        return new EnterpriseProject(projectId, version, status, createdAt,
+            OffsetDateTime.now(), completedAt, failedReason, documents, score, value);
     }
 
     /**
@@ -541,6 +596,14 @@ public final class EnterpriseProject {
                 "Un proyecto REQUESTED no puede portar Enterprise Score (actual: " + status + ").");
         }
         return score;
+    }
+
+    private static boolean validatePartial(GenerationStatus status, boolean partial) {
+        if (status == GenerationStatus.REQUESTED && partial) {
+            throw new EnterpriseProjectException(
+                "Un proyecto REQUESTED no puede marcarse como parcial.");
+        }
+        return partial;
     }
 
     private static List<DocumentArtifact> copyDocuments(List<DocumentArtifact> documents) {

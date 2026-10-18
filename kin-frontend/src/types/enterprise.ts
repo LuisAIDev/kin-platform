@@ -59,6 +59,7 @@ export interface EnterpriseDashboard {
   version: number;
   status: string;
   progress: number;
+  isPartial?: boolean;
   documentCount: number;
   versionsCount: number;
   createdAt: string;

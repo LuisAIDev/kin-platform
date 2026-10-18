@@ -66,6 +66,7 @@ public final class EnterpriseProjectMapper {
         entity.setUpdatedAt(project.updatedAt());
         entity.setCompletedAt(project.completedAt());
         entity.setFailedReason(project.failedReason());
+        entity.setPartial(project.isPartial());
         entity.setScore(scoreMapper.toEmbedded(project.score()));
         List<DocumentArtifactEntity> documents = project.documents().stream()
                 .map(artifact -> documentMapper.toEntity(artifact, entity))
@@ -97,7 +98,8 @@ public final class EnterpriseProjectMapper {
                     entity.getCreatedAt(),
                     entity.getUpdatedAt(),
                     documents,
-                    score);
+                    score,
+                    entity.isPartial());
             case COMPLETED -> EnterpriseProject.complete(
                     entity.getProjectId(),
                     entity.getVersion(),
@@ -105,7 +107,8 @@ public final class EnterpriseProjectMapper {
                     entity.getUpdatedAt(),
                     entity.getCompletedAt(),
                     documents,
-                    score);
+                    score,
+                    entity.isPartial());
             case FAILED -> EnterpriseProject.fail(
                     entity.getProjectId(),
                     entity.getVersion(),
@@ -113,7 +116,8 @@ public final class EnterpriseProjectMapper {
                     entity.getUpdatedAt(),
                     entity.getFailedReason(),
                     documents,
-                    score);
+                    score,
+                    entity.isPartial());
         };
     }
 }

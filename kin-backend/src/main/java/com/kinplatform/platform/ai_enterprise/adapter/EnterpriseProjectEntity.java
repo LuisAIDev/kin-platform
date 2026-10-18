@@ -63,6 +63,9 @@ public class EnterpriseProjectEntity {
     @Column(name = "failed_reason", columnDefinition = "TEXT")
     private String failedReason;
 
+    @Column(name = "is_partial", nullable = false)
+    private boolean partial;
+
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("id ASC")
     private List<DocumentArtifactEntity> documents = new ArrayList<>();

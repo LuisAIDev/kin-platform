@@ -1,5 +1,6 @@
 package com.kinplatform.platform.enterprise.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,6 +22,7 @@ import java.util.UUID;
  * @param version                 versión consultada
  * @param status                  estado de la generación
  * @param progress                progreso porcentual (0-100)
+ * @param isPartial               indica si la generación usó datos insuficientes
  * @param documentCount           número de documentos de la versión
  * @param versionsCount           número total de versiones del proyecto
  * @param createdAt               instante de creación de la versión
@@ -47,6 +49,10 @@ public record EnterpriseDashboardResponse(
 
     @PositiveOrZero @Schema(description = "Progreso porcentual (0-100)", example = "100")
     int progress,
+
+    @JsonProperty("isPartial")
+    @Schema(description = "Indica si la generación usó datos insuficientes", example = "false")
+    boolean isPartial,
 
     @PositiveOrZero @Schema(description = "Número de documentos de la versión", example = "7")
     int documentCount,

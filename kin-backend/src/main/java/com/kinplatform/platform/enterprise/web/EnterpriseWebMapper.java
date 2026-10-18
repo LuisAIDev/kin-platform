@@ -245,6 +245,7 @@ public final class EnterpriseWebMapper {
             informationProgress != null
                 ? Math.max(0, Math.min(100, informationProgress))
                 : progress(project.status()),
+            project.isPartial(),
             project.documentCount(),
             versions.size(),
             project.createdAt(),
