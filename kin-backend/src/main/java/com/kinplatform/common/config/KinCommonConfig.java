@@ -28,6 +28,7 @@ import com.kinplatform.common.context.ExplorationPriority;
 import com.kinplatform.common.context.strategy.ConversationStrategist;
 import com.kinplatform.common.context.strategy.DefaultExplorationStrategy;
 import com.kinplatform.common.conversation.history.HistoryWindow;
+import com.kinplatform.common.conversation.history.TokenBudgetWindow;
 import com.kinplatform.common.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.engine.DomainEngine;
@@ -149,6 +150,14 @@ public class KinCommonConfig {
     @Bean
     public HistoryWindow historyWindow() {
         return new HistoryWindow();
+    }
+
+    @Bean
+    public TokenBudgetWindow tokenBudgetWindow() {
+        return new TokenBudgetWindow(
+                TokenBudgetWindow.TokenEstimator.HEURISTIC,
+                24_000,
+                3_500);
     }
 
     @Bean

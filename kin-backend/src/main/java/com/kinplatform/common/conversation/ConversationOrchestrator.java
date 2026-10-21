@@ -1,5 +1,8 @@
 package com.kinplatform.common.conversation;
 
+import com.kinplatform.common.ai.PromptAssembler;
+import com.kinplatform.common.ai.PromptRequest;
+import com.kinplatform.common.ai.prompt.ConversationPromptBuilder;
 import com.kinplatform.common.method.KinMethod;
 import com.kinplatform.common.method.KinMethodCommand;
 import com.kinplatform.common.method.KinMethodResult;
@@ -8,6 +11,7 @@ import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.Message;
 import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.conversation.history.HistoryWindow;
+import com.kinplatform.common.conversation.history.TokenBudgetWindow;
 import com.kinplatform.common.conversation.policy.TurnPolicy;
 import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
@@ -47,6 +51,8 @@ public class ConversationOrchestrator {
     private final ContextRepository contextRepository;
     private final ResponseFallback responseFallback;
     private final EnterpriseProjectTrigger enterpriseTrigger;
+    private final PromptAssembler promptAssembler;
+    private final TokenBudgetWindow tokenBudgetWindow;
 
     /** Trigger por defecto: sin integración Enterprise, no emite nada. */
     private static final EnterpriseProjectTrigger NO_OP_TRIGGER = projectId -> {};
@@ -64,7 +70,9 @@ public class ConversationOrchestrator {
                 responseGuard,
                 contextRepository,
                 new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
-                NO_OP_TRIGGER);
+                NO_OP_TRIGGER,
+                defaultPromptAssembler(),
+                defaultTokenBudgetWindow());
     }
 
     /**
@@ -79,7 +87,8 @@ public class ConversationOrchestrator {
             ResponseGuard responseGuard,
             ContextRepository contextRepository,
             ResponseFallback responseFallback) {
-        this(historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository, responseFallback, NO_OP_TRIGGER);
+        this(historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository, responseFallback, NO_OP_TRIGGER,
+                defaultPromptAssembler(), defaultTokenBudgetWindow());
     }
 
     /**
@@ -102,7 +111,9 @@ public class ConversationOrchestrator {
                 responseGuard,
                 contextRepository,
                 new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
-                enterpriseTrigger);
+                enterpriseTrigger,
+                defaultPromptAssembler(),
+                defaultTokenBudgetWindow());
     }
 
     /**
@@ -116,7 +127,9 @@ public class ConversationOrchestrator {
             ResponseGuard responseGuard,
             ContextRepository contextRepository,
             ResponseFallback responseFallback,
-            EnterpriseProjectTrigger enterpriseTrigger) {
+            EnterpriseProjectTrigger enterpriseTrigger,
+            PromptAssembler promptAssembler,
+            TokenBudgetWindow tokenBudgetWindow) {
         if (historyWindow == null) {
             throw new IllegalArgumentException("historyWindow no puede ser null");
         }
@@ -135,6 +148,12 @@ public class ConversationOrchestrator {
         if (responseFallback == null) {
             throw new IllegalArgumentException("responseFallback no puede ser null");
         }
+        if (promptAssembler == null) {
+            throw new IllegalArgumentException("promptAssembler no puede ser null");
+        }
+        if (tokenBudgetWindow == null) {
+            throw new IllegalArgumentException("tokenBudgetWindow no puede ser null");
+        }
         this.historyWindow = historyWindow;
         this.turnPolicy = turnPolicy;
         this.kinMethod = kinMethod;
@@ -142,6 +161,22 @@ public class ConversationOrchestrator {
         this.contextRepository = contextRepository;
         this.responseFallback = responseFallback;
         this.enterpriseTrigger = enterpriseTrigger == null ? NO_OP_TRIGGER : enterpriseTrigger;
+        this.promptAssembler = promptAssembler;
+        this.tokenBudgetWindow = tokenBudgetWindow;
+    }
+
+    /**
+     * Ensamblador por defecto para constructores de compatibilidad: solo cubre
+     * el prompt CONVERSATION (el orquestador nunca ensambla REPORT para el
+     * presupuesto de tokens). El wiring de producción inyecta el
+     * {@link PromptAssembler} completo.
+     */
+    private static PromptAssembler defaultPromptAssembler() {
+        return new PromptAssembler(new ConversationPromptBuilder(), null);
+    }
+
+    private static TokenBudgetWindow defaultTokenBudgetWindow() {
+        return new TokenBudgetWindow(TokenBudgetWindow.TokenEstimator.HEURISTIC, 24_000, 3_500);
     }
 
     /**
@@ -167,12 +202,13 @@ public class ConversationOrchestrator {
             throw new IllegalArgumentException("turn no puede ser null");
         }
 
-        List<Message> windowedHistory = historyWindow.window(turn.history(), HistoryWindow.DEFAULT_MAX_MESSAGES);
-
         ProjectContext projectContext = contextRepository.findOrCreate(
                 turn.projectId(), turn.projectTitle(), turn.projectDescription(), turn.projectCategory());
 
         TurnDirective directive = turnPolicy.decide(projectContext, previousDecision(projectContext));
+
+        List<Message> windowedHistory = budgetHistory(
+                turn.history(), projectContext, directive, turn.userMessage());
 
         KinMethodCommand command = new KinMethodCommand(
                 turn.projectId(),
@@ -280,10 +316,11 @@ public class ConversationOrchestrator {
         if (turn == null) {
             throw new IllegalArgumentException("turn no puede ser null");
         }
-        List<Message> windowedHistory = historyWindow.window(turn.history(), HistoryWindow.DEFAULT_MAX_MESSAGES);
         ProjectContext projectContext = contextRepository.findOrCreate(
                 turn.projectId(), turn.projectTitle(), turn.projectDescription(), turn.projectCategory());
         TurnDirective directive = turnPolicy.decide(projectContext, previousDecision(projectContext));
+        List<Message> windowedHistory = budgetHistory(
+                turn.history(), projectContext, directive, turn.userMessage());
         return new KinMethodCommand(
                 turn.projectId(),
                 turn.userId(),
@@ -297,6 +334,26 @@ public class ConversationOrchestrator {
 
     private ConversationDecision previousDecision(ProjectContext projectContext) {
         return projectContext != null ? projectContext.currentDecision() : null;
+    }
+
+    /**
+     * Aplica el presupuesto de tokens al historial del turno.
+     *
+     * <p>El system prompt real solo puede ensamblarse cuando existe una decisión
+     * de conversación previa ({@link PromptRequest#forConversation} exige
+     * decisión no nula). En el primer turno todavía no hay decisión: en ese caso
+     * se conserva la ventana determinista por número de mensajes
+     * ({@link HistoryWindow}) en lugar de inventar una decisión.</p>
+     */
+    private List<Message> budgetHistory(List<Message> history, ProjectContext projectContext,
+                                        TurnDirective directive, String userMessage) {
+        ConversationDecision decision = previousDecision(projectContext);
+        if (decision == null) {
+            return historyWindow.window(history, HistoryWindow.DEFAULT_MAX_MESSAGES);
+        }
+        String systemPrompt = promptAssembler.assemble(
+                PromptRequest.forConversation(projectContext, decision, directive));
+        return tokenBudgetWindow.apply(history, systemPrompt, userMessage);
     }
 
     /**

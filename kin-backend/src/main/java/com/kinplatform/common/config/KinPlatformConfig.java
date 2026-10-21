@@ -1,10 +1,12 @@
 package com.kinplatform.common.config;
 
+import com.kinplatform.common.ai.PromptAssembler;
 import com.kinplatform.common.context.ContextRepository;
 import com.kinplatform.common.context.ProjectContextSyncPort;
 import com.kinplatform.common.conversation.ConversationOrchestrator;
 import com.kinplatform.common.conversation.ResponseFallback;
 import com.kinplatform.common.conversation.history.HistoryWindow;
+import com.kinplatform.common.conversation.history.TokenBudgetWindow;
 import com.kinplatform.common.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.method.KinMethod;
@@ -359,8 +361,12 @@ public class KinPlatformConfig {
             KinMethod kinMethod,
             ResponseGuard responseGuard,
             ContextRepository contextRepository,
-            EnterpriseProjectTrigger enterpriseProjectTrigger) {
+            EnterpriseProjectTrigger enterpriseProjectTrigger,
+            PromptAssembler promptAssembler,
+            TokenBudgetWindow tokenBudgetWindow) {
         return new ConversationOrchestrator(
-                historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository, enterpriseProjectTrigger);
+                historyWindow, turnPolicy, kinMethod, responseGuard, contextRepository,
+                new ResponseFallback(List.of(ResponseFallback.DEFAULT_CANNED_RESPONSE), 0),
+                enterpriseProjectTrigger, promptAssembler, tokenBudgetWindow);
     }
 }

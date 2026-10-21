@@ -1,5 +1,7 @@
 package com.kinplatform.common.config;
 
+import com.kinplatform.common.ai.PromptAssembler;
+import com.kinplatform.common.ai.prompt.ConversationPromptBuilder;
 import com.kinplatform.common.method.KinMethod;
 import com.kinplatform.common.method.KinMethodCommand;
 import com.kinplatform.common.method.KinMethodResult;
@@ -8,6 +10,7 @@ import com.kinplatform.common.context.ProjectContext;
 import com.kinplatform.common.conversation.ConversationOrchestrator;
 import com.kinplatform.common.conversation.ConversationTurn;
 import com.kinplatform.common.conversation.history.HistoryWindow;
+import com.kinplatform.common.conversation.history.TokenBudgetWindow;
 import com.kinplatform.common.conversation.policy.DefaultTurnPolicy;
 import com.kinplatform.common.conversation.validation.ResponseGuard;
 import com.kinplatform.common.decision.ConversationDecision;
@@ -60,7 +63,9 @@ class KinConfigConversationOrchestratorWiringTest {
 
         ConversationOrchestrator orchestrator = kinPlatformConfig.conversationOrchestrator(
             new HistoryWindow(), new DefaultTurnPolicy(), kinMethod,
-            new ResponseGuard(), contextRepository, enterpriseProjectTrigger);
+            new ResponseGuard(), contextRepository, enterpriseProjectTrigger,
+            new PromptAssembler(new ConversationPromptBuilder(), null),
+            new TokenBudgetWindow(TokenBudgetWindow.TokenEstimator.HEURISTIC, 24_000, 3_500));
 
         var result = orchestrator.orchestrate(turn());
 
