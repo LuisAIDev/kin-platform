@@ -1,19 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { InvestmentMemoButton } from "./InvestmentMemoButton";
 import { investmentMemoService } from "@/services/investmentMemo";
-
-const { pdfSaveMock, pdfFromMock, pdfSetMock } = vi.hoisted(() => {
-  const pdfSaveMock = vi.fn<() => Promise<void>>();
-  const pdfFromMock = vi.fn<(node: HTMLElement) => { save: typeof pdfSaveMock }>(
-    () => ({ save: pdfSaveMock })
-  );
-  const pdfSetMock = vi.fn<
-    (options: unknown) => { from: typeof pdfFromMock }
-  >(() => ({ from: pdfFromMock }));
-  return { pdfSaveMock, pdfFromMock, pdfSetMock };
-});
 
 vi.mock("@/services/investmentMemo", () => ({
   investmentMemoService: {
@@ -21,12 +10,9 @@ vi.mock("@/services/investmentMemo", () => ({
   },
 }));
 
-vi.mock("html2pdf.js", () => ({
-  default: vi.fn(() => ({ set: pdfSetMock })),
-}));
-
 describe("InvestmentMemoButton", () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
   });
 
@@ -87,17 +73,18 @@ describe("InvestmentMemoButton", () => {
     expect(investmentMemoService.get).toHaveBeenCalledTimes(2);
   });
 
-  it("genera el PDF con fondo blanco y sin los controles del modal", async () => {
+  it("usa la vista de impresión con portada, metadatos y window.print()", async () => {
     vi.mocked(investmentMemoService.get).mockResolvedValue(
-      "# Oportunidad\n\nTexto del memo"
+      [
+        "# Oportunidad",
+        "",
+        "**Categoría:** Fintech | **Estado:** IN_PROGRESS | **Fecha:** 2026-10-22T12:00:00Z",
+        "**Score de Viabilidad:** 87",
+        "",
+        "Texto del memo",
+      ].join("\n")
     );
-    let resolveSave: (() => void) | undefined;
-    pdfSaveMock.mockImplementation(
-      () =>
-        new Promise<void>((resolve) => {
-          resolveSave = resolve;
-        })
-    );
+    const printSpy = vi.spyOn(window, "print").mockImplementation(() => {});
     const user = userEvent.setup();
 
     render(<InvestmentMemoButton projectId="p3" projectTitle="Mi Proyecto" />);
@@ -106,31 +93,21 @@ describe("InvestmentMemoButton", () => {
     );
     await screen.findByRole("heading", { name: "Oportunidad" }, { timeout: 5000 });
 
+    expect(
+      screen.getByText("Investment Memo — Confidencial")
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("22 de Octubre de 2026")).not.toHaveLength(0);
+    expect(screen.getAllByText("Fintech")).not.toHaveLength(0);
+    expect(screen.getAllByText("En progreso")).not.toHaveLength(0);
+    expect(screen.getAllByText("87 / 100")).not.toHaveLength(0);
+    expect(screen.getAllByText("Categoría")).not.toHaveLength(0);
+    expect(screen.getAllByText("Texto del memo")).not.toHaveLength(0);
+
     const pdfButton = screen.getByRole("button", {
       name: /guardar documento de inversión en pdf/i,
     });
     await user.click(pdfButton);
 
-    expect(pdfButton).toHaveTextContent("Generando PDF...");
-    await waitFor(() => expect(pdfSetMock).toHaveBeenCalledTimes(1));
-
-    const options = pdfSetMock.mock.calls[0][0] as {
-      filename: string;
-      html2canvas: { backgroundColor: string };
-    };
-    expect(options.filename).toBe("investment-memo-mi-proyecto.pdf");
-    expect(options.html2canvas.backgroundColor).toBe("#ffffff");
-
-    const node = pdfFromMock.mock.calls[0][0];
-    expect(node.id).toBe("investment-memo-pdf");
-    expect(node.querySelector("#investment-memo-content")).toBeNull();
-    expect(node.querySelector("button")).toBeNull();
-    expect(node.textContent).toContain("Oportunidad");
-    expect(node.style.backgroundColor).toMatch(/^(#ffffff|rgb\(255, 255, 255\))$/);
-    expect(node.style.color).toMatch(/^(#000000|rgb\(0, 0, 0\))$/);
-
-    resolveSave?.();
-    await waitFor(() => expect(pdfButton).toHaveTextContent("Guardar en PDF"));
-    expect(pdfSaveMock).toHaveBeenCalledTimes(1);
+    expect(printSpy).toHaveBeenCalledTimes(1);
   });
 });

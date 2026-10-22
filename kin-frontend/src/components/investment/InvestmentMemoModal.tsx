@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { downloadBlob } from "@/services/enterpriseApi";
@@ -13,6 +14,54 @@ type Props = {
   error: string | null;
   onClose: () => void;
   onRetry: () => void;
+};
+
+type MemoMetadata = {
+  category: string | null;
+  status: string | null;
+  score: string | null;
+  date: string | null;
+};
+
+const EMPTY_METADATA: MemoMetadata = {
+  category: null,
+  status: null,
+  score: null,
+  date: null,
+};
+
+const NO_DATA = "—";
+
+const STATUS_LABELS: Record<string, string> = {
+  DRAFT: "Borrador",
+  IN_PROGRESS: "En progreso",
+  COMPLETED: "Completado",
+  ARCHIVED: "Archivado",
+  DELETED: "Eliminado",
+};
+
+const MONTHS = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
+
+const METADATA_LABELS: Record<string, keyof MemoMetadata> = {
+  categoria: "category",
+  "categoría": "category",
+  estado: "status",
+  fecha: "date",
+  score: "score",
+  "score de viabilidad": "score",
 };
 
 const markdownComponents: Components = {
@@ -64,7 +113,7 @@ const markdownComponents: Components = {
     </a>
   ),
   table: ({ children }) => (
-    <div className="my-5 overflow-x-auto rounded-lg border border-neutral-200">
+    <div className="memo-table-wrapper my-5 overflow-x-auto rounded-lg border border-neutral-200">
       <table className="w-full border-collapse text-left text-sm">{children}</table>
     </div>
   ),
@@ -93,109 +142,471 @@ const markdownComponents: Components = {
 };
 
 const PRINT_STYLES = `
-  @page { margin: 18mm; }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    color: #171717;
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 11.5pt;
-    line-height: 1.6;
+  .memo-print-portal {
+    display: none;
   }
-  article { max-width: 100%; }
-  h1, h2, h3, h4, h5, h6 {
-    color: #0a0a0a;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    line-height: 1.25;
+
+  @media print {
+    @page {
+      size: A4 portrait;
+      margin: 18mm 16mm 20mm;
+    }
+
+    html,
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+      height: auto !important;
+      overflow: visible !important;
+      background: #ffffff !important;
+      color: #111111 !important;
+    }
+
+    body > *:not(.memo-print-portal) {
+      display: none !important;
+    }
+
+    .memo-print-portal {
+      display: block !important;
+      background: #ffffff !important;
+      color: #111111 !important;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 11.5pt;
+      line-height: 1.65;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .memo-print-portal *,
+    .memo-print-portal *::before,
+    .memo-print-portal *::after {
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+
+    .memo-print-portal button,
+    .memo-print-portal [role="button"],
+    .memo-print-portal nav,
+    .memo-print-portal .memo-no-print {
+      display: none !important;
+    }
+
+    .memo-cover {
+      display: flex !important;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 236mm;
+      padding: 4mm 0;
+      break-after: page;
+      page-break-after: always;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .memo-cover-brand {
+      display: flex;
+      align-items: center;
+      gap: 4mm;
+    }
+
+    .memo-cover-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14mm;
+      height: 14mm;
+      border-radius: 3mm;
+      background: #111111 !important;
+      color: #ffffff !important;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 20pt;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .memo-cover-wordmark {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 19pt;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      color: #111111 !important;
+    }
+
+    .memo-cover-body {
+      max-width: 160mm;
+      margin: auto 0;
+    }
+
+    .memo-cover-eyebrow {
+      margin: 0 0 12mm;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8.5pt;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #555555 !important;
+    }
+
+    .memo-cover-title {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 32pt;
+      font-weight: 700;
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      color: #111111 !important;
+      overflow-wrap: anywhere;
+    }
+
+    .memo-cover-date {
+      margin: 11mm 0 0;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12pt;
+      color: #333333 !important;
+    }
+
+    .memo-cover-subtitle {
+      margin: 6mm 0 0;
+      padding-top: 5mm;
+      border-top: 1px solid #111111;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10pt;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #111111 !important;
+    }
+
+    .memo-cover-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 10mm;
+      padding-top: 5mm;
+      border-top: 1px solid #d4d4d4;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8pt;
+      letter-spacing: 0.04em;
+      color: #666666 !important;
+    }
+
+    .memo-print-content {
+      max-width: none !important;
+      margin: 0 !important;
+    }
+
+    .memo-print-header {
+      margin: 0 0 8mm;
+    }
+
+    .memo-print-kicker {
+      margin: 0 0 3mm;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8.5pt;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #666666 !important;
+    }
+
+    .memo-print-title {
+      margin: 0 0 6mm;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 22pt;
+      font-weight: 700;
+      line-height: 1.15;
+      color: #111111 !important;
+      overflow-wrap: anywhere;
+    }
+
+    .memo-print-content h1,
+    .memo-print-content h2,
+    .memo-print-content h3,
+    .memo-print-content h4,
+    .memo-print-content h5,
+    .memo-print-content h6 {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #111111 !important;
+      line-height: 1.25;
+    }
+
+    .memo-print-content h1 {
+      margin: 0 0 6mm;
+      font-size: 22pt;
+    }
+
+    .memo-print-content h2 {
+      margin: 8mm 0 3mm;
+      padding-bottom: 2mm;
+      border-bottom: 1px solid #d4d4d4;
+      font-size: 15pt;
+    }
+
+    .memo-print-content h3 {
+      margin: 6mm 0 2mm;
+      font-size: 12pt;
+    }
+
+    .memo-print-content h4,
+    .memo-print-content h5,
+    .memo-print-content h6 {
+      margin: 5mm 0 2mm;
+      font-size: 10.5pt;
+    }
+
+    .memo-print-content p {
+      margin: 0 0 3mm;
+      color: #222222 !important;
+      orphans: 3;
+      widows: 3;
+    }
+
+    .memo-print-content ul,
+    .memo-print-content ol {
+      margin: 0 0 4mm;
+      padding-left: 6mm;
+    }
+
+    .memo-print-content li {
+      margin-bottom: 1.5mm;
+      color: #222222 !important;
+    }
+
+    .memo-print-content strong {
+      color: #111111 !important;
+    }
+
+    .memo-print-content a {
+      color: #111111 !important;
+      text-decoration: underline;
+    }
+
+    .memo-print-content blockquote {
+      margin: 4mm 0;
+      padding: 2mm 4mm;
+      border-left: 3px solid #9a9a9a !important;
+      background: #fafafa !important;
+      color: #333333 !important;
+      font-style: italic;
+    }
+
+    .memo-print-content table {
+      width: 100%;
+      margin: 4mm 0;
+      border-collapse: collapse;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+    }
+
+    .memo-print-content .memo-table-wrapper {
+      margin: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      overflow: visible !important;
+    }
+
+    .memo-print-content th,
+    .memo-print-content td {
+      padding: 2mm 2.5mm;
+      border: 1px solid #c9c9c9 !important;
+      text-align: left;
+      vertical-align: top;
+      color: #222222 !important;
+    }
+
+    .memo-print-content th {
+      background: #f2f2f2 !important;
+      color: #111111 !important;
+    }
+
+    .memo-print-meta {
+      margin: 0 0 8mm !important;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+    }
+
+    .memo-print-meta th {
+      width: 25%;
+      background: #f2f2f2 !important;
+      font-size: 7.5pt;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #555555 !important;
+    }
+
+    .memo-print-meta td {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #111111 !important;
+    }
+
+    .memo-print-content code {
+      padding: 0.5mm 1.5mm;
+      border-radius: 1mm;
+      background: #f5f5f5 !important;
+      color: #111111 !important;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 9pt;
+    }
+
+    .memo-print-content pre {
+      margin: 4mm 0;
+      padding: 3mm;
+      border: 1px solid #e0e0e0 !important;
+      border-radius: 2mm;
+      background: #f7f7f7 !important;
+      color: #111111 !important;
+      font-size: 8.5pt;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .memo-print-content pre code {
+      padding: 0;
+      border: 0 !important;
+      background: transparent !important;
+      color: inherit !important;
+    }
+
+    .memo-print-content hr {
+      margin: 6mm 0;
+      border: 0;
+      border-top: 1px solid #d4d4d4;
+    }
+
+    .memo-print-content h1,
+    .memo-print-content h2,
+    .memo-print-content h3,
+    .memo-print-content h4,
+    .memo-print-content h5,
+    .memo-print-content h6,
+    .memo-print-content p,
+    .memo-print-content ul,
+    .memo-print-content ol,
+    .memo-print-content li,
+    .memo-print-content blockquote,
+    .memo-print-content pre,
+    .memo-print-content table,
+    .memo-print-content tr,
+    .memo-print-meta,
+    .memo-print-meta tr {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .memo-print-content h1,
+    .memo-print-content h2,
+    .memo-print-content h3,
+    .memo-print-content h4,
+    .memo-print-content h5,
+    .memo-print-content h6 {
+      break-after: avoid;
+      page-break-after: avoid;
+    }
   }
-  h1 { margin: 0 0 18px; font-size: 24pt; }
-  h2 { margin: 26px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #d4d4d4; font-size: 16pt; }
-  h3 { margin: 20px 0 8px; font-size: 13pt; }
-  h4 { margin: 16px 0 6px; font-size: 11.5pt; }
-  p { margin: 0 0 10px; }
-  ul, ol { margin: 0 0 12px; padding-left: 22px; }
-  li { margin-bottom: 4px; }
-  strong { color: #0a0a0a; }
-  a { color: #1d4ed8; text-decoration: underline; }
-  blockquote {
-    margin: 14px 0;
-    padding: 8px 14px;
-    border-left: 4px solid #bfdbfe;
-    background: #eff6ff;
-    color: #404040;
-    font-style: italic;
-  }
-  table { width: 100%; margin: 14px 0; border-collapse: collapse; font-size: 10pt; }
-  th, td { padding: 6px 8px; border: 1px solid #d4d4d4; text-align: left; vertical-align: top; }
-  th { background: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-  code {
-    padding: 1px 4px;
-    border-radius: 4px;
-    background: #f5f5f5;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-    font-size: 9.5pt;
-  }
-  pre { padding: 10px 12px; border-radius: 6px; background: #f7f7f7; color: #171717; border: 1px solid #e5e5e5; overflow-wrap: anywhere; white-space: pre-wrap; }
-  pre code { padding: 0; background: transparent; color: inherit; }
-  hr { margin: 20px 0; border: 0; border-top: 1px solid #d4d4d4; }
 `;
 
-const PDF_EXPORT_STYLES = `
-  #investment-memo-pdf {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-  }
-  #investment-memo-pdf *,
-  #investment-memo-pdf *::before,
-  #investment-memo-pdf *::after {
-    color: #000000 !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    border-color: #9ca3af !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-  }
-  #investment-memo-pdf th { background-color: #f3f4f6 !important; }
-  #investment-memo-pdf blockquote,
-  #investment-memo-pdf pre,
-  #investment-memo-pdf code { background-color: #f3f4f6 !important; }
-  #investment-memo-pdf pre code { background-color: transparent !important; }
-  #investment-memo-pdf a { text-decoration: underline !important; }
-  #investment-memo-pdf table { width: 100%; border-collapse: collapse; }
-  #investment-memo-pdf th,
-  #investment-memo-pdf td { border: 1px solid #9ca3af !important; }
-  #investment-memo-pdf h1,
-  #investment-memo-pdf h2,
-  #investment-memo-pdf h3,
-  #investment-memo-pdf h4,
-  #investment-memo-pdf h5,
-  #investment-memo-pdf h6,
-  #investment-memo-pdf table,
-  #investment-memo-pdf blockquote,
-  #investment-memo-pdf pre,
-  #investment-memo-pdf li,
-  #investment-memo-pdf tr {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-  #investment-memo-pdf h1,
-  #investment-memo-pdf h2,
-  #investment-memo-pdf h3 {
-    break-after: avoid;
-    page-break-after: avoid;
-  }
-`;
+function cleanValue(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return /^(n\/d|n\/a|not_available|no disponible|—|-)$/i.test(trimmed)
+    ? null
+    : trimmed;
+}
 
-const HTML_ESCAPES: Record<string, string> = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;",
-};
+function displayValue(value: string | null): string {
+  return cleanValue(value) ?? NO_DATA;
+}
 
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+function displayStatus(value: string | null): string {
+  const label = cleanValue(value);
+  if (!label) return NO_DATA;
+  return (
+    STATUS_LABELS[label.toUpperCase()] ??
+    label
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (char) => char.toUpperCase())
+  );
+}
+
+function displayScore(value: string | null): string {
+  const score = cleanValue(value);
+  if (!score) return NO_DATA;
+  return /^\d+(?:[.,]\d+)?$/.test(score) ? `${score} / 100` : score;
+}
+
+function formatExecutiveDate(value?: string | null): string {
+  const parsed = value ? new Date(value) : new Date();
+  const date = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  const day = date.getUTCDate();
+  const month = MONTHS[date.getUTCMonth()] ?? "";
+  const year = date.getUTCFullYear();
+
+  return `${day} de ${month} de ${year}`;
+}
+
+function extractMetadataLine(line: string, metadata: MemoMetadata): void {
+  const pairs = line.matchAll(/\*\*([^*]+?)\*\*\s*:?\s*([^|*]+)/g);
+  for (const match of pairs) {
+    const rawLabel = match[1]?.replace(/:\s*$/, "").trim().toLowerCase();
+    const key = rawLabel ? METADATA_LABELS[rawLabel] : undefined;
+    if (!key) continue;
+    const value = match[2]?.replace(/[|*]/g, "").trim();
+    if (value) metadata[key] = value;
+  }
+}
+
+function parseMemo(markdown: string): {
+  title: string | null;
+  metadata: MemoMetadata;
+  body: string;
+} {
+  const metadata: MemoMetadata = { ...EMPTY_METADATA };
+  const bodyLines: string[] = [];
+  let title: string | null = null;
+  let headerOpen = true;
+
+  for (const line of markdown.replace(/\r\n/g, "\n").split("\n")) {
+    const trimmed = line.trim();
+
+    if (headerOpen && !title) {
+      const heading = trimmed.match(/^#\s+(.+)$/);
+      if (heading) {
+        title = heading[1].trim();
+        continue;
+      }
+    }
+
+    if (headerOpen && trimmed === "") {
+      continue;
+    }
+
+    if (
+      headerOpen &&
+      /\*\*(?:Categor[ií]a|Estado|Fecha|Score(?:\s+de\s+Viabilidad)?)\s*:?\*\*/i.test(
+        trimmed
+      )
+    ) {
+      extractMetadataLine(trimmed, metadata);
+      continue;
+    }
+
+    headerOpen = false;
+    bodyLines.push(line);
+  }
+
+  while (bodyLines.length > 0 && bodyLines[0].trim() === "") bodyLines.shift();
+  while (
+    bodyLines.length > 0 &&
+    bodyLines[bodyLines.length - 1].trim() === ""
+  ) {
+    bodyLines.pop();
+  }
+
+  return { title, metadata, body: bodyLines.join("\n") };
 }
 
 function slugify(value: string): string {
@@ -208,32 +619,57 @@ function slugify(value: string): string {
     .slice(0, 60);
 }
 
-function buildPdfNode(source: HTMLElement): HTMLElement {
-  const wrapper = document.createElement("div");
-  wrapper.id = "investment-memo-pdf";
-  wrapper.style.backgroundColor = "#ffffff";
-  wrapper.style.color = "#000000";
-  wrapper.style.width = "100%";
-  wrapper.style.padding = "8px";
-  wrapper.style.boxSizing = "border-box";
-  wrapper.style.fontFamily =
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
-
-  const style = document.createElement("style");
-  style.textContent = PDF_EXPORT_STYLES;
-
-  const clone = source.cloneNode(true) as HTMLElement;
-  clone.removeAttribute("id");
-  clone.style.margin = "0";
-  clone.style.maxWidth = "none";
-
-  wrapper.appendChild(style);
-  wrapper.appendChild(clone);
-  return wrapper;
-}
-
 const toolbarButtonClass =
   "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50";
+
+function MemoMetadataTable({
+  metadata,
+  date,
+  className = "",
+}: {
+  metadata: MemoMetadata;
+  date: string;
+  className?: string;
+}) {
+  const cells: Array<[string, string]> = [
+    ["Categoría", displayValue(metadata.category)],
+    ["Estado", displayStatus(metadata.status)],
+    ["Score", displayScore(metadata.score)],
+    ["Fecha", date],
+  ];
+
+  return (
+    <table
+      className={`memo-meta-table w-full table-fixed border-collapse text-left ${className}`}
+    >
+      <thead>
+        <tr>
+          {cells.map(([label]) => (
+            <th
+              key={label}
+              scope="col"
+              className="border border-neutral-200 bg-neutral-50 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-neutral-500"
+            >
+              {label}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          {cells.map(([label, value]) => (
+            <td
+              key={label}
+              className="border border-neutral-200 px-3 py-2.5 text-sm font-semibold text-neutral-900"
+            >
+              {value}
+            </td>
+          ))}
+        </tr>
+      </tbody>
+    </table>
+  );
+}
 
 function MemoSkeleton() {
   return (
@@ -294,10 +730,7 @@ export default function InvestmentMemoModal({
   onRetry,
 }: Props) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const pdfBusyRef = useRef(false);
   const [copied, setCopied] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
-  const [pdfError, setPdfError] = useState<string | null>(null);
 
   useEffect(() => {
     closeButtonRef.current?.focus();
@@ -321,6 +754,13 @@ export default function InvestmentMemoModal({
     return () => window.clearTimeout(timer);
   }, [copied]);
 
+  const memoDoc = useMemo(() => parseMemo(markdown ?? ""), [markdown]);
+  const documentTitle = memoDoc.title || projectTitle;
+  const documentDate = useMemo(
+    () => formatExecutiveDate(memoDoc.metadata.date),
+    [memoDoc.metadata.date]
+  );
+
   const handleCopy = useCallback(async () => {
     if (!markdown) return;
     try {
@@ -341,215 +781,198 @@ export default function InvestmentMemoModal({
   }, [markdown, projectTitle]);
 
   const handlePrint = useCallback(() => {
-    const content = document.getElementById("investment-memo-content");
-    if (!content) return;
-
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
-    printWindow.opener = null;
-    printWindow.document.write(
-      `<!doctype html><html lang="es"><head><meta charset="utf-8" />` +
-        `<title>${escapeHtml(projectTitle)}</title>` +
-        `<style>${PRINT_STYLES}</style></head><body>` +
-        `<article>${content.innerHTML}</article></body></html>`
-    );
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.setTimeout(() => printWindow.print(), 200);
-  }, [projectTitle]);
-
-  const handleSavePdf = useCallback(async () => {
-    const content = document.getElementById("investment-memo-content");
-    const hasMarkdown = Boolean(markdown);
-    if (!content || !hasMarkdown || pdfBusyRef.current) return;
-
-    pdfBusyRef.current = true;
-    setPdfLoading(true);
-    setPdfError(null);
-    try {
-      const { default: html2pdf } = await import("html2pdf.js");
-      const node = buildPdfNode(content);
-      const filename = `investment-memo-${slugify(projectTitle) || "proyecto"}.pdf`;
-
-      await html2pdf()
-        .set({
-          margin: [10, 10, 12, 10],
-          filename,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: "#ffffff",
-            logging: false,
-          },
-          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        })
-        .from(node)
-        .save();
-    } catch (err) {
-      setPdfError(
-        err instanceof Error && err.message
-          ? err.message
-          : "No se pudo generar el PDF. Inténtalo de nuevo."
-      );
-    } finally {
-      pdfBusyRef.current = false;
-      setPdfLoading(false);
-    }
-  }, [markdown, projectTitle]);
+    if (!markdown) return;
+    window.print();
+  }, [markdown]);
 
   const actionsDisabled = loading || !markdown;
-  const toolbarDisabled = actionsDisabled || pdfLoading;
 
-  const renderedMemo = useMemo(
-    () =>
-      markdown ? (
-        <article id="investment-memo-content" className="mx-auto max-w-3xl">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={markdownComponents}
-          >
-            {markdown}
-          </ReactMarkdown>
-        </article>
-      ) : null,
-    [markdown]
-  );
+  const renderedMemo = markdown ? (
+    <article id="investment-memo-content" className="mx-auto max-w-3xl">
+      <header className="mb-6">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-600">
+          KIN · Investment Memo
+        </p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-neutral-900">
+          {documentTitle}
+        </h1>
+        <div className="mt-5 overflow-hidden rounded-xl border border-neutral-200">
+          <MemoMetadataTable metadata={memoDoc.metadata} date={documentDate} />
+        </div>
+      </header>
+      {memoDoc.body ? (
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+          {memoDoc.body}
+        </ReactMarkdown>
+      ) : null}
+    </article>
+  ) : null;
+
+  const printView =
+    typeof document !== "undefined" && markdown
+      ? createPortal(
+          <div className="memo-print-portal" aria-hidden="true">
+            <style>{PRINT_STYLES}</style>
+            <section className="memo-cover">
+              <header className="memo-cover-brand">
+                <span className="memo-cover-mark">K</span>
+                <span className="memo-cover-wordmark">KIN</span>
+              </header>
+              <div className="memo-cover-body">
+                <p className="memo-cover-eyebrow">Documento de inversión</p>
+                <h1 className="memo-cover-title">{documentTitle}</h1>
+                <p className="memo-cover-date">{documentDate}</p>
+                <p className="memo-cover-subtitle">
+                  Investment Memo — Confidencial
+                </p>
+              </div>
+              <footer className="memo-cover-footer">
+                <span>KIN Platform · Knowledge, Innovation &amp; Navigation</span>
+                <span>Documento confidencial para uso exclusivo de inversores.</span>
+              </footer>
+            </section>
+            <article className="memo-print-content">
+              <header className="memo-print-header">
+                <p className="memo-print-kicker">KIN · Investment Memo</p>
+                <h1 className="memo-print-title">{documentTitle}</h1>
+              </header>
+              <MemoMetadataTable
+                metadata={memoDoc.metadata}
+                date={documentDate}
+                className="memo-print-meta"
+              />
+              {memoDoc.body ? (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={markdownComponents}
+                >
+                  {memoDoc.body}
+                </ReactMarkdown>
+              ) : null}
+            </article>
+          </div>,
+          document.body
+        )
+      : null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-6"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="investment-memo-title"
-      onClick={onClose}
-    >
+    <>
       <div
-        className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-6"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="investment-memo-title"
+        onClick={onClose}
       >
-        <header className="flex items-start justify-between gap-4 border-b border-neutral-200 px-5 py-4 sm:px-6">
-          <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-600">
-              KIN · Documento de inversión
-            </p>
-            <h2
-              id="investment-memo-title"
-              className="mt-1 truncate text-lg font-bold tracking-tight text-neutral-900 sm:text-xl"
+        <div
+          className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <header className="flex items-start justify-between gap-4 border-b border-neutral-200 px-5 py-4 sm:px-6">
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-600">
+                KIN · Documento de inversión
+              </p>
+              <h2
+                id="investment-memo-title"
+                className="mt-1 truncate text-lg font-bold tracking-tight text-neutral-900 sm:text-xl"
+              >
+                {projectTitle}
+              </h2>
+            </div>
+            <button
+              ref={closeButtonRef}
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar documento de inversión"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-900"
             >
-              {projectTitle}
-            </h2>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </header>
+
+          <div className="flex flex-wrap items-center gap-2 border-b border-neutral-200 bg-neutral-50 px-5 py-3 sm:px-6">
+            <button
+              type="button"
+              onClick={() => void handleCopy()}
+              disabled={actionsDisabled}
+              className={toolbarButtonClass}
+            >
+              {copied ? "Copiado" : "Copiar"}
+            </button>
+            <button
+              type="button"
+              onClick={handlePrint}
+              disabled={actionsDisabled}
+              className={toolbarButtonClass}
+            >
+              Imprimir
+            </button>
+            <button
+              type="button"
+              onClick={handlePrint}
+              disabled={actionsDisabled}
+              aria-label="Guardar documento de inversión en PDF"
+              className={toolbarButtonClass}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Guardar en PDF
+            </button>
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={actionsDisabled}
+              className={toolbarButtonClass}
+            >
+              Descargar .md
+            </button>
+            <button
+              type="button"
+              onClick={onRetry}
+              disabled={loading}
+              className={`${toolbarButtonClass} border-primary-200 text-primary-700 hover:bg-primary-50 sm:ml-auto`}
+            >
+              {loading ? "Generando..." : "Regenerar"}
+            </button>
           </div>
-          <button
-            ref={closeButtonRef}
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar documento de inversión"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-900"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </header>
 
-        <div className="flex flex-wrap items-center gap-2 border-b border-neutral-200 bg-neutral-50 px-5 py-3 sm:px-6">
-          <button
-            type="button"
-            onClick={() => void handleCopy()}
-            disabled={toolbarDisabled}
-            className={toolbarButtonClass}
-          >
-            {copied ? "Copiado" : "Copiar"}
-          </button>
-          <button
-            type="button"
-            onClick={handlePrint}
-            disabled={toolbarDisabled}
-            className={toolbarButtonClass}
-          >
-            Imprimir
-          </button>
-          <button
-            type="button"
-            onClick={() => void handleSavePdf()}
-            disabled={toolbarDisabled}
-            aria-label="Guardar documento de inversión en PDF"
-            aria-busy={pdfLoading}
-            className={toolbarButtonClass}
-          >
-            {pdfLoading ? (
-              <>
-                <span
-                  className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-700"
-                  aria-hidden="true"
-                />
-                Generando PDF...
-              </>
-            ) : (
-              <>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                Guardar en PDF
-              </>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={handleDownload}
-            disabled={toolbarDisabled}
-            className={toolbarButtonClass}
-          >
-            Descargar .md
-          </button>
-          <button
-            type="button"
-            onClick={onRetry}
-            disabled={loading || pdfLoading}
-            className={`${toolbarButtonClass} border-primary-200 text-primary-700 hover:bg-primary-50 sm:ml-auto`}
-          >
-            {loading ? "Generando..." : "Regenerar"}
-          </button>
-          {pdfError ? (
-            <p role="alert" className="w-full text-xs font-medium text-red-600">
-              {pdfError}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-8 sm:py-8">
-          {loading ? <MemoSkeleton /> : null}
-          {!loading && error ? <MemoError message={error} onRetry={onRetry} /> : null}
-          {!loading && !error ? renderedMemo : null}
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-8 sm:py-8">
+            {loading ? <MemoSkeleton /> : null}
+            {!loading && error ? <MemoError message={error} onRetry={onRetry} /> : null}
+            {!loading && !error ? renderedMemo : null}
+          </div>
         </div>
       </div>
-    </div>
+      {printView}
+    </>
   );
 }
