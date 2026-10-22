@@ -140,6 +140,52 @@ const PRINT_STYLES = `
   hr { margin: 20px 0; border: 0; border-top: 1px solid #d4d4d4; }
 `;
 
+const PDF_EXPORT_STYLES = `
+  #investment-memo-pdf {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  #investment-memo-pdf *,
+  #investment-memo-pdf *::before,
+  #investment-memo-pdf *::after {
+    color: #000000 !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border-color: #9ca3af !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  #investment-memo-pdf th { background-color: #f3f4f6 !important; }
+  #investment-memo-pdf blockquote,
+  #investment-memo-pdf pre,
+  #investment-memo-pdf code { background-color: #f3f4f6 !important; }
+  #investment-memo-pdf pre code { background-color: transparent !important; }
+  #investment-memo-pdf a { text-decoration: underline !important; }
+  #investment-memo-pdf table { width: 100%; border-collapse: collapse; }
+  #investment-memo-pdf th,
+  #investment-memo-pdf td { border: 1px solid #9ca3af !important; }
+  #investment-memo-pdf h1,
+  #investment-memo-pdf h2,
+  #investment-memo-pdf h3,
+  #investment-memo-pdf h4,
+  #investment-memo-pdf h5,
+  #investment-memo-pdf h6,
+  #investment-memo-pdf table,
+  #investment-memo-pdf blockquote,
+  #investment-memo-pdf pre,
+  #investment-memo-pdf li,
+  #investment-memo-pdf tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  #investment-memo-pdf h1,
+  #investment-memo-pdf h2,
+  #investment-memo-pdf h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+`;
+
 const HTML_ESCAPES: Record<string, string> = {
   "&": "&amp;",
   "<": "&lt;",
@@ -160,6 +206,30 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
+}
+
+function buildPdfNode(source: HTMLElement): HTMLElement {
+  const wrapper = document.createElement("div");
+  wrapper.id = "investment-memo-pdf";
+  wrapper.style.backgroundColor = "#ffffff";
+  wrapper.style.color = "#000000";
+  wrapper.style.width = "100%";
+  wrapper.style.padding = "8px";
+  wrapper.style.boxSizing = "border-box";
+  wrapper.style.fontFamily =
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+
+  const style = document.createElement("style");
+  style.textContent = PDF_EXPORT_STYLES;
+
+  const clone = source.cloneNode(true) as HTMLElement;
+  clone.removeAttribute("id");
+  clone.style.margin = "0";
+  clone.style.maxWidth = "none";
+
+  wrapper.appendChild(style);
+  wrapper.appendChild(clone);
+  return wrapper;
 }
 
 const toolbarButtonClass =
@@ -224,7 +294,10 @@ export default function InvestmentMemoModal({
   onRetry,
 }: Props) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const pdfBusyRef = useRef(false);
   const [copied, setCopied] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   useEffect(() => {
     closeButtonRef.current?.focus();
@@ -286,7 +359,48 @@ export default function InvestmentMemoModal({
     printWindow.setTimeout(() => printWindow.print(), 200);
   }, [projectTitle]);
 
+  const handleSavePdf = useCallback(async () => {
+    const content = document.getElementById("investment-memo-content");
+    const hasMarkdown = Boolean(markdown);
+    if (!content || !hasMarkdown || pdfBusyRef.current) return;
+
+    pdfBusyRef.current = true;
+    setPdfLoading(true);
+    setPdfError(null);
+    try {
+      const { default: html2pdf } = await import("html2pdf.js");
+      const node = buildPdfNode(content);
+      const filename = `investment-memo-${slugify(projectTitle) || "proyecto"}.pdf`;
+
+      await html2pdf()
+        .set({
+          margin: [10, 10, 12, 10],
+          filename,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: "#ffffff",
+            logging: false,
+          },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        })
+        .from(node)
+        .save();
+    } catch (err) {
+      setPdfError(
+        err instanceof Error && err.message
+          ? err.message
+          : "No se pudo generar el PDF. Inténtalo de nuevo."
+      );
+    } finally {
+      pdfBusyRef.current = false;
+      setPdfLoading(false);
+    }
+  }, [markdown, projectTitle]);
+
   const actionsDisabled = loading || !markdown;
+  const toolbarDisabled = actionsDisabled || pdfLoading;
 
   const renderedMemo = useMemo(
     () =>
@@ -356,7 +470,7 @@ export default function InvestmentMemoModal({
           <button
             type="button"
             onClick={() => void handleCopy()}
-            disabled={actionsDisabled}
+            disabled={toolbarDisabled}
             className={toolbarButtonClass}
           >
             {copied ? "Copiado" : "Copiar"}
@@ -364,15 +478,53 @@ export default function InvestmentMemoModal({
           <button
             type="button"
             onClick={handlePrint}
-            disabled={actionsDisabled}
+            disabled={toolbarDisabled}
             className={toolbarButtonClass}
           >
-            Imprimir / PDF
+            Imprimir
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleSavePdf()}
+            disabled={toolbarDisabled}
+            aria-label="Guardar documento de inversión en PDF"
+            aria-busy={pdfLoading}
+            className={toolbarButtonClass}
+          >
+            {pdfLoading ? (
+              <>
+                <span
+                  className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-700"
+                  aria-hidden="true"
+                />
+                Generando PDF...
+              </>
+            ) : (
+              <>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Guardar en PDF
+              </>
+            )}
           </button>
           <button
             type="button"
             onClick={handleDownload}
-            disabled={actionsDisabled}
+            disabled={toolbarDisabled}
             className={toolbarButtonClass}
           >
             Descargar .md
@@ -380,11 +532,16 @@ export default function InvestmentMemoModal({
           <button
             type="button"
             onClick={onRetry}
-            disabled={loading}
+            disabled={loading || pdfLoading}
             className={`${toolbarButtonClass} border-primary-200 text-primary-700 hover:bg-primary-50 sm:ml-auto`}
           >
             {loading ? "Generando..." : "Regenerar"}
           </button>
+          {pdfError ? (
+            <p role="alert" className="w-full text-xs font-medium text-red-600">
+              {pdfError}
+            </p>
+          ) : null}
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-8 sm:py-8">
