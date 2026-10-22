@@ -36,6 +36,23 @@ describe("api", () => {
     expect(String(fetchMock.mock.calls[0][0])).toContain("/ping");
   });
 
+  it("getText: pide markdown con credentials:include y devuelve texto", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("# Memo", {
+        status: 200,
+        headers: { "Content-Type": "text/markdown;charset=UTF-8" },
+      })
+    );
+
+    const result = await api.getText("/projects/p1/investment-memo");
+
+    expect(result).toBe("# Memo");
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain("/projects/p1/investment-memo");
+    expect((init as RequestInit).credentials).toBe("include");
+    expect((init?.headers as Record<string, string>).Accept).toBe("text/markdown");
+  });
+
   it("post/put/delete: usan método y body JSON", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(jsonResponse({ id: 1 }))
@@ -166,7 +183,9 @@ describe("api", () => {
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValue(jsonResponse({ error: "correo no verificado", code: "EMAIL_VERIFICATION_REQUIRED" }, 403));
 
-    const err = await api.post("/auth/login", { email: "a@b.c", password: "x" }).catch((e: Error & { code?: string }) => e);
+    const err = (await api
+      .post("/auth/login", { email: "a@b.c", password: "x" })
+      .catch((e) => e)) as Error & { code?: string };
 
     expect(err.code).toBe("EMAIL_VERIFICATION_REQUIRED");
     expect(mockedForceLogout).not.toHaveBeenCalled();

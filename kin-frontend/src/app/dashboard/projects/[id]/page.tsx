@@ -8,6 +8,7 @@ import { chatService, type ChatMessage, type ChatResponse, type ChatStreamError 
 import type { ExportAction } from "@/services/exportProject";
 import ViabilityScore from "@/components/ViabilityScore";
 import PdfReportButton from "@/components/PdfReportButton";
+import { InvestmentMemoButton } from "@/components/investment/InvestmentMemoButton";
 import ExportProjectButton from "@/components/export/ExportProjectButton";
 import ExportChatActionCard from "@/components/export/ExportChatActionCard";
 import ProgressCircle from "@/components/ProgressCircle";
@@ -297,6 +298,12 @@ const pendingPromptRef = useRef(false);
           )}
 
           <PdfReportButton project={project} messages={messages} />
+
+          <InvestmentMemoButton
+            key={project.id}
+            projectId={project.id}
+            projectTitle={project.title}
+          />
 
           <ExportProjectButton project={project} />
 

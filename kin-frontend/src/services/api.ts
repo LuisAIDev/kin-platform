@@ -25,6 +25,26 @@ function isAuthEndpoint(endpoint: string): boolean {
   return AUTH_ENDPOINTS.some((prefix) => endpoint.startsWith(prefix));
 }
 
+async function throwApiError(res: Response, endpoint: string): Promise<never> {
+  const body = await res.json().catch(() => null);
+  const message = body?.error ?? `Request failed (${res.status})`;
+
+  const error = new Error(message) as Error & { code?: string; status?: number };
+  error.code = body?.code;
+  error.status = res.status;
+
+  if (res.status === 401 && !isAuthEndpoint(endpoint)) {
+    forceLogout();
+    error.message = "Unauthorized";
+  }
+
+  if (res.status === 400 && !isAuthEndpoint(endpoint) && message.toLowerCase().includes("authenticated user")) {
+    forceLogout();
+  }
+
+  throw error;
+}
+
 async function request<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -41,23 +61,7 @@ async function request<T>(
   });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    const message = body?.error ?? `Request failed (${res.status})`;
-
-    const error = new Error(message) as Error & { code?: string; status?: number };
-    error.code = body?.code;
-    error.status = res.status;
-
-    if (res.status === 401 && !isAuthEndpoint(endpoint)) {
-      forceLogout();
-      error.message = "Unauthorized";
-    }
-
-    if (res.status === 400 && !isAuthEndpoint(endpoint) && message.toLowerCase().includes("authenticated user")) {
-      forceLogout();
-    }
-
-    throw error;
+    return throwApiError(res, endpoint);
   }
 
   if (res.status === 204) return undefined as T;
@@ -65,8 +69,31 @@ async function request<T>(
   return res.json();
 }
 
+async function requestText(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<string> {
+  const headers: Record<string, string> = {
+    Accept: "text/markdown",
+    ...(options.headers as Record<string, string>),
+  };
+
+  const res = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers,
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    return throwApiError(res, endpoint);
+  }
+
+  return res.text();
+}
+
 export const api = {
   get: <T>(endpoint: string) => request<T>(endpoint),
+  getText: (endpoint: string, options?: RequestInit) => requestText(endpoint, options),
   post: <T>(endpoint: string, data: unknown) =>
     request<T>(endpoint, { method: "POST", body: JSON.stringify(data) }),
   put: <T>(endpoint: string, data: unknown) =>
