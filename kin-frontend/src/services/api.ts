@@ -51,6 +51,7 @@ async function request<T>(
 ): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    Accept: "application/json",
     ...(options.headers as Record<string, string>),
   };
 

@@ -235,7 +235,7 @@ export default function SubscriptionPage() {
 
             {!status.isActive && (
               <button
-                onClick={() => router.push("/dashboard/pricing")}
+                onClick={() => router.push("/dashboard/plans")}
                 className="rounded-lg border border-neutral-200 bg-white px-5 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition min-h-11"
               >
                 Ver planes disponibles

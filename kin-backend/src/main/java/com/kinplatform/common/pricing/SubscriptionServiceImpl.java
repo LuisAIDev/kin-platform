@@ -3,6 +3,7 @@ package com.kinplatform.common.pricing;
 import com.kinplatform.common.ai.usage.AiBudgetControlService;
 import com.kinplatform.common.pricing.dto.PatientSubscriptionStatusResponse;
 import com.kinplatform.common.pricing.dto.SubscriptionResponse;
+import com.kinplatform.common.user.User;
 import com.kinplatform.common.user.UserRepository;
 import com.kinplatform.kin.health.documents.port.DocumentStorageQuotaPort;
 import com.kinplatform.kin.health.subscription.port.HealthQuotaPort;
@@ -43,16 +44,19 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             throw new IllegalArgumentException("Pricing plan is not active: " + planId);
         }
 
+        var vertical = resolveVertical(user);
+        if (plan.getVertical() != vertical) {
+            throw new IllegalArgumentException("Pricing plan does not belong to user's vertical");
+        }
+
         if (plan.getPrice().compareTo(java.math.BigDecimal.ZERO) > 0) {
             throw new IllegalArgumentException(
                     "Paid plans require payment. Use /stripe/create-checkout-session instead.");
         }
 
-        subscriptionRepository
-                .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
-                .ifPresent(s -> {
-                    throw new IllegalArgumentException("User already has an active subscription");
-                });
+        if (findActiveSubscription(userId, vertical) != null) {
+            throw new IllegalArgumentException("User already has an active subscription");
+        }
 
         var now = OffsetDateTime.now();
         var subscription = UserSubscription.builder()
@@ -91,11 +95,14 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             throw new IllegalArgumentException("Pricing plan is not active: " + planId);
         }
 
-        subscriptionRepository
-                .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
-                .ifPresent(s -> {
-                    throw new IllegalArgumentException("User already has an active subscription");
-                });
+        var vertical = resolveVertical(user);
+        if (plan.getVertical() != vertical) {
+            throw new IllegalArgumentException("Pricing plan does not belong to user's vertical");
+        }
+
+        if (findActiveSubscription(userId, vertical) != null) {
+            throw new IllegalArgumentException("User already has an active subscription");
+        }
 
         var now = OffsetDateTime.now();
         var trialEnd = now.plusDays(14);
@@ -125,15 +132,18 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public SubscriptionResponse cancelSubscription(UUID userId) {
         log.info("Cancelling subscription for user {}", userId);
 
-        var subscription = subscriptionRepository
-                .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
-                .orElseThrow(() -> new IllegalArgumentException("No active subscription found for user: " + userId));
+        var user = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        var subscription = findActiveSubscription(userId, resolveVertical(user));
+        if (subscription == null) {
+            throw new IllegalArgumentException("No active subscription found for user: " + userId);
+        }
 
         subscription.setStatus(SubscriptionStatus.CANCELLED);
         subscription.setEndDate(OffsetDateTime.now());
         var saved = subscriptionRepository.save(subscription);
 
-        var user = saved.getUser();
         user.setCurrentPlan(null);
         userRepository.save(user);
 
@@ -146,9 +156,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public SubscriptionResponse cancelPatientSubscription(UUID userId) {
         log.info("Cancelling patient subscription for user {}", userId);
 
-        var subscription = subscriptionRepository
-                .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
-                .orElseThrow(() -> new IllegalArgumentException("No active subscription found for user: " + userId));
+        var subscription = findActiveSubscription(userId, ProductVertical.SALUD_PERSONAL);
+        if (subscription == null) {
+            throw new IllegalArgumentException("No active subscription found for user: " + userId);
+        }
 
         var plan = subscription.getPlan();
         if (plan.getVertical() != ProductVertical.SALUD_PERSONAL) {
@@ -176,8 +187,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public SubscriptionResponse getCurrentSubscription(UUID userId) {
         log.debug("Fetching current subscription for user {}", userId);
 
+        var user = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         var subscription = subscriptionRepository
-                .findTopByUserIdOrderByCreatedAtDesc(userId)
+                .findTopByUserIdAndPlan_VerticalOrderByCreatedAtDesc(userId, resolveVertical(user))
                 .orElseThrow(() -> new IllegalArgumentException("No subscription found for user: " + userId));
 
         return SubscriptionResponse.fromEntity(subscription);
@@ -245,9 +259,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public PatientSubscriptionStatusResponse getPatientSubscriptionStatus(UUID userId) {
         log.debug("Fetching patient subscription status for user {}", userId);
 
-        var subscription = subscriptionRepository
-                .findByUserIdAndStatusAndEndDateAfter(userId, SubscriptionStatus.ACTIVE, OffsetDateTime.now())
-                .orElse(null);
+        var subscription = findActiveSubscription(userId, ProductVertical.SALUD_PERSONAL);
 
         if (subscription == null) {
             // Usuario sin suscripción activa - devolver estado del plan por defecto (FREE)
@@ -334,5 +346,25 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .periodEnd(periodEnd)
                 .subscriptionEndDate(subscription.getEndDate())
                 .build();
+    }
+
+    private UserSubscription findActiveSubscription(UUID userId, ProductVertical vertical) {
+        return subscriptionRepository
+                .findActiveByUserAndVertical(
+                        userId, SubscriptionStatus.ACTIVE, vertical, OffsetDateTime.now())
+                .stream()
+                .findFirst()
+                .orElse(null);
+    }
+
+    private ProductVertical resolveVertical(User user) {
+        if (user.getPlatform() == null) {
+            return ProductVertical.EMPRESAS;
+        }
+        try {
+            return ProductVertical.valueOf(user.getPlatform());
+        } catch (IllegalArgumentException e) {
+            return ProductVertical.EMPRESAS;
+        }
     }
 }

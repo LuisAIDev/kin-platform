@@ -5,9 +5,12 @@ import com.kinplatform.common.ai.usage.AiUsageSummary;
 import com.kinplatform.common.usage.ProjectQuotaPort;
 import com.kinplatform.common.pricing.PricingPlan;
 import com.kinplatform.common.pricing.PricingPlanRepository;
+import com.kinplatform.common.pricing.ProductVertical;
 import com.kinplatform.common.pricing.SubscriptionStatus;
 import com.kinplatform.common.pricing.UserSubscription;
 import com.kinplatform.common.pricing.UserSubscriptionRepository;
+import com.kinplatform.common.user.User;
+import com.kinplatform.common.user.UserRepository;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,7 @@ public class SubscriptionValidatorService {
 
     private final UserSubscriptionRepository subscriptionRepository;
     private final PricingPlanRepository planRepository;
+    private final UserRepository userRepository;
     private final CacheManager cacheManager;
     private final ProjectQuotaPort projectQuotaPort;
     private final AiBudgetControlService budgetControlService;
@@ -32,11 +36,13 @@ public class SubscriptionValidatorService {
     public SubscriptionValidatorService(
             UserSubscriptionRepository subscriptionRepository,
             PricingPlanRepository planRepository,
+            UserRepository userRepository,
             CacheManager cacheManager,
             ProjectQuotaPort projectQuotaPort,
             AiBudgetControlService budgetControlService) {
         this.subscriptionRepository = subscriptionRepository;
         this.planRepository = planRepository;
+        this.userRepository = userRepository;
         this.cacheManager = cacheManager;
         this.projectQuotaPort = projectQuotaPort;
         this.budgetControlService = budgetControlService;
@@ -97,7 +103,7 @@ public class SubscriptionValidatorService {
     @Cacheable(value = "messageLimit", key = "#userId")
     public boolean canSendMessage(UUID userId) {
         UserSubscription subscription = getActiveSubscription(userId);
-        PricingPlan plan = subscription != null ? subscription.getPlan() : getDefaultPlan();
+        PricingPlan plan = subscription != null ? subscription.getPlan() : getDefaultPlan(userId);
 
         if (plan.getMessagesPerMonth() == null) {
             log.debug("Usuario {} tiene mensajes ilimitados", userId);
@@ -131,7 +137,7 @@ public class SubscriptionValidatorService {
 
     public int getRemainingMessages(UUID userId) {
         UserSubscription subscription = getActiveSubscription(userId);
-        PricingPlan plan = subscription != null ? subscription.getPlan() : getDefaultPlan();
+        PricingPlan plan = subscription != null ? subscription.getPlan() : getDefaultPlan(userId);
 
         if (plan.getMessagesPerMonth() == null) {
             return Integer.MAX_VALUE;
@@ -151,17 +157,15 @@ public class SubscriptionValidatorService {
         if (subscription != null) {
             return subscription.getPlan();
         }
-        return getDefaultPlan();
+        return getDefaultPlan(userId);
     }
 
     public boolean isSubscriptionActive(UUID userId) {
         UserSubscription subscription = getActiveSubscription(userId);
-        if (subscription == null) {
+        if (subscription == null || subscription.getStatus() != SubscriptionStatus.ACTIVE) {
             return false;
         }
-        return subscription.getStatus() == SubscriptionStatus.ACTIVE
-                && subscription.getEndDate() != null
-                && subscription.getEndDate().isAfter(OffsetDateTime.now());
+        return subscription.getEndDate() == null || subscription.getEndDate().isAfter(OffsetDateTime.now());
     }
 
     /**
@@ -173,14 +177,31 @@ public class SubscriptionValidatorService {
      */
     public UserSubscription getActiveSubscription(UUID userId) {
         return subscriptionRepository
-                .findByUserIdAndStatusAndEndDateAfter(userId, SubscriptionStatus.ACTIVE, OffsetDateTime.now())
+                .findActiveByUserAndVertical(
+                        userId, SubscriptionStatus.ACTIVE, resolveVertical(userId), OffsetDateTime.now())
+                .stream()
+                .findFirst()
                 .orElse(null);
     }
 
-    private PricingPlan getDefaultPlan() {
+    private PricingPlan getDefaultPlan(UUID userId) {
+        ProductVertical vertical = resolveVertical(userId);
         return planRepository
-                .findFirstByIsActiveTrueOrderByPriceAsc()
-                .orElseThrow(() -> new RuntimeException("No active pricing plan found"));
+                .findFirstByVerticalAndIsActiveTrueOrderByPriceAsc(vertical)
+                .orElseThrow(() -> new RuntimeException(
+                        "No active pricing plan found for vertical " + vertical));
+    }
+
+    private ProductVertical resolveVertical(UUID userId) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null || user.getPlatform() == null) {
+            return ProductVertical.EMPRESAS;
+        }
+        try {
+            return ProductVertical.valueOf(user.getPlatform());
+        } catch (IllegalArgumentException e) {
+            return ProductVertical.EMPRESAS;
+        }
     }
 
     public void evictProjectLimitCache(UUID userId) {

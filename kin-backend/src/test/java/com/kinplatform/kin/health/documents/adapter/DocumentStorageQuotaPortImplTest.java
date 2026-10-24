@@ -60,14 +60,6 @@ class DocumentStorageQuotaPortImplTest {
     @BeforeEach
     void setUp() {
         service = new DocumentStorageQuotaPortImpl(subscriptionRepository, planRepository, userRepository, documentRepository);
-
-        var user = User.builder()
-                .id(USER_ID)
-                .email("u@t.com")
-                .fullName("U")
-                .role(UserRole.PATIENT)
-                .build();
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
     }
 
     @Test
@@ -107,7 +99,8 @@ class DocumentStorageQuotaPortImplTest {
     @DisplayName("Paciente sin suscripción → usa plan Free por defecto")
     void noSubscription_usesFreePlan() {
         var freePlan = createPlan("FREE", ProductVertical.SALUD_PERSONAL, 50, 0);
-        when(planRepository.findByCodeAndVertical("FREE", ProductVertical.SALUD_PERSONAL))
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(createUser()));
+        when(planRepository.findFirstByVerticalAndIsActiveTrueOrderByPriceAsc(ProductVertical.SALUD_PERSONAL))
                 .thenReturn(Optional.of(freePlan));
         when(subscriptionRepository.findByUserIdAndStatusAndEndDateAfter(any(), any(), any()))
                 .thenReturn(Optional.empty());

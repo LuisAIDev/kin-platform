@@ -89,7 +89,9 @@ public class StripeService implements PaymentGateway {
                             .build())
                     .putMetadata("plan_id", planId.toString())
                     .putMetadata("user_id", userId.toString())
-                    .putMetadata("vertical", "SALUD_PERSONAL");
+                    .putMetadata(
+                            "vertical",
+                            plan.getVertical() != null ? plan.getVertical().name() : "EMPRESAS");
 
             // Añadir trial_period_days si el plan tiene trial_days > 0
             if (plan.getTrialDays() != null && plan.getTrialDays() > 0) {
@@ -221,10 +223,12 @@ public class StripeService implements PaymentGateway {
             subscription.setStatus(SubscriptionStatus.CANCELLED);
             subscriptionRepository.save(subscription);
 
-            // Establecer el plan actual del usuario como el plan gratuito
+            var vertical = subscription.getPlan().getVertical();
             var freePlan = planRepository
-                    .findFirstByIsActiveTrueOrderByPriceAsc()
-                    .orElseThrow(() -> new RuntimeException("No free plan found"));
+                    .findByCodeAndVertical("FREE", vertical)
+                    .filter(plan -> Boolean.TRUE.equals(plan.getIsActive()))
+                    .or(() -> planRepository.findFirstByVerticalAndIsActiveTrueOrderByPriceAsc(vertical))
+                    .orElseThrow(() -> new RuntimeException("No active free plan found for vertical " + vertical));
             user.setCurrentPlan(freePlan);
             user.setSubscription(null);
             userRepository.save(user);

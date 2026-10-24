@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -69,6 +70,11 @@ class SubscriptionServiceImplTest {
     }
 
     private PricingPlan plan(BigDecimal price, Integer messagesPerMonth, boolean active) {
+        return plan(price, messagesPerMonth, active, ProductVertical.EMPRESAS);
+    }
+
+    private PricingPlan plan(
+            BigDecimal price, Integer messagesPerMonth, boolean active, ProductVertical vertical) {
         return PricingPlan.builder()
                 .id(PLAN_ID)
                 .name("Plan")
@@ -76,6 +82,7 @@ class SubscriptionServiceImplTest {
                 .features("[]")
                 .messagesPerMonth(messagesPerMonth)
                 .isActive(active)
+                .vertical(vertical)
                 .supportLevel(SupportLevel.BASIC)
                 .viabilityScoringDetail(ViabilityScoringDetail.BASIC)
                 .build();
@@ -95,8 +102,9 @@ class SubscriptionServiceImplTest {
     void subscribe_planGratis_deberiaActivar() {
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
         when(planRepository.findById(PLAN_ID)).thenReturn(Optional.of(plan(BigDecimal.ZERO, 10, true)));
-        when(subscriptionRepository.findByUserIdAndStatus(USER_ID, SubscriptionStatus.ACTIVE))
-                .thenReturn(Optional.empty());
+        when(subscriptionRepository.findActiveByUserAndVertical(
+                        eq(USER_ID), eq(SubscriptionStatus.ACTIVE), eq(ProductVertical.EMPRESAS), any()))
+                .thenReturn(List.of());
         when(subscriptionRepository.save(any(UserSubscription.class))).thenAnswer(i -> i.getArgument(0));
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -144,18 +152,30 @@ class SubscriptionServiceImplTest {
     void subscribe_conSuscripcionActiva_deberiaRechazar() {
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
         when(planRepository.findById(PLAN_ID)).thenReturn(Optional.of(plan(BigDecimal.ZERO, 10, true)));
-        when(subscriptionRepository.findByUserIdAndStatus(USER_ID, SubscriptionStatus.ACTIVE))
-                .thenReturn(Optional.of(activeSubscription()));
+        when(subscriptionRepository.findActiveByUserAndVertical(
+                        eq(USER_ID), eq(SubscriptionStatus.ACTIVE), eq(ProductVertical.EMPRESAS), any()))
+                .thenReturn(List.of(activeSubscription()));
 
         assertThrows(IllegalArgumentException.class, () -> service.subscribe(USER_ID, PLAN_ID));
+    }
+
+    @Test
+    void subscribe_planDeOtraVertical_deberiaRechazar() {
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(planRepository.findById(PLAN_ID))
+                .thenReturn(Optional.of(plan(BigDecimal.ZERO, 10, true, ProductVertical.SALUD_PERSONAL)));
+
+        assertThrows(IllegalArgumentException.class, () -> service.subscribe(USER_ID, PLAN_ID));
+        verify(subscriptionRepository, never()).save(any(UserSubscription.class));
     }
 
     @Test
     void startTrial_deberiaCrearTrial() {
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
         when(planRepository.findById(PLAN_ID)).thenReturn(Optional.of(plan(BigDecimal.ZERO, 10, true)));
-        when(subscriptionRepository.findByUserIdAndStatus(USER_ID, SubscriptionStatus.ACTIVE))
-                .thenReturn(Optional.empty());
+        when(subscriptionRepository.findActiveByUserAndVertical(
+                        eq(USER_ID), eq(SubscriptionStatus.ACTIVE), eq(ProductVertical.EMPRESAS), any()))
+                .thenReturn(List.of());
         when(subscriptionRepository.save(any(UserSubscription.class))).thenAnswer(i -> i.getArgument(0));
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -185,16 +205,19 @@ class SubscriptionServiceImplTest {
     void startTrial_conSuscripcionActiva_deberiaRechazar() {
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
         when(planRepository.findById(PLAN_ID)).thenReturn(Optional.of(plan(BigDecimal.ZERO, 10, true)));
-        when(subscriptionRepository.findByUserIdAndStatus(USER_ID, SubscriptionStatus.ACTIVE))
-                .thenReturn(Optional.of(activeSubscription()));
+        when(subscriptionRepository.findActiveByUserAndVertical(
+                        eq(USER_ID), eq(SubscriptionStatus.ACTIVE), eq(ProductVertical.EMPRESAS), any()))
+                .thenReturn(List.of(activeSubscription()));
 
         assertThrows(IllegalArgumentException.class, () -> service.startTrial(USER_ID, PLAN_ID));
     }
 
     @Test
     void cancelSubscription_deberiaCancelar() {
-        when(subscriptionRepository.findByUserIdAndStatus(USER_ID, SubscriptionStatus.ACTIVE))
-                .thenReturn(Optional.of(activeSubscription()));
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(subscriptionRepository.findActiveByUserAndVertical(
+                        eq(USER_ID), eq(SubscriptionStatus.ACTIVE), eq(ProductVertical.EMPRESAS), any()))
+                .thenReturn(List.of(activeSubscription()));
         when(subscriptionRepository.save(any(UserSubscription.class))).thenAnswer(i -> i.getArgument(0));
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -206,15 +229,30 @@ class SubscriptionServiceImplTest {
 
     @Test
     void cancelSubscription_sinActiva_deberiaFallar() {
-        when(subscriptionRepository.findByUserIdAndStatus(USER_ID, SubscriptionStatus.ACTIVE))
-                .thenReturn(Optional.empty());
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(subscriptionRepository.findActiveByUserAndVertical(
+                        eq(USER_ID), eq(SubscriptionStatus.ACTIVE), eq(ProductVertical.EMPRESAS), any()))
+                .thenReturn(List.of());
 
         assertThrows(IllegalArgumentException.class, () -> service.cancelSubscription(USER_ID));
     }
 
     @Test
+    void cancelSubscription_noCancelaSuscripcionDeOtraVertical() {
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(subscriptionRepository.findActiveByUserAndVertical(
+                        eq(USER_ID), eq(SubscriptionStatus.ACTIVE), eq(ProductVertical.EMPRESAS), any()))
+                .thenReturn(List.of());
+
+        assertThrows(IllegalArgumentException.class, () -> service.cancelSubscription(USER_ID));
+        verify(subscriptionRepository, never()).save(any(UserSubscription.class));
+    }
+
+    @Test
     void getCurrentSubscription_deberiaDevolverLaSuscripcion() {
-        when(subscriptionRepository.findTopByUserIdOrderByCreatedAtDesc(USER_ID))
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(subscriptionRepository.findTopByUserIdAndPlan_VerticalOrderByCreatedAtDesc(
+                        USER_ID, ProductVertical.EMPRESAS))
                 .thenReturn(Optional.of(activeSubscription()));
 
         SubscriptionResponse response = service.getCurrentSubscription(USER_ID);
@@ -224,7 +262,9 @@ class SubscriptionServiceImplTest {
 
     @Test
     void getCurrentSubscription_sinSuscripcion_deberiaFallar() {
-        when(subscriptionRepository.findTopByUserIdOrderByCreatedAtDesc(USER_ID))
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
+        when(subscriptionRepository.findTopByUserIdAndPlan_VerticalOrderByCreatedAtDesc(
+                        USER_ID, ProductVertical.EMPRESAS))
                 .thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () -> service.getCurrentSubscription(USER_ID));

@@ -2,6 +2,7 @@ package com.kinplatform.common.pricing.stripe;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -16,7 +17,10 @@ import static org.mockito.Mockito.when;
 import com.kinplatform.kin.medical.payment.SubscriptionActivationService;
 import com.kinplatform.common.pricing.PricingPlan;
 import com.kinplatform.common.pricing.PricingPlanRepository;
+import com.kinplatform.common.pricing.ProductVertical;
+import com.kinplatform.common.pricing.SubscriptionStatus;
 import com.kinplatform.common.pricing.SupportLevel;
+import com.kinplatform.common.pricing.UserSubscription;
 import com.kinplatform.common.pricing.UserSubscriptionRepository;
 import com.kinplatform.common.pricing.ViabilityScoringDetail;
 import com.kinplatform.common.user.User;
@@ -36,6 +40,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -47,6 +52,7 @@ class StripeServiceTest {
 
     private static final UUID USER_ID = UUID.randomUUID();
     private static final UUID PLAN_ID = UUID.randomUUID();
+    private static final UUID SUBSCRIPTION_ID = UUID.randomUUID();
 
     @Mock
     private PricingPlanRepository planRepository;
@@ -87,6 +93,8 @@ class StripeServiceTest {
     private PricingPlan plan(boolean active) {
         return PricingPlan.builder()
                 .id(PLAN_ID)
+                .code("PREMIUM")
+                .vertical(ProductVertical.EMPRESAS)
                 .name("Premium Pro")
                 .description("Desc")
                 .price(new BigDecimal("29.00"))
@@ -114,6 +122,26 @@ class StripeServiceTest {
             assertEquals("cs_test_123", response.getSessionId());
             assertEquals("https://checkout.stripe.com/c/pay/cs_test_123", response.getUrl());
         }
+    }
+
+    @Test
+    void createCheckoutSession_metadataVertical_deberiaUsarLaVerticalDelPlan() throws StripeException {
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user()));
+        var plan = plan(true);
+        plan.setVertical(ProductVertical.SALUD_PERSONAL);
+        when(planRepository.findById(PLAN_ID)).thenReturn(Optional.of(plan));
+        var session = mock(Session.class);
+        when(session.getId()).thenReturn("cs_vertical");
+        when(session.getUrl()).thenReturn("https://checkout.stripe.com/c/pay/cs_vertical");
+        var captor = ArgumentCaptor.forClass(SessionCreateParams.class);
+
+        try (MockedStatic<Session> mocked = mockStatic(Session.class)) {
+            mocked.when(() -> Session.create(captor.capture())).thenReturn(session);
+
+            stripeService.createCheckoutSession(USER_ID, PLAN_ID, "https://app/success", "https://app/cancel");
+        }
+
+        assertEquals("SALUD_PERSONAL", captor.getValue().getMetadata().get("vertical"));
     }
 
     @Test
@@ -218,6 +246,32 @@ class StripeServiceTest {
 
             assertThrows(RuntimeException.class, () -> stripeService.handleCheckoutCompleted("cs_dup"));
         }
+    }
+
+    @Test
+    void handleSubscriptionDeleted_deberiaVolverAlFreeDeLaMismaVertical() {
+        var user = user();
+        var paidPlan = plan(true);
+        paidPlan.setVertical(ProductVertical.SALUD_PERSONAL);
+        var subscription = UserSubscription.builder()
+                .id(SUBSCRIPTION_ID)
+                .user(user)
+                .plan(paidPlan)
+                .status(SubscriptionStatus.ACTIVE)
+                .build();
+        var freePlan = plan(true);
+        freePlan.setCode("FREE");
+        freePlan.setPrice(BigDecimal.ZERO);
+        freePlan.setVertical(ProductVertical.SALUD_PERSONAL);
+        when(subscriptionRepository.findById(SUBSCRIPTION_ID)).thenReturn(Optional.of(subscription));
+        when(planRepository.findByCodeAndVertical("FREE", ProductVertical.SALUD_PERSONAL))
+                .thenReturn(Optional.of(freePlan));
+
+        stripeService.handleSubscriptionDeleted(SUBSCRIPTION_ID);
+
+        assertEquals(freePlan, user.getCurrentPlan());
+        assertNull(user.getSubscription());
+        verify(planRepository, never()).findFirstByIsActiveTrueOrderByPriceAsc();
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.kinplatform.common.pricing;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,5 +32,17 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
             @Param("userId") UUID userId,
             @Param("vertical") ProductVertical vertical,
             @Param("status") SubscriptionStatus status);
+
+    @Query("SELECT s FROM UserSubscription s JOIN s.plan p "
+            + "WHERE s.user.id = :userId AND s.status = :status AND p.vertical = :vertical "
+            + "AND (s.endDate IS NULL OR s.endDate > :now) ORDER BY s.createdAt DESC")
+    List<UserSubscription> findActiveByUserAndVertical(
+            @Param("userId") UUID userId,
+            @Param("status") SubscriptionStatus status,
+            @Param("vertical") ProductVertical vertical,
+            @Param("now") OffsetDateTime now);
+
+    Optional<UserSubscription> findTopByUserIdAndPlan_VerticalOrderByCreatedAtDesc(
+            UUID userId, ProductVertical vertical);
 }
 

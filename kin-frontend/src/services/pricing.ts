@@ -15,6 +15,8 @@ export interface PricingPlan {
   supportLevel: "BASIC" | "PREMIUM" | "SUPPORT_24_7";
   viabilityScoringDetail: "BASIC" | "DETAILED";
   isActive: boolean;
+  vertical?: "EMPRESAS" | "SALUD_PERSONAL" | "SALUD_PROFESIONAL";
+  trialDays?: number | null;
 }
 
 export interface UpdatePricingPlanRequest {

@@ -14,13 +14,14 @@ import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/subscriptions")
+@RequestMapping(value = "/subscriptions", produces = MediaType.APPLICATION_JSON_VALUE)
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
