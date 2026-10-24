@@ -74,4 +74,11 @@ export const subscriptionApi = {
       successUrl,
       cancelUrl,
     }),
+
+  createWompiCheckoutSession: (planId: string, successUrl?: string, cancelUrl?: string) =>
+    api.post<CheckoutResponse>("/wompi/create-checkout-session", {
+      planId,
+      successUrl,
+      cancelUrl,
+    }),
 };

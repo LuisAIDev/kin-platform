@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { subscriptionApi, type SubscriptionStatus } from "@/services/subscriptionApi";
 import type { PricingPlan } from "@/services/pricing";
 
 type Banner = { type: "success" | "cancelled" | "error"; message: string } | null;
+type PaymentGateway = "WOMPI" | "STRIPE";
 
 const SUPPORT_LABEL: Record<PricingPlan["supportLevel"], string> = {
   BASIC: "Soporte estándar",
@@ -63,10 +64,13 @@ function planButtonLabel(
   isCurrent: boolean,
   isActiveSubscription: boolean,
   isLocked: boolean,
+  showCop: boolean,
+  copAvailable: boolean,
 ): string {
   if (isCurrent && (isActiveSubscription || plan.price === 0)) return "Plan actual";
   if (isLocked) return "Plan activo en curso";
   if (plan.price === 0) return "Comenzar gratis";
+  if (showCop && !copAvailable) return "No disponible en COP";
   return `Elegir ${plan.name}`;
 }
 
@@ -78,6 +82,19 @@ export default function PlansPage() {
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [banner, setBanner] = useState<Banner>(null);
+  const [gateway, setGateway] = useState<PaymentGateway>("WOMPI");
+  const gatewaySelectedManually = useRef(false);
+
+  // Igual que en KIN Medical: si el navegador está en español se propone
+  // Wompi (COP); en otro idioma, Stripe (USD). La elección manual manda.
+  useEffect(() => {
+    if (gatewaySelectedManually.current) return;
+    const lang =
+      typeof navigator !== "undefined" && navigator.language
+        ? navigator.language.toLowerCase()
+        : "es-co";
+    setGateway(lang.startsWith("es") ? "WOMPI" : "STRIPE");
+  }, []);
 
   const refreshStatus = useCallback(async () => {
     const nextStatus = await subscriptionApi.getStatus();
@@ -152,12 +169,22 @@ export default function PlansPage() {
         return;
       }
 
+      const copAvailable = plan.priceCop != null && plan.priceCop > 0;
+      if (gateway === "WOMPI" && !copAvailable) {
+        setBanner({
+          type: "error",
+          message: "Este plan no tiene precio en COP configurado. Elige pago internacional.",
+        });
+        return;
+      }
+
       const origin = window.location.origin;
-      const checkout = await subscriptionApi.createCheckoutSession(
-        plan.id,
-        `${origin}/dashboard/plans?success=true`,
-        `${origin}/dashboard/plans?cancelled=true`,
-      );
+      const successUrl = `${origin}/dashboard/plans?success=true`;
+      const cancelUrl = `${origin}/dashboard/plans?cancelled=true`;
+      const checkout =
+        gateway === "WOMPI"
+          ? await subscriptionApi.createWompiCheckoutSession(plan.id, successUrl, cancelUrl)
+          : await subscriptionApi.createCheckoutSession(plan.id, successUrl, cancelUrl);
       window.location.assign(checkout.url);
     } catch (err) {
       setBanner({
@@ -221,13 +248,13 @@ export default function PlansPage() {
             Elige el plan que impulse tus proyectos
           </h1>
           <p className="mt-4 text-base leading-7 text-neutral-600">
-            Planes mensuales en USD con pago seguro mediante Stripe. Cambia de plan cuando quieras,
-            sin permanencia.
+            Planes mensuales en COP con Wompi o en USD con Stripe. Elige cómo prefieres pagar:
+            el plan y sus beneficios son los mismos. Cambia de plan cuando quieras, sin permanencia.
           </p>
           <div className="mt-5 flex flex-wrap gap-2 text-xs font-medium text-neutral-600">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5">
               <ShieldIcon className="h-4 w-4 text-primary-600" />
-              Pago seguro con Stripe
+              Pago seguro con Wompi o Stripe
             </span>
             <span className="rounded-full border border-neutral-200 bg-white px-3 py-1.5">
               Facturación mensual
@@ -253,6 +280,51 @@ export default function PlansPage() {
             {banner.message}
           </div>
         )}
+
+        <div className="mt-8 rounded-lg border border-blue-200 bg-blue-50 p-3">
+          <p className="text-sm text-blue-900">
+            <strong>Elige cómo prefieres pagar.</strong> El plan y sus beneficios son los mismos en
+            ambas opciones. Solo cambia la moneda.
+          </p>
+        </div>
+
+        <div className="mt-6 mb-6">
+          <label className="mb-2 block text-sm font-medium text-neutral-700">Método de pago</label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              aria-pressed={gateway === "WOMPI"}
+              onClick={() => {
+                gatewaySelectedManually.current = true;
+                setGateway("WOMPI");
+              }}
+              className={`rounded-lg border-2 p-3 transition ${
+                gateway === "WOMPI"
+                  ? "border-primary-500 bg-primary-50"
+                  : "border-neutral-200 hover:border-neutral-300"
+              }`}
+            >
+              <p className="text-sm font-semibold">Colombia</p>
+              <p className="text-xs text-neutral-500">PSE, Nequi, Tarjetas (COP)</p>
+            </button>
+            <button
+              type="button"
+              aria-pressed={gateway === "STRIPE"}
+              onClick={() => {
+                gatewaySelectedManually.current = true;
+                setGateway("STRIPE");
+              }}
+              className={`rounded-lg border-2 p-3 transition ${
+                gateway === "STRIPE"
+                  ? "border-primary-500 bg-primary-50"
+                  : "border-neutral-200 hover:border-neutral-300"
+              }`}
+            >
+              <p className="text-sm font-semibold">Internacional</p>
+              <p className="text-xs text-neutral-500">Tarjetas (USD)</p>
+            </button>
+          </div>
+        </div>
 
         {status && (
           <section className="mt-8 overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm">
@@ -343,10 +415,15 @@ export default function PlansPage() {
             const isLocked = hasActivePaidPlan && !isCurrent;
             const badge = planBadge(plan);
             const isBusy = subscribing === plan.id;
+            const showCop = gateway === "WOMPI";
+            const copAvailable = plan.priceCop != null && plan.priceCop > 0;
+            const displayPrice =
+              plan.price === 0 ? 0 : showCop ? (copAvailable ? plan.priceCop! : null) : plan.price;
             const disabled =
               isBusy ||
               (isCurrent && (Boolean(status?.isActive) || plan.price === 0)) ||
-              isLocked;
+              isLocked ||
+              (plan.price > 0 && showCop && !copAvailable);
 
             return (
               <article
@@ -386,19 +463,33 @@ export default function PlansPage() {
 
                 <div className="mt-6 flex items-end gap-1.5">
                   <span className="text-4xl font-bold tracking-tight text-neutral-950">
-                    ${plan.price}
+                    {displayPrice === null
+                      ? "—"
+                      : `$${showCop ? formatNumber(displayPrice) : displayPrice}`}
                   </span>
                   <span className="pb-1 text-sm text-neutral-500">
-                    {plan.price === 0 ? "para siempre" : "/mes"}
+                    {plan.price === 0 ? "para siempre" : `${showCop ? "COP" : "USD"}/mes`}
                   </span>
                 </div>
+
+                {plan.price > 0 && (
+                  <p className="mt-1 text-xs text-neutral-400">
+                    {showCop
+                      ? `También en USD: $${plan.price}/mes`
+                      : copAvailable
+                        ? `También en COP: $${formatNumber(plan.priceCop!)}/mes`
+                        : "Pago internacional en USD"}
+                  </p>
+                )}
 
                 {plan.trialDays ? (
                   <p className="mt-2 text-xs font-medium text-primary-700">
                     Incluye {plan.trialDays} días de prueba
                   </p>
                 ) : (
-                  <p className="mt-2 text-xs text-neutral-400">Facturación mensual en USD</p>
+                  <p className="mt-2 text-xs text-neutral-400">
+                    Facturación mensual en {showCop ? "COP" : "USD"}
+                  </p>
                 )}
 
                 <ul className="mt-6 space-y-3" role="list">
@@ -446,7 +537,14 @@ export default function PlansPage() {
                   >
                     {isBusy
                       ? "Procesando..."
-                      : planButtonLabel(plan, isCurrent, Boolean(status?.isActive), isLocked)}
+                      : planButtonLabel(
+                          plan,
+                          isCurrent,
+                          Boolean(status?.isActive),
+                          isLocked,
+                          showCop,
+                          copAvailable,
+                        )}
                   </button>
                   <p className="mt-3 text-center text-xs text-neutral-400">
                     {SUPPORT_LABEL[plan.supportLevel]}
@@ -458,8 +556,8 @@ export default function PlansPage() {
         </section>
 
         <p className="mt-8 text-center text-xs leading-5 text-neutral-400">
-          Los pagos se procesan de forma segura con Stripe. Los precios están expresados en dólares
-          estadounidenses (USD).
+          Los pagos se procesan de forma segura con Wompi (PSE, Nequi y tarjetas en Colombia, COP)
+          o con Stripe (tarjetas internacionales, USD). El plan y sus beneficios son los mismos.
         </p>
       </div>
     </main>

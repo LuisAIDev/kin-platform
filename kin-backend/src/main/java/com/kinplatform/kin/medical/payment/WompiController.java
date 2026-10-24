@@ -9,6 +9,8 @@ import com.kinplatform.common.user.UserRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,16 +23,25 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Checkout con Wompi (PSE, Nequi, tarjetas, Botón Bancolombia) para las
- * verticales de salud. Independiente de {@code StripeController}: NO comparte
- * el prefijo {@code /stripe}, de modo que Stripe sigue intacto para pagos
- * internacionales.
+ * Checkout con Wompi (PSE, Nequi, tarjetas, Botón Bancolombia) para KIN
+ * Platform (EMPRESAS) y las verticales de salud. Independiente de
+ * {@code StripeController}: NO comparte el prefijo {@code /stripe}, de modo que
+ * Stripe sigue intacto para pagos internacionales.
  */
 @Slf4j
 @RestController
 @RequestMapping("/wompi")
 @RequiredArgsConstructor
 public class WompiController {
+
+    /**
+     * Verticales que pueden pagar con Wompi. Incluye EMPRESAS (KIN Platform) y
+     * las verticales de salud; Stripe sigue siendo la pasarela internacional.
+     */
+    private static final Set<ProductVertical> WOMPI_VERTICALS = EnumSet.of(
+            ProductVertical.EMPRESAS,
+            ProductVertical.SALUD_PROFESIONAL,
+            ProductVertical.SALUD_PERSONAL);
 
     private final WompiService wompiService;
     private final PricingPlanRepository planRepository;
@@ -52,8 +63,8 @@ public class WompiController {
         }
 
         ProductVertical vertical = plan.getVertical();
-        if (vertical != ProductVertical.SALUD_PROFESIONAL && vertical != ProductVertical.SALUD_PERSONAL) {
-            throw new IllegalArgumentException("Plan no válido para médicos/pacientes");
+        if (!WOMPI_VERTICALS.contains(vertical)) {
+            throw new IllegalArgumentException("Plan no válido para Wompi");
         }
 
         BigDecimal priceCop = plan.getPriceCop();

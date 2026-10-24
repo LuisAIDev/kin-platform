@@ -23,13 +23,18 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>Dos semánticas, que reflejan el comportamiento histórico de Stripe:</p>
  * <ul>
  *   <li>{@link #activateNew(UUID, UUID)}: alta de suscripción tras un primer
- *       pago. Falla si el usuario ya tiene una suscripción {@code ACTIVE}
- *       (evita doble alta).</li>
+ *       pago. Falla si el usuario ya tiene una suscripción {@code ACTIVE} en la
+ *       misma vertical (evita doble alta).</li>
  *   <li>{@link #activateOrRenew(UUID, UUID)}: renueva una suscripción
- *       {@code ACTIVE} vigente (extiende un mes y resetea consumo) o la crea si
- *       no existe. Es la semántica usada para pagos recurrentes y para Wompi,
- *       cuyo pago es puntual y puede repetirse mes a mes.</li>
+ *       {@code ACTIVE} vigente de la misma vertical (extiende un mes y resetea
+ *       consumo) o la crea si no existe. Es la semántica usada para pagos
+ *       recurrentes y para Wompi, cuyo pago es puntual y puede repetirse mes a
+ *       mes.</li>
  * </ul>
+ *
+ * <p>Todas las búsquedas se filtran por la vertical del plan pagado: un pago de
+ * EMPRESAS nunca renueva ni bloquea una suscripción de salud, y viceversa. Así
+ * un usuario puede mantener una suscripción activa por vertical.</p>
  *
  * <p>El estado {@code TRIAL} que asigna el registro de médicos no cuenta como
  * {@code ACTIVE}: un médico en trial puede contratar un plan de pago sin
@@ -45,7 +50,8 @@ public class SubscriptionActivationService {
     private final UserSubscriptionRepository subscriptionRepository;
 
     /**
-     * Da de alta una suscripción nueva. Falla si ya existe una {@code ACTIVE}.
+     * Da de alta una suscripción nueva. Falla si ya existe una {@code ACTIVE}
+     * en la misma vertical.
      */
     @Transactional
     public void activateNew(UUID userId, UUID planId) {
@@ -53,7 +59,7 @@ public class SubscriptionActivationService {
         var plan = requirePlan(planId);
 
         subscriptionRepository
-                .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+                .findByUserAndPlanVerticalAndStatus(userId, plan.getVertical(), SubscriptionStatus.ACTIVE)
                 .ifPresent(s -> {
                     throw new IllegalArgumentException("User already has an active subscription");
                 });
@@ -67,8 +73,8 @@ public class SubscriptionActivationService {
     }
 
     /**
-     * Renueva la suscripción {@code ACTIVE} vigente o crea una nueva si no
-     * existe. Idéntico a la semántica de renovación de Stripe.
+     * Renueva la suscripción {@code ACTIVE} vigente de la misma vertical o crea
+     * una nueva si no existe. Idéntico a la semántica de renovación de Stripe.
      */
     @Transactional
     public void activateOrRenew(UUID userId, UUID planId) {
@@ -77,7 +83,9 @@ public class SubscriptionActivationService {
         var now = OffsetDateTime.now();
 
         var existing = subscriptionRepository
-                .findByUserIdAndStatusAndEndDateAfter(userId, SubscriptionStatus.ACTIVE, now)
+                .findActiveByUserAndVertical(userId, SubscriptionStatus.ACTIVE, plan.getVertical(), now)
+                .stream()
+                .findFirst()
                 .orElse(null);
 
         if (existing != null) {

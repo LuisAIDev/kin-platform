@@ -16,8 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
  * FREE/STANDARD/PREMIUM.
  *
  * <p>Opera por {@code code} + {@code vertical = EMPRESAS} (no solo por
- * {@code code}): actualiza los planes canónicos si existen (preservando el id
- * y las FKs de suscripciones) y crea los que falten. Desde V37 el {@code code}
+ * {@code code}): actualiza los metadatos de los planes canónicos si existen
+ * (preservando el id, las FKs de suscripciones y los precios gestionados por
+ * Flyway) y crea los que falten. Desde V37 el {@code code}
  * ya no es único globalmente (los planes de KIN Salud comparten códigos como
  * {@code FREE}), por lo que la búsqueda debe filtrar por vertical. Los
  * presupuestos de IA provienen de configuración (env {@code KIN_*_AI_BUDGET_USD})
@@ -29,6 +30,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class DataInitializer implements CommandLineRunner {
 
     private static final ProductVertical VERTICAL = ProductVertical.EMPRESAS;
+
+    /**
+     * Precios aprobados para EMPRESAS. Solo se usan al CREAR un plan faltante
+     * (instalación nueva). Si el plan ya existe, sus precios son propiedad de
+     * Flyway (V85) y este inicializador no los toca.
+     */
+    private static final BigDecimal FREE_PRICE = new BigDecimal("0.00");
+    private static final BigDecimal FREE_PRICE_COP = new BigDecimal("0.00");
+    private static final BigDecimal STANDARD_PRICE = new BigDecimal("15.00");
+    private static final BigDecimal STANDARD_PRICE_COP = new BigDecimal("60000.00");
+    private static final BigDecimal PREMIUM_PRICE = new BigDecimal("22.00");
+    private static final BigDecimal PREMIUM_PRICE_COP = new BigDecimal("88000.00");
 
     private final PricingPlanRepository repository;
     private final ObjectMapper objectMapper;
@@ -49,7 +62,8 @@ public class DataInitializer implements CommandLineRunner {
                 "FREE",
                 "GRATIS",
                 "Plan gratuito para empezar a evaluar tus ideas de negocio",
-                BigDecimal.ZERO,
+                FREE_PRICE,
+                FREE_PRICE_COP,
                 List.of(
                         "3 proyectos completados por período",
                         "Asistente de IA incluido",
@@ -67,7 +81,8 @@ public class DataInitializer implements CommandLineRunner {
                 "STANDARD",
                 "STANDARD",
                 "Plan ideal para emprendedores en crecimiento",
-                new BigDecimal("25.00"),
+                STANDARD_PRICE,
+                STANDARD_PRICE_COP,
                 List.of(
                         "5 proyectos completados por período",
                         "IA avanzada",
@@ -86,7 +101,8 @@ public class DataInitializer implements CommandLineRunner {
                 "PREMIUM",
                 "PREMIUM",
                 "Plan completo: proyectos ilimitados y la mayor cuota de IA",
-                new BigDecimal("35.00"),
+                PREMIUM_PRICE,
+                PREMIUM_PRICE_COP,
                 List.of(
                         "Proyectos ilimitados",
                         "IA avanzada",
@@ -109,6 +125,7 @@ public class DataInitializer implements CommandLineRunner {
             String name,
             String description,
             BigDecimal price,
+            BigDecimal priceCop,
             List<String> features,
             Integer maxProjects,
             Integer messagesPerMonth,
@@ -124,7 +141,7 @@ public class DataInitializer implements CommandLineRunner {
             plan = existing.get();
             plan.setName(name);
             plan.setDescription(description);
-            plan.setPrice(price);
+            // price y price_cop son propiedad de Flyway (V85): no se sobrescriben.
             plan.setFeatures(objectMapper.writeValueAsString(features));
             plan.setMaxProjects(maxProjects);
             plan.setMessagesPerMonth(messagesPerMonth);
@@ -135,7 +152,7 @@ public class DataInitializer implements CommandLineRunner {
             plan.setIsActive(true);
             plan.setAiBudgetUsd(aiBudget);
             repository.save(plan);
-            log.info("Plan {} actualizado (id={})", code, plan.getId());
+            log.info("Plan {} actualizado sin tocar precios (id={})", code, plan.getId());
         } else {
             plan = PricingPlan.builder()
                     .code(code)
@@ -143,6 +160,7 @@ public class DataInitializer implements CommandLineRunner {
                     .name(name)
                     .description(description)
                     .price(price)
+                    .priceCop(priceCop)
                     .features(objectMapper.writeValueAsString(features))
                     .maxProjects(maxProjects)
                     .messagesPerMonth(messagesPerMonth)
@@ -154,7 +172,12 @@ public class DataInitializer implements CommandLineRunner {
                     .aiBudgetUsd(aiBudget)
                     .build();
             repository.save(plan);
-            log.info("Plan {} creado (id={})", code, plan.getId());
+            log.info(
+                    "Plan {} creado con price={} USD y priceCop={} COP (id={})",
+                    code,
+                    price,
+                    priceCop,
+                    plan.getId());
         }
     }
 }

@@ -45,20 +45,25 @@ class PricingPlanFeaturesJpaTest extends PostgresTestSupport {
         var initializer = new DataInitializer(repository, new ObjectMapper());
         initializer.run();
 
-        assertEquals(3, repository.count());
+        assertEquals(3, repository.findByVerticalAndIsActiveTrueOrderByPriceAsc(ProductVertical.EMPRESAS)
+                .size());
 
-        var free = repository.findByCode("FREE").orElseThrow();
+        var free = repository.findByCodeAndVertical("FREE", ProductVertical.EMPRESAS).orElseThrow();
         var freeFeatures = MAPPER.readValue(free.getFeatures(), new TypeReference<List<String>>() {});
         assertEquals(4, freeFeatures.size());
         assertTrue(freeFeatures.contains("Scoring de viabilidad"));
+        assertEquals(new BigDecimal("0.00"), free.getPrice());
+        assertEquals(new BigDecimal("0.00"), free.getPriceCop());
 
-        var standard = repository.findByCode("STANDARD").orElseThrow();
-        assertEquals(new BigDecimal("25.00"), standard.getPrice());
+        var standard = repository.findByCodeAndVertical("STANDARD", ProductVertical.EMPRESAS).orElseThrow();
+        assertEquals(new BigDecimal("15.00"), standard.getPrice());
+        assertEquals(new BigDecimal("60000.00"), standard.getPriceCop());
         assertEquals(5, standard.getMaxProjects());
         assertTrue(standard.getAdvancedAI());
 
-        var premium = repository.findByCode("PREMIUM").orElseThrow();
-        assertEquals(new BigDecimal("35.00"), premium.getPrice());
+        var premium = repository.findByCodeAndVertical("PREMIUM", ProductVertical.EMPRESAS).orElseThrow();
+        assertEquals(new BigDecimal("22.00"), premium.getPrice());
+        assertEquals(new BigDecimal("88000.00"), premium.getPriceCop());
         assertEquals(null, premium.getMaxProjects());
         var premiumFeatures = MAPPER.readValue(premium.getFeatures(), new TypeReference<List<String>>() {});
         assertTrue(premiumFeatures.contains("Proyectos ilimitados"));

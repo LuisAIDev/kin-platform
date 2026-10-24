@@ -159,6 +159,15 @@ class PricingPlanControllerTest {
     }
 
     @Test
+    void getByVertical_empresas_deberiaResponder200() throws Exception {
+        when(pricingPlanService.getByVertical(ProductVertical.EMPRESAS)).thenReturn(List.of(response()));
+
+        mockMvc.perform(get("/pricing-plans/vertical/EMPRESAS"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Plan"));
+    }
+
+    @Test
     void deactivate_comoNoAdmin_deberiaResponder403() throws Exception {
         stubUser(UserRole.FREE);
 

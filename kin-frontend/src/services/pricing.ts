@@ -6,6 +6,7 @@ export interface PricingPlan {
   name: string;
   description: string;
   price: number;
+  priceCop?: number | null;
   features: string[];
   maxProjects: number | null;
   messagesPerMonth: number | null;

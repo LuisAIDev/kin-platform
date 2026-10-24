@@ -1,5 +1,7 @@
 package com.kinplatform.common.pricing;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -25,8 +27,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
 
 @ExtendWith(MockitoExtension.class)
 class SubscriptionControllerTest {
@@ -200,6 +204,15 @@ class SubscriptionControllerTest {
                 .thenReturn(Optional.empty());
 
         mockMvc.perform(post("/subscriptions/trial").principal(principal())).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getSubscriptionStatus_deberiaSerTransaccionalReadOnly() throws Exception {
+        var method = SubscriptionController.class.getMethod("getSubscriptionStatus", Authentication.class);
+        var transactional = method.getAnnotation(Transactional.class);
+
+        assertNotNull(transactional);
+        assertTrue(transactional.readOnly());
     }
 }
 
