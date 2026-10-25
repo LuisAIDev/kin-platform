@@ -37,6 +37,7 @@ public class DataInitializer implements CommandLineRunner {
      * Flyway (V85) y este inicializador no los toca.
      */
     private static final BigDecimal FREE_PRICE = new BigDecimal("0.00");
+
     private static final BigDecimal FREE_PRICE_COP = new BigDecimal("0.00");
     private static final BigDecimal STANDARD_PRICE = new BigDecimal("15.00");
     private static final BigDecimal STANDARD_PRICE_COP = new BigDecimal("60000.00");
@@ -136,12 +137,34 @@ public class DataInitializer implements CommandLineRunner {
             BigDecimal aiBudget)
             throws Exception {
         Optional<PricingPlan> existing = repository.findByCodeAndVertical(code, VERTICAL);
+        boolean adoptLegacy = false;
+        if (existing.isEmpty()) {
+            // Bases antiguas pueden tener planes EMPRESAS sin `code` (p. ej.
+            // "GRATIS"/"STANDARD"). Se adoptan por nombre en lugar de crear un
+            // duplicado que dejaría tarjetas repetidas y sin price_cop.
+            existing = repository.findFirstByCodeIsNullAndNameAndVertical(name, VERTICAL);
+            if (existing.isEmpty() && !name.equals(code)) {
+                // Algunas bases usan el propio code como nombre del plan legacy.
+                existing = repository.findFirstByCodeIsNullAndNameAndVertical(code, VERTICAL);
+            }
+            adoptLegacy = existing.isPresent();
+        }
+
         PricingPlan plan;
         if (existing.isPresent()) {
             plan = existing.get();
+            if (adoptLegacy) {
+                // El plan legacy no pasó por V85 (que filtra por code): al
+                // adoptarlo le aplicamos el code y los precios aprobados.
+                plan.setCode(code);
+                plan.setPrice(price);
+                plan.setPriceCop(priceCop);
+                log.info("Plan legacy {} adoptado como {} (id={})", name, code, plan.getId());
+            }
             plan.setName(name);
             plan.setDescription(description);
-            // price y price_cop son propiedad de Flyway (V85): no se sobrescriben.
+            // price y price_cop son propiedad de Flyway (V85): no se sobrescriben
+            // salvo al adoptar un plan legacy, que V85 no pudo actualizar.
             plan.setFeatures(objectMapper.writeValueAsString(features));
             plan.setMaxProjects(maxProjects);
             plan.setMessagesPerMonth(messagesPerMonth);
@@ -172,13 +195,7 @@ public class DataInitializer implements CommandLineRunner {
                     .aiBudgetUsd(aiBudget)
                     .build();
             repository.save(plan);
-            log.info(
-                    "Plan {} creado con price={} USD y priceCop={} COP (id={})",
-                    code,
-                    price,
-                    priceCop,
-                    plan.getId());
+            log.info("Plan {} creado con price={} USD y priceCop={} COP (id={})", code, price, priceCop, plan.getId());
         }
     }
 }
-

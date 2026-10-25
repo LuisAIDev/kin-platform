@@ -68,7 +68,8 @@ class PricingPlanControllerTest {
         return PricingPlanResponse.builder()
                 .id(PLAN_ID)
                 .name("Plan")
-                .price(BigDecimal.ZERO)
+                .price(new BigDecimal("15.00"))
+                .priceCop(new BigDecimal("60000.00"))
                 .features(List.of("a"))
                 .isActive(true)
                 .build();
@@ -164,7 +165,9 @@ class PricingPlanControllerTest {
 
         mockMvc.perform(get("/pricing-plans/vertical/EMPRESAS"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Plan"));
+                .andExpect(jsonPath("$[0].name").value("Plan"))
+                .andExpect(jsonPath("$[0].price").value(15.0))
+                .andExpect(jsonPath("$[0].priceCop").value(60000.0));
     }
 
     @Test
@@ -175,5 +178,3 @@ class PricingPlanControllerTest {
                 .andExpect(status().isForbidden());
     }
 }
-
-

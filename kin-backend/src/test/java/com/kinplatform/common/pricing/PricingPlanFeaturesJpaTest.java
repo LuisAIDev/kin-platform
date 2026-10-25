@@ -45,28 +45,66 @@ class PricingPlanFeaturesJpaTest extends PostgresTestSupport {
         var initializer = new DataInitializer(repository, new ObjectMapper());
         initializer.run();
 
-        assertEquals(3, repository.findByVerticalAndIsActiveTrueOrderByPriceAsc(ProductVertical.EMPRESAS)
-                .size());
+        assertEquals(
+                3,
+                repository
+                        .findByVerticalAndIsActiveTrueOrderByPriceAsc(ProductVertical.EMPRESAS)
+                        .size());
 
-        var free = repository.findByCodeAndVertical("FREE", ProductVertical.EMPRESAS).orElseThrow();
+        var free = repository
+                .findByCodeAndVertical("FREE", ProductVertical.EMPRESAS)
+                .orElseThrow();
         var freeFeatures = MAPPER.readValue(free.getFeatures(), new TypeReference<List<String>>() {});
         assertEquals(4, freeFeatures.size());
         assertTrue(freeFeatures.contains("Scoring de viabilidad"));
         assertEquals(new BigDecimal("0.00"), free.getPrice());
         assertEquals(new BigDecimal("0.00"), free.getPriceCop());
 
-        var standard = repository.findByCodeAndVertical("STANDARD", ProductVertical.EMPRESAS).orElseThrow();
+        var standard = repository
+                .findByCodeAndVertical("STANDARD", ProductVertical.EMPRESAS)
+                .orElseThrow();
         assertEquals(new BigDecimal("15.00"), standard.getPrice());
         assertEquals(new BigDecimal("60000.00"), standard.getPriceCop());
         assertEquals(5, standard.getMaxProjects());
         assertTrue(standard.getAdvancedAI());
 
-        var premium = repository.findByCodeAndVertical("PREMIUM", ProductVertical.EMPRESAS).orElseThrow();
+        var premium = repository
+                .findByCodeAndVertical("PREMIUM", ProductVertical.EMPRESAS)
+                .orElseThrow();
         assertEquals(new BigDecimal("22.00"), premium.getPrice());
         assertEquals(new BigDecimal("88000.00"), premium.getPriceCop());
         assertEquals(null, premium.getMaxProjects());
         var premiumFeatures = MAPPER.readValue(premium.getFeatures(), new TypeReference<List<String>>() {});
         assertTrue(premiumFeatures.contains("Proyectos ilimitados"));
+    }
+
+    @Test
+    void dataInitializer_adoptaPlanLegacySinCodeEnLugarDeDuplicarlo() throws Exception {
+        var legacy = PricingPlan.builder()
+                .name("GRATIS")
+                .vertical(ProductVertical.EMPRESAS)
+                .description("Plan legacy")
+                .price(BigDecimal.ZERO)
+                .features("[]")
+                .isActive(false)
+                .advancedAI(false)
+                .pdfExport(false)
+                .supportLevel(SupportLevel.BASIC)
+                .viabilityScoringDetail(ViabilityScoringDetail.BASIC)
+                .build();
+        repository.saveAndFlush(legacy);
+
+        new DataInitializer(repository, new ObjectMapper()).run();
+
+        var adopted = repository
+                .findByCodeAndVertical("FREE", ProductVertical.EMPRESAS)
+                .orElseThrow();
+        assertEquals(legacy.getId(), adopted.getId());
+        assertEquals("FREE", adopted.getCode());
+        assertEquals(new BigDecimal("0.00"), adopted.getPriceCop());
+        assertTrue(adopted.getIsActive());
+        assertTrue(repository.findByVerticalAndIsActiveTrueOrderByPriceAsc(ProductVertical.EMPRESAS).stream()
+                .noneMatch(plan -> plan.getCode() == null));
     }
 
     @Test
@@ -110,4 +148,3 @@ class PricingPlanFeaturesJpaTest extends PostgresTestSupport {
         assertEquals(List.of("Hasta 3 proyectos", "Exportación a PDF"), restoredFeatures);
     }
 }
-
