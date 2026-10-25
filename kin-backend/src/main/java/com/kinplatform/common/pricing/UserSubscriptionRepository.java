@@ -33,7 +33,13 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
             @Param("vertical") ProductVertical vertical,
             @Param("status") SubscriptionStatus status);
 
-    @Query("SELECT s FROM UserSubscription s JOIN s.plan p "
+    /**
+     * Suscripción activa con su {@link PricingPlan} ya cargado mediante
+     * {@code JOIN FETCH}. El plan se consume fuera de la transacción del
+     * repositorio (p. ej. {@code SubscriptionController#getSubscriptionStatus}),
+     * así que debe venir inicializado para evitar {@code LazyInitializationException}.
+     */
+    @Query("SELECT s FROM UserSubscription s JOIN FETCH s.plan p "
             + "WHERE s.user.id = :userId AND s.status = :status AND p.vertical = :vertical "
             + "AND (s.endDate IS NULL OR s.endDate > :now) ORDER BY s.createdAt DESC")
     List<UserSubscription> findActiveByUserAndVertical(
@@ -45,4 +51,3 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
     Optional<UserSubscription> findTopByUserIdAndPlan_VerticalOrderByCreatedAtDesc(
             UUID userId, ProductVertical vertical);
 }
-

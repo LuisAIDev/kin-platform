@@ -1,12 +1,12 @@
 package com.kinplatform.common.pricing;
 
-import com.kinplatform.common.security.PatientAccess;
 import com.kinplatform.common.pricing.dto.PatientSubscriptionStatusResponse;
 import com.kinplatform.common.pricing.dto.PricingPlanDTO;
 import com.kinplatform.common.pricing.dto.SubscriptionRequest;
 import com.kinplatform.common.pricing.dto.SubscriptionResponse;
 import com.kinplatform.common.pricing.dto.SubscriptionStatusResponse;
 import com.kinplatform.common.pricing.service.SubscriptionValidatorService;
+import com.kinplatform.common.security.PatientAccess;
 import com.kinplatform.common.user.User;
 import com.kinplatform.common.user.UserRepository;
 import jakarta.validation.Valid;
@@ -17,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -72,7 +71,7 @@ public class SubscriptionController {
     @PostMapping("/cancel-patient")
     public ResponseEntity<SubscriptionResponse> cancelPatientSubscription(Authentication auth) {
         User user = getCurrentUser(auth);
-        
+
         if (!PatientAccess.isPatient(user)) {
             throw new IllegalStateException("Endpoint solo disponible para pacientes");
         }
@@ -84,7 +83,6 @@ public class SubscriptionController {
     }
 
     @GetMapping("/status")
-    @Transactional(readOnly = true)
     public ResponseEntity<SubscriptionStatusResponse> getSubscriptionStatus(Authentication auth) {
         User user = getCurrentUser(auth);
         UUID userId = user.getId();
@@ -179,5 +177,3 @@ public class SubscriptionController {
         return com.kinplatform.common.security.AuthenticatedUsers.require(userRepository, auth);
     }
 }
-
-

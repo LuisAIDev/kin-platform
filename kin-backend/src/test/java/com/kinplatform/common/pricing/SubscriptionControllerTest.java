@@ -1,18 +1,17 @@
 package com.kinplatform.common.pricing;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.kinplatform.common.ai.usage.AiUsageSummary;
 import com.kinplatform.common.GlobalExceptionHandler;
-import com.kinplatform.common.usage.UsagePeriod;
+import com.kinplatform.common.ai.usage.AiUsageSummary;
 import com.kinplatform.common.pricing.dto.SubscriptionResponse;
 import com.kinplatform.common.pricing.service.SubscriptionValidatorService;
+import com.kinplatform.common.usage.UsagePeriod;
 import com.kinplatform.common.user.User;
 import com.kinplatform.common.user.UserRepository;
 import com.kinplatform.common.user.UserRole;
@@ -207,15 +206,9 @@ class SubscriptionControllerTest {
     }
 
     @Test
-    void getSubscriptionStatus_deberiaSerTransaccionalReadOnly() throws Exception {
+    void getSubscriptionStatus_noDebeAbrirTransaccionReadOnly() throws Exception {
         var method = SubscriptionController.class.getMethod("getSubscriptionStatus", Authentication.class);
-        var transactional = method.getAnnotation(Transactional.class);
 
-        assertNotNull(transactional);
-        assertTrue(transactional.readOnly());
+        assertNull(method.getAnnotation(Transactional.class));
     }
 }
-
-
-
-

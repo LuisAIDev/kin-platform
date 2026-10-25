@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
@@ -52,6 +53,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * @return número de filas actualizadas (1 si hubo rollover, 0 si no).
      */
     @Modifying(clearAutomatically = true)
+    @Transactional
     @Query(
             value = "UPDATE users SET completed_projects = 0, "
                     + "completed_projects_period_start = :periodStart, updated_at = now() "
@@ -60,4 +62,3 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             nativeQuery = true)
     int rolloverCompletedProjects(@Param("userId") UUID userId, @Param("periodStart") OffsetDateTime periodStart);
 }
-

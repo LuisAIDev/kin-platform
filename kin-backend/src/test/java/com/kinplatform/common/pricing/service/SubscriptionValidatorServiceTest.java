@@ -10,13 +10,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.kinplatform.common.ai.usage.AiBudgetControlService;
-import com.kinplatform.common.usage.ProjectQuotaPort;
 import com.kinplatform.common.pricing.PricingPlan;
 import com.kinplatform.common.pricing.PricingPlanRepository;
 import com.kinplatform.common.pricing.ProductVertical;
 import com.kinplatform.common.pricing.SubscriptionStatus;
 import com.kinplatform.common.pricing.UserSubscription;
 import com.kinplatform.common.pricing.UserSubscriptionRepository;
+import com.kinplatform.common.usage.ProjectQuotaPort;
 import com.kinplatform.common.user.User;
 import com.kinplatform.common.user.UserRepository;
 import java.math.BigDecimal;
@@ -241,6 +241,14 @@ class SubscriptionValidatorServiceTest {
     }
 
     @Test
+    void getCompletedProjectsUsed_deberiaHacerRolloverYDevolverContador() {
+        when(projectQuotaPort.completedProjects(USER_ID)).thenReturn(2);
+
+        assertEquals(2, service.getCompletedProjectsUsed(USER_ID));
+        verify(projectQuotaPort).rolloverIfNeeded(USER_ID);
+    }
+
+    @Test
     void evictProjectLimitCache_deberiaInvalidar() {
         when(cacheManager.getCache("projectLimit")).thenReturn(cache);
 
@@ -276,10 +284,7 @@ class SubscriptionValidatorServiceTest {
         healthPlan.setVertical(ProductVertical.SALUD_PERSONAL);
         var healthSubscription = subscription(healthPlan, 0);
         when(subscriptionRepository.findActiveByUserAndVertical(
-                        eq(USER_ID),
-                        eq(SubscriptionStatus.ACTIVE),
-                        eq(ProductVertical.SALUD_PERSONAL),
-                        any()))
+                        eq(USER_ID), eq(SubscriptionStatus.ACTIVE), eq(ProductVertical.SALUD_PERSONAL), any()))
                 .thenReturn(List.of(healthSubscription));
 
         assertEquals(healthPlan, service.getCurrentPlan(USER_ID));
