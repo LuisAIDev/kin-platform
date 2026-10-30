@@ -11,6 +11,7 @@ type RouteConfig = {
 const PUBLIC_ROUTES: RouteConfig[] = [
   { path: "/", changeFrequency: "weekly", priority: 1 },
   { path: "/sobre-kin", changeFrequency: "monthly", priority: 0.8 },
+  { path: "/manual-usuario", changeFrequency: "monthly", priority: 0.8 },
   { path: "/arquitectura", changeFrequency: "monthly", priority: 0.8 },
   { path: "/register", changeFrequency: "monthly", priority: 0.6 },
   { path: "/login", changeFrequency: "yearly", priority: 0.3 },

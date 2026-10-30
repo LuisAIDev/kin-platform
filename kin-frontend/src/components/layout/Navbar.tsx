@@ -61,6 +61,13 @@ export default function Navbar({ variant = "landing", activePath = "/sobre-kin" 
                   Sobre KIN
                 </Link>
                 <Link
+                  href="/manual-usuario"
+                  aria-current={activePath === "/manual-usuario" ? "page" : undefined}
+                  className={activePath === "/manual-usuario" ? NAV_ACTIVE_CLASS : NAV_LINK_CLASS}
+                >
+                  Manual
+                </Link>
+                <Link
                   href="/arquitectura"
                   aria-current={activePath === "/arquitectura" ? "page" : undefined}
                   className={activePath === "/arquitectura" ? NAV_ACTIVE_CLASS : NAV_LINK_CLASS}
@@ -81,6 +88,9 @@ export default function Navbar({ variant = "landing", activePath = "/sobre-kin" 
                 </a>
                 <Link href="/sobre-kin" className={NAV_LINK_CLASS}>
                   Sobre KIN
+                </Link>
+                <Link href="/manual-usuario" className={NAV_LINK_CLASS}>
+                  Manual
                 </Link>
                 <Link href="/arquitectura" className={NAV_LINK_CLASS}>
                   Arquitectura técnica

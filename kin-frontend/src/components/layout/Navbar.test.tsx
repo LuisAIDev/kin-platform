@@ -62,6 +62,34 @@ describe("Navbar", () => {
     expect(screen.queryByRole("link", { name: "Contacto" })).toBeNull();
   });
 
+  it("incluye el enlace 'Manual' entre Sobre KIN y Arquitectura en la variante landing", () => {
+    render(<Navbar />);
+    const manualLink = screen.getByRole("link", { name: "Manual" });
+    expect(manualLink).toHaveAttribute("href", "/manual-usuario");
+
+    const aboutLink = screen.getByRole("link", { name: "Sobre KIN" });
+    const archLink = screen.getByRole("link", { name: "Arquitectura t\u00e9cnica" });
+    expect(
+      aboutLink.compareDocumentPosition(manualLink) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      manualLink.compareDocumentPosition(archLink) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("variante about con activePath='/manual-usuario' marca Manual como actual", () => {
+    render(<Navbar variant="about" activePath="/manual-usuario" />);
+
+    const manualLink = screen.getByRole("link", { name: "Manual" });
+    expect(manualLink).toHaveAttribute("href", "/manual-usuario");
+    expect(manualLink).toHaveAttribute("aria-current", "page");
+
+    const aboutLink = screen.getByRole("link", { name: "Sobre KIN" });
+    expect(aboutLink).not.toHaveAttribute("aria-current");
+  });
+
   it("variante about con activePath='/arquitectura' marca Arquitectura técnica como actual", () => {
     render(<Navbar variant="about" activePath="/arquitectura" />);
 
